@@ -5,29 +5,70 @@
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --background-end-rgb: 23, 36, 65;
+  --primary-color: theme(colors.primary.500)
 }
 
+/* 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 255, 255, 255;
+    --foreground-rgb: 23, 36, 65;
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
   }
-}
+
+} */
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+@layer base {
+  html {
+    color-scheme: light !important;
+  }
+
+  :root {
+    --card-padding: theme("spacing[6]");
+    --accordion-padding: theme("spacing[4]");
+    --feedback-padding: var(--card-padding);
+    --toast-padding: theme("spacing[4]");
+    --display-text-color: theme(colors.gray.950);
+    --title-text-color: var(--display-text-color);
+    --caption-text-color: theme(colors.gray.500);
+    --body-text-color: theme(colors.gray.700);
+    --placeholder-text-color: theme(colors.gray.400);
+
+    /* @media(prefers-color-scheme:dark) {
+      --display-text-color: theme(colors.white);
+      --title-text-color: var(--display-text-color);
+      --caption-text-color: theme(colors.gray.500);
+      --body-text-color: theme(colors.gray.300);
+      --placeholder-text-color: theme(colors.gray.600);
+      background-color: rgb(23, 36, 65);
+
+    } */
+
+    --area-primary-stroke: theme(colors.primary.600);
+    --area-secondary-stroke: theme(colors.secondary.600);
+    --area-accent-stroke: theme(colors.accent.600);
+    --area-gray-stroke: theme(colors.gray.600);
+    --area-neutral-stroke: theme(colors.gray.950);
+  }
+
+  /* .dark {
+    --display-text-color: theme(colors.white);
+    --title-text-color: var(--display-text-color);
+    --caption-text-color: theme(colors.gray.500);
+    --body-text-color: theme(colors.gray.300);
+    --placeholder-text-color: theme(colors.gray.600);
+    background-color: rgb(23, 36, 65);
+  } */
+
 }
