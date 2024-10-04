@@ -13,17 +13,18 @@ export type Database = {
         Row: {
           title: string,
           business: string
-          client: string
+          client?: string
           created_at?: string
           end: string
           id?: string
           service: Json
           start: string
-          updated_at?: string
+          updated_at?: string,
+          client_metadata?: Json,
         }
         Insert: {
           title: string,
-          business?: string
+          business: string
           client?: string
           created_at?: string
           end: string
@@ -31,6 +32,7 @@ export type Database = {
           service: Json
           start: string
           updated_at?: string
+          client_metadata?: Json,
         }
         Update: {
           title?: string,
@@ -42,6 +44,7 @@ export type Database = {
           service?: Json
           start?: string
           updated_at?: string
+          client_metadata?: Json,
         }
         Relationships: [
           {

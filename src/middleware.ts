@@ -21,6 +21,14 @@ export async function middleware(req: NextRequest) {
             // Rewrite requests to /appointments under the dashboard subdomain
             return NextResponse.rewrite(new URL('/dashboard/appointments', req.url));
         }
+        else if (path.startsWith('/services')) {
+            // Rewrite requests to /appointments under the dashboard subdomain
+            return NextResponse.rewrite(new URL('/dashboard/services', req.url));
+        }
+        else if (path.startsWith('/settings')) {
+            // Rewrite requests to /appointments under the dashboard subdomain
+            return NextResponse.rewrite(new URL('/dashboard/settings', req.url));
+        }
         // Rewrite any other request under the dashboard subdomain
         return NextResponse.rewrite(new URL('/dashboard', req.url));
     }

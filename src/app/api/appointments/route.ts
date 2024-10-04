@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
             service: service,
             business: business_id,
             client: client_id,
-            title: title
+            title: title,
         }
     ]).select();
     if (data?.length) {

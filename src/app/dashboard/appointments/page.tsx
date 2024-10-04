@@ -14,6 +14,7 @@ import Label from '@components/Label';
 import { useUserContext } from '@utils/context/UserContext';
 import "./calendar.css"
 import Popover from '@tailus-ui/Popover';
+import Input from '@components/Input';
 
 
 const Page = () => {
@@ -83,7 +84,8 @@ const Page = () => {
                 start: slotInfo?.start.toISO() || "",
                 end: slotInfo.end.toISO() || "",
                 service: "",
-                title: "Loc Retwist with Abijah"
+                title: `Loc Retwist with ${clientInformation.firstName}`,
+                client_metadata: clientInformation
             }
             // const res = await fetch(`http://127.0.0.1:3000/api/appointments`, {
             //     method: 'POST',
@@ -94,11 +96,18 @@ const Page = () => {
                 {
                     start: new Date(appointment.start),
                     end: new Date(appointment.end),
-                    title: appointment.title
+                    title: appointment.title,
+                    clientMetaData: appointment.client_metadata
                 }
             ])
             setIsOpen(false)
             console.log(appointments);
+            setClientInformation({
+                firstName: "",
+                lastName: "",
+                email: "",
+                phoneNumber: ""
+            })
         }
 
     }
@@ -119,10 +128,15 @@ const Page = () => {
     }
 
     const handleEvent = (event: any) => {
-        console.log(event);
 
     }
     // Add a new client to clientele
+    const [clientInformation, setClientInformation] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phoneNumber: ""
+    })
     return (
         <div className='px-6 h-screen flex w-full'>
             <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
@@ -137,33 +151,7 @@ const Page = () => {
 
                         <Dialog.Description className="mt-2">
                             <div className='gap-3 flex flex-col'>
-                                <div>
-                                    <Label className='text-sm font-medium'>Client</Label>
-                                    <Select.Root defaultValue="">
-                                        <Select.Trigger size="md" className="w-56 flex justify-between">
-                                            <Select.Value placeholder={
-                                                <Caption>Choose a client</Caption>} />
-                                            <Select.Icon>
-                                                <ChevronDown size={16} />                                        </Select.Icon>
-                                        </Select.Trigger>
 
-                                        <Select.Portal>
-                                            <Select.Content mixed className="z-50">
-                                                <Select.Viewport>
-                                                    <Button.Root variant='soft' size='xs' className='w-full py-5 mb-2'>
-                                                        <Button.Label>
-                                                            + Add Client
-                                                        </Button.Label>
-                                                    </Button.Root>
-                                                    {
-                                                        clients.map((client) => (
-                                                            <SelectItem service={client} key={client.name} />
-                                                        ))
-                                                    }
-                                                </Select.Viewport>
-                                            </Select.Content>
-                                        </Select.Portal>
-                                    </Select.Root></div>
                                 <div>
                                     <Label className='text-sm font-medium'>Service</Label>
                                     <Select.Root defaultValue="">
@@ -186,12 +174,52 @@ const Page = () => {
                                             </Select.Content>
                                         </Select.Portal>
                                     </Select.Root></div>
+                                <div>
+                                    <Label className='text-sm font-medium'>Client Information</Label>
+                                    <div className='flex flex-col gap-2'>
+                                        <div className='flex gap-2'>
+                                            <Input placeholder="First Name" value={clientInformation.firstName} onChange={(e) => {
+                                                setClientInformation({
+                                                    ...clientInformation,
+                                                    firstName: e.target.value
+                                                })
+                                            }} />
+                                            <Input placeholder="Last Name" value={clientInformation.lastName} onChange={(e) => {
+                                                setClientInformation({
+                                                    ...clientInformation,
+                                                    lastName: e.target.value
+                                                })
+                                            }} />
+                                        </div>
+                                        <Input placeholder="Email" value={clientInformation.email} onChange={(e) => {
+                                            setClientInformation({
+                                                ...clientInformation,
+                                                email: e.target.value
+                                            })
+                                        }} />
+                                        <Input placeholder="Phone Number" value={clientInformation.phoneNumber} onChange={(e) => {
+                                            setClientInformation({
+                                                ...clientInformation,
+                                                phoneNumber: e.target.value
+                                            })
+                                        }} />
+
+                                    </div>
+                                </div>
                             </div>
                         </Dialog.Description>
 
                         <Dialog.Actions>
                             <Dialog.Close asChild>
-                                <Button.Root onClick={() => { setIsOpen(false) }} variant="outlined" size="sm" intent="gray">
+                                <Button.Root onClick={() => {
+                                    setIsOpen(false),
+                                        setClientInformation({
+                                            firstName: "",
+                                            lastName: "",
+                                            email: "",
+                                            phoneNumber: ""
+                                        })
+                                }} variant="outlined" size="sm" intent="gray">
                                     <Button.Label>Cancel</Button.Label>
                                 </Button.Root>
                             </Dialog.Close>
