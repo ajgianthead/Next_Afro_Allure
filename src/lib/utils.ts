@@ -13,3 +13,7 @@ export function cloneElement(element: React.ReactElement, classNames: string) {
         className: twMerge(element.props.className, classNames)
     });
 }
+
+export const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2023-10-16'
+});
