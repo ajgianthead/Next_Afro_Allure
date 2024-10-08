@@ -1,9 +1,7 @@
-'use server'
+'use server';
 
-import { type NextRequest, NextResponse } from 'next/server'
-
-import { updateSession } from '@utils/supabase/middleware'
-
+import { type NextRequest, NextResponse } from 'next/server';
+import { updateSession } from '@utils/supabase/middleware';
 
 export async function middleware(req: NextRequest) {
     // **Step 1: Update Supabase Auth Session**
@@ -15,21 +13,34 @@ export async function middleware(req: NextRequest) {
     const url = new URL(req.url);         // Extract the URL of the request
     const path = url.pathname;            // Get the path of the request (e.g., /appointments)
 
-    // Check if the request is from the 'dashboard' subdomain
+    // **Step 3: Generate Nonce for CSP**
+    const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+
+    // **Step 4: Set Content Security Policy (CSP) Headers**
+
+
+    // Pass the nonce to the request headers for later use if needed
+    //req.headers.set('csp-nonce', nonce);
+
+    // **Step 5: Handle Subdomain Rewrites**
     if (host === 'dashboard.localhost:3000') {
         if (path.startsWith('/appointments')) {
-            // Rewrite requests to /appointments under the dashboard subdomain
             return NextResponse.rewrite(new URL('/dashboard/appointments', req.url));
-        }
-        else if (path.startsWith('/services')) {
-            // Rewrite requests to /appointments under the dashboard subdomain
+        } else if (path.startsWith('/services')) {
             return NextResponse.rewrite(new URL('/dashboard/services', req.url));
-        }
-        else if (path.startsWith('/settings')) {
-            // Rewrite requests to /appointments under the dashboard subdomain
+        } else if (path.startsWith('/settings')) {
+            // const response = NextResponse.rewrite(new URL('/dashboard/settings', req.url));
+            // response.headers.set('x-nonce', nonce)
+
+            // response.headers.set(
+            //     'Content-Security-Policy',
+            //     `script-src 'self' https://js.stripe.com https://connect-js.stripe.com 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'; frame-src https://connect-js.stripe.com https://js.stripe.com;`
+            // );
+
+            // return response;
             return NextResponse.rewrite(new URL('/dashboard/settings', req.url));
+
         }
-        // Rewrite any other request under the dashboard subdomain
         return NextResponse.rewrite(new URL('/dashboard', req.url));
     }
 
@@ -53,4 +64,4 @@ export const config = {
          */
         '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
-}
+};

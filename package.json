@@ -26,6 +26,7 @@
     "@radix-ui/react-tabs": "^1.1.0",
     "@stripe/connect-js": "^3.3.14",
     "@stripe/react-connect-js": "^3.3.15",
+    "@stripe/stripe-js": "^4.7.0",
     "@supabase/ssr": "^0.5.1",
     "@supabase/supabase-js": "^2.45.2",
     "@tailus/themer": "^0.1.8",

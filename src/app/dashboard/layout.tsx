@@ -7,7 +7,7 @@ import Separator from '@tailus-ui/Separator';
 import { Notifications } from '@components/Notifications';
 import { useEffect, useState } from 'react';
 import { BrandIcon } from '@components/utilities/Brand';
-import { Menu, Settings, HelpCircle, LayoutDashboard, Calendar, CalendarCog, Database, UsersRound, Shield, Percent, Tag, PanelsTopLeft, ChartNoAxesCombined } from 'lucide-react';
+import { Menu, Settings, HelpCircle, LayoutDashboard, Calendar, CalendarCog, Database, UsersRound, Shield, Percent, Tag, PanelsTopLeft, ChartNoAxesCombined, Scale } from 'lucide-react';
 import { Caption, Title } from '@tailus-ui/typography';
 import { UserDropdown } from '@components/UserDropdown';
 import ScrollArea from '@components/ScrollArea';
@@ -70,6 +70,12 @@ export default function Layout({
                                             <Database />
                                         </Link.Icon>
                                         <Link.Label>Services</Link.Label>
+                                    </Link.Root>
+                                    <Link.Root link="/services">
+                                        <Link.Icon>
+                                            <Scale />
+                                        </Link.Icon>
+                                        <Link.Label>Policies</Link.Label>
                                     </Link.Root>
                                     <Link.Root link="/booking-site">
                                         <Link.Icon>

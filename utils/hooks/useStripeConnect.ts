@@ -7,23 +7,19 @@ export const useStripeConnect = (connectedAccountId: string) => {
     useEffect(() => {
         if (connectedAccountId) {
             const fetchClientSecret = async () => {
-                const response = await fetch("/api/account_session", {
+                const response = await fetch("http://127.0.0.1:3000/api/account_session", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
                     body: JSON.stringify({
                         account: connectedAccountId,
                     }),
                 });
-
                 if (!response.ok) {
                     // Handle errors on the client side here
                     const { error } = await response.json();
                     throw new Error("An error occurred: ", error);
                 } else {
-                    const { client_secret: clientSecret } = await response.json();
-                    return clientSecret;
+                    const val = await response.json();
+                    return val.clientSecret;
                 }
             };
 
@@ -35,6 +31,8 @@ export const useStripeConnect = (connectedAccountId: string) => {
                         overlays: "dialog",
                         variables: {
                             colorPrimary: "#635BFF",
+                            fontFamily: "Geist, Inter, ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+
                         },
                     },
                 })
