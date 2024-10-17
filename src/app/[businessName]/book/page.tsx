@@ -1,45 +1,145 @@
+"use client"
+
 import Input from '@components/Input'
+import Button from '@tailus-ui/Button'
 import { Caption, Text, Title } from '@tailus-ui/typography'
 import Image from 'next/image'
-import React from 'react'
+import React, { useState } from 'react'
+import Stepper from '@mui/joy/Stepper';
+import Step from '@mui/joy/Step';
+import StepButton from '@mui/joy/StepButton';
+import StepIndicator from '@mui/joy/StepIndicator';
+import { Check } from 'lucide-react'
+import Label from '@components/Label'
+import Card from '@tailus-ui/Card'
+import Separator from "@tailus-ui/Separator"
+import Link from 'next/link'
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider'
+import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
+
+const steps = ['Select a service', 'Pick a date and time', 'Contact information', "Deposit payment", "Appointment confirmation"];
 
 export default function page() {
+    const components = [<ServiceSelection />, <DateTimePicker />, <ClientInfo />, <div></div>, <div></div>]
+    const [activeStep, setActiveStep] = useState<number>(1);
     return (
-        <div className='w-full h-screen flex overflow-hidden'>
-            <div className='w-[40%] h-full flex-col p-5'>
-                <Input variant='outlined' placeholder='Search for a service' />
-                <div className='mt-8 overflow-scroll h-full'>
-                    <div className='flex flex-col gap-2 mr-5'>
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                        <ServiceCard />
-                    </div>
-                </div>
+        <div className='w-full pt-10 px-20  flex flex-col overflow-hidden'>
+            <Stepper sx={{ width: '100%', marginBottom: 5 }}>
+                {steps.map((step, index) => (
+                    <Step
+                        key={step}
+                        indicator={
+                            <StepIndicator
+                                variant={activeStep <= index ? 'soft' : 'solid'}
+                                color={activeStep < index ? 'neutral' : 'primary'}
+                            >
+                                {activeStep <= index ? index + 1 : <Check size={16} />}
+                            </StepIndicator>
+                        }
+                        sx={[
+                            activeStep > index &&
+                            index !== 2 && { '&::after': { bgcolor: 'primary.solidBg' } },
+                        ]}
+                    >
+                        <StepButton onClick={() => setActiveStep(index)}>
+                            <div className='text-left'>
+                                <Text className="font-medium">{step}</Text>
+                                <Caption>Details</Caption>
+                            </div>
+                        </StepButton>
+                    </Step>
+                ))}
+            </Stepper>
+            <div className='w-full h-full flex-col p-5'>
+                {components[activeStep]}
             </div>
 
-            <div className='w-[60%] h-full flex-col p-5'>1</div>
+        </div>
+    )
+}
+
+const ClientInfo = () => {
+    return (
+        <div className='flex w-full flex-col items-center justify-center'>
+            <div className='w-1/2 mb-4 text-left'>
+                <Title>Contact Information</Title>
+                <Caption>Enter your information below</Caption>
+            </div>
+            <Card className='w-1/2 flex flex-col gap-2'>
+                <div className='flex gap-2'>
+                    <Input placeholder='First Name' />
+                    <Input placeholder='Last Name' />
+                </div>
+                <Input placeholder='Email' />
+                <Input placeholder='Phone Number' />
+                <div className='flex gap-3 items-center'>
+                    <Separator orientation='horizontal' />
+                    <Caption>or</Caption>
+                    <Separator orientation='horizontal' />
+                </div>
+                <Button.Root variant='soft'>
+                    <Button.Label>Login to Afro Allure</Button.Label>
+                </Button.Root>
+                <div className='w-full flex justify-center'>
+                    <Caption>Don't have an account? <Link className='underline' href={"#register"}>Register</Link></Caption>
+                </div>
+            </Card>
+        </div>
+    )
+}
+
+const DateTimePicker = () => {
+    const [date, setDate] = useState()
+    return (
+        <Card className='flex'>
+            <div className='w-1/2'>
+                <LocalizationProvider dateAdapter={AdapterLuxon}>
+                    <DateCalendar value={date} onChange={(newValue: any) => setDate(newValue)} />
+                </LocalizationProvider>
+            </div>
+            <div>
+                Times
+            </div>
+        </Card>
+
+    )
+}
+
+const ServiceSelection = () => {
+    return (
+        <div className=''>
+            <Title className='mb-5'>Select a Service</Title>
+            <Input variant='outlined' placeholder='Search for a service' />
+            <div className='mt-8 overflow-y-scroll'>
+                <div className='flex flex-wrap gap-2 mr-5 h-[450px]'>
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                    <ServiceCard />
+                </div>
+            </div>
         </div>
     )
 }
 
 const ServiceCard = () => {
     return (
-        <div className='rounded-md border border-[#ECECEC] w-[100%] flex h-[150px]'>
+        <div className='rounded-md border border-[#ECECEC] w-[400px] flex h-[150px]'>
 
             <Image style={{
                 // height: '100%',

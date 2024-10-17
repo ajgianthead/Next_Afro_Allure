@@ -3,10 +3,10 @@
 import { createClient } from "@utils/supabase/client";
 import { UserAuthContext } from "@utils/types/user";
 import { createContext, useContext, useEffect, useState } from "react";
-import { ContextDevTool } from 'react-context-devtool';
 import { Database } from "../../lib/database.types";
 
 const UserContext = createContext<any>(false);
+const supabase = createClient<Database>()
 
 export function UserWrapper({ children }: any) {
     let [user, setUser] = useState<UserAuthContext>({
@@ -15,9 +15,7 @@ export function UserWrapper({ children }: any) {
         business_id: undefined,
         client_id: undefined
     });
-    console.log("hi")
     useEffect(() => {
-        const supabase = createClient<Database>()
         const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
                 if (session?.user.user_metadata.account_type === 'business') {
@@ -32,8 +30,6 @@ export function UserWrapper({ children }: any) {
                             business_id: data[0].business_id,
                             client_id: undefined
                         })
-                        console.log(data)
-
                     }
                 } else if (session?.user.user_metadata.account_type === 'client') {
                     let { data, error } = await supabase.from('client_users').select("client_id").eq("user_id", session?.user.id)

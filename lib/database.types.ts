@@ -119,7 +119,7 @@ export type Database = {
           business_name: string
           clients?: string[] | null
           created_at?: string
-          email: string
+          email?: string
           stripe_acc_id?: string | null
           updated_at?: string
           user_id?: string
@@ -148,8 +148,6 @@ export type Database = {
       }
       client_users: {
         Row: {
-          first_name: string
-          last_name: string
           appointments?: string[] | null
           client_id?: string
           created_at?: string
@@ -160,20 +158,16 @@ export type Database = {
           user_id?: string
         }
         Insert: {
-          first_name: string
-          last_name: string
           appointments?: string[] | null
           client_id?: string
           created_at?: string
-          email: string
-          phone_number: string
+          email?: string
+          phone_number?: string
           stripe_acc_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
         Update: {
-          first_name?: string
-          last_name?: string
           appointments?: string[] | null
           client_id?: string
           created_at?: string

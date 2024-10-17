@@ -1,5 +1,4 @@
 'use client'
-import { useState } from 'react';
 import { StackedCards } from '@components/dashboard/Overview';
 import Orders from '@components/dashboard/OrdersTable';
 import { TwoAreasChart } from '@components/dashboard/AreaCharts';
@@ -9,7 +8,6 @@ import { StackedAreaChart } from '@components/dashboard/StackedAreas';
 
 
 export default function App() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     return (
         <>
             <div className="h-screen overflow-visible lg:flex">

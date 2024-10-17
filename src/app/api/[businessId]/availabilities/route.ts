@@ -2,14 +2,17 @@ import { createClient } from "@utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { Database } from "../../../../../lib/database.types";
 
-export async function GET(request: NextRequest, { params }: { params: { businessName: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: { businessId: string } }) {
     const supabase = createClient<Database>();
-    const { businessName } = params
-    const { data, error } = await supabase.from("business_users").select().eq("business_name", businessName);
+    const { businessId } = params
+    const { availabilities } = await request.json()
+    const { data, error } = await supabase.from("business_users").update({
+        availabilities: availabilities
+    }).eq("business_id", businessId).select();
     if (error) {
-        return new NextResponse(JSON.stringify({ result: error }), {
+        return new NextResponse(JSON.stringify({ error: error }), {
             headers: { 'Content-Type': 'application/json' },
-            status: 400
+            status: 500
         })
     }
     if (data?.length) {
@@ -18,9 +21,10 @@ export async function GET(request: NextRequest, { params }: { params: { business
             status: 200
         })
     }
-    return new NextResponse(JSON.stringify({ result: "Business doesn't exist" }), {
+    return new NextResponse(JSON.stringify({ result: "No availabilities to update" }), {
         headers: { 'Content-Type': 'application/json' },
         status: 401
     })
 
 }
+

@@ -1,6 +1,9 @@
 import type { Config } from "tailwindcss";
 import { animations, components, palettes, rounded, shade } from "@tailus/themer"
 
+const { nextui } = require("@nextui-org/react");
+
+
 
 const config: Config = {
   content: [
@@ -8,8 +11,10 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     './node_modules/@tailus/themer/dist/components/**/*.{js,ts}',
+    "./node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}",
+
   ],
-  darkMode: undefined,
+  darkMode: "class",
   theme: {
     extend: {
       colors: ({ colors }) => ({
@@ -24,11 +29,14 @@ const config: Config = {
       },
     },
   },
+
   plugins: [
     rounded,
     shade,
     components,
-    animations
+    animations,
+    nextui()
   ],
+
 };
 export default config;

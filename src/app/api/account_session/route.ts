@@ -7,7 +7,16 @@ export async function POST(request: NextRequest) {
         const accountSession = await stripe.accountSessions.create({
             account: account,
             components: {
-                account_onboarding: { enabled: true }
+                account_onboarding: { enabled: true },
+                payments: {
+                    enabled: true,
+                    features: {
+                        refund_management: true,
+                        dispute_management: true,
+                        capture_payments: true,
+                        destination_on_behalf_of_charge_management: false,
+                    },
+                }
             }
         })
         return new NextResponse(JSON.stringify({ clientSecret: accountSession.client_secret }), {

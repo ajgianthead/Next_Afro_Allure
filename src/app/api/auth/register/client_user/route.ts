@@ -3,6 +3,7 @@
 import { corsHeaders } from "@utils/cors_headers";
 import { createClient } from "@utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { Database } from "../../../../../../lib/database.types";
 
 export async function POST(request: NextRequest) {
     const supabase = createClient<Database>();

@@ -87,9 +87,9 @@ const Page = () => {
 }
 
 const ManageStripe = () => {
-    const stripeConnectInstance = useStripeConnect("acct_1Pf33CFxCnHC5B2g")
+    const stripeConnectInstance = useStripeConnect("acct_1Q6tUcFpD7KoueRC")
     return (
-        <div className='w-full h-[450px]'>
+        <div className='w-full h-[450px] overflow-y-scroll overflow-x-hidden'>
             {
                 stripeConnectInstance && <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
                     <ConnectAccountOnboarding onExit={() => {

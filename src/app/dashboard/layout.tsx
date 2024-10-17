@@ -1,5 +1,4 @@
 'use client'
-
 import Button from '@tailus-ui/Button';
 import { twMerge } from 'tailwind-merge';
 import * as Link from '@components/Link';
@@ -11,17 +10,18 @@ import { Menu, Settings, HelpCircle, LayoutDashboard, Calendar, CalendarCog, Dat
 import { Caption, Title } from '@tailus-ui/typography';
 import { UserDropdown } from '@components/UserDropdown';
 import ScrollArea from '@components/ScrollArea';
-import { createClient } from '@utils/supabase/server';
-import { getUser } from './getUser';
-import { redirect } from 'next/navigation';
+import { fetchUser } from './actions';
 
 
-export default function Layout({
+export default async function Layout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    useEffect(() => {
+        fetchUser()
+    }, []);
 
 
     return (

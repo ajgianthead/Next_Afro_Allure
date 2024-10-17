@@ -11,6 +11,8 @@ import { register } from '../actions';
 import Aligner from '@components/Aligner';
 import Switch from '@components/Switch';
 import { useState } from 'react';
+import { createClient } from '@utils/supabase/client';
+import { Database } from '../../../../lib/database.types';
 
 interface RegisterForm {
     name: string;
@@ -31,7 +33,7 @@ export default function Register() {
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         if (asBusiness) {
-            const result = await fetch("http://127.0.0.1:3000/api/auth/register/business_user", {
+            const result = await fetch("http://localhost:3000/api/auth/register/business_user", {
                 method: "post",
                 headers: myHeaders,
                 body: JSON.stringify({
@@ -41,8 +43,9 @@ export default function Register() {
                 }),
             })
             const res = await result.json();
+            const supabase = createClient<Database>();
         } else {
-            const result = await fetch("http://127.0.0.1:3000/api/auth/register/client_user", {
+            const result = await fetch("http://localhost:3000/api/auth/register/client_user", {
                 method: "POST",
                 headers: myHeaders,
                 body: JSON.stringify({
@@ -52,7 +55,6 @@ export default function Register() {
                 }),
             })
             //let res = await result.json()
-            console.log(result);
         }
 
     }

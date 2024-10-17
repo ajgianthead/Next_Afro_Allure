@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { loadConnectAndInitialize, StripeConnectInstance } from "@stripe/connect-js";
+import '@fontsource/geist-sans';
 
 export const useStripeConnect = (connectedAccountId: string) => {
     const [stripeConnectInstance, setStripeConnectInstance] = useState<StripeConnectInstance>();
@@ -27,11 +28,17 @@ export const useStripeConnect = (connectedAccountId: string) => {
                 loadConnectAndInitialize({
                     publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
                     fetchClientSecret,
+                    fonts: [
+                        {
+                            src: `url(https://cdn.jsdelivr.net/fontsource/fonts/geist-sans@latest/latin-400-normal.woff)`,
+                            family: "Geist Sans"
+                        }
+                    ],
                     appearance: {
                         overlays: "dialog",
                         variables: {
                             colorPrimary: "#635BFF",
-                            fontFamily: "Geist, Inter, ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+                            fontFamily: "Geist Sans",
 
                         },
                     },
