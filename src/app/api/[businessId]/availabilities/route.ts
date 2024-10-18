@@ -27,4 +27,28 @@ export async function PUT(request: NextRequest, { params }: { params: { business
     })
 
 }
+// Get availabilities
+export async function GET(request: NextRequest, { params }: { params: { businessId: string } }) {
+    const supabase = createClient<Database>();
+    const { businessId } = params;
+    const { data, error } = await supabase.from('business_users').select('availabilities').eq("business_id", businessId);
+
+    if (error) {
+        return new NextResponse(JSON.stringify({ error: error }), {
+            headers: { 'Content-Type': 'application/json' },
+            status: 500
+        })
+    }
+    if (data?.length) {
+        return new NextResponse(JSON.stringify({ result: data }), {
+            headers: { 'Content-Type': 'application/json' },
+            status: 200
+        })
+    }
+    return new NextResponse(JSON.stringify({ result: "No availabilities to update" }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 401
+    })
+
+}
 

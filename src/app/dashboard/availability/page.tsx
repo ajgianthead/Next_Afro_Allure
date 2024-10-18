@@ -165,6 +165,25 @@ export default function page() {
         setAvailability(availabilities[index])
         setOpenCreate(true)
     }
+    const handleDelete = async (index: number) => {
+        let clone = [...availabilities]
+        clone.splice(index, 1)
+        setAvailabilities(clone)
+        // Update Supabase
+        const result = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities`,
+            {
+                method: "PUT",
+                body: JSON.stringify({
+                    availabilities: clone
+                }),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+        const res = await result.json()
+        console.log(res);
+    }
     return (
         <div className='px-6'>
             <Dialog.Root open={openCreate} onOpenChange={setOpenCreate}>

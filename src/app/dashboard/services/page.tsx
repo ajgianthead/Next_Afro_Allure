@@ -20,13 +20,17 @@ export default function page() {
     useEffect(() => {
         const getServices = async () => {
             const { business_id } = user
-            const res = await fetch(`http://127.0.0.1:3000/api/${business_id}/services`)
+            const res = await fetch(`http://localhost:3000/api/${business_id}/services`)
             const services = await res.json()
-            return services
+            console.log(services);
+
+            return services.result
         }
-        const services = getServices() as unknown as Service[];
-        setServices(services)
-    }, []);
+        if (user.business_id) {
+            const services = getServices() as unknown as Service[];
+            setServices(services)
+        }
+    }, [user]);
     const [services, setServices] = useState<Service[]>([])
     const [addOn, setAddOn] = useState<AddOn>({
         id: crypto.randomUUID(),

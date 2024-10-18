@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: { business
     if (error) {
         return new NextResponse(JSON.stringify({ result: error, message: error.message }), {
             headers: { 'Content-Type': 'application/json' },
-            status: 400
+            status: 500
         })
     }
     if (data?.length) {
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest, { params }: { params: { business
     }
     return new NextResponse(JSON.stringify({ result: data, message: "No services found" }), {
         headers: { 'Content-Type': 'application/json' },
-        status: 401
+        status: 200
     })
 
 }
