@@ -84,8 +84,8 @@ const Page = () => {
                 start: slotInfo?.start.toISO() || "",
                 end: slotInfo.end.toISO() || "",
                 service: "",
-                title: `Loc Retwist with ${clientInformation.firstName}`,
-                client_metadata: clientInformation
+                client_metadata: clientInformation,
+                status: "PENDING"
             }
             // const res = await fetch(`http://127.0.0.1:3000/api/appointments`, {
             //     method: 'POST',
@@ -96,7 +96,7 @@ const Page = () => {
                 {
                     start: new Date(appointment.start),
                     end: new Date(appointment.end),
-                    title: appointment.title,
+                    title: `Loc Retwist with ${clientInformation.firstName}`,
                     clientMetaData: appointment.client_metadata
                 }
             ])

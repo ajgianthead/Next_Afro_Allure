@@ -7,12 +7,13 @@ import { Database } from "../../../../lib/database.types";
 export async function PUT(request: NextRequest) {
     const supabase = createClient<Database>();
     // I dont know man??
-    const { id, start, end } = await request.json();
+    const { id, start, end, status } = await request.json();
     const { data, error } = await supabase.from('appointments').update(
         {
             start: start,
             end: end,
-            updated_at: Date.now().toString()
+            updated_at: Date.now().toString(),
+            status: status
         }
     ).eq('id', id);
     if (error) {
@@ -31,24 +32,18 @@ export async function POST(request: NextRequest) {
     const authToken = process.env.NEXT_PUBLIC_TWILIO_AUTH_TOKEN;
     const client = twilio(accountSid, authToken)
     // I dont know man??
-    const { start, end, service, client_id, business_id, title } = await request.json();
+    const appointment: Appointment = await request.json();
     const { data, error } = await supabase.from('appointments').insert([
-        {
-            start: start,
-            end: end,
-            service: service,
-            business: business_id,
-            client: client_id,
-            title: title,
-        }
+       appointment
     ]).select();
     if (data?.length) {
         try {
             await client.messages.create({
                 from: process.env.NEXT_PUBLIC_TWILIO_PHONE_NUMBER,
                 to: "+17547159659",
-                body: "This is a test from Abijah"
+                body: `Hello from AfroAllure! Click this link to confirm your appointment with $BUSINESS_NAME: http://localhost:3000/appointment/${data[0].id}/confirm`
             })
+            // Also send email
         } catch (twil_error) {
             return new NextResponse(JSON.stringify({ twilio_error: twil_error }), {
                 headers: { 'Content-Type': 'application/json' },

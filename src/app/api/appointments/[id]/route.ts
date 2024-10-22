@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         throw new Error(error.message)
     }
     if (appointments?.length) {
-        return new NextResponse(JSON.stringify({ appointments: appointments }), {
+        return new NextResponse(JSON.stringify({ appointment: appointments[0] }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200
         })
