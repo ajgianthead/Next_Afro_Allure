@@ -36,6 +36,10 @@ const Page = () => {
             }
             setAppointments(temp)
         }
+        // Get services
+        const getServices = async () => {
+
+        }
         // getAppointments().catch(console.error);;
     }, []);
     const { user } = useUserContext();
@@ -64,14 +68,6 @@ const Page = () => {
             name: "Braids"
         },
     ];
-    let clients = [
-        {
-            name: "Abijah Nesbitt"
-        },
-        {
-            name: "Alfonzo Yates"
-        },
-    ];
     const [appointments, setAppointments] = useState<any>([]);
 
     // Create an appointment Supabase => Local State
@@ -87,10 +83,10 @@ const Page = () => {
                 client_metadata: clientInformation,
                 status: "PENDING"
             }
-            // const res = await fetch(`http://127.0.0.1:3000/api/appointments`, {
-            //     method: 'POST',
-            //     body: JSON.stringify(appointment)
-            // })
+            const res = await fetch(`http://127.0.0.1:3000/api/appointments`, {
+                method: 'POST',
+                body: JSON.stringify(appointment)
+            })
             setAppointments([
                 ...appointments,
                 {

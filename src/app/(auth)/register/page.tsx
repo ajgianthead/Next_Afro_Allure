@@ -13,6 +13,9 @@ import Switch from '@components/Switch';
 import { useState } from 'react';
 import { createClient } from '@utils/supabase/client';
 import { Database } from '../../../../lib/database.types';
+import CircularProgress from '@mui/joy/CircularProgress';
+import { useRouter } from 'next/navigation';
+
 
 interface RegisterForm {
     name: string;
@@ -29,7 +32,9 @@ export default function Register() {
         password: "",
         phone: ""
     })
+    const router = useRouter()
     const handleRoute = async () => {
+        setIsLoading(true)
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         if (asBusiness) {
@@ -43,7 +48,7 @@ export default function Register() {
                 }),
             })
             const res = await result.json();
-            const supabase = createClient<Database>();
+            router.replace('http://localhost:3000/dashboard')
         } else {
             const result = await fetch("http://localhost:3000/api/auth/register/client_user", {
                 method: "POST",
@@ -58,6 +63,7 @@ export default function Register() {
         }
 
     }
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     return (
         <main className="inset-0 z-10 m-auto h-fit max-w-xl px-6 py-12 lg:absolute">
@@ -73,7 +79,7 @@ export default function Register() {
                     </div>
 
                     <div className="mt-6 grid grid-cols-1 gap-3">
-                        <Button.Root variant="outlined" intent="gray" size="lg" className="w-full">
+                        <Button.Root disabled={isLoading} variant="outlined" intent="gray" size="lg" className="w-full">
                             <Button.Icon type="leading" size="sm">
                                 <FcGoogle />
                             </Button.Icon>
@@ -96,7 +102,7 @@ export default function Register() {
                                     <Label size="sm" htmlFor="name">
                                         Business Name
                                     </Label>
-                                    <Input value={formData.name} onChange={(e) => {
+                                    <Input disabled={isLoading} value={formData.name} onChange={(e) => {
                                         setFormData({
                                             ...formData,
                                             name: e.target.value
@@ -106,7 +112,7 @@ export default function Register() {
                                     <Label size="sm" htmlFor="phone">
                                         Phone Number
                                     </Label>
-                                    <Input value={formData.phone} onChange={(e) => {
+                                    <Input disabled={isLoading} value={formData.phone} onChange={(e) => {
                                         setFormData({
                                             ...formData,
                                             phone: e.target.value
@@ -117,7 +123,7 @@ export default function Register() {
                                     <Label size="sm" htmlFor="email">
                                         Email
                                     </Label>
-                                    <Input value={formData.email} onChange={(e) => {
+                                    <Input disabled={isLoading} value={formData.email} onChange={(e) => {
                                         setFormData({
                                             ...formData,
                                             email: e.target.value
@@ -130,7 +136,7 @@ export default function Register() {
                                             Password
                                         </Label>
                                     </div>
-                                    <Input value={formData.password} onChange={(e) => {
+                                    <Input disabled={isLoading} value={formData.password} onChange={(e) => {
                                         setFormData({
                                             ...formData,
                                             password: e.target.value
@@ -143,7 +149,7 @@ export default function Register() {
                             <Label htmlFor="airplane-mode">
                                 Register as Business
                             </Label>
-                            <Switch.Root checked={asBusiness} onCheckedChange={(e) => {
+                            <Switch.Root disabled={isLoading} checked={asBusiness} onCheckedChange={(e) => {
                                 setAsBusiness(e)
 
                             }} className="mt-1" id="isBusiness" name='isBusiness'>
@@ -152,8 +158,8 @@ export default function Register() {
                             <Caption as="p" size="base">Join Afro Allure as a business by toggling the switch</Caption>
                         </Aligner>
 
-                        <Button.Root onClick={handleRoute} className="w-full">
-                            <Button.Label>Create an Account</Button.Label>
+                        <Button.Root disabled={isLoading} onClick={handleRoute} className="w-full">
+                            <Button.Label className='flex items-center'>{isLoading ? <CircularProgress size='sm' /> : "Create an Account"}</Button.Label>
                         </Button.Root>
                     </div>
                 </div>
@@ -161,7 +167,7 @@ export default function Register() {
                 <Card variant="soft" data-shade="925" className="rounded-[calc(var(--card-radius)-0.25rem)] dark:bg-gray-925">
                     <Caption className="my-0" size="sm" align="center">
                         Already have an account ?{' '}
-                        <Link intent="neutral" size="sm" variant="underlined" href="/login">
+                        <Link intent="neutral" size="sm" variant="underlined" href={!isLoading ? "/login" : ""}>
                             Sign In
                         </Link>
                     </Caption>

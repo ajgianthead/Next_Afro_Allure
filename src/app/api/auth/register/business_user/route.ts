@@ -2,6 +2,7 @@ import { corsHeaders } from "@utils/cors_headers";
 import { createClient } from "@utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { Database } from "../../../../../../lib/database.types";
+import { stripe } from "@lib/utils";
 
 // Register a business user
 export async function POST(request: NextRequest) {
@@ -18,14 +19,30 @@ export async function POST(request: NextRequest) {
         }
     })
         .then(async (data) => {
+            // Create stripe account
+            const account = await stripe.accounts.create({
+                controller: {
+                    stripe_dashboard: {
+                        type: "express",
+                    },
+                    fees: {
+                        payer: "application"
+                    },
+                    losses: {
+                        payments: "application"
+                    },
+                },
+            })
             return await supabase.from('business_users').insert([
                 {
                     business_name: name,
                     user_id: data.data.user?.id,
                     email: data.data.user?.email,
+                    stripe_acc_id: account.id
                 }
             ]).select()
         })
+        
     if (error) {
         return new Response(JSON.stringify({ error: error }), {
             headers: { 'Content-Type': 'application/json' },

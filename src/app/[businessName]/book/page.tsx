@@ -4,7 +4,7 @@ import Input from '@components/Input'
 import Button from '@tailus-ui/Button'
 import { Caption, Text, Title } from '@tailus-ui/typography'
 import Image from 'next/image'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Stepper from '@mui/joy/Stepper';
 import Step from '@mui/joy/Step';
 import StepButton from '@mui/joy/StepButton';
@@ -17,6 +17,10 @@ import Link from 'next/link'
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider'
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
+import { DateTime } from 'luxon'
+import { getAvailability, getUnavailability } from '../actions'
+import { getSlots } from "slot-calculator"
+
 
 const steps = ['Select a service', 'Pick a date and time', 'Contact information', "Deposit payment", "Appointment confirmation"];
 
@@ -90,12 +94,59 @@ const ClientInfo = () => {
 }
 
 const DateTimePicker = () => {
-    const [date, setDate] = useState()
+    const [date, setDate] = useState();
+    const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [slots, setSlots] = useState<any>({})
+    const [currSlots, setCurrSlots] = useState<any>([]);
+
+    const getData = async (startDate: string, endDate: string) => {
+        // Get availability id for server actions
+        const formattedAvailability = await getAvailability(startDate, endDate, "") as any
+        const formattedUnavailability = await getUnavailability(startDate, endDate, [])
+        const { availableSlotsByDay } = getSlots({
+            from: startDate,
+            to: endDate,
+            duration: 30, // Needs to be thought about
+            availability: formattedAvailability,
+            unavailability: formattedUnavailability
+        })
+        setSlots(availableSlotsByDay)
+    }
+
+    useEffect(() => {
+        const startDate = DateTime.now().toUTC().toISO()
+        const endDate = DateTime.now().toUTC().endOf("month").toISO()
+        getData(startDate, endDate)
+        setIsLoading(false)
+    }, []);
+
+    const handleMonthChange = async (month: DateTime<boolean>) => {
+        setIsLoading(true)
+        // Set new start and end dates
+        let startDate = ""
+        let endDate = ""
+        if (month.month === DateTime.now().month) {
+            startDate = DateTime.now().toUTC().toISO()!
+        } else {
+            startDate = month.toUTC().toISO()!
+        }
+        endDate = month.toUTC().endOf("month").toISO()!
+        await getData(startDate, endDate)
+        setIsLoading(false)
+    }
+
+    const handleDateChange = async (value: any) => {
+        if (Object.keys(slots).length) { // If slots exist
+            const fetchedSlots = slots[value] // Get slot array based on date
+            setCurrSlots(fetchedSlots)
+        }
+    }
+
     return (
         <Card className='flex'>
             <div className='w-1/2'>
                 <LocalizationProvider dateAdapter={AdapterLuxon}>
-                    <DateCalendar value={date} onChange={(newValue: any) => setDate(newValue)} />
+                    <DateCalendar onMonthChange={handleMonthChange} disablePast loading={isLoading} value={date} onChange={handleDateChange} />
                 </LocalizationProvider>
             </div>
             <div>

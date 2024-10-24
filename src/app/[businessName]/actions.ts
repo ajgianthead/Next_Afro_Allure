@@ -11,6 +11,7 @@ export const getAvailability = async (startDate: string, endDate: string, availa
         while(curr <= end){
             let weekDay = curr.weekday - 1
             const ranges = availability.week[weekDay].timeRanges;
+            // Loop through week availability
             for(let i = 0; i < ranges.length; i++){
                 // Get time
                 const startHour = ranges[i].start.hour
@@ -29,6 +30,27 @@ export const getAvailability = async (startDate: string, endDate: string, availa
             }
             curr = curr.plus({days: 1})
         }
+        // Loop through specific dates
+        const specificDates = availability.specificDates;
+        const dates = Object.keys(specificDates)
+        for(let i = 0; i < dates.length; i++){
+            const ranges = specificDates[dates[i]]
+            const currDate = DateTime.fromISO(dates[i])
+            for(let j = 0; j < ranges.length; j++){
+                const startHour = ranges[j].start.hour
+                const startMin = ranges[j].start.minute
+                const endHour = ranges[j].end.hour
+                const endMin = ranges[j].end.minute
+                
+                let startDateTimeRef = DateTime.utc(currDate.get('year'), currDate.get('month'), currDate.get('day'), startHour, startMin)
+                let endDateTimeRef = DateTime.utc(currDate.get('year'), currDate.get('month'), currDate.get('day'), endHour, endMin)
+                const specificDayObj = {
+                    from: startDateTimeRef.toISO(),
+                    to: endDateTimeRef.toISO()
+                }
+                slotResult.push(specificDayObj)
+            }
+        }
         return slotResult
     } catch (error: any) {
         console.log(error)
@@ -36,7 +58,7 @@ export const getAvailability = async (startDate: string, endDate: string, availa
     }
 }
 
-const getUnavailability = async (startDate: string, endDate: string, appointments: Array<any>) => {
+export const getUnavailability = async (startDate: string, endDate: string, appointments: Array<any>) => {
     try {
         let start = DateTime.fromISO(startDate).toUTC();
         let end = DateTime.fromISO(endDate).toUTC();

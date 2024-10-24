@@ -4,15 +4,17 @@ import Input from '@components/Input'
 import Textarea from '@components/TextArea'
 import Button from '@tailus-ui/Button'
 import Card from '@tailus-ui/Card'
-import { Title } from '@tailus-ui/typography'
+import { Caption, Title } from '@tailus-ui/typography'
 import { useUserContext } from '@utils/context/UserContext'
 import { createClient } from '@utils/supabase/client'
 import { AddOn } from '@utils/types/service'
 import { randomUUID } from 'crypto'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { v4 } from 'uuid';
 import { Database } from '../../../../lib/database.types'
-import { UserAuthContext } from '@utils/types/user'
+import { useDropzone } from 'react-dropzone'
+import Label from '@components/Label'
+import Image from 'next/image'
 
 export default function page() {
     // Get services from business
@@ -23,15 +25,14 @@ export default function page() {
             const res = await fetch(`http://localhost:3000/api/${business_id}/services`)
             const services = await res.json()
             console.log(services);
-
-            return services.result
-        }
-        if (user.business_id) {
-            const services = getServices() as unknown as Service[];
             setServices(services)
         }
+        console.log(user);
+        if (user.business_id) {
+            getServices()
+        }
     }, [user]);
-    const [services, setServices] = useState<Service[]>([])
+    const [services, setServices] = useState<any>([])
     const [addOn, setAddOn] = useState<AddOn>({
         id: crypto.randomUUID(),
         name: "",
@@ -74,7 +75,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         imagePath: "",
         photo_url: "",
         business: user.business_id,
-        categories: []
+        categories: ""
     });
     const uploadImage = async () => {
         const id = crypto.randomUUID();
@@ -83,7 +84,9 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
             ...service,
             imagePath: path
         })
-        const { data } = await supabase.storage.from('Service Photos').upload(path, image).then(async () => {
+        const { data } = await supabase.storage.from('Service Photos').upload(path, image.imageBlob!, {
+            contentType: 'image/*'
+        }).then(async () => {
             return supabase.storage.from("Service Photos").getPublicUrl(path)
         })
         return data.publicUrl
@@ -99,7 +102,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         }
         const res = await fetch(`http://127.0.0.1:3000/api/${user.business_id}/services`, {
             method: 'POST',
-            body: JSON.stringify(image ? clone : service)
+            body: JSON.stringify(image.imageBlob ? clone : service)
         })
         const dataBack = await res.json();
         setServices([
@@ -107,7 +110,22 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
             dataBack
         ])
     }
-    const [image, setImage] = useState<any>(null);
+    const [image, setImage] = useState<{
+        imageURL: string | null
+        imageBlob: Blob | null
+    }>({
+        imageURL: null,
+        imageBlob: null
+    });
+    const onDrop = useCallback((acceptedFiles: any) => {
+        acceptedFiles.forEach((file: Blob) => {
+            setImage({
+                imageURL: URL.createObjectURL(file),
+                imageBlob: file
+            })
+        })
+    }, [])
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
     return (
         <div>
             <Dialog.Root open={open} onOpenChange={setIsOpen}>
@@ -115,45 +133,60 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                     <Dialog.Overlay className='z-40' />
                     <Dialog.Content className="max-w-lg z-50">
                         <Dialog.Title>Create New Service</Dialog.Title>
-                        <Dialog.Description>
-                            <Input type='file' onChange={(e) => {
-                                if (e.target.files?.length) {
-                                    setImage(e.target.files[0])
-                                    // console.log(e.target.files[0]);
+                        <Dialog.Description className='flex gap-2 flex-col'>
+                            <div {...getRootProps()} className='border border-dashed rounded-md p-2 cursor-pointer text-center flex justify-center'>
+                                <input {...getInputProps()} accept='image/*' />
+                                {
+                                    image.imageURL ?
+                                        <Image src={image.imageURL} alt="Service Image" width={100} height={100} /> :
+                                        <p>Drag 'n' drop or click to select a photo the best represents your service</p>
                                 }
-                            }} />
-                            <Input value={service.name} placeholder='Name' onChange={(e) => {
-                                setService({
-                                    ...service,
-                                    name: e.target.value
-                                })
-                            }} />
-                            <Input value={service.price} placeholder='Price' onChange={(e) => {
-                                let temp;
-                                if (!Number.isNaN(e.target.value)) {
-                                    temp = Number(e.target.value)
+                            </div>
+                            <div>
+                                <Label>Service Name</Label>
+                                <Input value={service.name} placeholder='ex. Loc Retwist' onChange={(e) => {
                                     setService({
                                         ...service,
-                                        price: temp
+                                        name: e.target.value
                                     })
-                                }
-                            }} />
-                            <Textarea placeholder='Description' value={service.description} onChange={(e) => {
-                                setService({
-                                    ...service,
-                                    description: e.target.value
-                                })
-                            }} />
-                            <Input value={service.length} placeholder='Duration' onChange={(e) => {
-                                let temp;
-                                if (!Number.isNaN(e.target.value)) {
-                                    temp = Number(e.target.value)
+                                }} />
+                            </div>
+                            <div>
+                                <Label>Base Price</Label>
+                                <Input value={service.price} onChange={(e) => {
+                                    let temp;
+                                    if (!Number.isNaN(e.target.value)) {
+                                        temp = Number(e.target.value)
+                                        setService({
+                                            ...service,
+                                            price: temp
+                                        })
+                                    }
+                                }} />
+                            </div>
+                            <div>
+                                <Label>Description</Label>
+                                <Textarea value={service.description} onChange={(e) => {
                                     setService({
                                         ...service,
-                                        length: temp
+                                        description: e.target.value
                                     })
-                                }
-                            }} />
+                                }} />
+                            </div>
+                            <div>
+                                <Label>Duration</Label>
+                                <Caption>Enter in minutes</Caption>
+                                <Input value={service.length} placeholder='ex. 180' onChange={(e) => {
+                                    let temp;
+                                    if (!Number.isNaN(e.target.value)) {
+                                        temp = Number(e.target.value)
+                                        setService({
+                                            ...service,
+                                            length: temp
+                                        })
+                                    }
+                                }} />
+                            </div>
                         </Dialog.Description>
 
                         <Dialog.Actions>
@@ -179,7 +212,7 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
     const [service, setService] = useState<Service>({ ...oldService });
 
     const editImage = async () => {
-        const { data, error } = await supabase.storage.from('Service Photos').upload(service.imagePath, image, {
+        const { data, error } = await supabase.storage.from('Service Photos').upload(service.imagePath!, image, {
             upsert: true
         })
         if (data?.path) {

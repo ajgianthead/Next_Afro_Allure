@@ -122,7 +122,7 @@ export type Database = {
           business_name: string
           clients?: string[] | null
           created_at?: string
-          email: string
+          email?: string
           stripe_acc_id?: string | null
           updated_at?: string
           user_id?: string
@@ -179,15 +179,15 @@ export type Database = {
           addons: Json[] | null
           business: string
           categories: string
-          created_at: string
+          created_at?: string
           description: string
-          id: string
-          imagePath: string | null
+          id?: string
+          imagePath?: string | null
           length: number
           name: string
-          photo_url: string | null
+          photo_url?: string | null
           price: number
-          updated_at: string | null
+          updated_at?: string | null
         }
         Insert: {
           addons?: Json[] | null
