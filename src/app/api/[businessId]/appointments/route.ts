@@ -13,18 +13,15 @@ export async function GET(request: NextRequest, { params }: { params: { business
         .select(`*`)
         .eq('business', businessId);
     if (error) {
-        throw new Error(error.message)
-    }
-    if (appointments?.length) {
-        return new NextResponse(JSON.stringify({ appointments: appointments }), {
+        return new NextResponse(JSON.stringify({ error: error }), {
             headers: { 'Content-Type': 'application/json' },
-            status: 200
+            status: 500
         })
     }
-    return new NextResponse(JSON.stringify({
-        message: "This business has no appointments",
-        status: 500
-    }))
+    return new NextResponse(JSON.stringify({ appointments: appointments }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200
+    })
 }
 
 

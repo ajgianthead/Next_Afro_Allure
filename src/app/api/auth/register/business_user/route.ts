@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
                 {
                     business_name: name,
                     user_id: data.data.user?.id,
-                    email: data.data.user?.email,
+                    email: data.data.user?.email!,
                     stripe_acc_id: account.id
                 }
             ]).select()

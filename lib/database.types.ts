@@ -14,13 +14,13 @@ export type Database = {
           business: string
           client: string | null
           client_metadata: Json | null
-          created_at?: string
+          created_at: string
           end: string
-          id?: string
+          id: string
           service: Json
           start: string
           status: Database["public"]["Enums"]["status"]
-          updated_at?: string
+          updated_at: string
         }
         Insert: {
           business?: string
@@ -68,7 +68,7 @@ export type Database = {
           business: string
           client: string
           created_at: string
-          id?: number
+          id: number
           status: Database["public"]["Enums"]["status"]
         }
         Insert: {
@@ -102,10 +102,63 @@ export type Database = {
           },
         ]
       }
+      business_policies: {
+        Row: {
+          business: string
+          cancel_day_limit: number | null
+          created_at: string
+          deposit: Json
+          id: string
+          important_info: string | null
+          late_fee: Json
+          no_show: Json
+          read_before_booking: string | null
+          reschedule_day_limit: number | null
+          reschedule_limit: number | null
+          updated_at: string
+        }
+        Insert: {
+          business?: string
+          cancel_day_limit?: number | null
+          created_at?: string
+          deposit: Json
+          id?: string
+          important_info?: string | null
+          late_fee: Json
+          no_show: Json
+          read_before_booking?: string | null
+          reschedule_day_limit?: number | null
+          reschedule_limit?: number | null
+          updated_at?: string
+        }
+        Update: {
+          business?: string
+          cancel_day_limit?: number | null
+          created_at?: string
+          deposit?: Json
+          id?: string
+          important_info?: string | null
+          late_fee?: Json
+          no_show?: Json
+          read_before_booking?: string | null
+          reschedule_day_limit?: number | null
+          reschedule_limit?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_policies_business_fkey"
+            columns: ["business"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       business_users: {
         Row: {
           availabilities: Json[] | null
-          booking_policies: Json | null
+          booking_policies: string
           business_id: string
           business_name: string
           clients: string[] | null
@@ -117,19 +170,19 @@ export type Database = {
         }
         Insert: {
           availabilities?: Json[] | null
-          booking_policies?: Json | null
+          booking_policies?: string
           business_id?: string
           business_name: string
           clients?: string[] | null
           created_at?: string
-          email?: string
+          email: string
           stripe_acc_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Update: {
           availabilities?: Json[] | null
-          booking_policies?: Json | null
+          booking_policies?: string
           business_id?: string
           business_name?: string
           clients?: string[] | null
@@ -178,21 +231,21 @@ export type Database = {
         Row: {
           addons: Json[] | null
           business: string
-          categories: string
-          created_at?: string
+          categories: string[] | null
+          created_at: string
           description: string
-          id?: string
-          imagePath?: string | null
+          id: string
+          imagePath: string | null
           length: number
           name: string
-          photo_url?: string | null
+          photo_url: string | null
           price: number
-          updated_at?: string | null
+          updated_at: string | null
         }
         Insert: {
           addons?: Json[] | null
           business: string
-          categories: string
+          categories?: string[] | null
           created_at?: string
           description: string
           id?: string
@@ -206,7 +259,7 @@ export type Database = {
         Update: {
           addons?: Json[] | null
           business?: string
-          categories?: string
+          categories?: string[] | null
           created_at?: string
           description?: string
           id?: string
@@ -221,7 +274,7 @@ export type Database = {
           {
             foreignKeyName: "services_business_fkey"
             columns: ["business"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "business_users"
             referencedColumns: ["business_id"]
           },

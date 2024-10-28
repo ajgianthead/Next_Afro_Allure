@@ -15,14 +15,14 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
     stripeAccount: "acct_1Q6tUcFpD7KoueRC",
 });
 
-export default async function page() {
+export default function page() {
     const [options, setOptions] = useState<{
         clientSecret: any,
         onComplete?: any
     }>();
     const { appointment_id } = useParams<{ appointment_id: string }>()
     const [policies, setPolicies] = useState<any>();
-    const [appointmentData, setAppointmentData] = useState<any>()
+    const [appointmentData, setAppointmentData] = useState<any>({})
     useEffect(() => {
         // Fetch appointment data with appointmentID, when use businessID
         // that's attached to the appointment to fetch the business's policies
@@ -37,6 +37,7 @@ export default async function page() {
             } else {
                 const res = await response.json();
                 setAppointmentData(res.appointment)
+                return res.appointment
             }
         }
         const fetchSession = async () => {
@@ -62,8 +63,8 @@ export default async function page() {
                 })
             }
         }
-        const getPolicies = async () => {
-            const response = await fetch(`http://localhost:3000/api/${appointmentData.business}/policies`, {
+        const getPolicies = async (data: any) => {
+            const response = await fetch(`http://localhost:3000/api/policies/${data.business}`, {
                 method: "GET",
             });
             if (!response.ok) {
@@ -72,11 +73,12 @@ export default async function page() {
                 throw new Error("An error occurred: ", error);
             } else {
                 const result = await response.json();
-                setPolicies(result.booking_policies)
+                // setPolicies(result.booking_policies)
+                return result.policies
             }
         }
-        fetchAppointment().then(() => {
-            getPolicies().then(() => {
+        fetchAppointment().then((appointment) => {
+            getPolicies(appointment).then((policies) => {
                 if (policies.deposit.enabled) {
                     fetchSession();
                 } else {
@@ -85,8 +87,8 @@ export default async function page() {
                 }
             });
         })
-    }, [appointmentData]);
-    const [completed, setCompleted] = useState(appointmentData.status === "ACCEPTED");
+    }, []);
+    const [completed, setCompleted] = useState(Object.keys(appointmentData).length ? appointmentData.status === "ACCEPTED" : false);
     const handleCompleted = async () => {
         // Update the appointment status, then change the completed state
         const response = await fetch(`http://localhost:3000/api/appointments`, {

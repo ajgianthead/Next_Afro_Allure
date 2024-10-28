@@ -13,7 +13,7 @@ import ScrollArea from '@components/ScrollArea';
 import { fetchUser } from './actions';
 
 
-export default async function Layout({
+export default function Layout({
     children,
 }: Readonly<{
     children: React.ReactNode;

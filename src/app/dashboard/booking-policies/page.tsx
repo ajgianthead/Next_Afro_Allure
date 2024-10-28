@@ -6,7 +6,8 @@ import Label from '@components/Label'
 import Textarea from '@components/TextArea'
 import Button from '@tailus-ui/Button'
 import { Caption, Text, Title } from '@tailus-ui/typography'
-import React, { useState } from 'react'
+import { useUserContext } from '@utils/context/UserContext'
+import React, { useState, useEffect } from 'react'
 
 enum Level {
     LIGHT = "light",
@@ -44,6 +45,14 @@ type Policy = {
 }
 
 export default function page() {
+    const { user } = useUserContext()
+    const [businessID, setBusinessID] = useState<string>("")
+    useEffect(() => {
+        if (user.business_id) {
+            setBusinessID(user.business_id)
+            getPolicy(user.business_id)
+        }
+    }, [user.business_id]);
     const [bookingPolicy, setBookingPolicy] = useState<Policy>({
         deposit: {
             enabled: false
@@ -61,8 +70,44 @@ export default function page() {
         readBeforeBooking: "",
         refundPolicy: ""
     });
+    const getPolicy = async (id: string) => {
+        const result = await fetch(`http://localhost:3000/api/policies/${id}`, {
+            method: "GET"
+        })
+        const { policies } = await result.json()
+        const policy: Policy = {
+            deposit: policies.deposit,
+            lateFee: policies.late_fee,
+            noShowPolicy: policies.no_show,
+            rescheduleLimit: policies.reschedule_limit.toString(),
+            rescheduleDayLimit: policies.reschedule_day_limit.toString(),
+            cancelDayLimit: policies.cancel_day_limit.toString(),
+            importantInfo: policies.important_info,
+            readBeforeBooking: policies.read_before_booking,
+            refundPolicy: ""
+        }
+        setBookingPolicy(policy)
+    }
     const handlePolicy = async () => {
         // Send policy data to database
+        // Handle validation
+        const result = await fetch("http://localhost:3000/api/policies", {
+            method: 'POST',
+            body: JSON.stringify({
+                business: businessID,
+                deposit: bookingPolicy.deposit,
+                late_fee: bookingPolicy.lateFee,
+                no_show: bookingPolicy.noShowPolicy,
+                cancel_day_limit: Number(bookingPolicy.cancelDayLimit),
+                important_info: bookingPolicy.importantInfo,
+                read_before_booking: bookingPolicy.readBeforeBooking,
+                reschedule_day_limit: Number(bookingPolicy.rescheduleDayLimit),
+                reschedule_limit: Number(bookingPolicy.rescheduleLimit),
+            })
+        })
+        const policyID = await result.json()
+        console.log(policyID);
+
     }
     return (
         <div className='px-10 w-3/4'>

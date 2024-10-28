@@ -8,7 +8,6 @@ import Dialog from '@components/Dialog';
 import { Caption, Text, Title } from '@tailus-ui/typography';
 import DropdownMenu from "@components/DropdownMenu";
 import Select from '@components/Select';
-import { Service } from '@utils/types/service';
 import { ChevronDown, ChevronsDown, ChevronsUpDown, EllipsisVertical, Info, Pencil, Trash, X } from 'lucide-react';
 import Label from '@components/Label';
 import { useUserContext } from '@utils/context/UserContext';
@@ -19,12 +18,14 @@ import Input from '@components/Input';
 
 const Page = () => {
     // Get all appointments and convert from ISO => DateTimes
+    const { user } = useUserContext();
     useEffect(() => {
         const getAppointments = async () => {
-            const res = await fetch(`http://127.0.0.1:3000/api/${user.business_id}/appointments`, {
+            const res = await fetch(`http://localhost:3000/api/${user.business_id}/appointments`, {
                 method: 'GET'
             })
             const data = await res.json();
+            console.log(data)
             const result = data.appointments
             let temp = []
             for (let i = 0; i < result.length; i++) {
@@ -38,17 +39,24 @@ const Page = () => {
         }
         // Get services
         const getServices = async () => {
-
+            const { business_id } = user
+            const res = await fetch(`http://localhost:3000/api/${business_id}/services`)
+            const services = await res.json()
+            console.log(services);
+            setServices(services.result)
         }
-        // getAppointments().catch(console.error);;
-    }, []);
-    const { user } = useUserContext();
+        if (user.business_id) {
+            getServices()
+            getAppointments()
+        }
+    }, [user]);
     interface DateRange {
         start: DateTime,
         end: DateTime
     }
     const [isOpen, setIsOpen] = useState<boolean>(false)
     const [slotInfo, setSlotInfo] = useState<DateRange>()
+    const [services, setServices] = useState<Service[]>([])
     const localizer = luxonLocalizer(DateTime)
     const handleSelection = (slot: any) => {
         let range: DateRange = {
@@ -56,34 +64,24 @@ const Page = () => {
             end: DateTime.fromISO(slot.end.toISOString())
         }
         setSlotInfo(range)
-        console.log(range);
-
         setIsOpen(true)
     }
-    let services = [
-        {
-            name: "Loc Retwist"
-        },
-        {
-            name: "Braids"
-        },
-    ];
-    const [appointments, setAppointments] = useState<any>([]);
 
+    const [appointments, setAppointments] = useState<any>([]);
+    const [selectedService, setSelectedService] = useState<string>("")
     // Create an appointment Supabase => Local State
     const createAppointment = async () => {
         if (slotInfo?.start && slotInfo.end) {
-            console.log(slotInfo)
             const appointment: Appointment = {
                 business: user.business_id,
                 client: "",
                 start: slotInfo?.start.toISO() || "",
                 end: slotInfo.end.toISO() || "",
-                service: "",
+                service: selectedService,
                 client_metadata: clientInformation,
                 status: "PENDING"
             }
-            const res = await fetch(`http://127.0.0.1:3000/api/appointments`, {
+            const res = await fetch(`http://localhost:3000/api/appointments`, {
                 method: 'POST',
                 body: JSON.stringify(appointment)
             })
@@ -97,7 +95,7 @@ const Page = () => {
                 }
             ])
             setIsOpen(false)
-            console.log(appointments);
+            console.log(await res.json());
             setClientInformation({
                 firstName: "",
                 lastName: "",
@@ -111,7 +109,7 @@ const Page = () => {
 
     // Delete an appointment
     const handleDelete = async (appointmentID: string) => {
-        const res = await fetch(`http://127.0.0.1:3000/api/appointments/${appointmentID}`, {
+        const res = await fetch(`http://localhost:3000/api/appointments/${appointmentID}`, {
             method: 'DELETE'
         });
         const response = await res.json();
@@ -150,7 +148,9 @@ const Page = () => {
 
                                 <div>
                                     <Label className='text-sm font-medium'>Service</Label>
-                                    <Select.Root defaultValue="">
+                                    <Select.Root defaultValue="" onValueChange={(value: string) => {
+                                        setSelectedService(value)
+                                    }}>
                                         <Select.Trigger size="md" className="w-56 flex justify-between">
                                             <Select.Value placeholder={
                                                 <Caption>Select a service</Caption>} />
@@ -286,14 +286,11 @@ const Page = () => {
     );
 }
 
-const SelectItem = ({ service }: { service: any }) => {
+const SelectItem = ({ service }: { service: Service }) => {
     return (
-        <Select.Item value={service.name} className="pl-7 items-center">
+        <Select.Item value={service.id!} className="pl-7 items-center">
             <Select.ItemIndicator />
             <Select.ItemText>
-                <span role="img" aria-label={service.name} className="mr-2">
-                    {service.flag}
-                </span>
                 {service.name}
             </Select.ItemText>
         </Select.Item>

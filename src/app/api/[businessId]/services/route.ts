@@ -6,11 +6,15 @@ import { Database } from "../../../../../lib/database.types";
 export async function POST(request: NextRequest) {
     const supabase = createClient<Database>();
     const service: Service = await request.json();
+    console.log(service);
     let { data, error } = await supabase.from('services').insert([
         service
     ]).select();
     if (error) {
-        throw new Error(error.message)
+        return new NextResponse(JSON.stringify({ error: error }), {
+            headers: { 'Content-Type': 'application/json' },
+            status: 500
+        })
     }
     return new NextResponse(JSON.stringify({ data: data }), {
         headers: { 'Content-Type': 'application/json' },
