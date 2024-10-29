@@ -5,10 +5,29 @@ import { Database } from "../../../../../lib/database.types";
 // Create a service
 export async function POST(request: NextRequest) {
     const supabase = createClient<Database>();
-    const service: Service = await request.json();
-    console.log(service);
+    const {
+        name,
+            description,
+            price,
+            length,
+            addons ,
+            imagePath,
+            photo_url,
+            business,
+            categories
+    } = await request.json();
     let { data, error } = await supabase.from('services').insert([
-        service
+        {
+            name: name,
+            description: description,
+            price: price,
+            length: length,
+            addons: addons,
+            imagePath: imagePath,
+            photo_url: photo_url,
+            business: business,
+            categories: categories
+        }
     ]).select();
     if (error) {
         return new NextResponse(JSON.stringify({ error: error }), {

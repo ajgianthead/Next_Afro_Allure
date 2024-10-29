@@ -73,6 +73,9 @@ const Page = () => {
     const createAppointment = async () => {
         if (slotInfo?.start && slotInfo.end) {
             const appointment: Appointment = {
+                id: "",
+                created_at: "",
+                updated_at: "",
                 business: user.business_id,
                 client: "",
                 start: slotInfo?.start.toISO() || "",

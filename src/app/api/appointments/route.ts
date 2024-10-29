@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest) {
         {
             start: start,
             end: end,
-            updated_at: Date.now().toString(),
+            updated_at: new Date().toISOString(),
             status: status
         }
     ).eq('id', id);

@@ -10,6 +10,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { CircleCheckBig } from 'lucide-react'
 import { useParams } from 'next/navigation'
+import CircularProgress from '@mui/joy/CircularProgress'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
     stripeAccount: "acct_1Q6tUcFpD7KoueRC",
@@ -44,7 +45,7 @@ export default function page() {
             const response = await fetch("http://localhost:3000/api/checkout", {
                 method: "POST",
                 body: JSON.stringify({
-                    connectedAccountId: "acct_1Q6tUcFpD7KoueRC",
+                    connectedAccountId: "acct_1Q6tUcFpD7KoueRC", // Change Stripe Account ID to be dynamic to business
                 }),
             });
             if (!response.ok) {
@@ -78,17 +79,21 @@ export default function page() {
             }
         }
         fetchAppointment().then((appointment) => {
-            getPolicies(appointment).then((policies) => {
-                if (policies.deposit.enabled) {
-                    fetchSession();
-                } else {
-                    // Updates the appointment status and change the completed state
-                    handleCompleted()
-                }
-            });
+            if (appointment.status === "PENDING") {
+                setCompleted(false)
+            } else {
+                getPolicies(appointment).then((policies) => {
+                    if (policies.deposit.enabled) {
+                        fetchSession();
+                    } else {
+                        // Updates the appointment status and change the completed state
+                        handleCompleted()
+                    }
+                });
+            }
         })
     }, []);
-    const [completed, setCompleted] = useState(Object.keys(appointmentData).length ? appointmentData.status === "ACCEPTED" : false);
+    const [completed, setCompleted] = useState<boolean | null>(null);
     const handleCompleted = async () => {
         // Update the appointment status, then change the completed state
         const response = await fetch(`http://localhost:3000/api/appointments`, {
@@ -110,23 +115,27 @@ export default function page() {
     }
     return (
         <div>
-            {appointmentData ? <div className='w-full h-screen overflow-x-hidden overflow-scroll flex py-10 justify-center'>
-                {!completed && options ? <EmbeddedCheckoutProvider
-                    stripe={stripePromise}
-                    options={options}
+            {completed !== null ? <div>
+                {appointmentData ? <div className='w-full h-screen overflow-x-hidden overflow-scroll flex py-10 justify-center'>
+                    {!completed && options ? <EmbeddedCheckoutProvider
+                        stripe={stripePromise}
+                        options={options}
 
-                >
-                    <EmbeddedCheckout className='w-full' />
-                </EmbeddedCheckoutProvider> : <div className='flex h-[500px] gap-2 px-5 flex-col w-screen justify-center items-center'>
-                    <div className='flex gap-3'>
-                        <CircleCheckBig color='green' />
-                        <Title>Appointment Confirmed</Title></div>
-                    <div className='text-center'>
-                        <Caption>If you have any questions regarding your appointment, please contact LadyPlutoLooks</Caption>
-                    </div>
+                    >
+                        <EmbeddedCheckout className='w-full' />
+                    </EmbeddedCheckoutProvider> : <div className='flex h-[500px] gap-2 px-5 flex-col w-screen justify-center items-center'>
+                        <div className='flex gap-3'>
+                            <CircleCheckBig color='green' />
+                            <Title>Appointment Confirmed</Title></div>
+                        <div className='text-center'>
+                            <Caption>If you have any questions regarding your appointment, please contact LadyPlutoLooks</Caption>
+                        </div>
+                    </div>}
+                </div> : <div>
+                    <Text>Something went wrong :(</Text>
                 </div>}
-            </div> : <div>
-                <Text>Something went wrong :(</Text>
+            </div> : <div className='w-full h-screen flex justify-center items-center'>
+                <CircularProgress />
             </div>}
         </div>
     )

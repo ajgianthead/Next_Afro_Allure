@@ -73,6 +73,9 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
     const supabase = createClient<Database>();
     const [service, setService] = useState<Service>({
         name: "",
+        created_at: "",
+        updated_at: "",
+        id: "",
         description: "",
         price: 0,
         length: 0,
@@ -124,8 +127,8 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
             let res = await uploadImage()
             imageURL = res?.url
             clone = { ...service }
-            clone.photo_url = imageURL;
-            clone.imagePath = res?.path
+            clone.photo_url = imageURL!;
+            clone.imagePath = res?.path!;
 
         }
         const res = await fetch(`http://localhost:3000/api/${user}/services`, {
@@ -143,6 +146,9 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         })
         setService({
             name: "",
+            created_at: "",
+            updated_at: "",
+            id: "",
             description: "",
             price: 0,
             length: 0,
@@ -303,6 +309,9 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                                 <Button.Root onClick={() => {
                                     setService({
                                         name: "",
+                                        created_at: "",
+                                        updated_at: "",
+                                        id: "",
                                         description: "",
                                         price: 0,
                                         length: 0,
