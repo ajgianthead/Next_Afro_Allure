@@ -5,7 +5,7 @@ import { Database } from "../../../../../lib/database.types";
 export async function GET(request: NextRequest, { params }: { params: { businessName: string } }) {
     const supabase = createClient<Database>();
     const { businessName } = params
-    const { data, error } = await supabase.from("business_users").select().eq("business_name", businessName);
+    const { data, error } = await supabase.from("business_users").select("business_id, availabilities, booking_policies").ilike("business_name", `%${businessName}%`);
     if (error) {
         return new NextResponse(JSON.stringify({ result: error }), {
             headers: { 'Content-Type': 'application/json' },
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: { business
     }
     return new NextResponse(JSON.stringify({ result: "Business doesn't exist" }), {
         headers: { 'Content-Type': 'application/json' },
-        status: 401
+        status: 404
     })
 
 }

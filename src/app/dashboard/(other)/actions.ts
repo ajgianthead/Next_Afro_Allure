@@ -1,7 +1,7 @@
 'use server'
 import { createClient } from "@utils/supabase/server"
-import { Database } from "../../../lib/database.types"
 import { redirect } from "next/navigation"
+import { Database } from "../../../../lib/database.types"
 
 
 export const fetchUser = async () => {

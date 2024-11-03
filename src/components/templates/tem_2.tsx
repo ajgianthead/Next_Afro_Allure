@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function TemplateTwo() {
+export default function TemplateTwo({ data }: any) {
     return (
         <div>Template Two</div>
     )

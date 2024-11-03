@@ -6,11 +6,15 @@ import Separator from '@tailus-ui/Separator';
 import { Notifications } from '@components/Notifications';
 import { useEffect, useState } from 'react';
 import { BrandIcon } from '@components/utilities/Brand';
-import { Menu, Settings, HelpCircle, LayoutDashboard, Calendar, CalendarCog, Database, UsersRound, Shield, Percent, Tag, PanelsTopLeft, ChartNoAxesCombined, Scale } from 'lucide-react';
-import { Caption, Title } from '@tailus-ui/typography';
+import { Menu, Settings, HelpCircle, LayoutDashboard, Calendar, CalendarCog, Database, UsersRound, Shield, Percent, Tag, PanelsTopLeft, ChartNoAxesCombined, Scale, CircleAlert } from 'lucide-react';
+import { Caption, Text, Title } from '@tailus-ui/typography';
 import { UserDropdown } from '@components/UserDropdown';
 import ScrollArea from '@components/ScrollArea';
 import { fetchUser } from './actions';
+import { SiteWrapper } from '@utils/context/BookingSiteContext';
+import Banner from "@components/Banner";
+import { useUserContext } from '@utils/context/UserContext';
+
 
 
 export default function Layout({
@@ -19,9 +23,21 @@ export default function Layout({
     children: React.ReactNode;
 }>) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { user } = useUserContext();
+    const [userData, setUserData] = useState({})
     useEffect(() => {
+        const fetchUserData = async () => {
+            const res = await fetch(`http://localhost:3000/api/${user.business_id}`, {
+                method: 'GET'
+            })
+            const userData = await res.json()
+            setUserData(userData.data)
+        }
         fetchUser()
-    }, []);
+        if (user.business_id) {
+            fetchUserData()
+        }
+    }, [user.business_id]);
 
 
     return (
@@ -39,19 +55,19 @@ export default function Layout({
                     <ScrollArea.Root className="-mx-1 -my-4">
                         <ScrollArea.Viewport className="w-full px-1 py-4">
                             <div className="mt-4 space-y-1">
-                                <Link.Root link="/" isActive>
+                                <Link.Root link="/dashboard" isActive>
                                     <Link.Icon>
                                         <LayoutDashboard />
                                     </Link.Icon>
                                     <Link.Label>Dashboard</Link.Label>
                                 </Link.Root>
-                                <Link.Root link="/appointments">
+                                <Link.Root link="/dashboard/appointments">
                                     <Link.Icon>
                                         <Calendar />
                                     </Link.Icon>
                                     <Link.Label>Appointments</Link.Label>
                                 </Link.Root>
-                                <Link.Root link="/clients">
+                                <Link.Root link="/dashboard/clients">
                                     <Link.Icon>
                                         <UsersRound />
                                     </Link.Icon>
@@ -59,31 +75,31 @@ export default function Layout({
                                 </Link.Root>
                                 <div>
                                     <Caption className="mx-2 my-2">Automated Booking</Caption>
-                                    <Link.Root link="/availability">
+                                    <Link.Root link="/dashboard/availability">
                                         <Link.Icon>
                                             <CalendarCog />
                                         </Link.Icon>
                                         <Link.Label>Availability</Link.Label>
                                     </Link.Root>
-                                    <Link.Root link="/services">
+                                    <Link.Root link="/dashboard/services">
                                         <Link.Icon>
                                             <Database />
                                         </Link.Icon>
                                         <Link.Label>Services</Link.Label>
                                     </Link.Root>
-                                    <Link.Root link="/services">
+                                    <Link.Root link="/dashboard/booking-policies">
                                         <Link.Icon>
                                             <Scale />
                                         </Link.Icon>
                                         <Link.Label>Policies</Link.Label>
                                     </Link.Root>
-                                    <Link.Root link="/booking-site">
+                                    <Link.Root link="/dashboard/booking-site">
                                         <Link.Icon>
                                             <PanelsTopLeft />
                                         </Link.Icon>
                                         <Link.Label>Booking Site</Link.Label>
                                     </Link.Root>
-                                    <Link.Root link="/booking-site">
+                                    <Link.Root link="/dashboard">
                                         <Link.Icon>
                                             <ChartNoAxesCombined />
                                         </Link.Icon>
@@ -98,7 +114,7 @@ export default function Layout({
                                         </Link.Icon>
                                         <Link.Label>Loyalty Program</Link.Label>
                                     </Link.Root>
-                                    <Link.Root link="/discounts">
+                                    <Link.Root link="/dashboard/discounts">
                                         <Link.Icon>
                                             <Percent />
                                         </Link.Icon>
@@ -120,7 +136,7 @@ export default function Layout({
                                 </Link.Icon>
                                 <Link.Label>Help</Link.Label>
                             </Link.Root>
-                            <Link.Root link="/settings">
+                            <Link.Root link="/dashboard/settings">
                                 <Link.Icon>
                                     <Settings />
                                 </Link.Icon>
@@ -129,6 +145,7 @@ export default function Layout({
                         </div>
                     </div>
                 </div>
+
             </div>
             {isMenuOpen && (
                 <div
@@ -138,8 +155,8 @@ export default function Layout({
                 />
             )}
             <main className={twMerge('lg:ml-auto lg:w-[calc(100vw-16rem)]', isMenuOpen && 'pointer-events-none opacity-50')}>
-                <div className="feedback-bg sticky top-0 z-10 flex items-center justify-between  px-6 py-3 lg:py-4">
-                    <div className="flex items-center gap-2">
+                <div className="feedback-bg flex-col sticky top-0 z-10 flex items-end justify-betweenpx-6 pl-[1.25rem] py-3 lg:py-4">
+                    <div className="flex items-center gap-2 pr-6">
                         <Button.Root
                             size="sm"
                             variant="ghost"
@@ -155,12 +172,33 @@ export default function Layout({
                             Dashboard
                         </Title> */}
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 pr-6">
                         <Notifications />
                         <UserDropdown />
                     </div>
+                    <Banner.Root intent="warning" className="rounded-none w-full">
+                        <Banner.Content>
+                            <CircleAlert className="size-5 text-[--body-text-color]" />
+                            <div className="space-y-2">
+                                <Text size="sm" className="my-0 text-warning-800 dark:text-warning-300">
+                                    To launch your booking site you need to first:
+                                </Text>
+                                <ul className='mt-2 list-disc text-sm text-warning-800 dark:text-warning-300'>
+                                    <li>Create an <a href="/dashboard/availability" className='font-bold'>Availability</a></li>
+                                    <li>Upload your <a href="/dashboard/services" className='font-bold'>Service(s)</a></li>
+                                    <li>Configure your <a href="/dashboard/booking-policies" className='font-bold'>Booking Policies</a></li>
+                                    <li>Onboard with <a href="/onboarding/#" target='_blank' className='font-bold'>Stripe to accept payments</a></li>
+                                </ul>
+                            </div>
+                        </Banner.Content>
+                    </Banner.Root>
                 </div>
-                <div className='w-full'>{children}</div>
+
+                <div className='w-full'>
+                    <SiteWrapper>
+                        {children}
+                    </SiteWrapper>
+                </div>
 
             </main>
         </div>

@@ -162,8 +162,10 @@ export type Database = {
           business_id: string
           business_name: string
           clients: string[] | null
+          completed_stripe_onboarding: boolean
           created_at: string
           email: string
+          is_onboarded: boolean
           stripe_acc_id: string | null
           updated_at: string
           user_id: string
@@ -174,8 +176,10 @@ export type Database = {
           business_id?: string
           business_name: string
           clients?: string[] | null
+          completed_stripe_onboarding?: boolean
           created_at?: string
           email: string
+          is_onboarded?: boolean
           stripe_acc_id?: string | null
           updated_at?: string
           user_id?: string
@@ -186,8 +190,10 @@ export type Database = {
           business_id?: string
           business_name?: string
           clients?: string[] | null
+          completed_stripe_onboarding?: boolean
           created_at?: string
           email?: string
+          is_onboarded?: boolean
           stripe_acc_id?: string | null
           updated_at?: string
           user_id?: string

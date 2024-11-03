@@ -48,7 +48,7 @@ export default function Register() {
                 }),
             })
             const res = await result.json();
-            router.replace('http://localhost:3000/dashboard')
+            router.replace(`http://localhost:3000/onboarding/${res.stripe_acc_id}`)
         } else {
             const result = await fetch("http://localhost:3000/api/auth/register/client_user", {
                 method: "POST",

@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { UserWrapper } from "@utils/context/UserContext";
 import { NextUIProvider } from "@nextui-org/react";
-
+import '@fontsource/inter';
 
 const inter = Inter({ subsets: ["latin"] });
 

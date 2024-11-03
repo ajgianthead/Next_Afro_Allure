@@ -1,6 +1,5 @@
 import { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "@utils/supabase/server";
-import Appointment from "@utils/types/appointment";
 import { NextRequest, NextResponse } from "next/server";
 import { Database } from "../../../../../lib/database.types";
 

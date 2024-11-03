@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
                     email: data.data.user?.email!,
                     stripe_acc_id: account.id
                 }
-            ]).select()
+            ]).select().single()
         })
         
     if (error) {

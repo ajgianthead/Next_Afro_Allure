@@ -45,7 +45,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/app/dashboard/booking-site"
+    "src/app/dashboard/booking-site",
+    "src/app/dashboard/(booking-site)/preview"
   ],
   "exclude": [
     "node_modules"

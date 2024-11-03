@@ -5,11 +5,15 @@ import { DateTime } from "luxon";
 export const getAvailability = async (startDate: string, endDate: string, availability: any) => {
     let start = DateTime.fromISO(startDate).toUTC();
     let end = DateTime.fromISO(endDate).toUTC();
+    let slotResult = []
     try {
-        let slotResult = []
         let curr = start;
         while(curr <= end){
             let weekDay = curr.weekday - 1
+            if(!availability.week[weekDay].isChecked){
+                curr = curr.plus({days: 1})
+                continue
+            }
             const ranges = availability.week[weekDay].timeRanges;
             // Loop through week availability
             for(let i = 0; i < ranges.length; i++){
@@ -50,20 +54,21 @@ export const getAvailability = async (startDate: string, endDate: string, availa
                 }
                 slotResult.push(specificDayObj)
             }
-        }
-        return slotResult
+        }        
+
     } catch (error: any) {
         console.log(error)
-        throw new Error(error.message)
-    }
+    }    
+    return slotResult
+
 }
 
 export const getUnavailability = async (startDate: string, endDate: string, appointments: Array<any>) => {
+    let slotResult = []
     try {
         let start = DateTime.fromISO(startDate).toUTC();
         let end = DateTime.fromISO(endDate).toUTC();
         const filterAppointments = appointments.filter((date) => DateTime.fromISO(date) >= start && DateTime.fromISO(date) <= end)
-        let slotResult = []
         let curr = start;
         while(curr <= end){
             for(let i = 0; i < filterAppointments.length; i++){
@@ -75,9 +80,11 @@ export const getUnavailability = async (startDate: string, endDate: string, appo
             }
             curr = curr.plus({days: 1})
         }
-        return slotResult
     } catch (error: any) {
         console.log(error)
         throw new Error(error.message)
     }
+    
+    return slotResult
+
 }

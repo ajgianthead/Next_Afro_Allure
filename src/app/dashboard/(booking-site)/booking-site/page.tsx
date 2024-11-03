@@ -9,15 +9,17 @@ import { Text } from '@tailus-ui/typography';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import InputColor from 'react-input-color';
+import { ResponsiveIframeViewer, ViewportSize } from 'react-responsive-iframe-viewer';
+
 
 
 const Page = () => {
     const [images, setImages] = useState<string[]>([])
     return (
-        <div className='flex gap-2 px-6'>
+        <div className='flex gap-2'>
             {/* Input */}
-            <div className="w-1/2 ">
-                <Card className='flex flex-col gap-2'>
+            <div className="w-[400px] p-8">
+                <div className='flex flex-col gap-2'>
                     <Text weight={'semibold'}>Choose a template</Text>
                     <ScrollArea.Root className=" py-2">
                         <ScrollArea.Viewport>
@@ -28,14 +30,7 @@ const Page = () => {
                                 </Card>
                                 <Card className='min-w-[152.5px] bg-slate-600' variant='outlined'>
                                 </Card>
-                                <Card className='min-w-[152.5px] bg-slate-600' variant='outlined'>
-                                </Card>
-                                <Card className='min-w-[152.5px] bg-slate-600' variant='outlined'>
-                                </Card>
-                                <Card className='min-w-[152.5px] bg-slate-600' variant='outlined'>
-                                </Card>
-                                <Card className='min-w-[152.5px] bg-slate-600' variant='outlined'>
-                                </Card>
+
                             </div>
                         </ScrollArea.Viewport>
                         <ScrollArea.Scrollbar data-orientation="horizontal" orientation="horizontal" />
@@ -85,13 +80,18 @@ const Page = () => {
                             })}
                         </div>
                     </div>
-                </Card>
+                </div>
             </div>
             {/* Preview */}
-            <div className="w-1/2">
-                <Card className='h-screen'>
-                </Card></div>
+            <div className='w-full flex items-center'>
+                <ResponsiveIframeViewer
+                    className="w-full border border-black"
+                    src="http://localhost:3000/dashboard/preview/b9b2eabd-5764-4830-9c6b-66c29a34f8f5"
+                    title="Booking Site Preview"
+                    size={ViewportSize.desktop}
+                /> </div>
         </div>
+        // 
     );
 }
 

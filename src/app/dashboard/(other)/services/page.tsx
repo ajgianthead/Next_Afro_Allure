@@ -7,7 +7,6 @@ import Card from '@tailus-ui/Card'
 import { Caption, Text, Title } from '@tailus-ui/typography'
 import { useUserContext } from '@utils/context/UserContext'
 import { createClient } from '@utils/supabase/client'
-import { AddOn } from '@utils/types/service'
 import { randomUUID } from 'crypto'
 import React, { useCallback, useEffect, useState } from 'react'
 import { v4 } from 'uuid';
@@ -38,12 +37,6 @@ export default function page() {
     }, [user]);
     const [services, setServices] = useState<any>([])
     const [businessID, setBusinessID] = useState<string>("")
-    const [addOn, setAddOn] = useState<AddOn>({
-        id: crypto.randomUUID(),
-        name: "",
-        price: "",
-    });
-    const [addOns, setAddOns] = useState<AddOn[]>([]);
     const [createOpen, setCreateOpen] = useState<boolean>(false)
     const [editOpen, setEditOpen] = useState<boolean>(false)
     const handleDelete = async (serviceID: string, index: number) => {
