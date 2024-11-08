@@ -14,6 +14,7 @@ import { fetchUser } from './actions';
 import { SiteWrapper } from '@utils/context/BookingSiteContext';
 import Banner from "@components/Banner";
 import { useUserContext } from '@utils/context/UserContext';
+import { Database as DB } from '../../../../lib/database.types';
 
 
 
@@ -24,7 +25,7 @@ export default function Layout({
 }>) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { user } = useUserContext();
-    const [userData, setUserData] = useState({})
+    const [userData, setUserData] = useState<DB['public']['Tables']['business_users']['Row'] | null>(null)
     useEffect(() => {
         const fetchUserData = async () => {
             const res = await fetch(`http://localhost:3000/api/${user.business_id}`, {
@@ -34,6 +35,7 @@ export default function Layout({
             setUserData(userData.data)
         }
         fetchUser()
+        // Fetch services
         if (user.business_id) {
             fetchUserData()
         }
@@ -176,7 +178,7 @@ export default function Layout({
                         <Notifications />
                         <UserDropdown />
                     </div>
-                    <Banner.Root intent="warning" className="rounded-none w-full">
+                    {userData?.is_onboarded && <Banner.Root intent="warning" className="rounded-none w-full">
                         <Banner.Content>
                             <CircleAlert className="size-5 text-[--body-text-color]" />
                             <div className="space-y-2">
@@ -184,14 +186,15 @@ export default function Layout({
                                     To launch your booking site you need to first:
                                 </Text>
                                 <ul className='mt-2 list-disc text-sm text-warning-800 dark:text-warning-300'>
-                                    <li>Create an <a href="/dashboard/availability" className='font-bold'>Availability</a></li>
+                                    {userData?.availabilities?.length && <li>Create an <a href="/dashboard/availability" className='font-bold'>Availability</a></li>}
                                     <li>Upload your <a href="/dashboard/services" className='font-bold'>Service(s)</a></li>
-                                    <li>Configure your <a href="/dashboard/booking-policies" className='font-bold'>Booking Policies</a></li>
-                                    <li>Onboard with <a href="/onboarding/#" target='_blank' className='font-bold'>Stripe to accept payments</a></li>
+                                    {userData?.booking_policies?.length && <li>Configure your <a href="/dashboard/booking-policies" className='font-bold'>Booking Policies</a></li>}
+                                    {!userData?.completed_stripe_onboarding && <li>Onboard with <a href="/onboarding/#" target='_blank' className='font-bold'>Stripe to accept payments</a></li>}
                                 </ul>
                             </div>
                         </Banner.Content>
-                    </Banner.Root>
+                    </Banner.Root>}
+
                 </div>
 
                 <div className='w-full'>

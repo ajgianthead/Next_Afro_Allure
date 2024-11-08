@@ -10,13 +10,16 @@ import { createClient } from '@utils/supabase/client'
 import { randomUUID } from 'crypto'
 import React, { useCallback, useEffect, useState } from 'react'
 import { v4 } from 'uuid';
-import { Database } from '../../../../lib/database.types'
+import { Database } from '../../../../../lib/database.types'
 import { useDropzone } from 'react-dropzone'
 import Label from '@components/Label'
 import Image from 'next/image'
 import { TagsInput } from "react-tag-input-component";
-
-
+import Separator from '@tailus-ui/Separator'
+import Chip from '@mui/joy/Chip';
+import { EllipsisVertical, Pencil, Trash } from 'lucide-react'
+import DropdownMenu from '@components/DropdownMenu'
+import AlertDialog from '@components/AlertDialog'
 
 export default function page() {
     // Get services from business
@@ -38,7 +41,6 @@ export default function page() {
     const [services, setServices] = useState<any>([])
     const [businessID, setBusinessID] = useState<string>("")
     const [createOpen, setCreateOpen] = useState<boolean>(false)
-    const [editOpen, setEditOpen] = useState<boolean>(false)
     const handleDelete = async (serviceID: string, index: number) => {
         // Delete in supabase, then component state
         const result = await fetch(`http://localhost:3000/api/${user.business_id}/services/${serviceID}`, {
@@ -49,15 +51,67 @@ export default function page() {
         setServices(clone)
         return await result.json();
     }
+    const [currIndex, setCurrIndex] = useState<number>()
+    const [service, setService] = useState<Service>()
+    const [isEditing, setIsEditing] = useState(false);
+    const [open, setOpen] = useState(false);
     return (
         <div className='px-6'>
             <CreateServiceDialog services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={businessID} />
-            <Title>Services</Title>
-            <Button.Root>
-                <Button.Label onClick={() => {
-                    setCreateOpen(true)
-                }}>Create Service</Button.Label>
-            </Button.Root>
+            <EditServiceDialog services={services} setServices={setServices} open={isEditing} setIsOpen={setIsEditing} oldService={service} user={user} index={currIndex} />
+            <div className="flex justify-between items-center mt-3">
+                <Title>Services</Title>
+                <Button.Root>
+                    <Button.Label onClick={() => {
+                        setCreateOpen(true)
+                    }}>Create Service</Button.Label>
+                </Button.Root>
+            </div>
+            <Separator className="my-4 w-full" />
+            <div className='w-full h-full flex flex-wrap'>
+                <AlertDialog.Root open={open} onOpenChange={setOpen}>
+                    <AlertDialog.Portal>
+                        <AlertDialog.Overlay className='z-30' />
+                        <AlertDialog.Content className="max-w-lg z-40" data-shade="800">
+                            <AlertDialog.Title>
+                                Are you absolutely sure you want to delete this service?
+                            </AlertDialog.Title>
+                            <AlertDialog.Description className="mt-2">
+                                Clients won't be able to book this service.
+                            </AlertDialog.Description>
+                            <AlertDialog.Actions>
+                                <AlertDialog.Cancel asChild>
+                                    <Button.Root
+                                        variant="outlined"
+                                        intent="gray"
+                                        size="sm"
+                                    >
+                                        <Button.Label>Cancel</Button.Label>
+                                    </Button.Root>
+                                </AlertDialog.Cancel>
+                                <AlertDialog.Action asChild>
+                                    <Button.Root
+                                        variant="solid"
+                                        intent="danger"
+                                        size="sm"
+                                    >
+                                        <Button.Label>Yes, Delete</Button.Label>
+                                    </Button.Root>
+                                </AlertDialog.Action>
+                            </AlertDialog.Actions>
+                        </AlertDialog.Content>
+                    </AlertDialog.Portal>
+                </AlertDialog.Root>
+                {services.map((service: Service, index: number) => {
+                    return (
+                        <div key={index}>
+                            <div>
+                                <ServiceCard setService={setService} service={service} index={index} setIsEditing={setIsEditing} open={open} setOpen={setOpen} />
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
         </div>
     )
 }
@@ -174,7 +228,6 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         name: string;
         price: string;
     }[]>([]);
-    const [categoryName, setCategoryName] = useState<string>("")
     return (
         <div>
             <Dialog.Root open={open} onOpenChange={setIsOpen}>
@@ -219,7 +272,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                                     }
                                 }} />
                             </div>
-                            <div className="">
+                            <div>
                                 <div>
                                     <Label className='font-medium'>Category</Label>
                                     <Caption>Enter <span className='font-bold'>one or more</span> category that identifies with your service. Then hit <span className='font-bold'>Enter</span></Caption>
@@ -331,10 +384,15 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         </div>
     )
 }
-const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldService, index }: { services: Service[], setServices: any, open: boolean, setIsOpen: any, user: any, oldService: Service, index: number }) => {
+const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldService, index }: any) => {
     const supabase = createClient<Database>();
-    const [service, setService] = useState<Service>({ ...oldService });
-
+    const [service, setService] = useState<any>({});
+    useEffect(() => {
+        if (oldService) {
+            setService(oldService)
+            console.log("works");
+        }
+    }, [oldService]);
     const editImage = async () => {
         const { data, error } = await supabase.storage.from('Service Photos').upload(service.imagePath!, image, {
             upsert: true
@@ -371,7 +429,7 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
                 <Dialog.Portal>
                     <Dialog.Overlay className='z-40' />
                     <Dialog.Content className="max-w-lg z-50">
-                        <Dialog.Title>Create New Service</Dialog.Title>
+                        <Dialog.Title>Edit Service</Dialog.Title>
                         <Dialog.Description>
                             <Input type='file' onChange={(e) => {
                                 if (e.target.files?.length) {
@@ -415,12 +473,12 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
 
                         <Dialog.Actions>
                             <Dialog.Close asChild>
-                                <Button.Root onClick={() => { }} variant="outlined" size="sm" intent="gray">
+                                <Button.Root variant="outlined" size="sm" intent="gray">
                                     <Button.Label>Cancel</Button.Label>
                                 </Button.Root>
                             </Dialog.Close>
                             <Dialog.Close asChild >
-                                <Button.Root onClick={() => { }} size="sm">
+                                <Button.Root onClick={handleSubmit} size="sm">
                                     <Button.Label>Save Service</Button.Label>
                                 </Button.Root>
                             </Dialog.Close>
@@ -429,15 +487,62 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
                 </Dialog.Portal>
             </Dialog.Root>
         </div>
+
     )
 }
 
 // Individual Service Dialog + Edit and Delete Functionality
-const ServiceCard = ({ service, index }: any) => {
+const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService }: any) => {
     return (
-        <div>
-            <Card>
+        <div className='w-[250px]' key={index}>
+            <Card variant="outlined" className='py-4 flex flex-col gap-1'>
+                <div className='flex justify-between items-center'>
+                    <div className="w-full flex flex-wrap">
+                        {service.categories.map((category: string, index: number) => {
+                            return (
+                                <div key={index}>
+                                    <Chip size="sm" className="mr-1">{category}</Chip>
+                                </div>
+                            )
+                        })}
+                    </div>
+                    <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                            <Button.Root variant='ghost'>
+                                <Button.Icon>
+                                    <EllipsisVertical size={16} />
+                                </Button.Icon>
+                            </Button.Root>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Portal>
+                            <DropdownMenu.Content mixed sideOffset={5}>
+                                <DropdownMenu.Item onClick={() => {
+                                    setIsEditing(true)
+                                    setService(service)
+                                }}>
+                                    <DropdownMenu.Icon>
+                                        <Pencil />
+                                    </DropdownMenu.Icon>
+                                    Edit
+                                </DropdownMenu.Item>
+                                <DropdownMenu.Item intent="danger" onClick={() => {
+                                    setOpen(true)
+                                }}>
+                                    <DropdownMenu.Icon>
+                                        <Trash />
+                                    </DropdownMenu.Icon>
+                                    Delete
+                                </DropdownMenu.Item>
 
+                            </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                    </DropdownMenu.Root>
+                </div>
+                <div>
+                    <Title>{service.name}</Title>
+                    <Text>${service.price}</Text>
+                    <Caption>{service.description}</Caption>
+                </div>
             </Card>
         </div>
     )

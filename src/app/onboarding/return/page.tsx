@@ -3,6 +3,8 @@ import { createClient } from '@utils/supabase/server';
 import { redirect } from 'next/navigation';
 import React from 'react'
 import { Database } from '../../../../lib/database.types';
+import CircularProgress from '@mui/joy/CircularProgress';
+import { Caption } from '@tailus-ui/typography';
 
 export default async function page({ params }: { params: { stripe_account_id: string } }) {
   const { stripe_account_id } = params;
@@ -17,6 +19,11 @@ export default async function page({ params }: { params: { stripe_account_id: st
     redirect('/dashboard')
   }
   return (
-    <div>page</div>
+    <div className='flex w-full h-screen justify-center items-center'>
+      <div>
+        <CircularProgress size='sm' />
+        <Caption>Redirecting</Caption>
+      </div>
+    </div>
   )
 }

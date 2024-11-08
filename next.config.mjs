@@ -24,7 +24,7 @@ const nextConfig = {
         ]
     },
     images: {
-        domains: ["i.pinimg.com"]
+        domains: ["i.pinimg.com", "jappbqntqogmnoluifzx.supabase.co"]
     }
 }
 export default nextConfig;
