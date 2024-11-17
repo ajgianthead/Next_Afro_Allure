@@ -1,9 +1,13 @@
 'use server'
 
+import { stripe } from "@lib/utils";
+import { Stripe, StripeElements } from "@stripe/stripe-js";
 import pool from "@utils/dbPool";
 import { DateTime } from "luxon";
 import { getSlots, OutputSlot } from "slot-calculator";
 
+
+// Helper function that checks to see if a certain timeslot if available for booking or rescheduling
 const checkSlots = async (timeSlot: {
     start: string;
     end: string;
@@ -23,11 +27,43 @@ const checkSlots = async (timeSlot: {
     return availableSlots
 }
 
-export const bookAppointment = async (businessId: string, policyId: string, serviceId: string, lastServiceUpdate: string, client_metadata: any, timeSlot: {
+export const cancelAppointment = async (appointmentID: string) => {
+    // Check if appointment still exists
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await client.query(`SELECT * FROM appointments app WHERE app.id = ${appointmentID}`)
+        if(result.rowCount === 0){
+            throw Error("Appointment doesn't exist")
+        }
+        const appointment = result.rows[0]
+        if(appointment.status === "CANCELLED"){
+            throw Error("Already cancelled")
+        }
+        await client.query(`UPDATE appointments SET status = ${'CANCELLED'} WHERE id = ${appointmentID} RETURNING *`)
+        // Handle deposit refund
+        await client.query('END')
+    } catch (error: any) {
+        if(error.message === "Appointment doesn't exist"){
+            await client.query("ROLLBACK")
+            return -1
+        }
+        if(error.message === "Already cancelled"){
+            await client.query("ROLLBACK")
+            return 0
+        }
+        
+    }finally {
+        client.release();
+    }
+    
+}
+
+export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
     start: string;
     end: string;
     appointmentLength: number;
-}) => {
+}, businessId: string) => {
     const client = await pool.connect()
     try {
         await client.query('BEGIN');
@@ -37,6 +73,44 @@ export const bookAppointment = async (businessId: string, policyId: string, serv
         const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = ${businessId}`)).rows[0]
        
         let available: boolean = false
+        const availableSlots = await checkSlots(timeSlot, availability, appointments)
+        availableSlots.forEach((slot: OutputSlot, index: number) => {
+            if(slot.from === timeSlot.start && slot.to === timeSlot.end){
+                available = true
+            }
+        })
+        if(!available){
+            throw Error("Timeslot is no longer available")
+        }
+        // UPDATE appointment timeslot
+        const appointment = await client.query(`UPDATE appointments SET start = ${timeSlot.start}, end = ${timeSlot.end} WHERE id = ${appointmentID} RETURNING *`)
+        
+        return appointment.rows[0]
+    }catch (error) {
+        await client.query('ROLLBACK')
+    } finally {
+        client.release();
+    }
+}
+
+export const bookAppointment = async (businessId: string, policyId: string, serviceId: string, client_metadata: any, timeSlot: {
+    start: string;
+    end: string;
+    appointmentLength: number;
+}, 
+    elements: StripeElements,
+    stripe: Stripe
+) => {
+    const client = await pool.connect()
+    try {
+        await client.query('BEGIN');
+        // Check if timeslot is still available
+        // 1. Get availability and appointments
+        const availability = (await client.query(`SELECT availability FROM business_users bu WHERE bu.business_id = ${businessId}`)).rows[0]
+        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = ${businessId}`)).rows[0]
+       
+        let available: boolean = false
+        const availableSlots = await checkSlots(timeSlot, availability, appointments)
         availableSlots.forEach((slot: OutputSlot, index: number) => {
             if(slot.from === timeSlot.start && slot.to === timeSlot.end){
                 available = true
@@ -48,14 +122,23 @@ export const bookAppointment = async (businessId: string, policyId: string, serv
         // 2. 
         // Check if policy and service has changed since the user first loaded the page
         const policy = await client.query(`SELECT booking_policies FROM business_users bu WHERE bu.business_id = ${businessId}`)
-        const service = await client.query(`SELECT updated_at FROM services WHERE id = ${serviceId}`)
-        if(policy.rows[0] !== policyId || service.rows[0] !== lastServiceUpdate){
+        if(policy.rows[0] !== policyId){
             throw Error("Business data has changed")
         }
         // Charge account if policy requires deposit
         const businessPolicy = await client.query(`SELECT * FROM business_policies bp WHERE bp.id = ${policy.rows[0]}`)
         if(businessPolicy.rows[0].deposit.enabled){
             //TODO: Create charge with Stripe -> LATER!!
+            const {error} = await stripe.confirmPayment({
+                //`Elements` instance that was used to create the Payment Element
+                elements,
+                confirmParams: {
+                  return_url: 'https://example.com/order/123/complete',
+                },
+              });
+              if(error){
+                throw Error(error.message)
+              }
         }
         // Send query to supabase confirming the appointment
         const appointment = await client.query(`INSERT INTO appointments (start, end, business, client_metadata, status, service) VALUES (${timeSlot.start}, ${timeSlot.end}, ${businessId}, ${client_metadata}, "ACCEPTED", ${serviceId}) RETURNING *`)
