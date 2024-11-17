@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         })
     }
     return new NextResponse(JSON.stringify({
-        message: "This appointment doesn't exist",
+        appointment: "This appointment doesn't exist",
         status: 500
     }))
 }

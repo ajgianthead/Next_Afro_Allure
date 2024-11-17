@@ -19,13 +19,13 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/L
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import Skeleton from '@mui/joy/Skeleton';
 import { DateTime } from 'luxon'
-import { getAvailability, getUnavailability } from '../actions'
+import { bookAppointment, getAvailability, getUnavailability } from '../actions'
 import { getSlots, OutputSlot } from "slot-calculator"
 import { useParams } from 'next/navigation'
 import { Json } from '../../../../lib/database.types'
 import CircularProgress from '@mui/joy/CircularProgress'
 import Dialog from '@components/Dialog';
-import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe-js';
+import { Elements, EmbeddedCheckout, EmbeddedCheckoutProvider, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { BookingData, BookingWrapper, useBooking } from '@utils/context/BookingDataContext';
 
@@ -58,6 +58,11 @@ const Book = () => {
         }
     }, [data]);
 
+    const handleSubmit = () => {
+        // Validate data and input -> Make sure everthing is there
+        // POST request to appointments table via a postgres transaction
+    }
+
     return (
         <div >
             {!isLoading ? <div className='w-full pt-10 px-20  flex flex-col overflow-hidden'>
@@ -78,7 +83,7 @@ const Book = () => {
                                 index !== 2 && { '&::after': { bgcolor: 'primary.solidBg' } },
                             ]}
                         >
-                            <StepButton onClick={() => setActiveStep(index)}>
+                            <StepButton disabled onClick={() => setActiveStep(index)}>
                                 <div className='text-left'>
                                     <Text className="font-medium">{step}</Text>
                                     <Caption>Details</Caption>
@@ -90,9 +95,23 @@ const Book = () => {
                 <div className='w-full h-full flex-col p-5'>
                     {components[activeStep]}
                 </div>
-
+                <div className='w-full flex justify-between pb-2'>
+                    <Button.Root disabled={activeStep === 0} onClick={() => {
+                        setActiveStep(activeStep - 1)
+                    }}>
+                        <Button.Label>Back</Button.Label>
+                    </Button.Root>
+                    {activeStep < steps.length - 1 ? <Button.Root disabled={(activeStep === 0 && data.selectedService.length === 0) || (activeStep === 1 && Object.values(data.selectedDateTime).length === 0) || (activeStep === 2 && Object.values(data.clientInfo).length !== 4)} onClick={() => {
+                        setActiveStep(activeStep + 1)
+                    }}>
+                        <Button.Label>Next</Button.Label>
+                    </Button.Root> : <Button.Root disabled={activeStep === 2}>
+                        <Button.Label>Book Appointment</Button.Label>
+                    </Button.Root>}
+                </div>
             </div> : <div className='w-full h-screen flex justify-center items-center'>
                 <CircularProgress /></div>}
+
         </div>
     )
 }
@@ -100,12 +119,15 @@ const Book = () => {
 const DepositPayment = () => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
+    const selectedServiceData = data.services.filter((service: Service, index: number) => service.id === data.selectedService)
     useEffect(() => {
         const fetchSession = async () => {
             const response = await fetch("http://localhost:3000/api/checkout", {
                 method: "POST",
                 body: JSON.stringify({
-                    connectedAccountId: data.stripe_id, // Change Stripe Account ID to be dynamic to business
+                    connectedAccountId: data.stripe_id,
+                    app_fee: 123,
+                    price: selectedServiceData[0].price
                 }),
             });
             if (!response.ok) {
@@ -134,15 +156,36 @@ const DepositPayment = () => {
     return (
         <div>
             {
-                data.options && promise ? <EmbeddedCheckoutProvider
+                data.options && promise ? <Elements
                     stripe={promise}
                     options={data.options}
 
                 >
-                    <EmbeddedCheckout className='w-full' />
-                </EmbeddedCheckoutProvider> : <div> Something went wrong</div>
+                    <CheckoutForm service={selectedServiceData[0]} />
+                </Elements> : <div> Something went wrong</div>
             }
         </div>
+    )
+}
+
+const CheckoutForm = async (service: any) => {
+    const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
+    const elements = useElements();
+    const stripe = useStripe();
+    const handleSubmit = async (event: any) => {
+        event.preventDefault();
+        if (!stripe || !elements) {
+            return;
+        }
+        await bookAppointment(data.business_id, data.booking_policy.id, data.selectedService, data.clientInfo, { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length }, elements, stripe)
+    }
+    return (
+        <form onSubmit={handleSubmit}>
+            <PaymentElement className='w-full' />
+            <Button.Root disabled={!stripe}>
+                <Button.Label>Book Appointment</Button.Label>
+            </Button.Root>
+        </form>
     )
 }
 
@@ -209,19 +252,17 @@ const ClientInfo = () => {
     )
 }
 
-const DateTimePicker = ({ availability, appointments, selectedDateTime, setSelectedDateTime }: any) => {
+const DateTimePicker = () => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
-    const [date, setDate] = useState();
+    const [date, setDate] = useState<any>(Object.values(data.selectedDateTime).length ? DateTime.fromISO(data.selectedDateTime.start!).startOf('day') : undefined);
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [slots, setSlots] = useState<any>({})
     const [currSlots, setCurrSlots] = useState<any>([]);
 
     const getData = async (startDate: string, endDate: string) => {
         // Get availability id for server actions
-        const formattedAvailability = await getAvailability(startDate, endDate, availability) as any
-        const formattedUnavailability = await getUnavailability(startDate, endDate, appointments)
-        console.log(startDate, endDate)
-        console.log(formattedAvailability);
+        const formattedAvailability = await getAvailability(startDate, endDate, data.availabilities)
+        const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!)
 
         const { availableSlotsByDay } = getSlots({
             from: startDate,
@@ -231,14 +272,24 @@ const DateTimePicker = ({ availability, appointments, selectedDateTime, setSelec
             unavailability: formattedUnavailability
         })
         setSlots(availableSlotsByDay)
+        return availableSlotsByDay
     }
 
     useEffect(() => {
-        const startDate = DateTime.now().toUTC().startOf("day").toISO()
-        const endDate = DateTime.now().toUTC().endOf("month").toISO()
-        getData(startDate, endDate)
-        setIsLoading(false)
-    }, [availability, appointments]);
+        const initialize = async () => {
+            if (Object.keys(data.availabilities!).length && data.appointments?.length) {
+                const startDate = DateTime.now().toUTC().startOf("day").toISO()
+                const endDate = DateTime.now().toUTC().endOf("month").toISO()
+                const res = await getData(startDate, endDate)
+                if (Object.values(data.selectedDateTime).length) {
+                    const fetchedSlots = res[DateTime.fromISO(data.selectedDateTime.start!).toISODate()!]
+                    setCurrSlots(fetchedSlots)
+                }
+                setIsLoading(false)
+            }
+        }
+        initialize()
+    }, [data.availabilities, data.appointments]);
 
     const handleMonthChange = async (month: DateTime<boolean>) => {
         setIsLoading(true)
@@ -256,10 +307,11 @@ const DateTimePicker = ({ availability, appointments, selectedDateTime, setSelec
     }
 
     const handleDateChange = async (value: DateTime) => {
+        console.log(value);
+        setDate(value)
         if (Object.keys(slots).length) { // If slots exist
             const fetchedSlots = slots[value.toISODate()!] // Get slot array based on date
             setCurrSlots(fetchedSlots)
-            console.log(value.toISODate(), fetchedSlots);
         }
     }
 
@@ -276,7 +328,7 @@ const DateTimePicker = ({ availability, appointments, selectedDateTime, setSelec
                     {currSlots.map((slot: { from: string, to: string }, index: number) => {
                         return (
                             <div key={index}>
-                                <TimeSlot startTime={slot.from} endTime={slot.to} selectedDateTime={selectedDateTime} setSelectedDateTime={setSelectedDateTime} />
+                                <TimeSlot startTime={slot.from} endTime={slot.to} />
                             </div>
                         )
                     })}
@@ -287,21 +339,29 @@ const DateTimePicker = ({ availability, appointments, selectedDateTime, setSelec
     )
 }
 
-const TimeSlot = ({ startTime, endTime, selectedDateTime, setSelectedDateTime }: {
-    startTime: string, setSelectedDateTime: any, endTime: string, selectedDateTime: {
-        start?: string,
-        end?: string
-    }
+export const TimeSlot = ({ startTime, endTime }: {
+
+    startTime: string, endTime: string
 }) => {
+    const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const start = DateTime.fromISO(startTime).toUTC().toLocaleString(DateTime.TIME_SIMPLE)
-    const end = DateTime.fromISO(startTime).toUTC().toLocaleString(DateTime.TIME_SIMPLE)
+    const end = DateTime.fromISO(endTime).toUTC().toLocaleString(DateTime.TIME_SIMPLE)
     return (
         <div onClick={() => {
-            setSelectedDateTime({
+            setData({
+                ...data,
+                selectedDateTime: {
+                    start: startTime,
+                    end: endTime
+                }
+
+            })
+            console.log({
                 start: startTime,
                 end: endTime
-            })
-        }} style={{ borderWidth: startTime !== selectedDateTime.start && endTime !== selectedDateTime.end ? 3 : 1 }} className='text-sm font-medium border-primary-500 bg-primary-100 px-3 cursor-pointer py-2 rounded-md'>
+            });
+
+        }} style={{ borderWidth: startTime !== data.selectedDateTime.start && endTime !== data.selectedDateTime.end ? 1 : 3 }} className='text-sm font-medium border-primary-500 bg-primary-100 px-3 cursor-pointer py-2 rounded-md'>
             {start}
         </div>
     )

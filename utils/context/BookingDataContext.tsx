@@ -12,7 +12,7 @@ export type BookingData = {
     availabilities: Json | null;
     booking_policy: any
     appointments?: Json[];
-    services: Json[];
+    services: Service[];
     stripe_id: string;
     selectedService: string,
     selectedDateTime: {

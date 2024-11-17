@@ -40,7 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: { business
         })
     }
     if (data?.length) {
-        return new NextResponse(JSON.stringify({ result: data }), {
+        return new NextResponse(JSON.stringify({ result: data[0].availabilities }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200
         })
