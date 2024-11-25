@@ -4,7 +4,7 @@ import Label from '@components/Label'
 import Card from '@tailus-ui/Card'
 import { Caption, Text, Title } from '@tailus-ui/typography'
 import { CheckIcon, Plus, X } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Select from "@components/Select";
 import Input from '@components/Input'
 import Button from '@tailus-ui/Button'
@@ -19,6 +19,7 @@ import { Time } from "@internationalized/date";
 import { CheckedState } from '@radix-ui/react-checkbox'
 import { Calendar } from "react-multi-date-picker"
 import { useUserContext } from '@utils/context/UserContext'
+import CircularProgress from '@mui/joy/CircularProgress'
 
 
 const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -40,56 +41,72 @@ export default function page() {
         id: crypto.randomUUID(),
         name: "",
         week: [{
-            isChecked: false,
+            isChecked: true,
             timeRanges: [{
-                start: null,
-                end: null
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: true,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: true,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: true,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: true,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
             }]
         },
         {
             isChecked: false,
             timeRanges: [{
-                start: null,
-                end: null
+                start: new Time(9),
+                end: new Time(17)
             }]
         },
         {
             isChecked: false,
             timeRanges: [{
-                start: null,
-                end: null
-            }]
-        },
-        {
-            isChecked: false,
-            timeRanges: [{
-                start: null,
-                end: null
-            }]
-        },
-        {
-            isChecked: false,
-            timeRanges: [{
-                start: null,
-                end: null
-            }]
-        },
-        {
-            isChecked: false,
-            timeRanges: [{
-                start: null,
-                end: null
-            }]
-        },
-        {
-            isChecked: false,
-            timeRanges: [{
-                start: null,
-                end: null
+                start: new Time(9),
+                end: new Time(17)
             }]
         }],
         specificDates: {}
     }
+    useEffect(() => {
+        const getData = async () => {
+            const res = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities`, {
+                method: 'GET'
+            })
+            const result = await res.json()
+            const availabilities = result.result;
+            setAvailabilities(availabilities)
+        }
+        if (user.business_id) {
+            (async () => {
+                await getData()
+            })()
+        }
+
+    }, [user]);
     const [openCreate, setOpenCreate] = useState<boolean>(false)
     const [availability, setAvailability] = useState<any>(defaultAvailability)
     const [dates, setDates] = useState<string[]>(Object.keys(availability.specificDates))
@@ -98,8 +115,8 @@ export default function page() {
         if (!dates.includes(date)) {
             let newObj = { ...availability }
             newObj.specificDates[date] = [{
-                start: null,
-                end: null
+                start: new Time(9),
+                end: new Time(17)
             }]
             setAvailability(newObj)
             setDates(Object.keys(newObj.specificDates))
@@ -111,7 +128,7 @@ export default function page() {
             setDates(Object.keys(newObj.specificDates))
         }
     }
-    const [availabilities, setAvailabilities] = useState<any>([])
+    const [availabilities, setAvailabilities] = useState<any>(null)
     // Send availabilities to API
     // 
     // 
@@ -160,6 +177,8 @@ export default function page() {
     const [isEditing, setisEditing] = useState(false);
     const [currEditIndex, setCurrEditIndex] = useState<number>();
     const handleEdit = (index: number) => {
+        console.log(availabilities[index]);
+
         setCurrEditIndex(index)
         setisEditing(true)
         setAvailability(availabilities[index])
@@ -212,8 +231,8 @@ export default function page() {
                                                             let clone = { ...availability }
                                                             clone.week[index].isChecked = false
                                                             clone.week[index].timeRanges = [{
-                                                                start: null,
-                                                                end: null
+                                                                start: new Time(9),
+                                                                end: new Time(17)
                                                             }]
                                                             setAvailability(clone)
                                                         } else {
@@ -231,6 +250,8 @@ export default function page() {
 
                                                 </Aligner>
                                                 {availability.week[index].isChecked && availability.week[index].timeRanges.map((range: any, rangeIndex: number) => {
+                                                    const startRange = range.start ? new Time(range.start.hour, range.start.minute) : null
+                                                    const endRange = range.end ? new Time(range.end.hour, range.end.minute) : null
                                                     return (
                                                         <div className='mt-2 flex gap-2 items-center'>
                                                             {range.start && range.end && rangeIndex === availability.week[index].timeRanges.length - 1 && (range.end.hour !== 11 && range.end.minute < 58) ? <Button.Root className='justify-center' variant='ghost' size='sm' onClick={() => {
@@ -247,7 +268,7 @@ export default function page() {
                                                             </Button.Root> : <></>}
 
                                                             {/* Start */}
-                                                            <TimeInput minValue={rangeIndex === 0 ? new Time(0) : availability.week[index].timeRanges[rangeIndex - 1].end?.add({ minutes: 1 })} maxValue={new Time(23, 58)} variant='bordered' aria-label="TimeInput" value={range.start} size='sm' className='w-[100px] rounded-sm' label={null} onChange={(timeValue) => {
+                                                            <TimeInput minValue={rangeIndex === 0 ? new Time(0) : new Time(availability.week[index].timeRanges[rangeIndex - 1].end.hour, availability.week[index].timeRanges[rangeIndex - 1].end.minute)?.add({ minutes: 1 })} maxValue={new Time(23, 58)} variant='bordered' aria-label="TimeInput" value={startRange} size='sm' className='w-[100px] rounded-sm' label={null} onChange={(timeValue) => {
                                                                 let clone = { ...availability }
                                                                 clone.week[index].timeRanges[rangeIndex].start = timeValue
                                                                 setAvailability(clone)
@@ -256,7 +277,7 @@ export default function page() {
                                                             }} />
                                                             <Text>-</Text>
                                                             {/* End */}
-                                                            <TimeInput minValue={range.start?.add({ minutes: 1 })} maxValue={new Time(23, 59)} variant='bordered' aria-label="TimeInput" value={range.end} size='sm' className='w-[100px] rounded-sm' label={null} onChange={(timeValue) => {
+                                                            <TimeInput minValue={startRange?.add({ minutes: 1 })} maxValue={new Time(23, 59)} variant='bordered' aria-label="TimeInput" value={endRange} size='sm' className='w-[100px] rounded-sm' label={null} onChange={(timeValue) => {
                                                                 let clone = { ...availability }
                                                                 clone.week[index].timeRanges[rangeIndex].end = timeValue
                                                                 setAvailability(clone)
@@ -367,7 +388,7 @@ export default function page() {
             <Separator orientation='horizontal' className='my-2' />
             {/* Map through availabilities */}
             <div className='flex flex-wrap gap-2 w-full'>
-                {availabilities.map((element: any, index: number) => {
+                {availabilities ? availabilities.map((element: any, index: number) => {
                     return (
                         <div className='w-1/5' onClick={() => {
                             handleEdit(index)
@@ -382,7 +403,9 @@ export default function page() {
                             </Card>
                         </div>
                     )
-                })}
+                }) : <div className='flex justify-center items-center w-full h-full'>
+                    <CircularProgress size='sm' />
+                </div>}
             </div>
         </div>
     )
