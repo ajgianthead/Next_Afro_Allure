@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const authToken = process.env.NEXT_PUBLIC_TWILIO_AUTH_TOKEN;
     const client = twilio(accountSid, authToken)
     // I dont know man??
-    const {business, client_metadata, start, end, service, status} = await request.json();
+    const {business, client_metadata, start, end, service_data, status} = await request.json();
     const { data, error } = await supabase.from('appointments').insert([
        {
         business: business,
@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
         start: start,
         end: end,
         status: status,
-        service: service,
-        client: null
+        client: null,
+        service_data: service_data
        }
     ]).select();
     if (data?.length) {

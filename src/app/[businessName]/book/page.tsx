@@ -105,7 +105,12 @@ const Book = () => {
                         setActiveStep(activeStep + 1)
                     }}>
                         <Button.Label>Next</Button.Label>
-                    </Button.Root> : <Button.Root disabled={activeStep === 2}>
+                    </Button.Root> : <Button.Root onClick={async () => {
+                        const selectedServiceData = data.services.filter((service: Service, index: number) => service.id === data.selectedService)
+                        const appointment = await bookAppointment(data.business_id, data.booking_policy.id, data.selectedService, data.clientInfo, { ...data.selectedDateTime, appointmentLength: selectedServiceData[0].length }, null, null)
+                        console.log(appointment);
+
+                    }}>
                         <Button.Label>Book Appointment</Button.Label>
                     </Button.Root>}
                 </div>
@@ -261,6 +266,7 @@ const DateTimePicker = () => {
 
     const getData = async (startDate: string, endDate: string) => {
         // Get availability id for server actions
+        console.log(data.appointments);
         const formattedAvailability = await getAvailability(startDate, endDate, data.availabilities)
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!)
 
@@ -278,8 +284,8 @@ const DateTimePicker = () => {
     useEffect(() => {
         const initialize = async () => {
             if (Object.keys(data.availabilities!).length && data.appointments?.length) {
-                const startDate = DateTime.now().toUTC().startOf("day").toISO()
-                const endDate = DateTime.now().toUTC().endOf("month").toISO()
+                const startDate = DateTime.now().startOf("day").toISO()
+                const endDate = DateTime.now().endOf("month").toISO()
                 const res = await getData(startDate, endDate)
                 if (Object.values(data.selectedDateTime).length) {
                     const fetchedSlots = res[DateTime.fromISO(data.selectedDateTime.start!).toISODate()!]
@@ -297,11 +303,11 @@ const DateTimePicker = () => {
         let startDate = ""
         let endDate = ""
         if (month.month === DateTime.now().month) {
-            startDate = DateTime.now().toUTC().startOf("day").toISO()!
+            startDate = DateTime.now().startOf("day").toISO()!
         } else {
-            startDate = month.toUTC().toISO()!
+            startDate = month.toISO()!
         }
-        endDate = month.toUTC().endOf("month").toISO()!
+        endDate = month.endOf("month").toISO()!
         await getData(startDate, endDate)
         setIsLoading(false)
     }
@@ -344,8 +350,8 @@ export const TimeSlot = ({ startTime, endTime }: {
     startTime: string, endTime: string
 }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
-    const start = DateTime.fromISO(startTime).toUTC().toLocaleString(DateTime.TIME_SIMPLE)
-    const end = DateTime.fromISO(endTime).toUTC().toLocaleString(DateTime.TIME_SIMPLE)
+    const start = DateTime.fromISO(startTime).toLocaleString(DateTime.TIME_SIMPLE)
+    const end = DateTime.fromISO(endTime).toLocaleString(DateTime.TIME_SIMPLE)
     return (
         <div onClick={() => {
             setData({

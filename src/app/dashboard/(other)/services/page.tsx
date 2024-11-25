@@ -17,13 +17,15 @@ import Image from 'next/image'
 import { TagsInput } from "react-tag-input-component";
 import Separator from '@tailus-ui/Separator'
 import Chip from '@mui/joy/Chip';
-import { EllipsisVertical, Pencil, Trash } from 'lucide-react'
+import { EllipsisVertical, Pencil, Plus, Trash, X } from 'lucide-react'
 import DropdownMenu from '@components/DropdownMenu'
 import AlertDialog from '@components/AlertDialog'
+import CircularProgress from '@mui/joy/CircularProgress'
 
 export default function page() {
     // Get services from business
     const { user } = useUserContext();
+    const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
         const getServices = async () => {
             const { business_id } = user
@@ -36,9 +38,10 @@ export default function page() {
         if (user.business_id) {
             setBusinessID(user.business_id)
             getServices()
+            setLoading(false)
         }
     }, [user]);
-    const [services, setServices] = useState<any>([])
+    const [services, setServices] = useState<any[]>([])
     const [businessID, setBusinessID] = useState<string>("")
     const [createOpen, setCreateOpen] = useState<boolean>(false)
     const handleDelete = async (serviceID: string, index: number) => {
@@ -102,7 +105,7 @@ export default function page() {
                         </AlertDialog.Content>
                     </AlertDialog.Portal>
                 </AlertDialog.Root>
-                {services.map((service: Service, index: number) => {
+                {loading ? <div className='w-full h-[calc(100vh-200px)] flex justify-center items-center'><CircularProgress size={'sm'} /></div> : services.map((service: Service, index: number) => {
                     return (
                         <div key={index}>
                             <div>
@@ -126,7 +129,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         description: "",
         price: 0,
         length: 0,
-        addons: null,
+        addons: [],
         imagePath: "",
         photo_url: "",
         business: user,
@@ -167,18 +170,22 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         }
 
     }
+    const [dataSending, setDataSending] = useState<boolean>(false)
     const handleSubmit = async () => {
+        setDataSending(true)
         let imageURL;
         let clone;
         if (image.imageURL) {
             let res = await uploadImage()
+            console.log("hit")
             imageURL = res?.url
             clone = { ...service }
             clone.photo_url = imageURL!;
             clone.imagePath = res?.path!;
+            clone.addons = [...addOns]
 
         }
-        const res = await fetch(`http://localhost:3000/api/${user}/services`, {
+        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services`, {
             method: 'POST',
             body: JSON.stringify(image.imageBlob ? clone : service)
         })
@@ -199,14 +206,15 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
             description: "",
             price: 0,
             length: 0,
-            addons: null,
+            addons: [],
             imagePath: "",
             photo_url: "",
             business: user,
             categories: []
         })
         setAddOns([])
-
+        setDataSending(false)
+        setIsOpen(false)
     }
     const [image, setImage] = useState<{
         imageURL: string | null
@@ -226,7 +234,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
     const [addOns, setAddOns] = useState<{
         name: string;
-        price: string;
+        price: number;
     }[]>([]);
     return (
         <div>
@@ -261,7 +269,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                             </div>
                             <div>
                                 <Label className='font-medium'>Base Price</Label>
-                                <Input value={service.price} onChange={(e) => {
+                                <Input value={service.price.toString()} onChange={(e) => {
                                     let temp;
                                     if (!Number.isNaN(e.target.value)) {
                                         temp = Number(e.target.value)
@@ -301,7 +309,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                             <div>
                                 <Label className='font-medium'>Duration</Label>
                                 <Caption>Enter in minutes</Caption>
-                                <Input value={service.length} placeholder='ex. 180' onChange={(e) => {
+                                <Input value={service.length.toString()} placeholder='ex. 180' onChange={(e) => {
                                     let temp;
                                     if (!Number.isNaN(e.target.value)) {
                                         temp = Number(e.target.value)
@@ -317,7 +325,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                                     setAddOns([
                                         ...addOns, {
                                             name: "",
-                                            price: ""
+                                            price: 0
                                         }
                                     ])
                                 }} className='w-full' variant='soft'>
@@ -336,13 +344,28 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                                                     setAddOns(clone)
                                                 }} />
                                             </div>
-                                            <div className='flex flex-col items-end text-left'>
-                                                <Caption>Price</Caption>
-                                                <Input placeholder='ex. 20' className='w-1/2' value={addOn.price} onChange={(e) => {
-                                                    let clone = [...addOns]
-                                                    clone[index].price = e.target.value
-                                                    setAddOns(clone)
-                                                }} />
+                                            <div>
+                                                <div className='flex flex-col items-end text-left'>
+                                                    <Caption>Price</Caption>
+                                                    <div className='flex justify-end gap-2'>
+                                                        <Input placeholder='ex. 20' className='w-1/2' value={addOn.price.toString()} onChange={(e) => {
+                                                            if (!Number.isNaN(e.target.value)) {
+                                                                let clone = [...addOns]
+                                                                clone[index].price = Number(e.target.value)
+                                                                setAddOns(clone)
+                                                            }
+                                                        }} />
+                                                        <Button.Root variant='outlined' intent='gray' onClick={() => {
+                                                            let clone = [...addOns]
+                                                            clone.splice(index, 1)
+                                                            setAddOns(clone)
+                                                        }}>
+                                                            <Button.Icon>
+                                                                <X size={"xs"} />
+                                                            </Button.Icon>
+                                                        </Button.Root>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     )
@@ -361,22 +384,22 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                                         description: "",
                                         price: 0,
                                         length: 0,
-                                        addons: null,
+                                        addons: [],
                                         imagePath: "",
                                         photo_url: "",
                                         business: user,
                                         categories: []
                                     })
                                     setAddOns([])
-                                }} variant="outlined" size="sm" intent="gray">
+                                }} variant="outlined" disabled={dataSending} size="sm" intent="gray">
                                     <Button.Label>Cancel</Button.Label>
                                 </Button.Root>
                             </Dialog.Close>
-                            <Dialog.Close asChild >
-                                <Button.Root onClick={handleSubmit} size="sm">
-                                    <Button.Label>Create Service</Button.Label>
-                                </Button.Root>
-                            </Dialog.Close>
+
+                            <Button.Root disabled={dataSending} onClick={handleSubmit} size="sm">
+                                <Button.Label>{dataSending ? <CircularProgress size='sm' /> : "Create Service"}</Button.Label>
+                            </Button.Root>
+
                         </Dialog.Actions>
                     </Dialog.Content>
                 </Dialog.Portal>
@@ -387,14 +410,36 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
 const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldService, index }: any) => {
     const supabase = createClient<Database>();
     const [service, setService] = useState<any>({});
+    const [dataSending, setDataSending] = useState<boolean>(false)
+    const [image, setImage] = useState<{
+        imageURL: string | null
+        imageBlob: Blob | null
+    }>({
+        imageURL: null,
+        imageBlob: null
+    });
+    const onDrop = useCallback((acceptedFiles: any) => {
+        acceptedFiles.forEach((file: Blob) => {
+            setImage({
+                imageURL: URL.createObjectURL(file),
+                imageBlob: file
+            })
+        })
+    }, [])
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
+    const [addOns, setAddOns] = useState<{
+        name: string,
+        price: number
+    }[]>([])
     useEffect(() => {
         if (oldService) {
             setService(oldService)
+            setAddOns([...oldService.addons])
             console.log("works");
         }
     }, [oldService]);
     const editImage = async () => {
-        const { data, error } = await supabase.storage.from('Service Photos').upload(service.imagePath!, image, {
+        const { data, error } = await supabase.storage.from('Service Photos').upload(service.imagePath!, image.imageBlob!, {
             upsert: true
         })
         if (data?.path) {
@@ -404,6 +449,7 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
         return "";
     }
     const handleSubmit = async () => {
+        setDataSending(true)
         let imageURL;
         let clone;
         if (image) {
@@ -411,7 +457,7 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
             clone = { ...service }
             clone.photo_url = imageURL;
         }
-        const res = await fetch(`http://127.0.0.1:3000/api/${user.business_id}/services`, {
+        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services`, {
             method: 'PUT',
             body: JSON.stringify(image ? clone : service)
         })
@@ -421,71 +467,178 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
         let newServices = [...services];
         newServices[index] = dataBack.updatedData
         setServices(newServices)
+        setDataSending(false)
     }
-    const [image, setImage] = useState<any>(null);
     return (
         <div>
-            <Dialog.Root open={open} onOpenChange={setIsOpen}>
-                <Dialog.Portal>
-                    <Dialog.Overlay className='z-40' />
-                    <Dialog.Content className="max-w-lg z-50">
-                        <Dialog.Title>Edit Service</Dialog.Title>
-                        <Dialog.Description>
-                            <Input type='file' onChange={(e) => {
-                                if (e.target.files?.length) {
-                                    setImage(e.target.files[0])
-                                    // console.log(e.target.files[0]);
-                                }
-                            }} />
-                            <Input value={service.name} placeholder='Name' onChange={(e) => {
-                                setService({
-                                    ...service,
-                                    name: e.target.value
-                                })
-                            }} />
-                            <Input value={service.price} placeholder='Price' onChange={(e) => {
-                                let temp;
-                                if (!Number.isNaN(e.target.value)) {
-                                    temp = Number(e.target.value)
-                                    setService({
-                                        ...service,
-                                        price: temp
-                                    })
-                                }
-                            }} />
-                            <Textarea placeholder='Description' value={service.description} onChange={(e) => {
-                                setService({
-                                    ...service,
-                                    description: e.target.value
-                                })
-                            }} />
-                            <Input value={service.length} placeholder='Duration' onChange={(e) => {
-                                let temp;
-                                if (!Number.isNaN(e.target.value)) {
-                                    temp = Number(e.target.value)
-                                    setService({
-                                        ...service,
-                                        length: temp
-                                    })
-                                }
-                            }} />
-                        </Dialog.Description>
+            {Object.keys(service).length ? <div>
+                <Dialog.Root open={open} onOpenChange={setIsOpen}>
+                    <Dialog.Portal>
+                        <Dialog.Overlay className='z-40' />
+                        <Dialog.Content className="max-w-lg z-50 overflow-y-scroll">
+                            <Dialog.Title className='flex flex-col mb-5'>
+                                <Title>Create Service</Title>
+                                <Caption>Enter the details of your service below</Caption>
+                            </Dialog.Title>
+                            <Dialog.Description className='flex gap-2 flex-col'>
+                                <div>
+                                    <Label className='font-medium'>Upload Photo</Label>
+                                    <div {...getRootProps()} className='border border-dashed rounded-md p-2 cursor-pointer text-center flex justify-center'>
+                                        <input {...getInputProps()} accept='image/*' />
+                                        {
+                                            image.imageURL ?
+                                                <Image src={image.imageURL} alt="Service Image" width={100} height={100} /> :
+                                                <Caption>Drag 'n' drop or click to select a photo the best represents your service</Caption>
+                                        }
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label className='font-medium'>Service Name</Label>
+                                    <Input value={service.name} placeholder='ex. Loc Retwist' onChange={(e) => {
+                                        setService({
+                                            ...service,
+                                            name: e.target.value
+                                        })
+                                    }} />
+                                </div>
+                                <div>
+                                    <Label className='font-medium'>Base Price</Label>
+                                    <Input value={service.price.toString()} onChange={(e) => {
+                                        let temp;
+                                        if (!Number.isNaN(e.target.value)) {
+                                            temp = Number(e.target.value)
+                                            setService({
+                                                ...service,
+                                                price: temp
+                                            })
+                                        }
+                                    }} />
+                                </div>
+                                <div>
+                                    <div>
+                                        <Label className='font-medium'>Category</Label>
+                                        <Caption>Enter <span className='font-bold'>one or more</span> category that identifies with your service. Then hit <span className='font-bold'>Enter</span></Caption>
+                                    </div>
+                                    <TagsInput
+                                        value={service.categories!}
+                                        onChange={(tags: string[]) => {
+                                            setService({
+                                                ...service,
+                                                categories: tags
+                                            })
+                                        }}
+                                        name="categories"
+                                        placeHolder="Enter Category"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className='font-medium'>Description</Label>
+                                    <Textarea value={service.description} onChange={(e) => {
+                                        setService({
+                                            ...service,
+                                            description: e.target.value
+                                        })
+                                    }} />
+                                </div>
+                                <div>
+                                    <Label className='font-medium'>Duration</Label>
+                                    <Caption>Enter in minutes</Caption>
+                                    <Input value={service.length.toString()} placeholder='ex. 180' onChange={(e) => {
+                                        let temp;
+                                        if (!Number.isNaN(e.target.value)) {
+                                            temp = Number(e.target.value)
+                                            setService({
+                                                ...service,
+                                                length: temp
+                                            })
+                                        }
+                                    }} />
+                                </div>
+                                <div>
+                                    <Button.Root onClick={() => {
+                                        setAddOns([
+                                            ...addOns, {
+                                                name: "",
+                                                price: 0
+                                            }
+                                        ])
+                                    }} className='w-full' variant='soft'>
+                                        <Button.Label className='font-medium'>+ Create a service add-on</Button.Label>
+                                    </Button.Root>
+                                </div>
+                                <div>
+                                    {addOns.map((addOn, index) => {
+                                        return (
+                                            <div key={index} className='flex justify-between'>
+                                                <div>
+                                                    <Caption>Name</Caption>
+                                                    <Input placeholder='ex. Wash' className='w-1/2' value={addOn.name} onChange={(e) => {
+                                                        let clone = [...addOns]
+                                                        clone[index].name = e.target.value
+                                                        setAddOns(clone)
+                                                    }} />
+                                                </div>
+                                                <div>
+                                                    <div className='flex flex-col items-end text-left'>
+                                                        <Caption>Price</Caption>
+                                                        <div className='flex justify-end gap-2'>
+                                                            <Input placeholder='ex. 20' className='w-1/2' value={addOn.price.toString()} onChange={(e) => {
+                                                                if (!Number.isNaN(e.target.value)) {
+                                                                    let clone = [...addOns]
+                                                                    clone[index].price = Number(e.target.value)
+                                                                    setAddOns(clone)
+                                                                }
+                                                            }} />
+                                                            <Button.Root variant='outlined' intent='gray' onClick={() => {
+                                                                let clone = [...addOns]
+                                                                clone.splice(index, 1)
+                                                                setAddOns(clone)
+                                                            }}>
+                                                                <Button.Icon>
+                                                                    <X size={"xs"} />
+                                                                </Button.Icon>
+                                                            </Button.Root>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </Dialog.Description>
 
-                        <Dialog.Actions>
-                            <Dialog.Close asChild>
-                                <Button.Root variant="outlined" size="sm" intent="gray">
-                                    <Button.Label>Cancel</Button.Label>
+                            <Dialog.Actions>
+                                <Dialog.Close asChild>
+                                    <Button.Root onClick={() => {
+                                        setService({
+                                            name: "",
+                                            created_at: "",
+                                            updated_at: "",
+                                            id: "",
+                                            description: "",
+                                            price: 0,
+                                            length: 0,
+                                            addons: null,
+                                            imagePath: "",
+                                            photo_url: "",
+                                            business: user,
+                                            categories: []
+                                        })
+                                        setAddOns([])
+                                    }} variant="outlined" disabled={dataSending} size="sm" intent="gray">
+                                        <Button.Label>Cancel</Button.Label>
+                                    </Button.Root>
+                                </Dialog.Close>
+
+                                <Button.Root disabled={dataSending} onClick={handleSubmit} size="sm">
+                                    <Button.Label>{dataSending ? <CircularProgress size='sm' /> : "Create Service"}</Button.Label>
                                 </Button.Root>
-                            </Dialog.Close>
-                            <Dialog.Close asChild >
-                                <Button.Root onClick={handleSubmit} size="sm">
-                                    <Button.Label>Save Service</Button.Label>
-                                </Button.Root>
-                            </Dialog.Close>
-                        </Dialog.Actions>
-                    </Dialog.Content>
-                </Dialog.Portal>
-            </Dialog.Root>
+
+                            </Dialog.Actions>
+                        </Dialog.Content>
+                    </Dialog.Portal>
+                </Dialog.Root>
+            </div> : <></>}
         </div>
 
     )

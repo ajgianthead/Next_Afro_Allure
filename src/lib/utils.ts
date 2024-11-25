@@ -12,6 +12,9 @@ import Stripe from 'stripe';
  */
 
 import { loadStripe } from '@stripe/stripe-js';
+import { Settings } from "luxon";
+
+Settings.defaultZone = 'system'
 
 export function cloneElement(element: React.ReactElement, classNames: string) {
     return React.cloneElement(element, {

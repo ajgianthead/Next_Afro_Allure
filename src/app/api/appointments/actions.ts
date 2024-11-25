@@ -1,0 +1,90 @@
+import pool from "@utils/dbPool";
+import { checkSlots } from "app/[businessName]/actions";
+import { DateTime } from "luxon";
+import { OutputSlot } from "slot-calculator";
+
+export const bookingManual = async (businessId: string, client_metadata: any, serviceData: Service, timeSlot: {
+    start?: string;
+    end?: string;
+    appointmentLength: number;
+}
+) => {
+    const client = await pool.connect()
+    try {
+        await client.query('BEGIN');
+        // Check if timeslot is still available
+        // 1. Get availability and appointments
+        const availabilities = (await client.query(`SELECT availabilities FROM business_users bu WHERE bu.business_id = $1`, [businessId])).rows[0].availabilities
+        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows        
+        const availability = availabilities.filter((availability: any, index: number) => availability.id === "4fe7f32b-246e-4214-bccf-8fd898317363")[0]        
+       
+        let available: boolean = false
+        const availableSlots = await checkSlots(timeSlot, availability, appointments)
+        availableSlots.forEach((slot: OutputSlot, index: number) => {            
+            if(DateTime.fromISO(slot.from).equals(DateTime.fromISO(timeSlot.start!))  && DateTime.fromISO(slot.to).equals(DateTime.fromISO(timeSlot.end!))){
+                available = true
+            }
+        })      
+        if(!available){
+            throw Error("Timeslot is no longer available")
+        }
+        // Send query to supabase confirming the appointment
+        const appointment = await client.query(`INSERT INTO appointments (start, "end", business, client_metadata, status, service_data) VALUES ($1, $2, $3, $4, 'PENDING', $5) RETURNING *`, [timeSlot.start, timeSlot.end, businessId, client_metadata, serviceData])
+        await client.query('COMMIT');
+        return appointment.rows[0]
+
+    } catch (error) {
+        console.error(error)
+        await client.query('ROLLBACK')
+
+    } finally {
+        client.release();
+    }
+}
+
+
+export const businessRescheduling = async (businessId: string, appointmentID: string, timeSlot: {
+    start?: string;
+    end?: string;
+    appointmentLength: number;
+}) => {
+    // Check if appointment still exists, meaning not cancelled or denied and is confirmed
+    const client = await pool.connect()
+    try {
+        await client.query('BEGIN')
+        const availabilities = (await client.query(`SELECT availabilities FROM business_users bu WHERE bu.business_id = $1`, [businessId])).rows[0].availabilities
+        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows        
+        const availability = availabilities.filter((availability: any, index: number) => availability.id === "4fe7f32b-246e-4214-bccf-8fd898317363")[0]
+        const appointment: Appointment = appointments.find((value: Appointment, index: number) => value.id === appointmentID)
+        if(!appointment){
+            throw new Error("Appointment doesn't exist")
+        }
+        if(appointment.status !== "CONFIRMED"){
+            if(appointment.status === "PENDING"){
+                throw Error("Appointment is pending confirmation from client")
+            }else{
+                throw Error(`Appointment has been ${appointment.status}`)
+            }
+        }
+        // If appointment exists and is confirmed
+        let available: boolean = false
+        const availableSlots = await checkSlots(timeSlot, availability, appointments)
+        availableSlots.forEach((slot: OutputSlot, index: number) => {            
+            if(DateTime.fromISO(slot.from).equals(DateTime.fromISO(timeSlot.start!))  && DateTime.fromISO(slot.to).equals(DateTime.fromISO(timeSlot.end!))){
+                available = true
+            }
+        })      
+        if(!available){
+            throw Error("Timeslot is no longer available")
+        }
+        // Send query to supabase confirming the appointment
+        const res = await client.query(`UPDATE appointments SET start = $1, "end" = $2 WHERE id = $3 updated_at = $4 RETURNING *`, [timeSlot.start, timeSlot.end, appointmentID, Date.now()])
+        await client.query('COMMIT');
+        return res.rows[0]
+    } catch (error) {
+        console.error(error)
+        await client.query('ROLLBACK')
+    } finally {
+        client.release()
+    }
+}

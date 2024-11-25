@@ -65,6 +65,8 @@ export default function page() {
             }
         }
         const getPolicies = async (data: any) => {
+            console.log(data);
+
             const response = await fetch(`http://localhost:3000/api/policies/${data.business}`, {
                 method: "GET",
             });
@@ -79,8 +81,8 @@ export default function page() {
             }
         }
         fetchAppointment().then((appointment) => {
-            if (appointment.status === "PENDING") {
-                setCompleted(false)
+            if (appointment.status === "ACCEPTED") {
+                setCompleted(true)
             } else {
                 getPolicies(appointment).then((policies) => {
                     if (policies.deposit.enabled) {

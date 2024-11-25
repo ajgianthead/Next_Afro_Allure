@@ -17,7 +17,7 @@ export type Database = {
           created_at: string
           end: string
           id: string
-          service: Json
+          service_data: Json | null
           start: string
           status: Database["public"]["Enums"]["status"]
           updated_at: string
@@ -29,7 +29,7 @@ export type Database = {
           created_at?: string
           end: string
           id?: string
-          service: Json
+          service_data?: Json | null
           start: string
           status?: Database["public"]["Enums"]["status"]
           updated_at?: string
@@ -41,7 +41,7 @@ export type Database = {
           created_at?: string
           end?: string
           id?: string
-          service?: Json
+          service_data?: Json | null
           start?: string
           status?: Database["public"]["Enums"]["status"]
           updated_at?: string
@@ -50,16 +50,9 @@ export type Database = {
           {
             foreignKeyName: "appointments_business_fkey"
             columns: ["business"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "business_users"
             referencedColumns: ["business_id"]
-          },
-          {
-            foreignKeyName: "appointments_client_fkey"
-            columns: ["client"]
-            isOneToOne: true
-            referencedRelation: "client_users"
-            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -294,7 +287,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      status: "PENDING" | "ACCEPTED" | "DENIED"
+      status: "PENDING" | "CONFIRMED" | "DENIED" | "CANCELLED" | "COMPLETED"
     }
     CompositeTypes: {
       [_ in never]: never
