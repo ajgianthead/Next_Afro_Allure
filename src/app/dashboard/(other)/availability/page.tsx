@@ -97,8 +97,9 @@ export default function page() {
                 method: 'GET'
             })
             const result = await res.json()
-            const availabilities = result.result;
-            setAvailabilities(availabilities)
+            const availabilities = result;
+            console.log(availabilities)
+            setAvailabilities(availabilities.result === null ? [] : availabilities.result)
         }
         if (user.business_id) {
             (async () => {
@@ -128,7 +129,7 @@ export default function page() {
             setDates(Object.keys(newObj.specificDates))
         }
     }
-    const [availabilities, setAvailabilities] = useState<any>(null)
+    const [availabilities, setAvailabilities] = useState<any>([])
     // Send availabilities to API
     // 
     // 
@@ -388,7 +389,7 @@ export default function page() {
             <Separator orientation='horizontal' className='my-2' />
             {/* Map through availabilities */}
             <div className='flex flex-wrap gap-2 w-full'>
-                {availabilities ? availabilities.map((element: any, index: number) => {
+                {availabilities.length ? availabilities.map((element: any, index: number) => {
                     return (
                         <div className='w-1/5' onClick={() => {
                             handleEdit(index)

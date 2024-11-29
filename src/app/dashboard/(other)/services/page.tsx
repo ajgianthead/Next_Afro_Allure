@@ -60,7 +60,7 @@ export default function page() {
     const [open, setOpen] = useState(false);
     return (
         <div className='px-6'>
-            <CreateServiceDialog services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={businessID} />
+            <CreateServiceDialog services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={user.business_id} />
             <EditServiceDialog services={services} setServices={setServices} open={isEditing} setIsOpen={setIsEditing} oldService={service} user={user} index={currIndex} />
             <div className="flex justify-between items-center mt-3">
                 <Title>Services</Title>
@@ -140,7 +140,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
             ...service,
             business: user
         })
-        console.log(services);
+        console.log(user);
 
         if (services.length) {
             let newArr: Array<string> = [];
@@ -185,14 +185,14 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
             clone.addons = [...addOns]
 
         }
-        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services`, {
+        const res = await fetch(`http://localhost:3000/api/${user}/services`, {
             method: 'POST',
             body: JSON.stringify(image.imageBlob ? clone : service)
         })
         const dataBack = await res.json();
         setServices([
             ...services,
-            dataBack
+            dataBack.data
         ])
         setImage({
             imageURL: null,
@@ -646,6 +646,7 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
 
 // Individual Service Dialog + Edit and Delete Functionality
 const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService }: any) => {
+
     return (
         <div className='w-[250px]' key={index}>
             <Card variant="outlined" className='py-4 flex flex-col gap-1'>

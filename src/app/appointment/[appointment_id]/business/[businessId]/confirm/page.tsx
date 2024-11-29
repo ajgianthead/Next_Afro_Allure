@@ -81,7 +81,7 @@ export default function page() {
             }
         }
         fetchAppointment().then((appointment) => {
-            if (appointment.status === "ACCEPTED") {
+            if (appointment.status === "CONFIRMED") {
                 setCompleted(true)
             } else {
                 getPolicies(appointment).then((policies) => {
@@ -104,7 +104,7 @@ export default function page() {
                 id: appointment_id,
                 start: appointmentData.start,
                 end: appointmentData.end,
-                status: "ACCEPTED"
+                status: "CONFIRMED"
             })
         });
         if (!response.ok) {

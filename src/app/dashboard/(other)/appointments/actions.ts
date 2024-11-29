@@ -1,7 +1,34 @@
+'use server'
+
 import pool from "@utils/dbPool";
 import { checkSlots } from "app/[businessName]/actions";
 import { DateTime } from "luxon";
 import { OutputSlot } from "slot-calculator";
+
+export const manuallyCancel = async (businessId: string, appointmentID: string) => {
+    // Make sure appointment exists and isn't CANCELLED
+    const client = await pool.connect()
+    try {
+        await client.query('BEGIN')
+        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows        
+        const appointment: Appointment = appointments.find((value: Appointment, index: number) => value.id === appointmentID)
+        if(!appointment){
+            throw new Error("Appointment doesn't exist")
+        }
+        if(appointment.status === "CANCELLED"){
+            throw new Error("Appointment has already been cancelled")
+        }
+        const res = await client.query(`UPDATE appointments SET status = 'CANCELLED' WHERE id = $1 RETURNING *`, [appointmentID])
+        await client.query('COMMIT');
+        return res.rows[0]
+    } catch (error: any) {
+        console.error(error)
+        await client.query('ROLLBACK')
+    } finally {
+        client.release()
+    }
+
+}
 
 export const bookingManual = async (businessId: string, client_metadata: any, serviceData: Service, timeSlot: {
     start?: string;
@@ -43,11 +70,11 @@ export const bookingManual = async (businessId: string, client_metadata: any, se
 }
 
 
-export const businessRescheduling = async (businessId: string, appointmentID: string, timeSlot: {
+export const businessRescheduling = async (businessId: string, service_data: Service, client_metadata: any, appointmentID: string, timeSlot: {
     start?: string;
     end?: string;
     appointmentLength: number;
-}) => {
+}, resolved: boolean) => {
     // Check if appointment still exists, meaning not cancelled or denied and is confirmed
     const client = await pool.connect()
     try {
@@ -66,22 +93,27 @@ export const businessRescheduling = async (businessId: string, appointmentID: st
                 throw Error(`Appointment has been ${appointment.status}`)
             }
         }
-        // If appointment exists and is confirmed
-        let available: boolean = false
-        const availableSlots = await checkSlots(timeSlot, availability, appointments)
-        availableSlots.forEach((slot: OutputSlot, index: number) => {            
-            if(DateTime.fromISO(slot.from).equals(DateTime.fromISO(timeSlot.start!))  && DateTime.fromISO(slot.to).equals(DateTime.fromISO(timeSlot.end!))){
-                available = true
+        // Run through appointments and to see if they're any conflicts
+        for(let i = 0; i < appointments.length; i++){
+            if(appointments[i].id === appointmentID){
+                continue;
             }
-        })      
-        if(!available){
-            throw Error("Timeslot is no longer available")
+            //    [-------]
+            // [------]  
+            let conflictOne = DateTime.fromISO(timeSlot.start!) < DateTime.fromISO(appointments[i].start) && DateTime.fromISO(timeSlot.end!) > DateTime.fromISO(appointments[i].start)
+            // [--------]
+            //     [-------]
+            let conflictTwo = DateTime.fromISO(timeSlot.start!) > DateTime.fromISO(appointments[i].start) && DateTime.fromISO(timeSlot.start!) < DateTime.fromISO(appointments[i].end)
+            let conflictThree = DateTime.fromISO(timeSlot.start!).equals(DateTime.fromISO(appointments[i].start)) && DateTime.fromISO(timeSlot.end!).equals(DateTime.fromISO(appointments[i].end))
+            if(conflictOne || conflictTwo || conflictThree){
+                throw Error("Conflict")
+            }
         }
         // Send query to supabase confirming the appointment
-        const res = await client.query(`UPDATE appointments SET start = $1, "end" = $2 WHERE id = $3 updated_at = $4 RETURNING *`, [timeSlot.start, timeSlot.end, appointmentID, Date.now()])
+        const res = await client.query(`UPDATE appointments SET start = $1, "end" = $2, updated_at = $3, service_data = $4, client_metadata = $5 WHERE id = $6 RETURNING *`, [timeSlot.start, timeSlot.end, new Date().toISOString(), service_data, client_metadata, appointmentID])
         await client.query('COMMIT');
         return res.rows[0]
-    } catch (error) {
+    } catch (error: any) {
         console.error(error)
         await client.query('ROLLBACK')
     } finally {

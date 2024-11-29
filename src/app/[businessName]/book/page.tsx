@@ -28,6 +28,7 @@ import Dialog from '@components/Dialog';
 import { Elements, EmbeddedCheckout, EmbeddedCheckoutProvider, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { BookingData, BookingWrapper, useBooking } from '@utils/context/BookingDataContext';
+import { QueryResult } from 'pg';
 
 export default function page() {
     const params = useParams();
@@ -107,8 +108,7 @@ const Book = () => {
                         <Button.Label>Next</Button.Label>
                     </Button.Root> : <Button.Root onClick={async () => {
                         const selectedServiceData = data.services.filter((service: Service, index: number) => service.id === data.selectedService)
-                        const appointment = await bookAppointment(data.business_id, data.booking_policy.id, data.selectedService, data.clientInfo, { ...data.selectedDateTime, appointmentLength: selectedServiceData[0].length }, null, null)
-                        console.log(appointment);
+                        //const appointment = await bookAppointment(data.business_id, data.booking_policy.id, data.selectedService, data.clientInfo, { ...data.selectedDateTime, appointmentLength: selectedServiceData[0].length }, null, null)
 
                     }}>
                         <Button.Label>Book Appointment</Button.Label>
@@ -124,6 +124,7 @@ const Book = () => {
 const DepositPayment = () => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
+    const [id, setID] = useState<string>("")
     const selectedServiceData = data.services.filter((service: Service, index: number) => service.id === data.selectedService)
     useEffect(() => {
         const fetchSession = async () => {
@@ -143,6 +144,8 @@ const DepositPayment = () => {
                 const val = await response.json();
                 console.log(val.clientSecret);
                 const clientSecret = val.clientSecret;
+                const paymentIntentId = val.id;
+                setID(paymentIntentId)
                 const opt = { clientSecret }
                 setData({
                     ...data,
@@ -161,19 +164,19 @@ const DepositPayment = () => {
     return (
         <div>
             {
-                data.options && promise ? <Elements
+                data.options && promise && id.length > 0 ? <Elements
                     stripe={promise}
                     options={data.options}
 
                 >
-                    <CheckoutForm service={selectedServiceData[0]} />
+                    <CheckoutForm service={selectedServiceData[0]} paymentIntentID={id} />
                 </Elements> : <div> Something went wrong</div>
             }
         </div>
     )
 }
 
-const CheckoutForm = async (service: any) => {
+const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentIntentID: string }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const elements = useElements();
     const stripe = useStripe();
@@ -182,7 +185,36 @@ const CheckoutForm = async (service: any) => {
         if (!stripe || !elements) {
             return;
         }
-        await bookAppointment(data.business_id, data.booking_policy.id, data.selectedService, data.clientInfo, { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length }, elements, stripe)
+        // const res = await fetch('http://localhost:3000/api/bookingAuto', {
+        //     method: 'POST',
+        //     body: JSON.stringify({
+        //         paymentIntentID: paymentIntentID,
+        //         businessId: data.business_id,
+        //         policyId: data.booking_policy.id,
+        //         serviceId: data.selectedService,
+        //         client_metadata: data.clientInfo,
+        //         timeSlot: { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length },
+        //         elements: elements,
+        //         stripe: stripe
+        //     })
+        // })
+        // const result = await res.json();
+        // console.log(result.appointment);
+
+        await bookAppointment(paymentIntentID, data.business_id, data.booking_policy.id, service, data.clientInfo, { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length }).then(async (appointment: any) => {
+            console.log(appointment)
+            const { error } = await stripe?.confirmPayment({
+                //`Elements` instance that was used to create the Payment Element
+                elements,
+                confirmParams: {
+                    return_url: `http://localhost:3000/appointment/${appointment.id}/${data.stripe_id}/complete`,
+
+                },
+            })!;
+            if (error) {
+                throw Error(error.message)
+            }
+        })
     }
     return (
         <form onSubmit={handleSubmit}>
@@ -291,10 +323,13 @@ const DateTimePicker = () => {
                     const fetchedSlots = res[DateTime.fromISO(data.selectedDateTime.start!).toISODate()!]
                     setCurrSlots(fetchedSlots)
                 }
-                setIsLoading(false)
+
             }
+            setIsLoading(false)
         }
-        initialize()
+        (async () => {
+            await initialize()
+        })()
     }, [data.availabilities, data.appointments]);
 
     const handleMonthChange = async (month: DateTime<boolean>) => {

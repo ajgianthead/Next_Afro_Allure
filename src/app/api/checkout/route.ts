@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
         }, {
             stripeAccount: connectedAccountId
         });
-        return new NextResponse(JSON.stringify({ clientSecret: paymentIntent.client_secret }), {
+        return new NextResponse(JSON.stringify({ clientSecret: paymentIntent.client_secret, id: paymentIntent.id }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200
         })

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
             business: business,
             categories: categories
         }
-    ]).select();
+    ]).select().single();
     if (error) {
         return new NextResponse(JSON.stringify({ error: error }), {
             headers: { 'Content-Type': 'application/json' },
