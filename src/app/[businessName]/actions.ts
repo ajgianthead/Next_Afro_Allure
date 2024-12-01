@@ -14,7 +14,7 @@ import { getSlots, OutputSlot } from "slot-calculator";
 }, availability: any, appointments: any) => {    
     const beginDay = DateTime.fromISO(timeSlot.start!).startOf('day').toISO()!
     const endDay = DateTime.fromISO(timeSlot.end!).endOf('day').toISO()!
-    const formattedAv = availability.length > 0 ? await getAvailability(beginDay, endDay, availability) : []
+    const formattedAv = await getAvailability(beginDay, endDay, availability)
     const formattedUnav = await getUnavailability(beginDay, endDay, appointments)
     
     const {availableSlots} = getSlots({
@@ -23,7 +23,9 @@ import { getSlots, OutputSlot } from "slot-calculator";
         duration: timeSlot.appointmentLength!,
         availability: formattedAv,
         unavailability: formattedUnav
-    })        
+    })
+    console.log(availableSlots);
+      
     return availableSlots
 }
 
@@ -69,24 +71,26 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
         await client.query('BEGIN');
         // Check if timeslot is still available
         // 1. Get availability and appointments
-        const availability = (await client.query(`SELECT availability FROM business_users bu WHERE bu.business_id = ${businessId}`)).rows[0]
-        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = ${businessId}`)).rows[0]
-       
+        const availabilities = (await client.query(`SELECT availabilities FROM business_users bu WHERE bu.business_id = $1`, [businessId])).rows[0].availabilities
+        const availability = availabilities.filter((availability: any, index: number) => availability.id === "e69f4e31-6648-4be5-8577-bb004333a332")[0]
+        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows 
         let available: boolean = false
         const availableSlots = await checkSlots(timeSlot, availability, appointments)
-        availableSlots.forEach((slot: OutputSlot, index: number) => {
-            if(slot.from === timeSlot.start && slot.to === timeSlot.end){
+        availableSlots.forEach((slot: OutputSlot, index: number) => {            
+            if(DateTime.fromISO(slot.from).equals(DateTime.fromISO(timeSlot.start!)) && DateTime.fromISO(slot.to).equals(DateTime.fromISO(timeSlot.end!))){
                 available = true
             }
-        })
+        })  
         if(!available){
             throw Error("Timeslot is no longer available")
         }
-        // UPDATE appointment timeslot
-        const appointment = await client.query(`UPDATE appointments SET start = $1, "end" = $2 WHERE id = $3 RETURNING *`, [timeSlot.start, timeSlot.end, appointmentID])
+        console.log('works');
         
+        // UPDATE appointment timeslot
+        const appointment = await client.query(`UPDATE appointments SET start = $1, "end" = $2 WHERE id = $3 RETURNING *`, [timeSlot.start, timeSlot.end, appointmentID])        
         return appointment.rows[0]
-    }catch (error) {
+    }catch (error: any) {
+        console.log(error.message);
         await client.query('ROLLBACK')
     } finally {
         client.release();
@@ -108,17 +112,17 @@ export const bookAppointment = async (paymentIntentID: string, businessId: strin
         const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows        
         const availability = availabilities.filter((availability: any, index: number) => availability.id === "e69f4e31-6648-4be5-8577-bb004333a332")[0]        
 
-        // let available: boolean = false
-        // const availableSlots = await checkSlots(timeSlot, availability, appointments)
+        let available: boolean = false
+        const availableSlots = await checkSlots(timeSlot, availability, appointments)
 
-        // availableSlots.forEach((slot: OutputSlot, index: number) => {            
-        //     if(DateTime.fromISO(slot.from).equals(DateTime.fromISO(timeSlot.start!))  && DateTime.fromISO(slot.to).equals(DateTime.fromISO(timeSlot.end!))){
-        //         available = true
-        //     }
-        // })      
-        // if(!available){
-        //     throw Error("Timeslot is no longer available")
-        // }
+        availableSlots.forEach((slot: OutputSlot, index: number) => {            
+            if(DateTime.fromISO(slot.from).equals(DateTime.fromISO(timeSlot.start!)) && DateTime.fromISO(slot.to).equals(DateTime.fromISO(timeSlot.end!))){
+                available = true
+            }
+        })      
+        if(!available){
+            throw Error("Timeslot is no longer available")
+        }
 
         // 2. 
         // Check if policy and service has changed since the user first loaded the page

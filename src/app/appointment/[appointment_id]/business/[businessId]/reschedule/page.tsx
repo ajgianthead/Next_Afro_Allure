@@ -8,7 +8,7 @@ import Button from '@tailus-ui/Button'
 import Card from '@tailus-ui/Card'
 import { Title } from '@tailus-ui/typography'
 import { BookingData, useBooking } from '@utils/context/BookingDataContext'
-import { getAvailability, getUnavailability } from 'app/[businessName]/actions'
+import { getAvailability, getUnavailability, rescheduleAppointment } from 'app/[businessName]/actions'
 import { TimeSlot } from 'app/[businessName]/book/page'
 import { DateTime } from 'luxon'
 import { useParams } from 'next/navigation'
@@ -24,14 +24,20 @@ export default function page() {
     const [availability, setAvailability] = useState<null | any>({});
     const [appointments, setAppointments] = useState<any[]>([])
 
-    const getData = async (startDate: string, endDate: string, availability: any, appointments: any) => {
+    const getData = async (startDate: string, endDate: string, availability: any, appointments: any[]) => {
         // Get availability id for server actions
+        const appointment = appointments.filter((appointment: Appointment, index: number) => appointment.id === appointment_id)[0]
+        setAppointment(appointment)
+        setSelectedDateTime({
+            start: DateTime.fromJSDate(new Date(appointment.start)).toISO()!,
+            end: DateTime.fromJSDate(new Date(appointment.end)).toISO()!
+        })
         const formattedAvailability = await getAvailability(startDate, endDate, availability)
         const formattedUnavailability = await getUnavailability(startDate, endDate, appointments!)
         const { availableSlotsByDay } = getSlots({
             from: startDate,
             to: endDate,
-            duration: 180, // Needs to be thought about
+            duration: appointment.service_data.length, // Needs to be thought about
             availability: formattedAvailability,
             unavailability: formattedUnavailability
         })
@@ -40,7 +46,10 @@ export default function page() {
     const [selectedDateTime, setSelectedDateTime] = useState<{
         start: string;
         end: string;
-    } | any>({});
+    }>({
+        start: "",
+        end: ""
+    });
     const [ogAppointment, setOGAppointment] = useState<{
         start: string;
         end: string;
@@ -51,22 +60,6 @@ export default function page() {
     const [appointment, setAppointment] = useState<any>({});
 
     useEffect(() => {
-        const fetchAppointment = async () => {
-            const res = await fetch(`http://localhost:3000/api/appointments/${appointment_id}`, {
-                method: 'GET'
-            })
-            const result = await res.json();
-            const appointment = result.appointment
-            setAppointment(appointment)
-            setSelectedDateTime({
-                start: DateTime.fromJSDate(new Date(appointment.start)).toUTC().toISO(),
-                end: DateTime.fromJSDate(new Date(appointment.end)).toUTC().toISO()
-            })
-            if (appointment === "This appointment doesn't exist") {
-                return false
-            }
-            return true
-        }
         const fetchData = async () => {
             const res = await fetch(`http://localhost:3000/api/${businessId}/availabilities`, {
                 method: 'GET'
@@ -85,22 +78,20 @@ export default function page() {
             }
         }
         const initialize = async (availability: any, appointments: any) => {
-            const startDate = DateTime.now().toUTC().startOf("day").toISO()
-            const endDate = DateTime.now().toUTC().endOf("month").toISO()
+            const startDate = DateTime.now().startOf("day").toISO()
+            const endDate = DateTime.now().endOf("month").toISO()
             await getData(startDate, endDate, availability, appointments)
             setIsLoading(false)
 
 
         }
         const start = async () => {
-            if (Object.keys(appointment).length > 0 || await fetchAppointment()) {
-                if (!Object.keys(availability).length || !appointments?.length) {
-                    fetchData().then(async ({ availability, appointments }) => {
-                        await initialize(availability, appointments)
-                        setAvailability(availability)
-                        setAppointments(appointments)
-                    })
-                }
+            if (!Object.keys(availability).length || !appointments?.length) {
+                fetchData().then(async ({ availability, appointments }) => {
+                    await initialize(availability, appointments)
+                    setAvailability(availability)
+                    setAppointments(appointments)
+                })
             }
         }
         start()
@@ -113,11 +104,11 @@ export default function page() {
             let startDate = ""
             let endDate = ""
             if (month.month === DateTime.now().month) {
-                startDate = DateTime.now().toUTC().startOf("day").toISO()!
+                startDate = DateTime.now().startOf("day").toISO()!
             } else {
-                startDate = month.toUTC().toISO()!
+                startDate = month.toISO()!
             }
-            endDate = month.toUTC().endOf("month").toISO()!
+            endDate = month.endOf("month").toISO()!
             await getData(startDate, endDate, availability, appointments)
             setIsLoading(false)
         }
@@ -151,14 +142,14 @@ export default function page() {
                                             end: slot.to
                                         }
                                         setSelectedDateTime(selected)
-                                        if (DateTime.fromJSDate(new Date(appointment.start)).toUTC().toISO() === selected.start && DateTime.fromJSDate(new Date(appointment.end)).toUTC().toISO() === selected.end) {
+                                        if (DateTime.fromJSDate(new Date(appointment.start)).toISO() === selected.start && DateTime.fromJSDate(new Date(appointment.end)).toISO() === selected.end) {
                                             setIsDisabled(true)
                                         } else {
                                             setIsDisabled(false)
                                         }
                                     }}>
                                         <div style={{ borderWidth: slot.from !== selectedDateTime.start && slot.to !== selectedDateTime.end ? 1 : 3 }} className='text-sm font-medium border-primary-500 bg-primary-100 px-3 cursor-pointer py-2 rounded-md'>
-                                            {DateTime.fromISO(slot.from).toUTC().toLocaleString(DateTime.TIME_SIMPLE)}
+                                            {DateTime.fromISO(slot.from).toLocaleString(DateTime.TIME_SIMPLE)}
                                         </div>
                                     </div>
                                 )
@@ -167,7 +158,15 @@ export default function page() {
                     </div>
                 </Card>
                 <div className='w-full mt-10 px-20 flex justify-end items-end'>
-                    <Button.Root disabled={isDisabled}>
+                    <Button.Root disabled={isDisabled} onClick={async () => {
+                        const res = await rescheduleAppointment(appointment_id, {
+                            start: selectedDateTime.start,
+                            end: selectedDateTime.end,
+                            appointmentLength: appointment.service_data.length
+                        }, businessId)
+                        console.log(res);
+
+                    }}>
                         <Button.Label>Reschedule</Button.Label>
                     </Button.Root>
                 </div>
