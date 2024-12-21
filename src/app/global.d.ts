@@ -5,4 +5,5 @@ declare global {
     type Appointment = Database['public']['Tables']['appointments']['Row']
     type Client = Database['public']['Tables']['client_users']['Row']
     type Business = Database['public']['Tables']['business_users']['Row']
+    type Policy = Database['public']['Tables']['business_policies']['Row']
 }

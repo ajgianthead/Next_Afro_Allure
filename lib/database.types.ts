@@ -15,8 +15,13 @@ export type Database = {
           client: string | null
           client_metadata: Json | null
           created_at: string
+          deposit_charge_id: string | null
           end: string
           id: string
+          paid_deposit: boolean
+          policy_id: string | null
+          require_deposit: boolean
+          reschedules: number
           service_data: Json | null
           start: string
           status: Database["public"]["Enums"]["status"]
@@ -27,8 +32,13 @@ export type Database = {
           client?: string | null
           client_metadata?: Json | null
           created_at?: string
+          deposit_charge_id?: string | null
           end: string
           id?: string
+          paid_deposit?: boolean
+          policy_id?: string | null
+          require_deposit?: boolean
+          reschedules?: number
           service_data?: Json | null
           start: string
           status?: Database["public"]["Enums"]["status"]
@@ -39,8 +49,13 @@ export type Database = {
           client?: string | null
           client_metadata?: Json | null
           created_at?: string
+          deposit_charge_id?: string | null
           end?: string
           id?: string
+          paid_deposit?: boolean
+          policy_id?: string | null
+          require_deposit?: boolean
+          reschedules?: number
           service_data?: Json | null
           start?: string
           status?: Database["public"]["Enums"]["status"]
@@ -161,6 +176,7 @@ export type Database = {
           is_onboarded: boolean
           stripe_acc_id: string | null
           updated_at: string
+          url_name: string
           user_id: string
         }
         Insert: {
@@ -175,6 +191,7 @@ export type Database = {
           is_onboarded?: boolean
           stripe_acc_id?: string | null
           updated_at?: string
+          url_name?: string
           user_id?: string
         }
         Update: {
@@ -189,6 +206,7 @@ export type Database = {
           is_onboarded?: boolean
           stripe_acc_id?: string | null
           updated_at?: string
+          url_name?: string
           user_id?: string
         }
         Relationships: []

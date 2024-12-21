@@ -85,9 +85,10 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
             throw Error("Timeslot is no longer available")
         }
         console.log('works');
+        const ogAppointment = appointments.filter((appointment: Appointment, index: number) => appointment.id === appointmentID)[0]
         
         // UPDATE appointment timeslot
-        const appointment = await client.query(`UPDATE appointments SET start = $1, "end" = $2 WHERE id = $3 RETURNING *`, [timeSlot.start, timeSlot.end, appointmentID])        
+        const appointment = await client.query(`UPDATE appointments SET start = $1, "end" = $2, reschedules = $3 WHERE id = $4 RETURNING *`, [timeSlot.start, timeSlot.end, ogAppointment.reschedules + 1, appointmentID])        
         return appointment.rows[0]
     }catch (error: any) {
         console.log(error.message);

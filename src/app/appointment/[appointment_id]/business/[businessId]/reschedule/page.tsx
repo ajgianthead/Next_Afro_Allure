@@ -27,6 +27,11 @@ export default function page() {
     const getData = async (startDate: string, endDate: string, availability: any, appointments: any[]) => {
         // Get availability id for server actions
         const appointment = appointments.filter((appointment: Appointment, index: number) => appointment.id === appointment_id)[0]
+        // Check if reschedules is at its reschedule limit
+        //
+        //
+        //
+        //
         setAppointment(appointment)
         setSelectedDateTime({
             start: DateTime.fromJSDate(new Date(appointment.start)).toISO()!,

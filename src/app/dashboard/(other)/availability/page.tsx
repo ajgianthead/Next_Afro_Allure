@@ -20,6 +20,8 @@ import { CheckedState } from '@radix-ui/react-checkbox'
 import { Calendar } from "react-multi-date-picker"
 import { useUserContext } from '@utils/context/UserContext'
 import CircularProgress from '@mui/joy/CircularProgress'
+import Tooltip from '@tailus-ui/Tooltip'
+import Toast from '@components/Toast'
 
 
 const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -151,7 +153,11 @@ export default function page() {
                 }
             );
             const res = await result.json()
-            console.log(res);
+            setConfirmationData({
+                title: "Confirmation",
+                description: "Availability Created"
+            })
+            setConfirmation(true)
         } else {
             if (index != undefined) {
                 let clone = [...availabilities]
@@ -169,9 +175,13 @@ export default function page() {
                     }
                 );
                 const res = await result.json()
-                console.log(res);
             }
             setisEditing(false)
+            setConfirmationData({
+                title: "Confirmation",
+                description: "Availability Updated"
+            })
+            setConfirmation(true)
         }
         setAvailability(defaultAvailability)
     }
@@ -202,15 +212,28 @@ export default function page() {
             }
         );
         const res = await result.json()
-        console.log(res);
+        setConfirmationData({
+            title: "Confirmation",
+            description: "Availability Deleted"
+        })
+        setConfirmation(true)
     }
+    const [tooltip, setTooltip] = useState<boolean>(false)
+    const [confirmation, setConfirmation] = useState<boolean>(false)
+    const [confirmationData, setConfirmationData] = useState<{
+        title: string;
+        description: string;
+    }>({
+        title: "",
+        description: "",
+    })
     return (
         <div className='px-6'>
             <Dialog.Root open={openCreate} onOpenChange={setOpenCreate}>
                 <Dialog.Portal>
                     <Dialog.Overlay className='z-40' />
                     <Dialog.Content className="max-w-7xl z-50 overflow-y-scroll">
-                        <Dialog.Title>Create Availability</Dialog.Title>
+                        <Dialog.Title>{isEditing ? "Edit" : "Create"} Availability</Dialog.Title>
                         <Caption>Enter your availability</Caption>
                         <Dialog.Description className=''>
                             <Input value={availability.name} onChange={(e) => {
@@ -362,15 +385,38 @@ export default function page() {
                             <Dialog.Close asChild>
                                 <Button.Root onClick={() => {
                                     setAvailability(defaultAvailability)
+                                    setisEditing(false)
                                 }} variant="outlined" size="sm" intent="gray">
                                     <Button.Label>Cancel</Button.Label>
                                 </Button.Root>
                             </Dialog.Close>
+                            {isEditing ? <Dialog.Close asChild>
+                                <Tooltip.Provider>
+                                    <Tooltip.Root open={tooltip} onOpenChange={availabilities.length > 1 ? () => { } : () => { setTooltip(!tooltip) }} delayDuration={100}>
+                                        <Tooltip.Trigger asChild>
+                                            <Button.Root disabled={availabilities.length === 1} onClick={async () => {
+                                                await handleDelete(currEditIndex!)
+                                                setAvailability(defaultAvailability)
+                                                setisEditing(false)
+                                                setOpenCreate(false)
+                                            }} variant="soft" size="sm" intent="danger">
+                                                <Button.Label>Delete Availability</Button.Label>
+                                            </Button.Root>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Portal>
+                                            <Tooltip.Content className='z-50'>
+                                                Can't delete your only availability
+                                            </Tooltip.Content>
+                                        </Tooltip.Portal>
+                                    </Tooltip.Root>
+                                </Tooltip.Provider>
+
+                            </Dialog.Close> : <></>}
                             <Dialog.Close asChild >
                                 <Button.Root onClick={() => {
-                                    uploadAvailability(isEditing, currEditIndex)
+                                    isEditing ? uploadAvailability(isEditing, currEditIndex) : uploadAvailability(isEditing)
                                 }} size="sm">
-                                    <Button.Label>Upload Availability</Button.Label>
+                                    <Button.Label>{isEditing ? "Save Changes" : "Upload Availability"}</Button.Label>
                                 </Button.Root>
                             </Dialog.Close>
                         </Dialog.Actions>
@@ -382,6 +428,7 @@ export default function page() {
                 <Input placeholder='Search availability by name' className='' />
                 <Button.Root className='ml-30 min-w-36' onClick={() => {
                     setOpenCreate(true)
+                    setAvailability(defaultAvailability)
                 }}>
                     <Button.Label>+ Create New</Button.Label>
                 </Button.Root>
@@ -408,6 +455,15 @@ export default function page() {
                     <CircularProgress size='sm' />
                 </div>}
             </div>
+            <Toast.Provider>
+                <Toast.Root open={confirmation} onOpenChange={setConfirmation}>
+                    <Toast.Title>{confirmationData.title}</Toast.Title>
+                    <Toast.Description>{confirmationData.description}</Toast.Description>
+                    <Toast.Close />
+                </Toast.Root>
+
+                <Toast.Viewport />
+            </Toast.Provider>
         </div>
     )
 }

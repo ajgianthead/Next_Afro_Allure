@@ -114,6 +114,8 @@ const Page = () => {
     const createAppointment = async () => {
         if (slotInfo?.start && slotInfo.end) {
             const service = services.filter((data: any, index: number) => data.id === selectedService)[0]
+            console.log(policy);
+
             const appointment: Appointment = {
                 id: "",
                 created_at: "",
@@ -124,7 +126,12 @@ const Page = () => {
                 end: slotInfo.end.toISO() || "",
                 client_metadata: clientInformation,
                 status: "PENDING",
-                service_data: { ...service }
+                service_data: { ...service },
+                require_deposit: depositRequired,
+                paid_deposit: false,
+                policy_id: policy.id,
+                deposit_charge_id: "",
+                reschedules: policy.reschedule_limit
             }
             const res = await fetch(`http://localhost:3000/api/appointments`, {
                 method: 'POST',
@@ -179,7 +186,7 @@ const Page = () => {
         email: "",
         phoneNumber: ""
     })
-    const [depositRequired, setDepositRequired] = useState<boolean>()
+    const [depositRequired, setDepositRequired] = useState<boolean>(policy ? policy.deposit.enabled : false)
     const [view, setView] = useState<View>("week")
     const onView = useCallback((newView: View) => setView(newView), [setView])
     const [open, setOpen] = useState<boolean>(false)
@@ -391,7 +398,6 @@ const EditAppointment = ({ setAppointments, appointments, id, slotInfo, isOpen, 
     }, service_data: Service, services: Service[], appointments: any, id: number, setAppointments: any
 }) => {
     const [clientInformation, setClientInformation] = useState({ ...client_metadata })
-    console.log(slotInfo);
     const [date, setDate] = useState<DateTime>(DateTime.fromJSDate(slotInfo.start))
     const handleDateChange = (value: DateTime) => {
         setDate(value)

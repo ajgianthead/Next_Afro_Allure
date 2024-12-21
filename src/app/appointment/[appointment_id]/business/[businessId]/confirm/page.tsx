@@ -1,16 +1,19 @@
 "use client"
 
-import { loadStripe } from '@stripe/stripe-js'
+import { loadStripe, Stripe } from '@stripe/stripe-js'
 import Card from '@tailus-ui/Card'
 import { Caption, Text, Title } from '@tailus-ui/typography'
 import React, { useEffect, useState } from 'react'
 import {
     EmbeddedCheckoutProvider,
-    EmbeddedCheckout
+    EmbeddedCheckout,
+    Elements,
+    PaymentElement
 } from '@stripe/react-stripe-js';
 import { CircleCheckBig } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import CircularProgress from '@mui/joy/CircularProgress'
+import Button from '@tailus-ui/Button'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
     stripeAccount: "acct_1Q6tUcFpD7KoueRC",
@@ -24,6 +27,7 @@ export default function page() {
     const { appointment_id } = useParams<{ appointment_id: string }>()
     const [policies, setPolicies] = useState<any>();
     const [appointmentData, setAppointmentData] = useState<any>({})
+    const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     useEffect(() => {
         // Fetch appointment data with appointmentID, when use businessID
         // that's attached to the appointment to fetch the business's policies
@@ -41,11 +45,17 @@ export default function page() {
                 return res.appointment
             }
         }
-        const fetchSession = async () => {
+        const fetchSession = async (stripeID: string, appointment: Appointment, policy: Policy) => {
+            const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
+                stripeAccount: stripeID,
+            });
+            setStripePromise(stripePromise)
             const response = await fetch("http://localhost:3000/api/checkout", {
                 method: "POST",
                 body: JSON.stringify({
-                    connectedAccountId: "acct_1Q6tUcFpD7KoueRC", // Change Stripe Account ID to be dynamic to business
+                    connectedAccountId: stripeID,
+                    price: 2000,
+                    app_fee: 200 // Change Stripe Account ID to be dynamic to business
                 }),
             });
             if (!response.ok) {
@@ -62,12 +72,11 @@ export default function page() {
                     clientSecret: opt.clientSecret,
                     onComplete: handleCompleted
                 })
+                setCompleted(false)
             }
         }
         const getPolicies = async (data: any) => {
-            console.log(data);
-
-            const response = await fetch(`http://localhost:3000/api/policies/${data.business}`, {
+            const response = await fetch(`http://localhost:3000/api/policies/policy/${data.policy_id}`, {
                 method: "GET",
             });
             if (!response.ok) {
@@ -77,20 +86,33 @@ export default function page() {
             } else {
                 const result = await response.json();
                 // setPolicies(result.booking_policies)
-                return result.policies
+                return result.policy
             }
+        }
+        const getBusinessData = async (businessID: string) => {
+            const res = await fetch(`http://localhost:3000/api/${businessID}`, {
+                method: 'GET'
+            })
+            const result = await res.json();
+            return result.data
         }
         fetchAppointment().then((appointment) => {
             if (appointment.status === "CONFIRMED") {
                 setCompleted(true)
             } else {
-                getPolicies(appointment).then((policies) => {
-                    if (policies.deposit.enabled) {
-                        fetchSession();
-                    } else {
-                        // Updates the appointment status and change the completed state
-                        handleCompleted()
-                    }
+
+                getPolicies(appointment).then((policy) => {
+                    getBusinessData(appointment.business).then((businessData) => {
+                        if (policy.deposit.enabled) {
+
+                            fetchSession(businessData.stripe_acc_id, appointment, policy);
+
+                        } else {
+                            // Updates the appointment status and change the completed state
+                            handleCompleted()
+                        }
+                    })
+
                 });
             }
         })
@@ -115,17 +137,25 @@ export default function page() {
             setCompleted(true)
         }
     }
+    const handleSubmit = () => {
+
+    }
+
     return (
         <div>
             {completed !== null ? <div>
-                {appointmentData ? <div className='w-full h-screen overflow-x-hidden overflow-scroll flex py-10 justify-center'>
-                    {!completed && options ? <EmbeddedCheckoutProvider
-                        stripe={stripePromise}
+                {Object.keys(appointmentData).length ? <div className='w-full h-screen overflow-x-hidden overflow-scroll flex py-10 justify-center'>
+                    {!completed && options && promise ? <Elements
+                        stripe={promise}
                         options={options}
-
                     >
-                        <EmbeddedCheckout className='w-full' />
-                    </EmbeddedCheckoutProvider> : <div className='flex h-[500px] gap-2 px-5 flex-col w-screen justify-center items-center'>
+                        <form onSubmit={handleSubmit}>
+                            <PaymentElement className='w-full' />
+                            <Button.Root disabled={!promise}>
+                                <Button.Label>Book Appointment</Button.Label>
+                            </Button.Root>
+                        </form>
+                    </Elements> : <div className='flex h-[500px] gap-2 px-5 flex-col w-screen justify-center items-center'>
                         <div className='flex gap-3'>
                             <CircleCheckBig color='green' />
                             <Title>Appointment Confirmed</Title></div>

@@ -20,13 +20,11 @@ const endpointSecret = "whsec_387472f4c2731ffe1b1312127be3768762a7f4022447f8f12c
 
  
   const client = await pool.connect()
-  let appointmentID;
 
   // Handle the event
   switch (event.type) {
     case 'payment_intent.canceled':
       const paymentIntentCanceled = event.data.object;
-      appointmentID = paymentIntentCanceled.metadata.appointmentID
       // Delete appointment
       try {
         await client.query('BEGIN')
@@ -45,7 +43,6 @@ const endpointSecret = "whsec_387472f4c2731ffe1b1312127be3768762a7f4022447f8f12c
       break;
     case 'payment_intent.succeeded':
       const paymentIntentSucceeded = event.data.object;
-      appointmentID = paymentIntentSucceeded.metadata.appointmentID
 
       // Then define and call a function to handle the event payment_intent.succeeded
       // Update the appointment
