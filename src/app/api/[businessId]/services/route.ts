@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     const supabase = createClient<Database>();
     const { id, name, price, description, addons, length, photo_url, business, category } = await request.json();
-    let { data, error } = await supabase.from('services').update([
+    console.log(id);
+    
+    let { data, error } = await supabase.from('services').update(
         {
             name: name,
             price: price,
@@ -54,7 +56,7 @@ export async function PUT(request: NextRequest) {
             photo_url: photo_url,
             categories: category,
         }
-    ]).eq('business', business).eq('id', id).select();
+    ).eq('business', business).eq('id', id).select().single();
     if (error) {
         throw new Error(error.message)
     }
@@ -67,7 +69,7 @@ export async function PUT(request: NextRequest) {
 export async function GET(request: NextRequest, { params }: { params: { businessId: string } }) {
     const supabase = createClient<Database>();
     const { businessId } = params;
-    let { data, error } = await supabase.from("services").select("*").eq("business", businessId)
+    let { data, error } = await supabase.from("services").select("*").eq("business", businessId).order("created_at", {ascending: true})
     if (error) {
         return new NextResponse(JSON.stringify({ result: error, message: error.message }), {
             headers: { 'Content-Type': 'application/json' },

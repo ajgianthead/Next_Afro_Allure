@@ -55,13 +55,26 @@ export default function page() {
         return await result.json();
     }
     const [currIndex, setCurrIndex] = useState<number>()
-    const [service, setService] = useState<Service>()
+    const [service, setService] = useState<Service>({
+        name: "",
+        created_at: "",
+        updated_at: "",
+        id: "",
+        description: "",
+        price: 0,
+        length: 0,
+        addons: [],
+        imagePath: "",
+        photo_url: "",
+        business: user,
+        categories: []
+    })
     const [isEditing, setIsEditing] = useState(false);
     const [open, setOpen] = useState(false);
     return (
         <div className='px-6'>
             <CreateServiceDialog services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={user.business_id} />
-            <EditServiceDialog services={services} setServices={setServices} open={isEditing} setIsOpen={setIsEditing} oldService={service} user={user} index={currIndex} />
+            <EditServiceDialog setDeleteOpen={setOpen} services={services} setServices={setServices} open={isEditing} setIsOpen={setIsEditing} oldService={service} user={user} index={currIndex} />
             <div className="flex justify-between items-center mt-3">
                 <Title>Services</Title>
                 <Button.Root>
@@ -72,44 +85,13 @@ export default function page() {
             </div>
             <Separator className="my-4 w-full" />
             <div className='w-full h-full flex flex-wrap'>
-                <AlertDialog.Root open={open} onOpenChange={setOpen}>
-                    <AlertDialog.Portal>
-                        <AlertDialog.Overlay className='z-30' />
-                        <AlertDialog.Content className="max-w-lg z-40" data-shade="800">
-                            <AlertDialog.Title>
-                                Are you absolutely sure you want to delete this service?
-                            </AlertDialog.Title>
-                            <AlertDialog.Description className="mt-2">
-                                Clients won't be able to book this service.
-                            </AlertDialog.Description>
-                            <AlertDialog.Actions>
-                                <AlertDialog.Cancel asChild>
-                                    <Button.Root
-                                        variant="outlined"
-                                        intent="gray"
-                                        size="sm"
-                                    >
-                                        <Button.Label>Cancel</Button.Label>
-                                    </Button.Root>
-                                </AlertDialog.Cancel>
-                                <AlertDialog.Action asChild>
-                                    <Button.Root
-                                        variant="solid"
-                                        intent="danger"
-                                        size="sm"
-                                    >
-                                        <Button.Label>Yes, Delete</Button.Label>
-                                    </Button.Root>
-                                </AlertDialog.Action>
-                            </AlertDialog.Actions>
-                        </AlertDialog.Content>
-                    </AlertDialog.Portal>
-                </AlertDialog.Root>
+
                 {loading ? <div className='w-full h-[calc(100vh-200px)] flex justify-center items-center'><CircularProgress size={'sm'} /></div> : services.map((service: Service, index: number) => {
                     return (
+
                         <div key={index}>
                             <div>
-                                <ServiceCard setService={setService} service={service} index={index} setIsEditing={setIsEditing} open={open} setOpen={setOpen} />
+                                <ServiceCard setService={setService} service={service} index={index} setIndex={setCurrIndex} setIsEditing={setIsEditing} open={open} setOpen={setOpen} />
                             </div>
                         </div>
                     )
@@ -409,13 +391,13 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
 }
 const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldService, index }: any) => {
     const supabase = createClient<Database>();
-    const [service, setService] = useState<any>({});
+    const [service, setService] = useState<any>(oldService);
     const [dataSending, setDataSending] = useState<boolean>(false)
     const [image, setImage] = useState<{
         imageURL: string | null
         imageBlob: Blob | null
     }>({
-        imageURL: null,
+        imageURL: oldService.photo_url,
         imageBlob: null
     });
     const onDrop = useCallback((acceptedFiles: any) => {
@@ -434,8 +416,11 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
     useEffect(() => {
         if (oldService) {
             setService(oldService)
+            setImage({
+                ...image,
+                imageURL: oldService.photo_url
+            })
             setAddOns([...oldService.addons])
-            console.log("works");
         }
     }, [oldService]);
     const editImage = async () => {
@@ -452,33 +437,87 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
         setDataSending(true)
         let imageURL;
         let clone;
-        if (image) {
+        if (image.imageBlob) {
             imageURL = await editImage()
             clone = { ...service }
             clone.photo_url = imageURL;
         }
         const res = await fetch(`http://localhost:3000/api/${user.business_id}/services`, {
             method: 'PUT',
-            body: JSON.stringify(image ? clone : service)
+            body: JSON.stringify(image.imageBlob ? clone : service)
         })
         const dataBack = await res.json();
 
         // Update my component state
         let newServices = [...services];
-        newServices[index] = dataBack.updatedData
+        newServices.splice(index, 1, image.imageBlob ? clone : service)
+
         setServices(newServices)
         setDataSending(false)
+        setIsOpen(false)
     }
+    // Delete Service
+    const handleDelete = async () => {
+        // Delete in supabase
+        setDataSending(true)
+        const id = services[index].id
+        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services/${id}`, {
+            method: 'DELETE'
+        })
+        const result = await res.json();
+        const response = result.result;
+        // Delete in local state
+        let clone = [...services]
+        clone.splice(index, 1)
+        setServices(clone)
+        setDataSending(false)
+        setIsOpen(false)
+    }
+    const [deleteOpen, setDeleteOpen] = useState(false)
     return (
         <div>
-            {Object.keys(service).length ? <div>
+            <AlertDialog.Root open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <AlertDialog.Portal>
+                    <AlertDialog.Overlay className='z-50' />
+                    <AlertDialog.Content className="max-w-lg z-50" data-shade="800">
+                        <AlertDialog.Title>
+                            Are you absolutely sure you want to delete this service?
+                        </AlertDialog.Title>
+                        <AlertDialog.Description className="mt-2">
+                            Clients will not longer be able to book you for this service once it's deleted.
+                        </AlertDialog.Description>
+                        <AlertDialog.Actions>
+                            <AlertDialog.Cancel asChild>
+                                <Button.Root
+                                    variant="outlined"
+                                    intent="gray"
+                                    size="sm"
+                                >
+                                    <Button.Label>Cancel</Button.Label>
+                                </Button.Root>
+                            </AlertDialog.Cancel>
+                            <AlertDialog.Action asChild>
+                                <Button.Root
+                                    variant="solid"
+                                    intent="danger"
+                                    size="sm"
+                                    onClick={handleDelete}
+                                >
+                                    <Button.Label>Yes, Delete</Button.Label>
+                                </Button.Root>
+                            </AlertDialog.Action>
+                        </AlertDialog.Actions>
+                    </AlertDialog.Content>
+                </AlertDialog.Portal>
+            </AlertDialog.Root>
+            <div>
                 <Dialog.Root open={open} onOpenChange={setIsOpen}>
                     <Dialog.Portal>
                         <Dialog.Overlay className='z-40' />
                         <Dialog.Content className="max-w-lg z-50 overflow-y-scroll">
                             <Dialog.Title className='flex flex-col mb-5'>
-                                <Title>Create Service</Title>
-                                <Caption>Enter the details of your service below</Caption>
+                                <Title>Service Details</Title>
+                                <Caption>Below are the details on the selected service</Caption>
                             </Dialog.Title>
                             <Dialog.Description className='flex gap-2 flex-col'>
                                 <div>
@@ -610,19 +649,10 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
                             <Dialog.Actions>
                                 <Dialog.Close asChild>
                                     <Button.Root onClick={() => {
-                                        setService({
-                                            name: "",
-                                            created_at: "",
-                                            updated_at: "",
-                                            id: "",
-                                            description: "",
-                                            price: 0,
-                                            length: 0,
-                                            addons: null,
-                                            imagePath: "",
-                                            photo_url: "",
-                                            business: user,
-                                            categories: []
+                                        setService(oldService)
+                                        setImage({
+                                            imageBlob: null,
+                                            imageURL: oldService.photo_url
                                         })
                                         setAddOns([])
                                     }} variant="outlined" disabled={dataSending} size="sm" intent="gray">
@@ -630,26 +660,38 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
                                     </Button.Root>
                                 </Dialog.Close>
 
+
+                                <Button.Root onClick={() => {
+                                    setDeleteOpen(true)
+                                }} variant="soft" disabled={dataSending} size="sm" intent="danger">
+                                    <Button.Label>Delete Service</Button.Label>
+                                </Button.Root>
+
+
                                 <Button.Root disabled={dataSending} onClick={handleSubmit} size="sm">
-                                    <Button.Label>{dataSending ? <CircularProgress size='sm' /> : "Create Service"}</Button.Label>
+                                    <Button.Label>{dataSending ? <CircularProgress size='sm' /> : "Save Changes"}</Button.Label>
                                 </Button.Root>
 
                             </Dialog.Actions>
                         </Dialog.Content>
                     </Dialog.Portal>
                 </Dialog.Root>
-            </div> : <></>}
+            </div>
         </div>
 
     )
 }
 
 // Individual Service Dialog + Edit and Delete Functionality
-const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService }: any) => {
+const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService, setIndex }: any) => {
 
     return (
         <div className='w-[250px]' key={index}>
-            <Card variant="outlined" className='py-4 flex flex-col gap-1'>
+            <Card variant="outlined" className='py-4 flex flex-col gap-1 cursor-pointer' onClick={() => {
+                setIsEditing(true)
+                setIndex(index)
+                setService(service)
+            }}>
                 <div className='flex justify-between items-center'>
                     <div className="w-full flex flex-wrap">
                         {service.categories.map((category: string, index: number) => {
@@ -660,7 +702,7 @@ const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService }
                             )
                         })}
                     </div>
-                    <DropdownMenu.Root>
+                    {/* <DropdownMenu.Root>
                         <DropdownMenu.Trigger asChild>
                             <Button.Root variant='ghost'>
                                 <Button.Icon>
@@ -671,8 +713,7 @@ const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService }
                         <DropdownMenu.Portal>
                             <DropdownMenu.Content mixed sideOffset={5}>
                                 <DropdownMenu.Item onClick={() => {
-                                    setIsEditing(true)
-                                    setService(service)
+
                                 }}>
                                     <DropdownMenu.Icon>
                                         <Pencil />
@@ -690,7 +731,7 @@ const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService }
 
                             </DropdownMenu.Content>
                         </DropdownMenu.Portal>
-                    </DropdownMenu.Root>
+                    </DropdownMenu.Root> */}
                 </div>
                 <div>
                     <Title>{service.name}</Title>
