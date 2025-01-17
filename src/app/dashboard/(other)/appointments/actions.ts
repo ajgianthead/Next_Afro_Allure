@@ -47,8 +47,8 @@ export const bookingManual = async (businessId: string, client_metadata: any, se
        
         let available: boolean = false
         const availableSlots = await checkSlots(timeSlot, availability, appointments)
-        availableSlots.forEach((slot: OutputSlot, index: number) => {            
-            if(DateTime.fromISO(slot.from).equals(DateTime.fromISO(timeSlot.start!))  && DateTime.fromISO(slot.to).equals(DateTime.fromISO(timeSlot.end!))){
+        availableSlots.forEach((slot: string | null, index: number) => {            
+            if(slot === timeSlot.start!){
                 available = true
             }
         })      

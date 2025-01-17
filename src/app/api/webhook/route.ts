@@ -48,7 +48,7 @@ const endpointSecret = "whsec_387472f4c2731ffe1b1312127be3768762a7f4022447f8f12c
       // Update the appointment
       try {
         await client.query('BEGIN')
-        const appointment = await client.query(`UPDATE appointments app SET paid_deposit = true WHERE app.deposit_charge_id = $1  RETURNING *`, [paymentIntentSucceeded.id])
+        const appointment = await client.query(`UPDATE appointments app SET paid_deposit = true, status = 'CONFIRMED' WHERE app.deposit_charge_id = $1  RETURNING *`, [paymentIntentSucceeded.id])
         await client.query('COMMIT')                         
         // Send email and/or SMS confirming appointment
       } catch (error: any) {

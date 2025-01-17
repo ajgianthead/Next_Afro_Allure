@@ -294,23 +294,48 @@ const DateTimePicker = () => {
     const [date, setDate] = useState<any>(Object.values(data.selectedDateTime).length ? DateTime.fromISO(data.selectedDateTime.start!).startOf('day') : undefined);
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [slots, setSlots] = useState<any>({})
-    const [currSlots, setCurrSlots] = useState<any>([]);
+    const [currSlots, setCurrSlots] = useState<any[]>([]);
 
     const getData = async (startDate: string, endDate: string) => {
         // Get availability id for server actions
-        console.log(data.appointments);
         const formattedAvailability = await getAvailability(startDate, endDate, data.availabilities)
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!)
 
         const { availableSlotsByDay } = getSlots({
             from: startDate,
             to: endDate,
-            duration: 180, // Needs to be thought about
+            duration: 60, // Needs to be thought about
             availability: formattedAvailability,
-            unavailability: formattedUnavailability
+            unavailability: formattedUnavailability,
+            outputTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+
         })
-        setSlots(availableSlotsByDay)
-        return availableSlotsByDay
+        const days = Object.keys(availableSlotsByDay)
+        const slots = Object.values(availableSlotsByDay)
+
+        // Loop through days
+        let result: Record<string, string[][]> = {};
+        for (let i = 0; i < slots.length; i++) {
+            result[days[i]] = [[slots[i][0].from]]
+            for (let j = 0; j < slots[i].length; j++) {
+                if (j === slots[i].length - 1) {
+                    let temp = [...result[days[i]]]
+                    temp[temp.length - 1].push(slots[i][j].to)
+                    result[days[i]] = temp
+                    continue
+                }
+                if (slots[i][j].to !== slots[i][j + 1].from) {
+                    let temp = [...result[days[i]]]
+                    temp[temp.length - 1].push(slots[i][j].to)
+                    temp.push([slots[i][j + 1].from])
+                    result[days[i]] = temp
+                }
+                continue;
+            }
+        }
+
+        setSlots(result)
+        return result
     }
 
     useEffect(() => {
@@ -318,10 +343,27 @@ const DateTimePicker = () => {
             if (Object.keys(data.availabilities!).length && data.appointments?.length) {
                 const startDate = DateTime.now().startOf("day").toISO()
                 const endDate = DateTime.now().endOf("month").toISO()
-                const res = await getData(startDate, endDate)
+                const result = await getData(startDate, endDate)
                 if (Object.values(data.selectedDateTime).length) {
-                    const fetchedSlots = res[DateTime.fromISO(data.selectedDateTime.start!).toISODate()!]
-                    setCurrSlots(fetchedSlots)
+                    const fetchedSlots = result[DateTime.fromISO(data.selectedDateTime.start!).toISODate()!]
+                    let res = []
+                    for (let i = 0; i < fetchedSlots.length; i++) {
+                        let timeStart = DateTime.fromISO(fetchedSlots[i][0])
+                        let movingTime = DateTime.fromISO(fetchedSlots[i][0])
+                        let timeEnd = DateTime.fromISO(fetchedSlots[i][fetchedSlots[i].length - 1])
+                        const appointmentLength = data.services.filter((service: Service, index: number) => data.selectedService === service.id)[0].length
+                        while (movingTime < timeEnd) {
+                            movingTime = timeStart
+                            movingTime = movingTime.plus({ minutes: appointmentLength })
+                            if (movingTime <= timeEnd) { // length
+                                res.push(timeStart)
+                                timeStart = timeStart.plus({ minutes: 10 }) // increment
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    setCurrSlots(res)
                 }
 
             }
@@ -348,11 +390,29 @@ const DateTimePicker = () => {
     }
 
     const handleDateChange = async (value: DateTime) => {
-        console.log(value);
-        setDate(value)
         if (Object.keys(slots).length) { // If slots exist
-            const fetchedSlots = slots[value.toISODate()!] // Get slot array based on date
-            setCurrSlots(fetchedSlots)
+            const fetchedSlots = slots[value.toISODate()!]
+            // Get slot array based on date
+            let res = []
+            for (let i = 0; i < fetchedSlots.length; i++) {
+                let timeStart = DateTime.fromISO(fetchedSlots[i][0])
+                let movingTime = DateTime.fromISO(fetchedSlots[i][0])
+                let timeEnd = DateTime.fromISO(fetchedSlots[i][fetchedSlots[i].length - 1])
+                const appointmentLength = data.services.filter((service: Service, index: number) => data.selectedService === service.id)[0].length
+                console.log(appointmentLength);
+
+                while (movingTime < timeEnd) {
+                    movingTime = timeStart
+                    movingTime = movingTime.plus({ minutes: appointmentLength })
+                    if (movingTime <= timeEnd) { // length
+                        res.push(timeStart)
+                        timeStart = timeStart.plus({ minutes: 10 }) // increment
+                    } else {
+                        break;
+                    }
+                }
+            }
+            setCurrSlots(res)
         }
     }
 
@@ -360,19 +420,21 @@ const DateTimePicker = () => {
         <Card className='flex'>
             <div className='w-1/2'>
                 <LocalizationProvider dateAdapter={AdapterLuxon}>
-                    <DateCalendar onMonthChange={handleMonthChange} disablePast loading={isLoading} value={date} onChange={handleDateChange} />
+                    <DateCalendar onMonthChange={handleMonthChange} disablePast value={date} loading={isLoading} onChange={handleDateChange} />
                 </LocalizationProvider>
             </div>
             <div>
                 <Title>Available Time Slots</Title>
                 <div className='flex gap-2 w-full flex-wrap mt-5'>
-                    {currSlots.map((slot: { from: string, to: string }, index: number) => {
-                        return (
-                            <div key={index}>
-                                <TimeSlot startTime={slot.from} endTime={slot.to} />
-                            </div>
-                        )
-                    })}
+                    {
+                        currSlots.map((time: DateTime, index: number) => {
+                            return (
+                                <div key={index}>
+                                    <TimeSlot startTime={time} />
+                                </div>
+                            )
+                        })
+                    }
                 </div>
             </div>
         </Card>
@@ -380,29 +442,29 @@ const DateTimePicker = () => {
     )
 }
 
-export const TimeSlot = ({ startTime, endTime }: {
-
-    startTime: string, endTime: string
+export const TimeSlot = ({ startTime }: {
+    startTime: DateTime
 }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
-    const start = DateTime.fromISO(startTime).toLocaleString(DateTime.TIME_SIMPLE)
-    const end = DateTime.fromISO(endTime).toLocaleString(DateTime.TIME_SIMPLE)
+    const start = startTime.toLocaleString(DateTime.TIME_SIMPLE)
+    const endTime = startTime.plus({ minutes: data.services.filter((service) => service.id === data.selectedService)[0].length }).toISO()!
+
     return (
         <div onClick={() => {
             setData({
                 ...data,
                 selectedDateTime: {
-                    start: startTime,
+                    start: startTime.toISO()!,
                     end: endTime
                 }
 
             })
             console.log({
-                start: startTime,
+                start: startTime.toISO(),
                 end: endTime
             });
 
-        }} style={{ borderWidth: startTime !== data.selectedDateTime.start && endTime !== data.selectedDateTime.end ? 1 : 3 }} className='text-sm font-medium border-primary-500 bg-primary-100 px-3 cursor-pointer py-2 rounded-md'>
+        }} style={{ borderWidth: startTime.toISO() !== data.selectedDateTime.start && endTime !== data.selectedDateTime.end ? 1 : 3 }} className='text-sm font-medium border-primary-500 bg-primary-100 px-3 cursor-pointer py-2 rounded-md'>
             {start}
         </div>
     )

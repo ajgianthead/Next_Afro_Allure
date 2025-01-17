@@ -1,15 +1,21 @@
 'use client'
 import { useNode } from "@craftjs/core";
-import { default as TailusButton } from "@tailus-ui/Button";
 import React from "react";
+import { default as MUIButton } from '@mui/joy/Button';
 
-export const Button = ({ size, variant, color, children }: any) => {
+export const EditableButton = ({ size, variant, color, text }: any) => {
     const { connectors: { connect, drag } }: any = useNode();
     return (
-        <TailusButton.Root ref={ref => connect(drag(ref))} size={size} variant={variant} color={color}>
-            <TailusButton.Label>
-                {children}
-            </TailusButton.Label>
-        </TailusButton.Root>
+        <div>
+            <Button ref={(ref: any) => connect(drag(ref))} size={size} variant={variant} color={color} text={text} />
+        </div>
+    )
+}
+
+export const Button = ({ size, variant, color, text }: any) => {
+    return (
+        <MUIButton size={size} variant={variant} color={color}>
+            {text}
+        </MUIButton>
     )
 }

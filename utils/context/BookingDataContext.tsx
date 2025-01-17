@@ -58,7 +58,7 @@ export function BookingWrapper({ children, businessName }: any) {
             const businessData = await res.json();
             let availability = []
             if (businessData.result != "Business doesn't exist") {
-                availability = businessData.result.availabilities.filter((element: any) => element.id === "e69f4e31-6648-4be5-8577-bb004333a332")
+                availability = businessData.result.availabilities.filter((element: any) => element.id === "04a81a4a-f598-47d4-bc40-38a1f4d37e48")
             }
             return {
                 business_id: businessData.result.business_id,

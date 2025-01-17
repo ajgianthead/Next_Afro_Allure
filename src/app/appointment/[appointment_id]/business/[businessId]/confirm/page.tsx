@@ -160,7 +160,7 @@ export default function page() {
                             <CircleCheckBig color='green' />
                             <Title>Appointment Confirmed</Title></div>
                         <div className='text-center'>
-                            <Caption>If you have any questions regarding your appointment, please contact LadyPlutoLooks</Caption>
+                            <Caption>If you have any questions regarding your appointment, please contact {"INSERT BUSINESS NAME"}</Caption>
                         </div>
                     </div>}
                 </div> : <div>
