@@ -5,7 +5,7 @@ import { Caption } from '@tailus-ui/typography';
 import {
     type TabsListProps as ListProps,
     type TabsIndicatorProps as IndicatorProps,
-} from "@tailus/themer"; import { ALargeSmall, AlignCenter, AlignLeft, AlignRight, Bold, Box, ChevronDown, Columns2, Grid2x2, Image, Italic, PanelBottom, Rows2, Square, SquarePlus, Type, Underline, Video } from 'lucide-react';
+} from "@tailus/themer"; import { ALargeSmall, AlignCenter, AlignHorizontalSpaceAround, AlignLeft, AlignRight, AlignVerticalSpaceAround, Bold, Box, ChevronDown, Columns2, Grid2x2, Image, Italic, LayoutGrid, PanelBottom, Rows2, Square, SquarePlus, StretchHorizontal, StretchVertical, Type, Underline, Video, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react'
 import { Editor, Frame, Element, useEditor } from "@craftjs/core";
 import { Container } from '@components/editor/Container';
@@ -19,6 +19,14 @@ import { TbLineHeight } from "react-icons/tb";
 import { TbLetterSpacing } from "react-icons/tb";
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
+import Popover from '@tailus-ui/Popover';
+import IconButton from '@mui/joy/IconButton';
+import { SketchPicker } from 'react-color';
+import { TbBoxMargin } from "react-icons/tb";
+import { TbBoxPadding } from "react-icons/tb";
+import Settings from '@components/editor/Settings';
+
+
 
 type TabsAppProps = "layout" | "components" | "pre-built"
 
@@ -37,7 +45,7 @@ export default function page() {
             spanRef.current.style.width = activeTrigger.offsetWidth + "px";
         }
     }, [state]);
-
+    const [color, setColor] = useState<string>("#000000");
     return (
         <div>
             <Editor resolver={{ Container, EditableButton, EditableText }}>
@@ -137,101 +145,8 @@ export default function page() {
                     </section>
                     {/* Settings Bar */}
                     <section>
-                        <div className='w-[300px] bg-white h-full border-l border-[#D4D4D4] p-3'>
-                            <div>
-                                <Caption className='font-bold text-slate-300'>Typography</Caption>
-                                <div className='flex w-full flex-col gap-2'>
-                                    <div className='w-full justify-between items-center flex'>
-                                        <Caption>Font</Caption>
-                                        <Select placeholder="Choose one…" className='w-4/6'>
-                                            <Option value={'some'}>...</Option>
-                                        </Select>
-                                    </div>
-                                    <div className='w-full justify-end items-center flex'>
-                                        <Select placeholder="Choose one…" className='w-4/6'>
-                                            <Option value={"another"}>...</Option>
-                                        </Select>
-                                    </div>
-                                    <div className='w-full flex flex-col gap-2 justify-end items-end'>
-                                        <div className='flex w-4/6 items-end justify-between gap-1'>
-                                            <div className='w-1/2'>
-                                                <Input startDecorator={<ALargeSmall />} />
-                                            </div>
-                                            <div className='w-1/2 border border-slate-300 rounded-lg py-[1px]'>
-                                                <ToggleGroup.Root size='sm' variant='soft' type="multiple">
-                                                    <ToggleGroup.Item value="bold">
-                                                        <ToggleGroup.Icon size='xs'>
-                                                            <Bold />
-                                                        </ToggleGroup.Icon>
-                                                    </ToggleGroup.Item>
-                                                    <ToggleGroup.Item value="italic">
-                                                        <ToggleGroup.Icon size='xs'>
-                                                            <Italic />
-                                                        </ToggleGroup.Icon>
-                                                    </ToggleGroup.Item>
-                                                    <ToggleGroup.Item value="underline">
-                                                        <ToggleGroup.Icon size='xs'>
-                                                            <Underline />
-                                                        </ToggleGroup.Icon>
-                                                    </ToggleGroup.Item>
-                                                </ToggleGroup.Root>
-                                            </div>
-                                        </div>
-                                        <div className='flex w-4/6 items-end justify-between gap-1'>
-                                            <div className='w-1/2'>
-                                                <Input startDecorator={<TbLineHeight />} />
-                                            </div>
-                                            <div className='w-1/2'>
-                                                <Input startDecorator={<TbLetterSpacing />} />
-                                            </div>
-                                        </div>
-                                        <div className='w-full justify-between items-center flex'>
-                                            <Caption>Align</Caption>
-                                            <div className='w-4/6 border border-slate-300 rounded-lg py-[1px]'>
-                                                <ToggleGroup.Root size='sm' variant='soft' type="single" className='w-full flex justify-evenly'>
-                                                    <ToggleGroup.Item value="bold" className='w-1/3'>
-                                                        <ToggleGroup.Icon size='xs'>
-                                                            <AlignLeft />
-                                                        </ToggleGroup.Icon>
-                                                    </ToggleGroup.Item>
-                                                    <ToggleGroup.Item value="italic" className='w-1/3'>
-                                                        <ToggleGroup.Icon size='xs'>
-                                                            <AlignCenter />
-                                                        </ToggleGroup.Icon>
-                                                    </ToggleGroup.Item>
-                                                    <ToggleGroup.Item value="underline" className='w-1/3'>
-                                                        <ToggleGroup.Icon size='xs'>
-                                                            <AlignRight />
-                                                        </ToggleGroup.Icon>
-                                                    </ToggleGroup.Item>
-                                                </ToggleGroup.Root>
-                                            </div>
-                                        </div>
-                                        <div className='w-full justify-between items-center flex'>
-                                            <Caption>Color</Caption>
-                                            <div className='w-4/6 border border-slate-300 rounded-lg py-[1px]'>
-                                                <ToggleGroup.Root size='sm' variant='soft' type="single" className='w-full flex justify-evenly'>
-                                                    <ToggleGroup.Item value="bold" className='w-1/3'>
-                                                        <ToggleGroup.Icon size='xs'>
-                                                            <AlignLeft />
-                                                        </ToggleGroup.Icon>
-                                                    </ToggleGroup.Item>
-                                                    <ToggleGroup.Item value="italic" className='w-1/3'>
-                                                        <ToggleGroup.Icon size='xs'>
-                                                            <AlignCenter />
-                                                        </ToggleGroup.Icon>
-                                                    </ToggleGroup.Item>
-                                                    <ToggleGroup.Item value="underline" className='w-1/3'>
-                                                        <ToggleGroup.Icon size='xs'>
-                                                            <AlignRight />
-                                                        </ToggleGroup.Icon>
-                                                    </ToggleGroup.Item>
-                                                </ToggleGroup.Root>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className='overflow-y-scroll w-[300px] flex flex-col gap-5 bg-white h-full border-l border-[#D4D4D4] p-3'>
+                            <Settings />
                         </div>
                     </section>
                 </main>
@@ -241,3 +156,141 @@ export default function page() {
         </div >
     )
 }
+
+
+{/* <div>
+                                <div>
+                                    <Caption className='font-bold text-slate-300 mb-5'>Layout</Caption>
+                                    <div className='flex w-full flex-col gap-2'>
+                                        <div className='w-full justify-between items-center flex'>
+                                            <Caption>Width</Caption>
+                                            <Input className='w-1/3 text-xs' endDecorator={'px'} />
+
+                                        </div>
+                                        <div className='w-full justify-between items-center flex'>
+                                            <Caption>Height</Caption>
+                                            <Input className='w-1/3 text-xs' endDecorator={'px'} />
+
+                                        </div>
+                                        <div className='w-full flex flex-col gap-2 justify-end items-end'>
+                                            <div className='w-full justify-between items-center flex'>
+                                                <Caption>Margin</Caption>
+                                                <div className='w-1/2 flex justify-end gap-1'>
+                                                    <Input className='w-4/6 text-xs' endDecorator={'px'} />
+                                                    <IconButton variant='outlined'>
+                                                        <TbBoxMargin />
+                                                    </IconButton>
+                                                </div>
+                                            </div>
+                                            <div className='w-full justify-between items-center flex'>
+                                                <Caption>Padding</Caption>
+                                                <div className='w-1/2 flex justify-end gap-1'>
+                                                    <Input className='w-4/6 text-xs' endDecorator={'px'} />
+                                                    <IconButton variant='outlined'>
+                                                        <TbBoxPadding />
+                                                    </IconButton>
+                                                </div>
+                                            </div>
+                                            <div className='w-full justify-between items-center flex'>
+                                                <Caption>Direction</Caption>
+                                                <div className='w-4/6 border border-slate-300 rounded-lg py-[1px]'>
+                                                    <ToggleGroup.Root size='sm' variant='soft' type="single" className='w-full flex justify-evenly'>
+                                                        <ToggleGroup.Item value="bold" className='w-1/3'>
+                                                            <ToggleGroup.Icon size='xs'>
+                                                                <StretchVertical />
+                                                            </ToggleGroup.Icon>
+                                                        </ToggleGroup.Item>
+                                                        <ToggleGroup.Item value="italic" className='w-1/3'>
+                                                            <ToggleGroup.Icon size='xs'>
+                                                                <StretchHorizontal />
+                                                            </ToggleGroup.Icon>
+                                                        </ToggleGroup.Item>
+                                                        <ToggleGroup.Item value="underline" className='w-1/3'>
+                                                            <ToggleGroup.Icon size='xs'>
+                                                                <LayoutGrid />
+                                                            </ToggleGroup.Icon>
+                                                        </ToggleGroup.Item>
+                                                    </ToggleGroup.Root>
+                                                </div>
+                                            </div>
+                                            <div className='w-full justify-between items-center flex'>
+                                                <Caption>Gap</Caption>
+                                                <div className='w-4/6 flex gap-1 '>
+                                                    <div className='w-1/2'>
+                                                        <Input startDecorator={<AlignVerticalSpaceAround size={12} />} className='text-xs' />
+                                                    </div>
+                                                    <div className='w-1/2'>
+                                                        <Input startDecorator={<AlignHorizontalSpaceAround size={12} />} className='text-xs' />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className='w-full justify-between items-center flex'>
+                                                <Caption>Color</Caption>
+                                                <div className='w-4/6 py-[1px]'>
+                                                    <Popover.Root>
+                                                        <Popover.Trigger asChild>
+                                                            <Button variant='outlined' sx={{
+                                                                color: "black",
+                                                                borderColor: "black",
+                                                                backgroundColor: "white",
+                                                                display: 'flex',
+                                                            }} className='w-full gap-2'><div className={`w-5 h-5`} style={{
+                                                                backgroundColor: color
+                                                            }}></div>{color}</Button>
+                                                        </Popover.Trigger>
+                                                        <Popover.Portal>
+                                                            <Popover.Content mixed className="max-w-xs">
+                                                                <SketchPicker color={color} onChangeComplete={(color: any, event: any) => {
+                                                                    setColor(color.hex)
+                                                                }} />                                                            <Popover.Close asChild>
+
+                                                                </Popover.Close>
+                                                            </Popover.Content>
+                                                        </Popover.Portal>
+                                                    </Popover.Root>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <Caption className='font-bold text-slate-300 mb-5'>Border</Caption>
+                                    <div className='flex w-full flex-col gap-2'>
+                                        <div className='w-full justify-between items-center flex'>
+                                            <Caption>Width</Caption>
+                                            <Input className='w-1/3 text-xs' endDecorator={'px'} />
+                                        </div>
+                                        <div className='w-full justify-between items-center flex'>
+                                            <Caption>Color</Caption>
+                                            <div className='w-4/6 py-[1px]'>
+                                                <Popover.Root>
+                                                    <Popover.Trigger asChild>
+                                                        <Button variant='outlined' sx={{
+                                                            color: "black",
+                                                            borderColor: "black",
+                                                            backgroundColor: "white",
+                                                            display: 'flex',
+                                                        }} className='w-full gap-2'><div className={`w-5 h-5`} style={{
+                                                            backgroundColor: color
+                                                        }}></div>{color}</Button>
+                                                    </Popover.Trigger>
+                                                    <Popover.Portal>
+                                                        <Popover.Content mixed className="max-w-xs">
+                                                            <SketchPicker color={color} onChangeComplete={(color: any, event: any) => {
+                                                                setColor(color.hex)
+                                                            }} />                                                            <Popover.Close asChild>
+
+                                                            </Popover.Close>
+                                                        </Popover.Content>
+                                                    </Popover.Portal>
+                                                </Popover.Root>
+                                            </div>
+                                        </div>
+                                        <div className='w-full justify-between items-center flex'>
+                                            <Caption>Radius</Caption>
+                                            <Input className='w-1/3 text-xs' endDecorator={'px'} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> */}

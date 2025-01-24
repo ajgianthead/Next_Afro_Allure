@@ -30,7 +30,7 @@ export async function PUT(request: NextRequest) {
 // Create an appointment
 export async function POST(request: NextRequest) {
     const supabase = createClient<Database>();
-    const mctx = mailchimp(process.env.NEXT_PUBLIC_MAILCHIMP_TEST_API_KEY!);
+    const mctx = mailchimp(process.env.NEXT_PUBLIC_MAILCHIMP_API_KEY!);
     // I dont know man??
     const {business, client_metadata, start, end, service_data, status, require_deposit, policy_id, paid_deposit, deposit_charge_id, reschedules} = await request.json();
     const { data, error } = await supabase.from('appointments').insert([
@@ -56,8 +56,13 @@ export async function POST(request: NextRequest) {
                 template_name: 'confirm-appointment',
                 template_content: [],
                 message: {
+                    subject: 'Confirm your appointment',
+                    from_email: 'notifications@afroallure.co',
+                    from_name: "notifications@afroallure.co",
                     to: [{
-                            'email': client_metadata.email,
+                            email: 'abijahnesbitt@afroallure.co',
+                            type: 'to'
+                            
                         }],
                         "global_merge_vars": [
                             {
@@ -81,6 +86,15 @@ export async function POST(request: NextRequest) {
                                 content: service_data.name // Format Appointment Date
                             },
                             {
+                                name: "appointment_id",
+                                content: `${data[0].id}` // Insert stylist name
+                            },
+                            {
+                                name: "business_id",
+                                content: `${business}` // Insert stylist name
+                            },
+                            // http://localhost:3000/appointment/*|APPOINTMENT_ID/business/*|BUSINESS_ID|*/confirm
+                            { 
                                 name: "facebook_url",
                                 content: '' // Format Appointment Date
                             },
