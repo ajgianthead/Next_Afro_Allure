@@ -1,13 +1,16 @@
 import { stripe } from "@lib/utils";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
     const { account } = await request.json();
     try {
-        const accountSession = await stripe.accountSessions.create({
+        const accountSession = await stripe.accountSessions.create(
+            
+            {
             account: account,
+            
             components: {
-                account_onboarding: { enabled: true },
                 payments: {
                     enabled: true,
                     features: {
@@ -16,9 +19,25 @@ export async function POST(request: NextRequest) {
                         capture_payments: true,
                         destination_on_behalf_of_charge_management: false,
                     },
-                }
-            }
-        })
+                },
+                balances: {
+                    enabled: true,
+                    features: {
+                        instant_payouts: true,
+                        standard_payouts: true,
+                        edit_payout_schedule: true,
+                    }
+                },
+                payouts_list: {
+                    enabled: true
+                },
+                // reporting_chart: {
+                //     enabled: true,
+                // }
+            },
+            
+        } 
+        )        
         return new NextResponse(JSON.stringify({ clientSecret: accountSession.client_secret }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200

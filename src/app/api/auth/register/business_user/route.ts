@@ -1,8 +1,64 @@
 import { corsHeaders } from "@utils/cors_headers";
 import { createClient } from "@utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { Database } from "../../../../../../lib/database.types";
+import { Database, Json } from "../../../../../../lib/database.types";
 import { stripe } from "@lib/utils";
+import { Time } from "@internationalized/date";
+
+const defaultAvailability : any = [{
+        id: crypto.randomUUID(),
+        name: "",
+        week: [{
+            isChecked: true,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: true,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: true,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: true,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: true,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: false,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        },
+        {
+            isChecked: false,
+            timeRanges: [{
+                start: new Time(9),
+                end: new Time(17)
+            }]
+        }],
+        specificDates: {}
+    }]
 
 // Register a business user
 export async function POST(request: NextRequest) {
@@ -33,14 +89,33 @@ export async function POST(request: NextRequest) {
                     },
                 },
             })
-            return await supabase.from('business_users').insert([
+            
+           return await supabase.from('business_users').insert([
                 {
                     business_name: name,
                     user_id: data.data.user?.id,
                     email: data.data.user?.email!,
-                    stripe_acc_id: account.id
+                    stripe_acc_id: account.id,
+                    availabilities: defaultAvailability
                 }
-            ]).select().single()
+            ]).select().single().then(async (res) => {
+                const business = res.data
+                return await supabase.from('services').insert([
+                    {
+                        name: "Test Service",
+                        business: business?.business_id!,
+                        description: "This is a test service",
+                        length: 180,
+                        price: 100,
+                        photo_url: "",
+                        imagePath: "",
+                        addons: null,
+                        categories: ["test", "default", "service"],
+
+                    }
+                ]).select(`business_users(*)`).single()
+            })
+
         })
         
     if (error) {
@@ -49,8 +124,6 @@ export async function POST(request: NextRequest) {
             status: 500
         })
     }
-    console.log(user);
-
     return new Response(JSON.stringify({ data: user }), {
         headers: { 'Content-Type': 'application/json' },
         status: 200

@@ -14,6 +14,7 @@ import { CircleCheckBig } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import CircularProgress from '@mui/joy/CircularProgress'
 import Button from '@tailus-ui/Button'
+import { AppointmentReminderData, appointmentReminders } from '@utils/bull_mq'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
     stripeAccount: "acct_1Q6tUcFpD7KoueRC",
@@ -134,6 +135,20 @@ export default function page() {
             const { error } = await response.json();
             throw new Error("An error occurred: ", error);
         } else {
+            // Send job
+            const reminderData: AppointmentReminderData = {
+                appointmentData: {
+                    start: appointmentData.start,
+                    end: appointmentData.end
+                },
+                appointmentId: appointmentData.id,
+                businessId: appointmentData.business,
+                client_metadata: appointmentData.client_metadata,
+                service_data: appointmentData.service_data
+            }
+            appointmentReminders.add(appointmentData.id, reminderData, {
+                delay: 5000 //TODO: Change to calculated milliseconds
+            })
             setCompleted(true)
         }
     }

@@ -17,7 +17,7 @@ import { useUserContext } from '@utils/context/UserContext';
 
 
 
-const clients: Client[] = Array.from({ length: 50 }, (_, i) => ({
+const clients: any[] = Array.from({ length: 50 }, (_, i) => ({
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
     email: faker.internet.email(),
@@ -26,7 +26,7 @@ const clients: Client[] = Array.from({ length: 50 }, (_, i) => ({
 
 const CreateClientDialog = ({ clients, setClients, open, setIsOpen, user }: { clients: Client[], setClients: any, open: boolean, setIsOpen: any, user: any }) => {
     const supabase = createClient<Database>();
-    const [client, setClient] = useState<Client>({
+    const [client, setClient] = useState<any>({
         first_name: "",
         last_name: "",
         email: "",
@@ -103,7 +103,7 @@ export const ClientsTable = () => {
     // Open dialog to edit client
     // Handle deleting a client
     const { user } = useUserContext();
-    const [clients, setClients] = useState<Client[]>([])
+    const [clients, setClients] = useState<any[]>([])
     useEffect(() => {
         // Recieve clients from supabase
         const getClients = async () => {

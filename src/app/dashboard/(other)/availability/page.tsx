@@ -100,7 +100,6 @@ export default function page() {
             })
             const result = await res.json()
             const availabilities = result;
-            console.log(availabilities)
             setAvailabilities(availabilities.result === null ? [] : availabilities.result)
         }
         if (user.business_id) {

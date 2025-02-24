@@ -47,6 +47,14 @@ export function UserWrapper({ children }: any) {
                 }
 
             }
+            if (event === "SIGNED_OUT") {
+                setUser({
+                    user_id: undefined,
+                    role: undefined,
+                    client_id: undefined,
+                    business_id: undefined
+                })
+            }
         })
         return () => {
             data.subscription.unsubscribe();

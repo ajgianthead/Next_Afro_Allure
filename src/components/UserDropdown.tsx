@@ -4,8 +4,10 @@ import { Check, ChevronRight, HelpCircle, LogOut, MessageCircleQuestion, Setting
 import { Caption, Title } from '@tailus-ui/typography';
 import { AdminAvatar } from './AdminAvatar';
 import { TAILUS_AVATAR } from './../const';
+import { useRouter } from 'next/navigation';
 
 export const UserDropdown = () => {
+  const router = useRouter()
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger className="rounded-[--avatar-radius] hover:ring ring-[--ui-soft-bg] data-[state=open]:ring">
@@ -37,7 +39,15 @@ export const UserDropdown = () => {
                   </Button.Icon>
                   <Button.Label>Manage</Button.Label>
                 </Button.Root>
-                <Button.Root className="bg-gray-50" variant="outlined" size="xs" intent="gray">
+                <Button.Root onClick={async () => {
+                  const signOut = await fetch(`http://localhost:3000/api/auth/signout`, {
+                    method: 'POST'
+                  })
+                  const res = await signOut.json();
+                  console.log(res.message);
+                  router.replace('/login')
+
+                }} className="bg-gray-50" variant="outlined" size="xs" intent="gray">
                   <Button.Icon size="xs" type="leading">
                     <LogOut />
                   </Button.Icon>

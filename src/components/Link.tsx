@@ -25,11 +25,11 @@ export const Link = ({ isActive = false, label, link, children }: { isActive?: b
 export const Root = ({ isActive = false, link, children }: { isActive?: boolean; children: ReactNode; link: string }) => (
   <Button.Root
     href={link}
-    variant={isActive ? 'outlined' : 'ghost'}
-    intent="gray"
+    variant={isActive ? 'soft' : 'ghost'}
+    intent="primary"
     className={twMerge(
-      'justify-start gap-3.5 px-4 hover:bg-indigo-50',
-      isActive && 'bg-[white] [--btn-border-color:theme(colors.primary.900)] dark:bg-gray-500/10 dark:!shadow-none dark:[--btn-border-color:theme(colors.transparent)]'
+      'justify-start gap-3.5 px-4 hover:bg-[theme(colors.gray.200)] ',
+      isActive && 'bg-[theme(colors.primary.50)] text-white  dark:bg-gray-500/10 dark:!shadow-none dark:[--btn-border-color:theme(colors.transparent)]'
     )}
   >
     {children}

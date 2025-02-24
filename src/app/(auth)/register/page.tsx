@@ -48,7 +48,9 @@ export default function Register() {
                 }),
             })
             const res = await result.json();
-            router.replace(`http://localhost:3000/onboarding/${res.data.stripe_acc_id}`)
+            console.log(res.data);
+
+            router.replace(`http://localhost:3000/onboarding/${res.data.business_users.stripe_acc_id}`)
         } else {
             const result = await fetch("http://localhost:3000/api/auth/register/client_user", {
                 method: "POST",
