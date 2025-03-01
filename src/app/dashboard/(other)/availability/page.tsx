@@ -3,7 +3,7 @@ import Checkbox from '@components/Checkbox'
 import Label from '@components/Label'
 import Card from '@tailus-ui/Card'
 import { Caption, Text, Title } from '@tailus-ui/typography'
-import { CheckIcon, Plus, X } from 'lucide-react'
+import { CheckIcon, CircleHelp, Plus, X } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import Select from "@components/Select";
 import Input from '@components/Input'
@@ -37,8 +37,6 @@ const shortCuts = {
 
 export default function page() {
     const { user } = useUserContext()
-    console.log(user);
-
     const defaultAvailability = {
         id: crypto.randomUUID(),
         name: "",
@@ -100,7 +98,8 @@ export default function page() {
             })
             const result = await res.json()
             const availabilities = result;
-            setAvailabilities(availabilities.result === null ? [] : availabilities.result)
+            setAvailabilities(availabilities.result.availabilities === null ? [] : availabilities.result.availabilities)
+            setDefaultAvailable(availabilities.result.default)
         }
         if (user.business_id) {
             (async () => {
@@ -166,7 +165,8 @@ export default function page() {
                     {
                         method: "PUT",
                         body: JSON.stringify({
-                            availabilities: clone
+                            availabilities: clone,
+                            defaultAvailability: isDefault ? availability.id : defaultAvailable
                         }),
                         headers: {
                             "Content-Type": "application/json"
@@ -186,9 +186,9 @@ export default function page() {
     }
     const [isEditing, setisEditing] = useState(false);
     const [currEditIndex, setCurrEditIndex] = useState<number>();
+    const [defaultAvailable, setDefaultAvailable] = useState("")
     const handleEdit = (index: number) => {
         console.log(availabilities[index]);
-
         setCurrEditIndex(index)
         setisEditing(true)
         setAvailability(availabilities[index])
@@ -226,29 +226,61 @@ export default function page() {
         title: "",
         description: "",
     })
+    const [isDefault, setisDefault] = useState(false);
     return (
         <div className='px-6'>
             <Dialog.Root open={openCreate} onOpenChange={setOpenCreate}>
                 <Dialog.Portal>
                     <Dialog.Overlay className='z-40' />
                     <Dialog.Content className="max-w-7xl z-50 overflow-y-scroll">
-                        <Dialog.Title>{isEditing ? "Edit" : "Create"} Availability</Dialog.Title>
-                        <Caption>Enter your availability</Caption>
+                        {/* <Dialog.Title>{isEditing ? "Edit" : "Create"} Availability</Dialog.Title>
+                        <Caption>Enter your availability</Caption> */}
                         <Dialog.Description className=''>
+                            <div className='mb-2'>
+                                <Title>{isEditing ? "Edit" : "Create New"} Availability</Title>
+                            </div>
                             <Input value={availability.name} onChange={(e) => {
                                 setAvailability({
                                     ...availability,
                                     name: e.target.value
                                 })
-                            }} placeholder='Availability Name' className='mt-5' />
+                            }} placeholder='Enter availability name' className='' />
+                            <div className='flex items-center gap-2 mt-2'>
+                                <Checkbox.Root checked={defaultAvailable === availability.id || isDefault} disabled={isEditing && defaultAvailable === availability.id} onClick={() => {
+                                    setisDefault(!isDefault)
+                                }}>
+                                    <Checkbox.Indicator asChild>
+                                        <CheckIcon className="size-3.5" color='purple' strokeWidth={3} />
+                                    </Checkbox.Indicator>
+                                </Checkbox.Root>
+                                <div className='flex gap-2 items-center'>
+                                    <Label>Default Availability </Label>
 
+                                    <Tooltip.Provider>
+                                        <Tooltip.Root delayDuration={100}>
+                                            <Tooltip.Trigger asChild>
+                                                <div><CircleHelp size={16} /></div>
+                                            </Tooltip.Trigger>
+                                            <Tooltip.Portal>
+                                                <Tooltip.Content className='z-50'>
+                                                    If checked, this will be your default availability for all services
+                                                </Tooltip.Content>
+                                            </Tooltip.Portal>
+                                        </Tooltip.Root>
+                                    </Tooltip.Provider>
+                                </div>
+                            </div>
                             <div className='flex mt-2 gap-2'>
-                                <Card className=' w-1/3 ' variant='outlined'>
+                                <Card className=' w-1/2 ' variant='outlined'>
                                     {/* Weekday Component */}
+                                    <div className='mb-5'>
+                                        <Title>Weekly Availability</Title>
+                                        <Caption>Enter the times you are available for each day of the week</Caption>
+                                    </div>
                                     {weekDays.map((day, index) => {
                                         return (
-                                            <div className='mb-5'>
-                                                <Aligner key={index} className='mb-2'>
+                                            <div className='mb-5' key={index}>
+                                                <Aligner className='mb-2'>
                                                     <Checkbox.Root checked={availability.week[index].isChecked} onClick={() => {
                                                         if (availability.week[index].isChecked) {
                                                             let clone = { ...availability }
@@ -323,7 +355,11 @@ export default function page() {
                                     })}
 
                                 </Card>
-                                <Card variant='outlined' className='w-2/3 flex justify-start'>
+                                <Card variant='outlined' className='w-1/2 flex flex-col justify-start'>
+                                    <div className='mb-5'>
+                                        <Title>Specific Dates</Title>
+                                        <Caption>Select dates that differ from your regular availability and enter the time(s) you're available</Caption>
+                                    </div>
                                     <div className='w-1/2'>
                                         <Calendar multiple onFocusedDateChange={onDateSelect} />
                                     </div>
@@ -426,7 +462,9 @@ export default function page() {
             <div className='w-full mt-2 flex gap-6'>
                 <Input placeholder='Search availability by name' className='' />
                 <Button.Root className='ml-30 min-w-36' onClick={() => {
+                    setisEditing(false)
                     setOpenCreate(true)
+                    setisDefault(false)
                     setAvailability(defaultAvailability)
                 }}>
                     <Button.Label>+ Create New</Button.Label>
@@ -436,9 +474,12 @@ export default function page() {
             {/* Map through availabilities */}
             <div className='flex flex-wrap gap-2 w-full'>
                 {availabilities.length ? availabilities.map((element: any, index: number) => {
+                    console.log(element);
+
                     return (
                         <div className='w-1/5' onClick={() => {
                             handleEdit(index)
+                            setisDefault(false)
                         }}>
                             <Card variant='outlined' className='w-full cursor-pointer'>
                                 <div className='mb-2'>

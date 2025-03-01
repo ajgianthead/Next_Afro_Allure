@@ -177,7 +177,9 @@ export type Database = {
           stripe_acc_id: string | null
           updated_at: string
           url_name: string
-          user_id: string
+          user_id: string,
+          current_onboarding_link: string,
+          default_availability: string,
         }
         Insert: {
           availabilities?: Json[] | null
@@ -193,6 +195,8 @@ export type Database = {
           updated_at?: string
           url_name?: string
           user_id?: string
+          current_onboarding_link?: string | null
+          default_availability?: string,
         }
         Update: {
           availabilities?: Json[] | null
@@ -208,6 +212,8 @@ export type Database = {
           updated_at?: string
           url_name?: string
           user_id?: string
+          current_onboarding_link?: string | null
+          default_availability?: string
         }
         Relationships: []
       }

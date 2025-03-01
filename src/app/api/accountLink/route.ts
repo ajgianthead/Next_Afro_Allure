@@ -1,5 +1,7 @@
 import { stripe } from "@lib/utils";
+import { createClient } from "@utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { Database } from "../../../../lib/database.types";
 
 export async function POST(request: NextRequest) {
     const { account } = await request.json();
@@ -7,12 +9,18 @@ export async function POST(request: NextRequest) {
         const accountLink = await stripe.accountLinks.create({
             account: account,
             refresh_url: `http://localhost:3000/onboarding/${account}`,
-            return_url: `http://localhost:3000/dashboard`,
+            return_url: `http://localhost:3000/onboarding/${account}/return`,
             type: 'account_onboarding',
             collection_options: {
                 fields: "eventually_due"
             }
         })
+        // Saving onboarding link
+        const supabase = createClient<Database>();
+        const {data} = await supabase.from('business_users').update({
+            current_onboarding_link: accountLink.url
+        }).eq('stripe_acc_id', account).select().single();
+
         return new NextResponse(JSON.stringify({ link: accountLink.url }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200

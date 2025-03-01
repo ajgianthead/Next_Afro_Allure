@@ -28,23 +28,22 @@ export default function Layout({
 }>) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { user } = useUserContext();
-    const [userData, setUserData] = useState<DB['public']['Tables']['business_users']['Row'] | null>(null)
+    const [userData, setUserData] = useState<any>(null)
     const router = useRouter()
     const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
         const fetchUserData = async () => {
-            const res = await fetch(`http://localhost:3000/api/${user.business_id}`, {
-                method: 'GET'
-            })
-            const userData = await res.json()
-            setUserData(userData.data)
+            if (user.business_id) {
+                const res = await fetch(`http://localhost:3000/api/${user.business_id}`, {
+                    method: 'GET'
+                })
+                const userData = await res.json()
+                setUserData(userData.data)
+            }
         }
         (async () => {
-            const user = await fetchUser()
-            // Fetch services
-            console.log(user);
-
-            if (user) {
+            const thisUser = await fetchUser()
+            if (thisUser) {
                 fetchUserData()
                 setLoading(false)
             } else {
@@ -59,7 +58,7 @@ export default function Layout({
         !loading ? <div lang="en">
             <div
                 className={twMerge(
-                    'fixed inset-y-0 left-0 z-0 flex -translate-x-72  transition-transform duration-300 lg:translate-x-0',
+                    'fixed inset-y-0 left-0 z-30 flex -translate-x-72  transition-transform duration-300 lg:translate-x-0',
                     isMenuOpen && 'translate-x-0'
                 )}
             >
@@ -177,39 +176,38 @@ export default function Layout({
                 />
             )}
             <main className={twMerge('lg:ml-auto lg:w-[calc(100vw-16rem)]', isMenuOpen && 'pointer-events-none opacity-50')}>
-                <div className="feedback-bg flex-row sticky top-0 z-30 flex items-end justify-between  pl-[1.25rem] py-3 lg:py-4">
-                    <div className="flex items-center gap-2 pr-6">
-                        <Button.Root
-                            size="sm"
-                            variant="ghost"
-                            intent="gray"
-                            className="-ml-2 focus:bg-transparent lg:hidden dark:focus:bg-transparent"
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        >
-                            <Button.Icon type="only">
-                                <Menu />
-                            </Button.Icon>
-                        </Button.Root>
-                        <Title size="base" weight="bold">
-                            Dashboard
-                        </Title>
-                    </div>
-                    <div className="flex items-center gap-4 pr-6">
-                        <Notifications />
-                        <UserDropdown />
+                <div className="feedback-bg flex-col sticky top-0 z-20 flex items-end justify-between  pl-[1.25rem] py-3 lg:py-4">
+                    <div className='flex-row flex justify-between w-full'>
+                        <div className="flex items-center gap-2 pr-6">
+                            <Button.Root
+                                size="sm"
+                                variant="ghost"
+                                intent="gray"
+                                className="-ml-2 focus:bg-transparent lg:hidden dark:focus:bg-transparent"
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            >
+                                <Button.Icon type="only">
+                                    <Menu />
+                                </Button.Icon>
+                            </Button.Root>
+                        </div>
+                        <div className="flex items-center gap-4 pr-6">
+                            <Notifications />
+                            <UserDropdown />
+                        </div>
                     </div>
 
-                    {!userData?.completed_stripe_onboarding && <Banner.Root intent="warning" className="sticky rounded-none w-full">
+                    {userData && !userData?.completed_stripe_onboarding ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
                         <Banner.Content>
                             <CircleAlert className="size-5 text-[--body-text-color]" />
                             <div className="space-y-2">
                                 <Text size="sm" className="my-0 text-warning-800 dark:text-warning-300">
-                                    To launch your booking site you need to first complete your onboarding with Stripe
+                                    To launch your booking site, you need to finish  <a target='_blank' href={`${userData.current_onboarding_link}`}><strong>onboarding with Stripe</strong></a> to start accepting payments
                                 </Text>
 
                             </div>
                         </Banner.Content>
-                    </Banner.Root>}
+                    </Banner.Root> : <></>}
                 </div>
 
                 <div className='w-full'>

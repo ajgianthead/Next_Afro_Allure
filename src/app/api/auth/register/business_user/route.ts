@@ -7,7 +7,7 @@ import { Time } from "@internationalized/date";
 
 const defaultAvailability : any = [{
         id: crypto.randomUUID(),
-        name: "",
+        name: "Default",
         week: [{
             isChecked: true,
             timeRanges: [{

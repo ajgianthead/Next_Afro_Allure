@@ -2,14 +2,16 @@
 
 import { stripe } from '@lib/utils'
 import { createClient } from '@utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 import CircularProgress from '@mui/joy/CircularProgress';
 import { Caption } from '@tailus-ui/typography';
 import { Database } from '../../../../../lib/database.types';
 
-export default function Page({ params }: { params: { stripe_account_id: string } }) {
-  const { stripe_account_id } = params;
+export default function Page() {
+  const params = useParams();
+  const stripe_account_id: any = params.stripe_account_id;
+
   const router = useRouter();
 
   useEffect(() => {
@@ -25,12 +27,12 @@ export default function Page({ params }: { params: { stripe_account_id: string }
         router.replace('/dashboard');
       }
     }
-    checkAccount();
+    checkAccount()
   }, [stripe_account_id, router]);
 
   return (
-    <div className='flex w-full h-screen justify-center items-center'>
-      <div>
+    <div >
+      <div className='flex w-full flex-col gap-2 h-screen justify-center items-center'>
         <CircularProgress size='sm' />
         <Caption>Redirecting</Caption>
       </div>

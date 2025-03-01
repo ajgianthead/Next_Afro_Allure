@@ -4,10 +4,11 @@ import { Database } from "../../../../../lib/database.types";
 
 export async function PUT(request: NextRequest, { params }: { params: { businessId: string } }) {
     const supabase = createClient<Database>();
-    const { businessId } = params
-    const { availabilities } = await request.json()
+    const { businessId } = await params
+    const { availabilities, defaultAvailability } = await request.json()
     const { data, error } = await supabase.from("business_users").update({
-        availabilities: availabilities
+        availabilities: availabilities,
+        default_availability: defaultAvailability,
     }).eq("business_id", businessId).select();
     if (error) {
         return new NextResponse(JSON.stringify({ error: error }), {
@@ -30,8 +31,8 @@ export async function PUT(request: NextRequest, { params }: { params: { business
 // Get availabilities
 export async function GET(request: NextRequest, { params }: { params: { businessId: string } }) {
     const supabase = createClient<Database>();
-    const { businessId } = params;
-    const { data, error } = await supabase.from('business_users').select('availabilities').eq("business_id", businessId);
+    const { businessId } = await params;
+    const { data, error } = await supabase.from('business_users').select('availabilities, default_availability').eq("business_id", businessId);
 
     if (error) {
         return new NextResponse(JSON.stringify({ error: error }), {
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: { business
         })
     }
     if (data?.length) {
-        return new NextResponse(JSON.stringify({ result: data[0].availabilities }), {
+        return new NextResponse(JSON.stringify({ result: {availabilities: data[0].availabilities, default: data[0].default_availability} }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200
         })
