@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
             imagePath,
             photo_url,
             business,
-            categories
+            categories,
+            availability
     } = await request.json();
     let { data, error } = await supabase.from('services').insert([
         {
@@ -26,7 +27,8 @@ export async function POST(request: NextRequest) {
             imagePath: imagePath,
             photo_url: photo_url,
             business: business,
-            categories: categories
+            categories: categories,
+            availability: availability
         }
     ]).select().single();
     if (error) {
@@ -68,7 +70,7 @@ export async function PUT(request: NextRequest) {
 // Get all services
 export async function GET(request: NextRequest, { params }: { params: { businessId: string } }) {
     const supabase = createClient<Database>();
-    const { businessId } = params;
+    const { businessId } = await params;
     let { data, error } = await supabase.from("services").select("*").eq("business", businessId).order("created_at", {ascending: true})
     if (error) {
         return new NextResponse(JSON.stringify({ result: error, message: error.message }), {

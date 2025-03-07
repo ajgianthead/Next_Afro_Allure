@@ -34,7 +34,7 @@ const SelectScrollUpButton = React.forwardRef<
         ref={forwardedRef}
         className={button({ className })}
     >
-        {children || <ChevronUp className="size-3" />}
+        {children || <ChevronUp />}
     </SelectPrimitive.ScrollUpButton>
 ));
 
@@ -47,7 +47,7 @@ const SelectScrollDownButton = React.forwardRef<
         ref={forwardedRef}
         className={button({ className })}
     >
-        {children || <ChevronDown size={3} />}
+        {children || <ChevronDown />}
     </SelectPrimitive.ScrollDownButton>
 ));
 

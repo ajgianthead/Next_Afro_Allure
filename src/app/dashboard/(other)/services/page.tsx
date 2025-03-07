@@ -17,22 +17,31 @@ import Image from 'next/image'
 import { TagsInput } from "react-tag-input-component";
 import Separator from '@tailus-ui/Separator'
 import Chip from '@mui/joy/Chip';
-import { EllipsisVertical, Pencil, Plus, Trash, X } from 'lucide-react'
+import { CircleCheck, EllipsisVertical, Pencil, Plus, Trash, X } from 'lucide-react'
 import DropdownMenu from '@components/DropdownMenu'
 import AlertDialog from '@components/AlertDialog'
 import CircularProgress from '@mui/joy/CircularProgress'
+import Tooltip from '@tailus-ui/Tooltip'
+import Toast from '@components/Toast'
+import Select from '@components/Select'
 
-export default function page() {
+export default function Page() {
     // Get services from business
     const { user } = useUserContext();
     const [loading, setLoading] = useState<boolean>(true);
+    const [availabilities, setAvailabilities] = useState<any>([])
+    const [defaultAvailability, setDefaultAvailability] = useState<string>("")
     useEffect(() => {
         const getServices = async () => {
             const { business_id } = user
-            const res = await fetch(`http://localhost:3000/api/${business_id}/services`)
+            const res = await fetch(`http://localhost:3000/api/${business_id}/services/availabilities`)
             const services = await res.json()
             console.log(services);
             setServices(services.result)
+            if (services.result.length) {
+                setAvailabilities(services.result[0].business_users.availabilities)
+                setDefaultAvailability(services.result[0].business_users.default_availability)
+            }
         }
         console.log(user);
         if (user.business_id) {
@@ -67,14 +76,23 @@ export default function page() {
         imagePath: "",
         photo_url: "",
         business: user,
-        categories: []
+        categories: [],
+        availability: ""
     })
     const [isEditing, setIsEditing] = useState(false);
     const [open, setOpen] = useState(false);
+    const [confirmation, setConfirmation] = useState<boolean>(false)
+    const [confirmationData, setConfirmationData] = useState<{
+        title: string;
+        description: string;
+    }>({
+        title: "",
+        description: "",
+    })
     return (
         <div className='px-6'>
-            <CreateServiceDialog services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={user.business_id} />
-            <EditServiceDialog setDeleteOpen={setOpen} services={services} setServices={setServices} open={isEditing} setIsOpen={setIsEditing} oldService={service} user={user} index={currIndex} />
+            <CreateServiceDialog availabilities={availabilities} defaultAvailability={defaultAvailability} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={user.business_id} />
+            <EditServiceDialog availabilities={availabilities} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} setDeleteOpen={setOpen} services={services} setServices={setServices} open={isEditing} setIsOpen={setIsEditing} oldService={service} user={user} index={currIndex} />
             <div className="flex justify-between items-center mt-3">
                 <Title>Services</Title>
                 <Button.Root>
@@ -97,11 +115,24 @@ export default function page() {
                     )
                 })}
             </div>
+            <Toast.Provider>
+                <Toast.Root open={confirmation} onOpenChange={setConfirmation} mixed>
+                    <div className='flex justify-between items-center'>
+                        <Toast.Title className='flex gap-2 items-center'><CircleCheck color='green' size={16} />{confirmationData.title}</Toast.Title>
+                        <Toast.Close aria-label="Close">
+                            <span aria-hidden><X size={16} /></span>
+                        </Toast.Close>
+                    </div>
+                    <Toast.Description>{confirmationData.description}</Toast.Description>
+                </Toast.Root>
+
+                <Toast.Viewport />
+            </Toast.Provider>
         </div>
     )
 }
 
-const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: any) => {
+const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user, setConfirmationData, setConfirmation, defaultAvailability, availabilities }: any) => {
     const supabase = createClient<Database>();
     const [service, setService] = useState<Service>({
         name: "",
@@ -115,7 +146,8 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         imagePath: "",
         photo_url: "",
         business: user,
-        categories: []
+        categories: [],
+        availability: defaultAvailability
     });
     useEffect(() => {
         setService({
@@ -192,11 +224,17 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
             imagePath: "",
             photo_url: "",
             business: user,
-            categories: []
+            categories: [],
+            availability: defaultAvailability
         })
         setAddOns([])
         setDataSending(false)
         setIsOpen(false)
+        setConfirmationData({
+            title: "Success",
+            description: "Service Created"
+        })
+        setConfirmation(true)
     }
     const [image, setImage] = useState<{
         imageURL: string | null
@@ -218,6 +256,12 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         name: string;
         price: number;
     }[]>([]);
+
+    const defaultA = availabilities.filter((availability: any) => availability.id === defaultAvailability)
+    let defaultAvailabilityName;
+    if (defaultA.length) {
+        defaultAvailabilityName = defaultA[0].name
+    }
     return (
         <div>
             <Dialog.Root open={open} onOpenChange={setIsOpen}>
@@ -228,7 +272,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                             <Title>Create Service</Title>
                             <Caption>Enter the details of your service below</Caption>
                         </Dialog.Title>
-                        <Dialog.Description className='flex gap-2 flex-col'>
+                        <Dialog.Description className='flex gap-5 flex-col'>
                             <div>
                                 <Label className='font-medium'>Upload Photo</Label>
                                 <div {...getRootProps()} className='border border-dashed rounded-md p-2 cursor-pointer text-center flex justify-center'>
@@ -239,6 +283,35 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                                             <Caption>Drag 'n' drop or click to select a photo the best represents your service</Caption>
                                     }
                                 </div>
+                            </div>
+                            <div>
+                                <Label className='font-medium'>Availability</Label>
+                                <Caption className='mb-2'>Choose the availability you want use when clients book this service on your booking site</Caption>
+                                <Select.Root defaultValue={defaultAvailability}>
+                                    <Select.Trigger size="md" className="w-full flex justify-between">
+                                        <Select.Value placeholder="Availability" />
+                                        <Select.Icon />
+                                    </Select.Trigger>
+
+                                    <Select.Portal>
+                                        <Select.Content mixed className="z-50">
+                                            <Select.Viewport>
+                                                {
+                                                    availabilities.map((availability: any, index: number) => (
+                                                        <div key={index}>
+                                                            <Select.Item value={availability.id} className="pl-7 items-center">
+                                                                <Select.ItemIndicator />
+                                                                <Select.ItemText>
+                                                                    {availability.name}
+                                                                </Select.ItemText>
+                                                            </Select.Item>
+                                                        </div>
+                                                    ))
+                                                }
+                                            </Select.Viewport>
+                                        </Select.Content>
+                                    </Select.Portal>
+                                </Select.Root>
                             </div>
                             <div>
                                 <Label className='font-medium'>Service Name</Label>
@@ -370,7 +443,8 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
                                         imagePath: "",
                                         photo_url: "",
                                         business: user,
-                                        categories: []
+                                        categories: [],
+                                        availability: defaultAvailability
                                     })
                                     setAddOns([])
                                 }} variant="outlined" disabled={dataSending} size="sm" intent="gray">
@@ -389,7 +463,8 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user }: a
         </div>
     )
 }
-const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldService, index }: any) => {
+const EditServiceDialog = ({ availabilities, services, setServices, open, setIsOpen, user, oldService, index, setConfirmation, setConfirmationData }: any) => {
+    const [tooltip, setTooltip] = useState<boolean>(false);
     const supabase = createClient<Database>();
     const [service, setService] = useState<any>(oldService);
     const [dataSending, setDataSending] = useState<boolean>(false)
@@ -424,27 +499,31 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
         }
     }, [oldService]);
     const editImage = async () => {
-        const { data, error } = await supabase.storage.from('Service Photos').upload(service.imagePath!, image.imageBlob!, {
-            upsert: true
+        const id = crypto.randomUUID();
+        const path = `images/${user.business_id}/services/${id}`
+        const { data, error } = await supabase.storage.from('Service Photos').upload(service.imagePath.length ? service.imagePath! : path, image.imageBlob!, {
+            upsert: service.imagePath.length > 0
         })
+        console.log(data);
+
         if (data?.path) {
             const res = supabase.storage.from("Service Photos").getPublicUrl(data?.path)
             return res.data.publicUrl
         }
-        return "";
+        return error;
     }
     const handleSubmit = async () => {
         setDataSending(true)
-        let imageURL;
-        let clone;
-        if (image.imageBlob) {
-            imageURL = await editImage()
-            clone = { ...service }
+        let clone = { ...service }
+        const hasImage = Object.values(image.imageBlob!)
+        if (hasImage.length) {
+            let imageURL = await editImage()
             clone.photo_url = imageURL;
+            console.log(imageURL);
         }
         const res = await fetch(`http://localhost:3000/api/${user.business_id}/services`, {
             method: 'PUT',
-            body: JSON.stringify(image.imageBlob ? clone : service)
+            body: JSON.stringify(hasImage.length ? clone : service)
         })
         const dataBack = await res.json();
 
@@ -455,6 +534,11 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
         setServices(newServices)
         setDataSending(false)
         setIsOpen(false)
+        setConfirmationData({
+            title: "Success",
+            description: "Service Updated"
+        })
+        setConfirmation(true)
     }
     // Delete Service
     const handleDelete = async () => {
@@ -472,8 +556,19 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
         setServices(clone)
         setDataSending(false)
         setIsOpen(false)
+        setConfirmationData({
+            title: "Success",
+            description: "Service Deleted"
+        })
+        setConfirmation(true)
     }
     const [deleteOpen, setDeleteOpen] = useState(false)
+    const defaultA = availabilities.filter((availability: any) => availability.id === service.availability)
+    let defaultAvailabilityName;
+    if (defaultA.length) {
+        defaultAvailabilityName = defaultA[0].name
+    }
+
     return (
         <div>
             <AlertDialog.Root open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -530,6 +625,35 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
                                                 <Caption>Drag 'n' drop or click to select a photo the best represents your service</Caption>
                                         }
                                     </div>
+                                </div>
+                                <div>
+                                    <Label className='font-medium'>Availability</Label>
+                                    <Caption className='mb-2'>Choose the availability you want use when clients book this service on your booking site</Caption>
+                                    <Select.Root defaultValue={service.availability}>
+                                        <Select.Trigger size="md" className="w-full flex justify-between">
+                                            <Select.Value placeholder="Availability" />
+                                            <Select.Icon />
+                                        </Select.Trigger>
+
+                                        <Select.Portal>
+                                            <Select.Content mixed className="z-50">
+                                                <Select.Viewport>
+                                                    {
+                                                        availabilities.map((availability: any, index: number) => (
+                                                            <div key={index}>
+                                                                <Select.Item value={availability.id} className="pl-7 items-center">
+                                                                    <Select.ItemIndicator />
+                                                                    <Select.ItemText>
+                                                                        {availability.name}
+                                                                    </Select.ItemText>
+                                                                </Select.Item>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </Select.Viewport>
+                                            </Select.Content>
+                                        </Select.Portal>
+                                    </Select.Root>
                                 </div>
                                 <div>
                                     <Label className='font-medium'>Service Name</Label>
@@ -661,11 +785,23 @@ const EditServiceDialog = ({ services, setServices, open, setIsOpen, user, oldSe
                                 </Dialog.Close>
 
 
-                                <Button.Root onClick={() => {
-                                    setDeleteOpen(true)
-                                }} variant="soft" disabled={dataSending} size="sm" intent="danger">
-                                    <Button.Label>Delete Service</Button.Label>
-                                </Button.Root>
+
+                                <Tooltip.Provider>
+                                    <Tooltip.Root open={tooltip} onOpenChange={services.length > 1 ? () => { } : () => { setTooltip(!tooltip) }} delayDuration={100}>
+                                        <Tooltip.Trigger asChild>
+                                            <Button.Root disabled={services.length === 1 || dataSending} onClick={() => {
+                                                setDeleteOpen(true)
+                                            }} variant="soft" size="sm" intent="danger">
+                                                <Button.Label>Delete Service</Button.Label>
+                                            </Button.Root>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Portal>
+                                            <Tooltip.Content className='z-50'>
+                                                Can't delete your only service
+                                            </Tooltip.Content>
+                                        </Tooltip.Portal>
+                                    </Tooltip.Root>
+                                </Tooltip.Provider>
 
 
                                 <Button.Root disabled={dataSending} onClick={handleSubmit} size="sm">
@@ -702,36 +838,6 @@ const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService, 
                             )
                         })}
                     </div>
-                    {/* <DropdownMenu.Root>
-                        <DropdownMenu.Trigger asChild>
-                            <Button.Root variant='ghost'>
-                                <Button.Icon>
-                                    <EllipsisVertical size={16} />
-                                </Button.Icon>
-                            </Button.Root>
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Portal>
-                            <DropdownMenu.Content mixed sideOffset={5}>
-                                <DropdownMenu.Item onClick={() => {
-
-                                }}>
-                                    <DropdownMenu.Icon>
-                                        <Pencil />
-                                    </DropdownMenu.Icon>
-                                    Edit
-                                </DropdownMenu.Item>
-                                <DropdownMenu.Item intent="danger" onClick={() => {
-                                    setOpen(true)
-                                }}>
-                                    <DropdownMenu.Icon>
-                                        <Trash />
-                                    </DropdownMenu.Icon>
-                                    Delete
-                                </DropdownMenu.Item>
-
-                            </DropdownMenu.Content>
-                        </DropdownMenu.Portal>
-                    </DropdownMenu.Root> */}
                 </div>
                 <div>
                     <Title>{service.name}</Title>

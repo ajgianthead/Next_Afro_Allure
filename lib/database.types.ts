@@ -264,6 +264,7 @@ export type Database = {
           photo_url: string | null
           price: number
           updated_at: string | null
+          availability: string
         }
         Insert: {
           addons?: Json[] | null
@@ -278,6 +279,7 @@ export type Database = {
           photo_url?: string | null
           price: number
           updated_at?: string | null
+          availability: string
         }
         Update: {
           addons?: Json[] | null
@@ -292,6 +294,7 @@ export type Database = {
           photo_url?: string | null
           price?: number
           updated_at?: string | null
+          availability?: string
         }
         Relationships: [
           {

@@ -3,7 +3,7 @@ import Checkbox from '@components/Checkbox'
 import Label from '@components/Label'
 import Card from '@tailus-ui/Card'
 import { Caption, Text, Title } from '@tailus-ui/typography'
-import { CheckIcon, CircleHelp, Plus, X } from 'lucide-react'
+import { CheckIcon, CircleCheck, CircleHelp, Plus, X } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import Select from "@components/Select";
 import Input from '@components/Input'
@@ -35,7 +35,7 @@ const shortCuts = {
     "Sunday": "SUN"
 }
 
-export default function page() {
+export default function Page() {
     const { user } = useUserContext()
     const defaultAvailability = {
         id: crypto.randomUUID(),
@@ -152,7 +152,7 @@ export default function page() {
             );
             const res = await result.json()
             setConfirmationData({
-                title: "Confirmation",
+                title: "Success",
                 description: "Availability Created"
             })
             setConfirmation(true)
@@ -177,7 +177,7 @@ export default function page() {
             }
             setisEditing(false)
             setConfirmationData({
-                title: "Confirmation",
+                title: "Success",
                 description: "Availability Updated"
             })
             setConfirmation(true)
@@ -212,7 +212,7 @@ export default function page() {
         );
         const res = await result.json()
         setConfirmationData({
-            title: "Confirmation",
+            title: "Success",
             description: "Availability Deleted"
         })
         setConfirmation(true)
@@ -270,8 +270,8 @@ export default function page() {
                                     </Tooltip.Provider>
                                 </div>
                             </div>
-                            <div className='flex mt-2 gap-2'>
-                                <Card className=' w-1/2 ' variant='outlined'>
+                            <div className='flex lg:flex-row flex-col mt-2 gap-2'>
+                                <Card className=' lg:w-1/2 w-full' variant='outlined'>
                                     {/* Weekday Component */}
                                     <div className='mb-5'>
                                         <Title>Weekly Availability</Title>
@@ -355,8 +355,8 @@ export default function page() {
                                     })}
 
                                 </Card>
-                                <Card variant='outlined' className='w-1/2 flex flex-col justify-start'>
-                                    <div className='mb-5'>
+                                <Card variant='outlined' className='lg:w-1/2 w-full  flex flex-col  justify-start'>
+                                    <div className='mb-5 text-wrap'>
                                         <Title>Specific Dates</Title>
                                         <Caption>Select dates that differ from your regular availability and enter the time(s) you're available</Caption>
                                     </div>
@@ -477,11 +477,11 @@ export default function page() {
                     console.log(element);
 
                     return (
-                        <div className='w-1/5' onClick={() => {
+                        <div className='' onClick={() => {
                             handleEdit(index)
                             setisDefault(false)
                         }}>
-                            <Card variant='outlined' className='w-full cursor-pointer'>
+                            <Card variant='outlined' className='w-full pr-20 min-w-max cursor-pointer'>
                                 <div className='mb-2'>
                                     <Text className='font-medium'>{element.name}</Text>
                                     <Caption className='text-xs italic'>MON, TUE, WED, FRI</Caption>
@@ -496,10 +496,14 @@ export default function page() {
                 </div>}
             </div>
             <Toast.Provider>
-                <Toast.Root open={confirmation} onOpenChange={setConfirmation}>
-                    <Toast.Title>{confirmationData.title}</Toast.Title>
+                <Toast.Root open={confirmation} onOpenChange={setConfirmation} mixed>
+                    <div className='flex justify-between items-center'>
+                        <Toast.Title className='flex gap-2 items-center'><CircleCheck color='green' size={16} />{confirmationData.title}</Toast.Title>
+                        <Toast.Close aria-label="Close">
+                            <span aria-hidden><X size={16} /></span>
+                        </Toast.Close>
+                    </div>
                     <Toast.Description>{confirmationData.description}</Toast.Description>
-                    <Toast.Close />
                 </Toast.Root>
 
                 <Toast.Viewport />
