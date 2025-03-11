@@ -12,15 +12,16 @@ import { TbLetterSpacing, TbLineHeight } from "react-icons/tb";
 import Popover from "@tailus-ui/Popover";
 import Button from "@mui/joy/Button";
 import { Color, SketchPicker, SketchPickerProps } from 'react-color';
+import FontPicker from 'react-fontpicker-ts'
+import 'react-fontpicker-ts/dist/index.css'
 
 
+const EditableText = ({ text, fontFamily = 'Open Sans', textAlign = 'left', fontSize = 16, fontWeight = 'normal', fontStyle = 'none', textDecorationLine = 'underline', fontColor = '#111827', className, textArray = [], lineHeight = 1.2, letterSpacing = 0 }: any) => {
 
-
-const EditableText = ({ text, textAlign = 'left', fontSize = 16, fontWeight = 'normal', fontStyle = 'none', textDecorationLine = 'underline', fontColor = '#111827', className, textArray = [], lineHeight = 1.2, letterSpacing = 0 }: any) => {
-
-    const { connectors: { connect, drag }, hasSelectedNode, hasDraggedNode, actions: { setProp } } = useNode((state: any) => ({
+    const { connectors: { connect, drag }, hasSelectedNode, hasDraggedNode, isHovering, actions: { setProp } } = useNode((state: any) => ({
         hasSelectedNode: state.events.selected,
-        hasDraggedNode: state.events.dragged
+        hasDraggedNode: state.events.dragged,
+        isHovering: state.events.hovered
     }));
 
 
@@ -29,9 +30,15 @@ const EditableText = ({ text, textAlign = 'left', fontSize = 16, fontWeight = 'n
 
 
     return (
-        <div className={`${hasSelectedNode ? "border border-dashed border-black" : "border-none"}`} ref={(ref: any) => connect(drag(ref))} onClick={e => setActiveEdit(true)}>
-            <Text className={className} textAlign={textAlign} activeEdit={activeEdit} fontStyle={fontStyle} textDecorationLine={textDecorationLine} setActiveEdit={setActiveEdit} isEditable={true} text={text} setProp={setProp} fontSize={fontSize} fontColor={fontColor} fontWeight={fontWeight} lineHeight={lineHeight} letterSpacing={letterSpacing} />
+        <div ref={(ref: any) => connect(drag(ref))} onClick={(e: any) => setActiveEdit(true)} style={{
+            width: 'auto',
+            height: 'auto',
+            maxHeight: 'min-content'
+        }}>
+            <Text hasSelectedNode={hasSelectedNode} isHovering={isHovering} className={className} fontFamily={fontFamily} textAlign={textAlign} activeEdit={activeEdit} fontStyle={fontStyle} textDecorationLine={textDecorationLine} setActiveEdit={setActiveEdit} isEditable={true} text={text} setProp={setProp} fontSize={fontSize} fontColor={fontColor} fontWeight={fontWeight} lineHeight={lineHeight} letterSpacing={letterSpacing} />
         </div>
+
+
     )
 }
 const Text = (props: any) => {
@@ -47,7 +54,7 @@ const Text = (props: any) => {
                     }
                     disabled={!props.activeEdit}
                     tagName="p"
-                    className={`${props.className}`} style={{ fontSize: props.fontSize, color: props.fontColor, textDecorationLine: props.textDecorationLine, fontStyle: props.fontStyle, fontWeight: props.fontWeight, letterSpacing: props.letterSpacing, lineHeight: props.lineHeight, textAlign: props.textAlign }}
+                    className={`${props.className} hover:border-blue-800 ${!props.hasSelectedNode ? 'border-transparent' : ''} border  ${props.hasSelectedNode ? 'border-solid border-blue-800' : ''} ${props.isHovering && !props.hasSelectedNode ? 'border-dotted' : ""}`} style={{ fontSize: props.fontSize, color: props.fontColor, textDecorationLine: props.textDecorationLine, fontStyle: props.fontStyle, fontWeight: props.fontWeight, letterSpacing: props.letterSpacing, lineHeight: props.lineHeight, textAlign: props.textAlign, fontFamily: props.fontFamily }}
                 />
             </div> : <AAText className={`${props.className}`} style={{ fontSize: props.fontSize, color: props.fontColor }}>{props.text}</AAText>}
         </div>
@@ -90,9 +97,20 @@ const TextSettings = () => {
             <div className='flex w-full flex-col gap-2'>
                 <div className='w-full justify-between items-center flex'>
                     <Caption>Font</Caption>
-                    <Select placeholder="Choose one…" className='w-4/6'>
-                        <Option value={'some'}>...</Option>
-                    </Select>
+                    {/* <Select placeholder="Choose one…" className='w-4/6'>
+                        <Option value={"another"}>...</Option>
+                    </Select> */}
+                    <FontPicker
+                        className={
+                            `fontpicker 
+                         relative
+                         outline-0 w-4/6 h-7 rounded
+                         focus-within:ring-1 ring-inset ring-macaron-active `
+                        }
+                        autoLoad
+                        defaultValue={props.fontFamily}
+                        value={(font2: string) => setProp((props: any) => props.fontFamily = font2)}
+                    />
                 </div>
                 <div className='w-full justify-end items-center flex'>
                     <Select placeholder="Choose one…" className='w-4/6'>
@@ -229,6 +247,7 @@ EditableText.craft = {
         fontWeight: 'normal',
         fontColor: '#000000',
         fontStyle: 'none',
+        fontFamily: "Open Sans",
         textDecorationLine: 'none',
         lineHeight: 1.5,
         letterSpacing: 0,
