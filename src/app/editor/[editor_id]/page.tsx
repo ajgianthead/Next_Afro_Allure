@@ -5,27 +5,17 @@ import { Caption } from '@tailus-ui/typography';
 import {
     type TabsListProps as ListProps,
     type TabsIndicatorProps as IndicatorProps,
-} from "@tailus/themer"; import { ALargeSmall, AlignCenter, AlignHorizontalSpaceAround, AlignLeft, AlignRight, AlignVerticalSpaceAround, Bold, Box, ChevronDown, Columns2, Grid2x2, Image, Italic, LayoutGrid, PanelBottom, Rows2, Square, SquarePlus, StretchHorizontal, StretchVertical, Type, Underline, Video, X } from 'lucide-react';
+} from "@tailus/themer";
+import { Columns2, Grid2x2, PanelBottom, Rows2, Square } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react'
 import { Editor, Frame, Element, useEditor } from "@craftjs/core";
 import { Container } from '@components/editor/Container';
 import { EditableButton } from '@components/editor/Button';
-import { EditableText, Text } from '@components/editor/Text';
-import Button from '@mui/joy/Button';
+import { EditableText } from '@components/editor/Text';
 import Toolbox from '@components/editor/Toolbox';
-import Input from '@mui/joy/Input';
-import ToggleGroup from '@components/ToggleGroup';
-import { TbLineHeight } from "react-icons/tb";
-import { TbLetterSpacing } from "react-icons/tb";
-import Select from '@mui/joy/Select';
-import Option from '@mui/joy/Option';
-import Popover from '@tailus-ui/Popover';
-import IconButton from '@mui/joy/IconButton';
-import { SketchPicker } from 'react-color';
-import { TbBoxMargin } from "react-icons/tb";
-import { TbBoxPadding } from "react-icons/tb";
 import Settings from '@components/editor/Settings';
 import { EditorWrapper } from '@utils/context/EditorContext';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 
 
@@ -46,9 +36,11 @@ export default function Page() {
             spanRef.current.style.width = activeTrigger.offsetWidth + "px";
         }
     }, [state]);
+    const containerRef = useRef<any>(null);
     return (
         <EditorWrapper>
             <div>
+                {/* TODO: Put Transform Wrapper in a component and use useEditor() */}
                 <Editor resolver={{ Container, EditableButton, EditableText }}>
                     <div className='w-full h-10 border-b border-[#D4D4D4]'>
 
@@ -131,22 +123,13 @@ export default function Page() {
                             </Tabs.Root>
                         </section>
                         {/* Canvas */}
-                        <section>
-                            <div className='w-[900px] h-screen overflow-y-clip bg-gray-100'>
-                                <Frame>
-                                    <Element is={Container} padding={5} background="#eee" canvas>
-                                        <EditableButton size="small" variant="outlined">Click</EditableButton>
-                                        <EditableText text="Hi world!" />
-                                        <Element is={Container} padding={20} background="#999" canvas>
-                                            <EditableText text="It's me again!" />
-                                        </Element>
-                                    </Element>
-                                </Frame>
-                            </div>
-                        </section>
+                        <div className='flex overflow-y-hidden' ref={containerRef}>
+                            <EditorSpace />
+                        </div>
+
                         {/* Settings Bar */}
-                        <section>
-                            <div className='overflow-y-scroll w-[300px] flex flex-col gap-5 bg-white h-full border-l border-[#D4D4D4] p-3'>
+                        <section className=' w-[300px]'>
+                            <div className='overflow-y-scroll flex flex-col gap-5 bg-white h-full border-l border-[#D4D4D4] p-3'>
                                 <Settings />
                             </div>
                         </section>
@@ -156,5 +139,45 @@ export default function Page() {
 
             </div >
         </EditorWrapper>
+
+    )
+}
+
+const EditorSpace = () => {
+    const [isPanningEnabled, setIsPanningEnabled] = useState(false);
+
+    const handleMouseDown = (e: any) => {
+        // Prevent react-zoom-pan-pinch from interfering with Craft.js dragging
+        if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+            setIsPanningEnabled(true); // Enable zoom pan pinch panning
+        } else {
+            e.stopPropagation();
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsPanningEnabled(false);
+    };
+
+    return (
+        <div onMouseDown={handleMouseDown} onMouseUp={handleMouseUp}>
+            <TransformWrapper panning={{ disabled: !isPanningEnabled }} centerZoomedOut={true} minScale={0.5} initialScale={0.6} maxScale={5} initialPositionX={1280 / 2 - 550}>
+                <TransformComponent>
+                    <section>
+                        <div className='w-full h-screen bg-gray-100'>
+                            <Frame>
+                                <Element is={Container} padding={5} background="#fff" width={1280} height={900} canvas>
+                                    <EditableButton size="small" variant="outlined">Click</EditableButton>
+                                    <EditableText text="Hi world!" />
+                                    <Element is={Container} padding={20} background="#999" canvas>
+                                        <EditableText text="It's me again!" />
+                                    </Element>
+                                </Element>
+                            </Frame>
+                        </div>
+                    </section>
+                </TransformComponent>
+            </TransformWrapper>
+        </div>
     )
 }

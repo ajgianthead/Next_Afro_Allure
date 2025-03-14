@@ -54,7 +54,7 @@ const Text = (props: any) => {
                     }
                     disabled={!props.activeEdit}
                     tagName="p"
-                    className={`${props.className} hover:border-blue-800 ${!props.hasSelectedNode ? 'border-transparent' : ''} border  ${props.hasSelectedNode ? 'border-solid border-blue-800' : ''} ${props.isHovering && !props.hasSelectedNode ? 'border-dotted' : ""}`} style={{ fontSize: props.fontSize, color: props.fontColor, textDecorationLine: props.textDecorationLine, fontStyle: props.fontStyle, fontWeight: props.fontWeight, letterSpacing: props.letterSpacing, lineHeight: props.lineHeight, textAlign: props.textAlign, fontFamily: props.fontFamily }}
+                    className={`${props.className} hover:border-blue-800 ${!props.hasSelectedNode ? 'border-transparent' : ''} border  ${props.hasSelectedNode ? 'border-solid border-blue-800' : ''} ${props.isHovering && !props.hasSelectedNode ? 'border-dashed' : ""}`} style={{ fontSize: props.fontSize, color: props.fontColor, textDecorationLine: props.textDecorationLine, fontStyle: props.fontStyle, fontWeight: props.fontWeight, letterSpacing: props.letterSpacing, lineHeight: props.lineHeight, textAlign: props.textAlign, fontFamily: props.fontFamily }}
                 />
             </div> : <AAText className={`${props.className}`} style={{ fontSize: props.fontSize, color: props.fontColor }}>{props.text}</AAText>}
         </div>

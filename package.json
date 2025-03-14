@@ -79,6 +79,7 @@
     "react-responsive-iframe-viewer": "^1.1.4",
     "react-rnd": "^10.5.2",
     "react-tag-input-component": "^2.0.2",
+    "react-zoom-pan-pinch": "^3.7.0",
     "recharts": "^2.12.7",
     "sass": "^1.77.8",
     "slot-calculator": "^2.2.1",
