@@ -62,7 +62,7 @@ const Text = (props: any) => {
     )
 }
 
-const TextSettings = () => {
+export const TextSettings = () => {
     const { actions: { setProp }, props } = useNode((node) => ({
         props: node.data.props,
     }));

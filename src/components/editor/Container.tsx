@@ -14,8 +14,11 @@ import { TbBoxPadding } from "react-icons/tb";
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import { useEditorContext } from '@utils/context/EditorContext';
+import Select from '@mui/joy/Select';
+import Option from '@mui/joy/Option';
 
-export const Container = ({ background = '#fff', flexDirection = 'column', margin = 0, padding = 0, children, width = 500, height = 200 }: any) => {
+
+export const Container = ({ gap = 0, background = '#ffffff', flexDirection = 'column', margin = 0, padding = 0, children, width = 500, height = 200, alignMain = "start", alignAlt = "start" }: any) => {
     const { connectors: { connect, drag }, id, hasSelectedNode, hasDraggedNode, isHovering, parentNodeWidth, parentNodeHeight, actions: { setProp } } = useNode((state) => ({
         parentNodeWidth: state.dom?.parentElement?.style.width.slice(0, state.dom?.parentElement?.style.width.length - 2),
         parentNodeHeight: state.dom?.parentElement?.style.height.slice(0, state.dom?.parentElement?.style.height.length - 2),
@@ -58,9 +61,10 @@ export const Container = ({ background = '#fff', flexDirection = 'column', margi
                     setIsResizing(true);
                 }}
                 style={{
-                    width: '100%', height: '100%', display: 'flex', flexDirection, margin, padding, background
+                    width: '100%', height: '100%', display: 'flex', flexDirection, margin, padding, background, gap: `${gap}px`,
+
                 }}
-                className={`relative ${selectedNode.values().toArray()[0] === id ? "border-solid border-blue-800" : ""} ${isHovering && selectedNode.values().toArray()[0] !== id ? `border-dashed border-blue-800 border-2` : ''} ${isHovering && selectedNode.values().toArray()[0] === id ? `border-solid border-blue-800 border-2` : ''} ${!isHovering && selectedNode.values().toArray()[0] === id ? `border-solid border-blue-800 border-2` : ''} min-w-min min-h-max`}
+                className={`relative ${selectedNode.values().toArray()[0] === id ? "border-solid border-blue-800" : ""} ${isHovering && selectedNode.values().toArray()[0] !== id ? `border-dashed border-blue-800 border-2` : ''} ${isHovering && selectedNode.values().toArray()[0] === id ? `border-solid border-blue-800 border-2` : ''} ${!isHovering && selectedNode.values().toArray()[0] === id ? `border-solid border-blue-800 border-2` : ''} min-w-min min-h-max justify-${alignMain} items-${alignAlt}`}
             >
                 {children}
             </ResizableBox>
@@ -68,7 +72,7 @@ export const Container = ({ background = '#fff', flexDirection = 'column', margi
     )
 }
 
-const ContainerSettings = () => {
+export const ContainerSettings = () => {
     const { actions: { setProp }, props } = useNode((node) => ({
         props: node.data.props,
     }));
@@ -76,7 +80,7 @@ const ContainerSettings = () => {
     return (
         <div>
             <div>
-                <Caption className='font-bold text-slate-300 mb-5'>Layout</Caption>
+                <Caption className='font-bold text-slate-300 mt-5'>Layout</Caption>
                 <div className='flex w-full flex-col gap-2'>
                     <div className='w-full justify-between items-center flex'>
                         <Caption>Width</Caption>
@@ -137,14 +141,46 @@ const ContainerSettings = () => {
                                 </ToggleGroup.Root>
                             </div>
                         </div>
+                        <Caption className='font-bold text-slate-300 mt-2
+                         self-start'>Alignment</Caption>
+
+                        <div className='w-full justify-between items-center flex'>
+                            <Caption>{props.flexDirection === 'row' ? "Horizontal" : "Vertical"}</Caption>
+                            <div className='w-4/6 border border-slate-300 rounded-lg py-[1px]'>
+                                <Select defaultValue={props.alignMain} onChange={(event, value) => {
+                                    setProp((props: any) => props.alignMain = value)
+                                }}>
+                                    <Option value="start">Start</Option>
+                                    <Option value="center">Center</Option>
+                                    <Option value="end">End</Option>
+                                    <Option value="between">Spread Evenly</Option>
+                                    <Option value="around">Loosely Spaced</Option>
+                                    <Option value="evenly">Fully Spaced</Option>
+                                </Select>
+                            </div>
+                        </div>
+                        <div className='w-full justify-between items-center flex'>
+                            <Caption>{props.flexDirection === 'row' ? "Vertical" : "Horizontal"}</Caption>
+                            <div className='w-4/6 border border-slate-300 rounded-lg py-[1px]'>
+                                <Select defaultValue={props.alignAlt} onChange={(event, value) => {
+                                    setProp((props: any) => props.alignAlt = value)
+                                }}>
+                                    <Option value="start">Start</Option>
+                                    <Option value="center">Center</Option>
+                                    <Option value="end">End</Option>
+                                    <Option value="between">Spread Evenly</Option>
+                                    <Option value="around">Loosely Spaced</Option>
+                                    <Option value="evenly">Fully Spaced</Option>
+                                </Select>
+                            </div>
+                        </div>
                         <div className='w-full justify-between items-center flex'>
                             <Caption>Gap</Caption>
-                            <div className='w-4/6 flex gap-1 '>
-                                <div className='w-1/2'>
-                                    <Input startDecorator={<AlignVerticalSpaceAround size={12} />} className='text-xs' />
-                                </div>
-                                <div className='w-1/2'>
-                                    <Input startDecorator={<AlignHorizontalSpaceAround size={12} />} className='text-xs' />
+                            <div className=' w-1/3 flex gap-1 '>
+                                <div className='w-full'>
+                                    <Input value={props.gap} onChange={(e) => {
+                                        setProp((props: any) => props.gap = e.target.value)
+                                    }} endDecorator={`px`} className='text-xs' />
                                 </div>
                             </div>
                         </div>
@@ -158,7 +194,7 @@ const ContainerSettings = () => {
                                             borderColor: "black",
                                             backgroundColor: "white",
                                             display: 'flex',
-                                        }} className='w-full gap-2'><div className={`w-5 h-5`} style={{
+                                        }} className='w-full gap-2'><div className={`w-5 h-5 border-black border border-solid`} style={{
                                             backgroundColor: props.background
                                         }}></div>{props.background}</Button>
                                     </Popover.Trigger>
@@ -196,7 +232,7 @@ const ContainerSettings = () => {
                                         borderColor: "black",
                                         backgroundColor: "white",
                                         display: 'flex',
-                                    }} className='w-full gap-2'><div className={`w-5 h-5`} style={{
+                                    }} className='w-full gap-2'><div className={`w-5 h-5 border border-black border-solid`} style={{
                                         backgroundColor: color
                                     }}></div>{color}</Button>
                                 </Popover.Trigger>
@@ -232,5 +268,8 @@ Container.craft = {
         margin: 0,
         padding: 0,
         flexDirection: 'row',
+        gap: 0,
+        alignMain: "start",
+        alignAlt: "start",
     }
 }

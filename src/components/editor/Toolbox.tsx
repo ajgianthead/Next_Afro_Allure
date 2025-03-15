@@ -23,7 +23,7 @@ export default function Toolbox() {
                     </div>
                     <Caption>Text</Caption>
                 </button>
-                <button ref={(ref: any) => connectors.create(ref, <EditableButton size='md' variant="solid" color='primary' text="Insert text..." />)} className='w-[calc(100%/3-8px)] flex gap-1 flex-col  rounded-t border-[#D4D4D4] justify-center items-center'>
+                <button ref={(ref: any) => connectors.create(ref, <EditableButton size='md' variant="solid" color='#ffffff' text="Insert text..." />)} className='w-[calc(100%/3-8px)] flex gap-1 flex-col  rounded-t border-[#D4D4D4] justify-center items-center'>
                     <div className='w-full border border-[#D4D4D4] rounded flex justify-center py-5'>
                         <SquarePlus size={40} />
                     </div>

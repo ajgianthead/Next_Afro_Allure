@@ -166,8 +166,8 @@ const EditorSpace = () => {
                     <section>
                         <div className='w-full h-screen bg-gray-100'>
                             <Frame>
-                                <Element is={Container} padding={5} background="#fff" width={1280} height={900} canvas>
-                                    <EditableButton size="small" variant="outlined">Click</EditableButton>
+                                <Element is={Container} padding={5} background="#fff" flexDirection='column' width={1280} height={900} canvas>
+                                    <EditableButton size='md' variant="solid" color='#000000' text="Insert text..." />
                                     <EditableText text="Hi world!" />
                                     <Element is={Container} padding={20} background="#999" canvas>
                                         <EditableText text="It's me again!" />
