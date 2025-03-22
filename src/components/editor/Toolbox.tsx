@@ -1,6 +1,6 @@
 'use client'
 import { Caption, Title } from '@tailus-ui/typography'
-import { Box, Image as ImageIcon, SquarePlus, Type, Upload, Video as VideoIcon } from 'lucide-react'
+import { Box, Image as ImageIcon, Link, SquarePlus, Type, Upload, Video as VideoIcon } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { Container } from './Container'
 import { Element, useEditor } from '@craftjs/core';
@@ -18,6 +18,7 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import { ImageContainer } from './Image'
 import { Video } from './Video'
+import { Hyperlink } from './Hyperlink'
 
 
 
@@ -94,6 +95,12 @@ export default function Toolbox() {
                         <SquarePlus size={40} />
                     </div>
                     <Caption>Button</Caption>
+                </button>
+                <button ref={(ref: any) => connectors.create(ref, <Hyperlink text="Hyperlink text..." src="https://example.com/" />)} className='w-[calc(100%/3-8px)] flex gap-1 flex-col  rounded-t border-[#D4D4D4] justify-center items-center'>
+                    <div className='w-full border border-[#D4D4D4] rounded flex justify-center py-5'>
+                        <Link size={40} />
+                    </div>
+                    <Caption>Hyperlink</Caption>
                 </button>
                 <button onClick={() => {
                     setOpenMediaPortal(true)
