@@ -7,7 +7,7 @@ import { TextSettings } from "./Text";
 import { Caption } from "@tailus-ui/typography";
 import Input from "@mui/joy/Input";
 import IconButton from "@mui/joy/IconButton";
-import { TbBoxMargin, TbBoxPadding } from "react-icons/tb";
+import { TbBoxMargin, TbBoxPadding, TbLetterSpacing, TbLineHeight } from "react-icons/tb";
 import ToggleGroup from "@components/ToggleGroup";
 import { ALargeSmall, AlignCenter, AlignLeft, AlignRight, Bold, Italic, LayoutGrid, StretchHorizontal, StretchVertical, Underline } from "lucide-react";
 import Popover from "@tailus-ui/Popover";
@@ -17,10 +17,10 @@ import Select from "@mui/joy/Select";
 import Option from "@mui/joy/Option";
 
 
-export const EditableButton: UserComponent = ({ size, variant = 'primary', color = '#000000', text = 'Insert text...', background = '#45c9ea', padding = 'auto', margin = 'auto', width = 'auto', height = 'auto', fontFamily = 'Open Sans', textAlign = 'center', fontSize = 16, fontWeight = 'normal', fontStyle = 'none', textDecorationLine = 'none', }: any) => {
-    const { connectors: { connect, drag }, id, hasSelectedNode, hasDraggedNode, isHovering, parentNodeWidth, parentNodeHeight, actions: { setProp } } = useNode((state) => ({
-        parentNodeWidth: state.dom?.parentElement?.style.width.slice(0, state.dom?.parentElement?.style.width.length - 2),
-        parentNodeHeight: state.dom?.parentElement?.style.height.slice(0, state.dom?.parentElement?.style.height.length - 2),
+export const EditableButton: UserComponent = ({ size, variant = 'primary', color = '#000000', text = 'Insert text...', background = '#45c9ea', padding = 'auto', margin = 'auto', width = 'auto', height = 'auto', fontFamily = 'Open Sans', textAlign = 'center', fontSize = 16, fontWeight = 'normal', fontStyle = 'none', textDecorationLine = 'none', lineHeight = 1.5, letterSpacing = 0 }: any) => {
+    const { connectors: { connect, drag }, id, hasSelectedNode, hasDraggedNode, isHovering, nodeWidth, nodeHeight, actions: { setProp } } = useNode((state) => ({
+        nodeWidth: state.dom?.style.width.slice(0, state.dom?.style.width.length - 2),
+        nodeHeight: state.dom?.style.height.slice(0, state.dom?.style.height.length - 2),
         hasSelectedNode: state.events.selected,
         hasDraggedNode: state.events.dragged,
         isHovering: state.events.hovered
@@ -31,7 +31,8 @@ export const EditableButton: UserComponent = ({ size, variant = 'primary', color
     }));
     return (
         <div ref={(ref: any) => connect(drag(ref))} className={`max-w-max max-h-min ${selectedNode.values().toArray()[0] === id ? "border-solid border-blue-800" : ""} ${isHovering && selectedNode.values().toArray()[0] !== id ? `border-dashed border-blue-800 border-2` : ''} ${isHovering && selectedNode.values().toArray()[0] === id ? `border-solid border-blue-800 border-2` : ''} ${!isHovering && selectedNode.values().toArray()[0] === id ? `border-solid border-blue-800 border-2` : ''} `}>
-            <MUIButton size={size} variant={variant} color={'primary'} style={{
+
+            <MUIButton className="w-full h-full" size={size} variant={variant} color={'primary'} style={{
                 color,
                 padding,
                 margin,
@@ -44,7 +45,9 @@ export const EditableButton: UserComponent = ({ size, variant = 'primary', color
                 fontStyle,
                 textDecorationLine,
                 display: 'flex',
-                justifyContent: textAlign
+                justifyContent: textAlign,
+                lineHeight,
+                letterSpacing
             }}>
                 {text}
             </MUIButton>
@@ -237,6 +240,26 @@ const ButtonSettings = () => {
                                 </ToggleGroup.Root>
                             </div>
                         </div>
+                        <div className='flex w-4/6 items-end justify-between gap-1'>
+                            <div className='w-1/2'>
+                                <Input value={props.lineHeight} onChange={(e) => {
+                                    setProp((props: any) => props.lineHeight = parseFloat(e.target.value))
+                                }} type="number" slotProps={{
+                                    input: {
+                                        step: 0.1
+                                    }
+                                }} startDecorator={<TbLineHeight />} className='text-xs' />
+                            </div>
+                            <div className='w-1/2'>
+                                <Input value={props.letterSpacing} onChange={(e) => {
+                                    setProp((props: any) => props.letterSpacing = parseFloat(e.target.value))
+                                }} type="number" slotProps={{
+                                    input: {
+                                        step: 0.1
+                                    }
+                                }} startDecorator={<TbLetterSpacing />} className='text-xs' />
+                            </div>
+                        </div>
                         <div className='w-full justify-between items-center flex'>
                             <Caption>Align</Caption>
                             <div className='w-4/6 border border-slate-300 rounded-lg py-[1px]'>
@@ -351,6 +374,8 @@ EditableButton.craft = {
         fontStyle: 'none',
         fontFamily: "Open Sans",
         textDecorationLine: 'none',
-        textAlign: 'center'
+        textAlign: 'center',
+        lineHeight: 1.5,
+        letterSpacing: 0
     }
 }

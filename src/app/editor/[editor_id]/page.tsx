@@ -16,6 +16,8 @@ import Toolbox from '@components/editor/Toolbox';
 import Settings from '@components/editor/Settings';
 import { EditorWrapper } from '@utils/context/EditorContext';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { ImageContainer } from '@components/editor/Image';
+import { Video } from '@components/editor/Video';
 
 
 
@@ -41,7 +43,7 @@ export default function Page() {
         <EditorWrapper>
             <div>
                 {/* TODO: Put Transform Wrapper in a component and use useEditor() */}
-                <Editor resolver={{ Container, EditableButton, EditableText }}>
+                <Editor resolver={{ Container, EditableButton, EditableText, ImageContainer, Video }}>
                     <div className='w-full h-10 border-b border-[#D4D4D4]'>
 
                     </div>

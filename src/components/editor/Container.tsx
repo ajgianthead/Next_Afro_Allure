@@ -31,18 +31,11 @@ export const Container = ({ gap = 0, background = '#ffffff', flexDirection = 'co
         selectedNode: state.events.selected
     }));
     const { isResizing, setIsResizing } = useEditorContext();
-    return (
-        <div ref={(ref: any) => connect(ref)} className="max-h-min max-w-min"
-        //  onClick={(e) => {
-        //     e.stopPropagation();
-        //     if (hoveringId.values().toArray()[0] !== id) {
 
-        //     }
-        //     actions.selectNode(id);
-        // }}
-        >
+    return (
+        <div ref={(ref: any) => connect(isResizing ? ref : drag(ref))} draggable={!isResizing} className="max-h-min max-w-min">
             <ResizableBox
-                resizeHandles={hasSelectedNode ? ["se", "e", "s"] : []} // Only show handles if selected
+                resizeHandles={hasSelectedNode && !hasDraggedNode ? ["se", "e", "s"] : []} // Only show handles if selected
                 maxConstraints={[parseInt(parentNodeWidth!), parseInt(parentNodeHeight!)]}
                 width={width}
                 height={height}
@@ -56,7 +49,6 @@ export const Container = ({ gap = 0, background = '#ffffff', flexDirection = 'co
                 }}
                 onResizeStart={() => {
                     console.log("start");
-
                     actions.selectNode(id)
                     setIsResizing(true);
                 }}

@@ -8,15 +8,16 @@ import Option from "@mui/joy/Option";
 import Input from "@mui/joy/Input";
 import { ALargeSmall, AlignCenter, AlignLeft, AlignRight, Bold, Italic, Underline } from "lucide-react";
 import ToggleGroup from "@components/ToggleGroup";
-import { TbLetterSpacing, TbLineHeight } from "react-icons/tb";
+import { TbBoxMargin, TbBoxPadding, TbLetterSpacing, TbLineHeight } from "react-icons/tb";
 import Popover from "@tailus-ui/Popover";
 import Button from "@mui/joy/Button";
 import { Color, SketchPicker, SketchPickerProps } from 'react-color';
 import FontPicker from 'react-fontpicker-ts'
 import 'react-fontpicker-ts/dist/index.css'
+import IconButton from "@mui/joy/IconButton";
 
 
-const EditableText = ({ text, fontFamily = 'Open Sans', textAlign = 'left', fontSize = 16, fontWeight = 'normal', fontStyle = 'none', textDecorationLine = 'underline', fontColor = '#111827', className, textArray = [], lineHeight = 1.2, letterSpacing = 0 }: any) => {
+const EditableText = ({ text, fontFamily = 'Open Sans', textAlign = 'left', fontSize = 16, fontWeight = 'normal', fontStyle = 'none', textDecorationLine = 'underline', fontColor = '#111827', className, textArray = [], lineHeight = 1.5, letterSpacing = 0, margin = 'auto', padding = 'auto' }: any) => {
 
     const { connectors: { connect, drag }, hasSelectedNode, hasDraggedNode, isHovering, actions: { setProp } } = useNode((state: any) => ({
         hasSelectedNode: state.events.selected,
@@ -35,7 +36,7 @@ const EditableText = ({ text, fontFamily = 'Open Sans', textAlign = 'left', font
             height: 'auto',
             maxHeight: 'min-content'
         }}>
-            <Text hasSelectedNode={hasSelectedNode} isHovering={isHovering} className={className} fontFamily={fontFamily} textAlign={textAlign} activeEdit={activeEdit} fontStyle={fontStyle} textDecorationLine={textDecorationLine} setActiveEdit={setActiveEdit} isEditable={true} text={text} setProp={setProp} fontSize={fontSize} fontColor={fontColor} fontWeight={fontWeight} lineHeight={lineHeight} letterSpacing={letterSpacing} />
+            <Text margin={margin} padding={padding} hasSelectedNode={hasSelectedNode} isHovering={isHovering} className={className} fontFamily={fontFamily} textAlign={textAlign} activeEdit={activeEdit} fontStyle={fontStyle} textDecorationLine={textDecorationLine} setActiveEdit={setActiveEdit} isEditable={true} text={text} setProp={setProp} fontSize={fontSize} fontColor={fontColor} fontWeight={fontWeight} lineHeight={lineHeight} letterSpacing={letterSpacing} />
         </div>
 
 
@@ -54,7 +55,7 @@ const Text = (props: any) => {
                     }
                     disabled={!props.activeEdit}
                     tagName="p"
-                    className={`${props.className} hover:border-blue-800 ${!props.hasSelectedNode ? 'border-transparent' : ''} border  ${props.hasSelectedNode ? 'border-solid border-blue-800' : ''} ${props.isHovering && !props.hasSelectedNode ? 'border-dashed' : ""}`} style={{ fontSize: props.fontSize, color: props.fontColor, textDecorationLine: props.textDecorationLine, fontStyle: props.fontStyle, fontWeight: props.fontWeight, letterSpacing: props.letterSpacing, lineHeight: props.lineHeight, textAlign: props.textAlign, fontFamily: props.fontFamily }}
+                    className={`${props.className} hover:border-blue-800 ${!props.hasSelectedNode ? 'border-transparent' : ''} border  ${props.hasSelectedNode ? 'border-solid border-blue-800' : ''} ${props.isHovering && !props.hasSelectedNode ? 'border-dashed' : ""}`} style={{ fontSize: props.fontSize, color: props.fontColor, textDecorationLine: props.textDecorationLine, fontStyle: props.fontStyle, fontWeight: props.fontWeight, letterSpacing: props.letterSpacing, lineHeight: props.lineHeight, textAlign: props.textAlign, fontFamily: props.fontFamily, margin: props.margin, padding: props.padding }}
                 />
             </div> : <AAText className={`${props.className}`} style={{ fontSize: props.fontSize, color: props.fontColor }}>{props.text}</AAText>}
         </div>
@@ -93,7 +94,41 @@ export const TextSettings = () => {
 
     return (
         <div>
-            <Caption className='font-bold text-slate-300 mb-5'>Typography</Caption>
+            <Caption className='font-bold text-slate-300 mt-5'>Layout</Caption>
+            <div className='w-full justify-between items-center flex'>
+                <Caption>Margin</Caption>
+                <div className='w-1/2 flex justify-end gap-1'>
+                    <Input className='w-4/6 text-xs' value={props.margin === 'auto' ? 0 : props.margin} onChange={(e) => setProp((props: any) => {
+
+                        if (!e.target.value.length) {
+                            props.margin = 'auto'
+                        } else {
+                            props.margin = parseInt(e.target.value)
+                        }
+                    })
+
+                    } endDecorator={'px'} />
+                    <IconButton variant='outlined'>
+                        <TbBoxMargin />
+                    </IconButton>
+                </div>
+            </div>
+            <div className='w-full justify-between items-center flex'>
+                <Caption>Padding</Caption>
+                <div className='w-1/2 flex justify-end gap-1'>
+                    <Input className='w-4/6 text-xs' value={props.padding === 'auto' ? 0 : props.padding} onChange={(e) => setProp((props: any) => {
+                        if (!e.target.value.length) {
+                            props.padding = 'auto'
+                        } else {
+                            props.padding = parseInt(e.target.value)
+                        }
+                    })} endDecorator={'px'} />
+                    <IconButton variant='outlined'>
+                        <TbBoxPadding />
+                    </IconButton>
+                </div>
+            </div>
+            <Caption className='font-bold text-slate-300 mt-5'>Typography</Caption>
             <div className='flex w-full flex-col gap-2'>
                 <div className='w-full justify-between items-center flex'>
                     <Caption>Font</Caption>
@@ -251,7 +286,9 @@ EditableText.craft = {
         textDecorationLine: 'none',
         lineHeight: 1.5,
         letterSpacing: 0,
-        textAlign: 'left'
+        textAlign: 'left',
+        margin: 'auto',
+        padding: 'auto',
     }
 }
 
