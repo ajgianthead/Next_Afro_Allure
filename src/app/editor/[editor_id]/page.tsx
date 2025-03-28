@@ -6,7 +6,7 @@ import {
     type TabsListProps as ListProps,
     type TabsIndicatorProps as IndicatorProps,
 } from "@tailus/themer";
-import { Columns2, Grid2x2, PanelBottom, Rows2, Square } from 'lucide-react';
+import { Columns2, Grid2x2, PanelBottom, Redo, Rows2, Square, Undo } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react'
 import { Editor, Frame, Element, useEditor } from "@craftjs/core";
 import { Container } from '@components/editor/Container';
@@ -19,7 +19,11 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { ImageContainer } from '@components/editor/Image';
 import { Video } from '@components/editor/Video';
 import { Hyperlink } from '@components/editor/Hyperlink';
-
+import { Button, CircularProgress, IconButton } from '@mui/joy';
+import { Toolbar } from '@components/editor/Toolbar';
+import { useParams } from 'next/navigation';
+import { getEditorData } from '@utils/editor_actions';
+import lz from "lzutf8";
 
 
 type TabsAppProps = "layout" | "components" | "pre-built"
@@ -31,26 +35,27 @@ interface TabsUIProps extends ListProps {
 export default function Page() {
     const [state, setState] = useState<TabsAppProps>("components");
     const spanRef = useRef<HTMLSpanElement>(null);
-
+    const { editor_id } = useParams()
+    const [loadingEditorData, setLoadingEditorData] = useState<boolean>(true)
+    const [editorData, setEditorData] = useState<any>()
     useEffect(() => {
         const activeTrigger = document.getElementById(state) as HTMLElement;
         if (spanRef.current) {
             spanRef.current.style.left = activeTrigger.offsetLeft + "px";
             spanRef.current.style.width = activeTrigger.offsetWidth + "px";
         }
-    }, [state]);
+    }, [state, editorData]);
     const containerRef = useRef<any>(null);
     return (
         <EditorWrapper>
             <div>
                 {/* TODO: Put Transform Wrapper in a component and use useEditor() */}
                 <Editor resolver={{ Container, EditableButton, EditableText, ImageContainer, Video, Hyperlink }}>
-                    <div className='w-full h-10 border-b border-[#D4D4D4]'>
+                    <Toolbar editorId={editor_id!} setEditorData={setEditorData} setLoadingEditorData={setLoadingEditorData} />
 
-                    </div>
                     <main className='flex h-[calc(100vh-40px)] w-full bg-gray-100'>
                         <section className='h-full bg-white w-[400px] p-5 border-r border-[#D4D4D4]'>
-                            <Tabs.Root className="space-y-4" defaultValue={state} onValueChange={(value) => setState(value as TabsAppProps)}>
+                            {!loadingEditorData ? <Tabs.Root className="space-y-4" defaultValue={state} onValueChange={(value) => setState(value as TabsAppProps)}>
                                 <Tabs.List data-shade="925" variant="soft" triggerVariant="plain" size="sm" className='h-12'>
                                     <Tabs.Indicator ref={spanRef} variant="elevated" className="bg-white" />
                                     <Tabs.Trigger value="layout" id="layout">Layouts</Tabs.Trigger>
@@ -123,12 +128,16 @@ export default function Page() {
                                         </div>
                                     </div>
                                 </Tabs.Content>
-                            </Tabs.Root>
+                            </Tabs.Root> : <></>}
                         </section>
                         {/* Canvas */}
-                        <div className='flex overflow-y-hidden' ref={containerRef}>
-                            <EditorSpace />
-                        </div>
+                        {loadingEditorData ? <div className='w-full h-screen flex flex-col gap-2 justify-center items-center'>
+                            <CircularProgress />
+                            <Caption>Loading Editor Data...</Caption>
+                        </div> : <div className='flex overflow-y-hidden' ref={containerRef}>
+                            <EditorSpace jsonData={editorData} />
+                        </div>}
+
 
                         {/* Settings Bar */}
                         <section className=' w-[300px]'>
@@ -146,8 +155,11 @@ export default function Page() {
     )
 }
 
-const EditorSpace = () => {
+const EditorSpace = ({ jsonData }: any) => {
     const [isPanningEnabled, setIsPanningEnabled] = useState(false);
+    const { actions, query, enabled } = useEditor((state) => ({
+        enabled: state.options.enabled
+    }));
 
     const handleMouseDown = (e: any) => {
         // Prevent react-zoom-pan-pinch from interfering with Craft.js dragging
@@ -161,6 +173,12 @@ const EditorSpace = () => {
     const handleMouseUp = () => {
         setIsPanningEnabled(false);
     };
+    useEffect(() => {
+        if (jsonData) {
+            actions.deserialize(jsonData)
+
+        }
+    }, [jsonData]);
 
     return (
         <div onMouseDown={handleMouseDown} onMouseUp={handleMouseUp}>
@@ -168,13 +186,9 @@ const EditorSpace = () => {
                 <TransformComponent>
                     <section>
                         <div className='w-full h-screen bg-gray-100'>
-                            <Frame>
+                            <Frame data={jsonData}>
                                 <Element is={Container} padding={5} background="#fff" flexDirection='column' width={1280} height={900} canvas>
-                                    <EditableButton size='md' variant="solid" color='#000000' text="Insert text..." />
-                                    <EditableText text="Hi world!" />
-                                    <Element is={Container} padding={20} background="#999" canvas>
-                                        <EditableText text="It's me again!" />
-                                    </Element>
+
                                 </Element>
                             </Frame>
                         </div>

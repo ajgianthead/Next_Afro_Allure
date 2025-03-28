@@ -1,4 +1,6 @@
-import { useEditor, useNode } from "@craftjs/core";
+'use client'
+
+import { useEditor, useNode, UserComponent } from "@craftjs/core";
 import { Button, IconButton, Input } from "@mui/joy";
 import Popover from "@tailus-ui/Popover";
 import { Caption } from "@tailus-ui/typography";
@@ -9,7 +11,7 @@ import { SketchPicker } from "react-color";
 import { TbBoxMargin } from "react-icons/tb";
 import { ResizableBox } from "react-resizable";
 
-export const ImageContainer = ({ margin = 0, width = 500, height = 500, url }: any) => {
+export const ImageContainer: UserComponent = ({ margin = 0, width = 500, height = 500, url }: any) => {
     const { connectors: { connect, drag }, id, hasSelectedNode, hasDraggedNode, isHovering, parentNodeWidth, parentNodeHeight, actions: { setProp } } = useNode((state) => ({
         parentNodeWidth: state.dom?.parentElement?.style.width.slice(0, state.dom?.parentElement?.style.width.length - 2),
         parentNodeHeight: state.dom?.parentElement?.style.height.slice(0, state.dom?.parentElement?.style.height.length - 2),
@@ -133,6 +135,7 @@ const ImageSettings = () => {
 }
 
 ImageContainer.craft = {
+    displayName: "ImageContainer",
     related: {
         settings: ImageSettings
     },

@@ -357,6 +357,7 @@ const ButtonSettings = () => {
 }
 
 EditableButton.craft = {
+    displayName: "EditableButton",
     related: {
         settings: ButtonSettings
     },

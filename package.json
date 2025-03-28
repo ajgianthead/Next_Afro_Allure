@@ -58,6 +58,7 @@
     "framer-motion": "^11.11.8",
     "ioredis": "^5.4.2",
     "lucide-react": "^0.428.0",
+    "lzutf8": "^0.6.3",
     "next": "^15.1.7",
     "nextjs-cors": "^2.2.0",
     "pg": "^8.13.1",

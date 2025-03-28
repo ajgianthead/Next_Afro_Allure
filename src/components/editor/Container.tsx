@@ -1,8 +1,8 @@
 'use client'
 import { Caption } from '@tailus-ui/typography';
 import { ALargeSmall, AlignCenter, AlignHorizontalSpaceAround, AlignLeft, AlignRight, AlignVerticalSpaceAround, Bold, Box, ChevronDown, Columns2, Grid2x2, Image, Italic, LayoutGrid, PanelBottom, Rows2, Square, SquarePlus, StretchHorizontal, StretchVertical, Type, Underline, Video, X } from 'lucide-react';
-import React, { useState } from 'react'
-import { Editor, Frame, Element, useEditor, useNode } from "@craftjs/core";
+import React, { useEffect, useRef, useState } from 'react'
+import { Editor, Frame, Element, useEditor, useNode, UserComponent } from "@craftjs/core";
 import Button from '@mui/joy/Button';
 import Input from '@mui/joy/Input';
 import ToggleGroup from '@components/ToggleGroup';
@@ -18,10 +18,13 @@ import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
 
 
-export const Container = ({ gap = 0, background = '#ffffff', flexDirection = 'column', margin = 0, padding = 0, children, width = 500, height = 200, alignMain = "start", alignAlt = "start" }: any) => {
-    const { connectors: { connect, drag }, id, hasSelectedNode, hasDraggedNode, isHovering, parentNodeWidth, parentNodeHeight, actions: { setProp } } = useNode((state) => ({
-        parentNodeWidth: state.dom?.parentElement?.style.width.slice(0, state.dom?.parentElement?.style.width.length - 2),
-        parentNodeHeight: state.dom?.parentElement?.style.height.slice(0, state.dom?.parentElement?.style.height.length - 2),
+export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flexDirection = 'column', margin = 0, padding = 0, children, width = 500, height = 200, alignMain = "start", alignAlt = "start" }: any) => {
+    const { connectors: { connect, drag }, id, hasSelectedNode, hasChildNodes, childNodes, hasDraggedNode, parentChildNodes, isHovering, parentNodeWidth, parentNodeHeight, actions: { setProp } } = useNode((state) => ({
+        hasChildNodes: state.dom?.hasChildNodes,
+        childNodes: state.dom?.childNodes[0].childNodes,
+        parentNodeWidth: state.dom?.parentElement?.clientWidth! - parseInt((state.dom?.parentElement?.style.padding.slice(0, state.dom?.parentElement?.style!.padding.length - 2))!) * 2,
+        parentNodeHeight: state.dom?.parentElement?.clientHeight! - parseInt((state.dom?.parentElement?.style.padding.slice(0, state.dom?.parentElement?.style!.padding.length - 2))!) * 2,
+        parentChildNodes: state.dom?.parentElement?.childNodes,
         hasSelectedNode: state.events.selected,
         hasDraggedNode: state.events.dragged,
         isHovering: state.events.hovered
@@ -30,33 +33,88 @@ export const Container = ({ gap = 0, background = '#ffffff', flexDirection = 'co
         hoveringId: state.events.hovered,
         selectedNode: state.events.selected
     }));
+    const ref = useRef(null);
+    const [innerWidth, setInnerWidth] = useState(0);
+    useEffect(() => {
+        if (ref.current) {
+            const style = window.getComputedStyle(ref.current);
+            const width = parseFloat(style.width); // Excludes padding & border
+            setInnerWidth(width);
+        }
+    }, []);
     const { isResizing, setIsResizing } = useEditorContext();
-
+    const [maxHeight, setMaxHeight] = useState<number>(parentNodeHeight!)
+    const [minWidth, setMinWidth] = useState<number>(0)
+    const [minHeight, setMinHeight] = useState<number>(0);
     return (
-        <div ref={(ref: any) => connect(isResizing ? ref : drag(ref))} draggable={!isResizing} className="max-h-min max-w-min">
+        <div id={id} ref={(el: any) => connect(isResizing ? el : drag(ref.current = el))} draggable={!isResizing} >
             <ResizableBox
-                resizeHandles={hasSelectedNode && !hasDraggedNode ? ["se", "e", "s"] : []} // Only show handles if selected
-                maxConstraints={[parseInt(parentNodeWidth!), parseInt(parentNodeHeight!)]}
+                resizeHandles={hasSelectedNode && !hasDraggedNode ? ["se", "e", "s", "n", 'w', "ne", 'nw', "sw"] : []} // Only show handles if selected
+                maxConstraints={[parentNodeWidth!, !maxHeight ? height : maxHeight]}
+                minConstraints={[minWidth, minHeight]}
                 width={width}
                 height={height}
                 axis="both" // Allows resizing in both directions
                 onResizeStop={(e: React.SyntheticEvent, { size }: any) => {
                     setIsResizing(false);
                     actions.setProp(id, (props: any) => {
-                        props.width = size.width;
-                        props.height = size.height;
+                        if (size.width > parentNodeWidth!) {
+                            props.width = parentNodeWidth;
+                        } else {
+                            props.width = size.width;
+                        }
+                        if (size.height > maxHeight) {
+                            props.height = maxHeight
+                        } else {
+                            props.height = size.height;
+                        }
                     });
+                }}
+
+                onResize={(e: React.SyntheticEvent, { size }: any) => {
+                    // Constantly check if all the parent's nodes children equal its current height
+                    let maximumHeight;
+                    let heightSum = 0;
+                    console.log(innerWidth);
+                    parentChildNodes?.forEach((node: any) => {
+                        if (node.id !== id) {
+                            heightSum += node.offsetHeight
+                        }
+                    })
+                    maximumHeight = parentNodeHeight! - heightSum;
+                    if (maximumHeight <= 0) {
+                        setMaxHeight(0)
+                    } else {
+                        setMaxHeight(maximumHeight)
+                    }
+
                 }}
                 onResizeStart={() => {
                     console.log("start");
+                    if (hasChildNodes) {
+                        let sumWidth = 0;
+                        let minHeight = -Infinity;
+                        childNodes?.forEach((node: any) => {
+                            if (node.nodeName !== 'SPAN') {
+                                // Handle width
+                                sumWidth += node.offsetWidth
+                                // Handle height
+                                if (node.offsetHeight > minHeight) {
+                                    minHeight = node.offsetHeight
+                                }
+                            }
+                        })
+                        setMinWidth(sumWidth + padding * 2)
+                        setMinHeight(minHeight + padding * 2)
+                    }
                     actions.selectNode(id)
                     setIsResizing(true);
                 }}
+
                 style={{
                     width: '100%', height: '100%', display: 'flex', flexDirection, margin, padding, background, gap: `${gap}px`,
-
                 }}
-                className={`relative ${selectedNode.values().toArray()[0] === id ? "border-solid border-blue-800" : ""} ${isHovering && selectedNode.values().toArray()[0] !== id ? `border-dashed border-blue-800 border-2` : ''} ${isHovering && selectedNode.values().toArray()[0] === id ? `border-solid border-blue-800 border-2` : ''} ${!isHovering && selectedNode.values().toArray()[0] === id ? `border-solid border-blue-800 border-2` : ''} min-w-min min-h-max justify-${alignMain} items-${alignAlt}`}
+                className={` relative ${selectedNode.values().toArray()[0] === id ? "outline outline-blue-800" : ""} ${isHovering && selectedNode.values().toArray()[0] !== id ? `outline-dashed outline-blue-800 outline-2` : ''} ${isHovering && selectedNode.values().toArray()[0] === id ? `outline outline-blue-800 outline-2` : ''} ${!isHovering && selectedNode.values().toArray()[0] === id ? `outline outline-blue-800 outline-2` : ''} justify-${alignMain} items-${alignAlt} outline-offset-1`}
             >
                 {children}
             </ResizableBox>
@@ -251,6 +309,7 @@ export const ContainerSettings = () => {
 }
 
 Container.craft = {
+    displayName: "Container",
     related: {
         settings: ContainerSettings
     },

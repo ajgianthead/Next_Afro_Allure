@@ -1,7 +1,7 @@
 'use client'
 import { Text as AAText, Caption } from "@tailus-ui/typography";
 import React, { useEffect, useRef, useState } from "react";
-import { Node, useNode } from "@craftjs/core";
+import { Node, useNode, UserComponent } from "@craftjs/core";
 import ContentEditable from 'react-contenteditable'
 import Select from "@mui/joy/Select";
 import Option from "@mui/joy/Option";
@@ -17,7 +17,7 @@ import 'react-fontpicker-ts/dist/index.css'
 import IconButton from "@mui/joy/IconButton";
 
 
-const EditableText = ({ text, fontFamily = 'Open Sans', textAlign = 'left', fontSize = 16, fontWeight = 'normal', fontStyle = 'none', textDecorationLine = 'underline', fontColor = '#111827', className, textArray = [], lineHeight = 1.5, letterSpacing = 0, margin = 'auto', padding = 'auto' }: any) => {
+const EditableText: UserComponent = ({ text, fontFamily = 'Open Sans', textAlign = 'left', fontSize = 16, fontWeight = 'normal', fontStyle = 'none', textDecorationLine = 'underline', fontColor = '#111827', className, textArray = [], lineHeight = 1.5, letterSpacing = 0, margin = 'auto', padding = 'auto' }: any) => {
 
     const { connectors: { connect, drag }, hasSelectedNode, hasDraggedNode, isHovering, actions: { setProp } } = useNode((state: any) => ({
         hasSelectedNode: state.events.selected,
@@ -273,6 +273,7 @@ export const TextSettings = () => {
 }
 
 EditableText.craft = {
+    displayName: 'EditableText',
     related: {
         settings: TextSettings
     },

@@ -172,14 +172,14 @@ export type Database = {
           clients: string[] | null
           completed_stripe_onboarding: boolean
           created_at: string
+          current_onboarding_link: string | null
+          default_availability: string
           email: string
           is_onboarded: boolean
           stripe_acc_id: string | null
           updated_at: string
           url_name: string
-          user_id: string,
-          current_onboarding_link: string,
-          default_availability: string,
+          user_id: string
         }
         Insert: {
           availabilities?: Json[] | null
@@ -189,14 +189,14 @@ export type Database = {
           clients?: string[] | null
           completed_stripe_onboarding?: boolean
           created_at?: string
+          current_onboarding_link?: string | null
+          default_availability?: string
           email: string
           is_onboarded?: boolean
           stripe_acc_id?: string | null
           updated_at?: string
           url_name?: string
           user_id?: string
-          current_onboarding_link?: string | null
-          default_availability?: string,
         }
         Update: {
           availabilities?: Json[] | null
@@ -206,14 +206,14 @@ export type Database = {
           clients?: string[] | null
           completed_stripe_onboarding?: boolean
           created_at?: string
+          current_onboarding_link?: string | null
+          default_availability?: string
           email?: string
           is_onboarded?: boolean
           stripe_acc_id?: string | null
           updated_at?: string
           url_name?: string
           user_id?: string
-          current_onboarding_link?: string | null
-          default_availability?: string
         }
         Relationships: []
       }
@@ -253,6 +253,7 @@ export type Database = {
       services: {
         Row: {
           addons: Json[] | null
+          availability: string
           business: string
           categories: string[] | null
           created_at: string
@@ -264,10 +265,10 @@ export type Database = {
           photo_url: string | null
           price: number
           updated_at: string | null
-          availability: string
         }
         Insert: {
           addons?: Json[] | null
+          availability?: string
           business: string
           categories?: string[] | null
           created_at?: string
@@ -279,10 +280,10 @@ export type Database = {
           photo_url?: string | null
           price: number
           updated_at?: string | null
-          availability: string
         }
         Update: {
           addons?: Json[] | null
+          availability?: string
           business?: string
           categories?: string[] | null
           created_at?: string
@@ -294,12 +295,43 @@ export type Database = {
           photo_url?: string | null
           price?: number
           updated_at?: string | null
-          availability?: string
         }
         Relationships: [
           {
             foreignKeyName: "services_business_fkey"
             columns: ["business"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      web_editors: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          editor_data: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          editor_data?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          editor_data?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_editors_business_id_fkey"
+            columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_users"
             referencedColumns: ["business_id"]
@@ -314,7 +346,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      status: "PENDING" | "CONFIRMED" | "DENIED" | "CANCELLED" | "COMPLETED"
+      status:
+        | "PENDING"
+        | "CONFIRMED"
+        | "DENIED"
+        | "CANCELLED"
+        | "COMPLETED"
+        | "PROCESSING"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -304,6 +304,7 @@ const HyperlinkSettings = () => {
 }
 
 Hyperlink.craft = {
+    displayName: "Hyperlink",
     related: {
         settings: HyperlinkSettings
     },
