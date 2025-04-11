@@ -54,7 +54,7 @@ function getInitials(name: string): string {
 
 export const Orders = () => {
   return (
-    <Card variant="outlined" className="overflow-x-auto lg:overflow-clip">
+    <Card variant="outlined" className="overflow-x-auto w-full lg:w-[calc(100vw-20rem)] lg:overflow-clip">
       <div className="sticky left-0 mb-6">
         <Title as="h2" size="lg" weight="medium">
           Orders

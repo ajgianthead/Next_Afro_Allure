@@ -39,55 +39,33 @@ const Page = () => {
     const { user } = useUserContext();
     const [loadingData, setLoadingData] = useState<boolean>(true);
     useEffect(() => {
-        const getAppointments = async (services: Service[]) => {
-            const res = await fetch(`http://localhost:3000/api/${user.business_id}/appointments`, {
-                method: 'GET'
-            })
-            const data = await res.json();
-            console.log(data)
-            const result = data.appointments
-            let temp = []
-            for (let i = 0; i < result.length; i++) {
-                temp.push({
-                    id: result[i].id,
-                    start: new Date(result[i].start),
-                    end: new Date(result[i].end),
-                    title: `${result[i].service_data.name} with ${result[i].client_metadata.firstName}`,
-                    status: result[i].status,
-                    client_metadata: result[i].client_metadata,
-                    service_data: result[i].service_data
-                })
-            }
-            setAppointments(temp)
-        }
-        // Get services
-        const getServices = async () => {
-            const { business_id } = user
-            const res = await fetch(`http://localhost:3000/api/${business_id}/services`)
-            const services = await res.json()
-            console.log(services);
-            setServices(services.result)
-            return services.result
-        }
-        const getPolicies = async () => {
-            const res = await fetch(`http://localhost:3000/api/policies/${user.business_id}`, {
-                method: 'GET'
-            })
-            const result = await res.json();
-            console.log(result);
-            setDepositRequired(result.policies.deposit.enabled)
-            setPolicy(result.policies)
-        }
         if (user.business_id) {
             (async () => {
-                await getServices().then(async (res) => {
-                    await getAppointments(res).then(async () => {
-                        await getPolicies()
-                    })
+                const res = await fetch(`http://localhost:3000/api/${user.business_id}/booking`, {
+                    method: 'GET'
                 })
+                const result = await res.json()
+                console.log(result)
+                setDepositRequired(result.policy.deposit.enabled)
+                setPolicy(result.policy)
+                setServices(result.services)
+                if (result.appointments) {
+                    let temp = []
+                    for (let i = 0; i < result.appointments.length; i++) {
+                        temp.push({
+                            id: result.appointments[i].id,
+                            start: new Date(result.appointments[i].start),
+                            end: new Date(result.appointments[i].end),
+                            title: `${result.appointments[i].service_data.name} with ${result.appointments[i].client_metadata.firstName}`,
+                            status: result.appointments[i].status,
+                            client_metadata: result.appointments[i].client_metadata,
+                            service_data: result.appointments[i].service_data
+                        })
+                    }
+                    setAppointments(temp)
+                }
                 setLoadingData(false)
             })()
-
         }
     }, [user]);
     const [policy, setPolicy] = useState<any>()
@@ -100,12 +78,15 @@ const Page = () => {
     const [services, setServices] = useState<Service[]>([])
     const localizer = luxonLocalizer(DateTime)
     const handleSelection = (slot: any) => {
-        let range: DateRange = {
-            start: DateTime.fromISO(slot.start.toISOString()),
-            end: DateTime.fromISO(slot.end.toISOString())
+        if (DateTime.fromISO(slot.start.toISOString()) > DateTime.now()) {
+            let range: DateRange = {
+                start: DateTime.fromISO(slot.start.toISOString()),
+                end: DateTime.fromISO(slot.end.toISOString())
+            }
+            setSlotInfo(range)
+            setIsOpen(true)
         }
-        setSlotInfo(range)
-        setIsOpen(true)
+
     }
 
     const [appointments, setAppointments] = useState<any>([]);

@@ -16,15 +16,19 @@ import 'react-resizable/css/styles.css';
 import { useEditorContext } from '@utils/context/EditorContext';
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
+import { Resizable } from 're-resizable';
+
 
 
 export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flexDirection = 'column', margin = 0, padding = 0, children, width = 500, height = 200, alignMain = "start", alignAlt = "start" }: any) => {
-    const { connectors: { connect, drag }, id, hasSelectedNode, hasChildNodes, childNodes, hasDraggedNode, parentChildNodes, isHovering, parentNodeWidth, parentNodeHeight, actions: { setProp } } = useNode((state) => ({
+    const { connectors: { connect, drag }, id, hasSelectedNode, parentElement, parentFlexDirection, hasChildNodes, childNodes, hasDraggedNode, parentChildNodes, isHovering, parentNodeWidth, parentNodeHeight, actions: { setProp } } = useNode((state) => ({
         hasChildNodes: state.dom?.hasChildNodes,
+        parentFlexDirection: state.dom?.parentElement?.style.flexDirection,
         childNodes: state.dom?.childNodes[0].childNodes,
         parentNodeWidth: state.dom?.parentElement?.clientWidth! - parseInt((state.dom?.parentElement?.style.padding.slice(0, state.dom?.parentElement?.style!.padding.length - 2))!) * 2,
         parentNodeHeight: state.dom?.parentElement?.clientHeight! - parseInt((state.dom?.parentElement?.style.padding.slice(0, state.dom?.parentElement?.style!.padding.length - 2))!) * 2,
         parentChildNodes: state.dom?.parentElement?.childNodes,
+        parentElement: state.dom?.parentElement,
         hasSelectedNode: state.events.selected,
         hasDraggedNode: state.events.dragged,
         isHovering: state.events.hovered
@@ -33,64 +37,72 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
         hoveringId: state.events.hovered,
         selectedNode: state.events.selected
     }));
-    const ref = useRef(null);
+    const nodeRef = useRef<HTMLDivElement>(null);
     const [innerWidth, setInnerWidth] = useState(0);
-    useEffect(() => {
-        if (ref.current) {
-            const style = window.getComputedStyle(ref.current);
-            const width = parseFloat(style.width); // Excludes padding & border
-            setInnerWidth(width);
-        }
-    }, []);
     const { isResizing, setIsResizing } = useEditorContext();
-    const [maxHeight, setMaxHeight] = useState<number>(parentNodeHeight!)
-    const [minWidth, setMinWidth] = useState<number>(0)
-    const [minHeight, setMinHeight] = useState<number>(0);
+    useEffect(() => {
+        if (nodeRef.current) {
+            if (isResizing) {
+                connect(nodeRef.current);
+            } else {
+                connect(drag(nodeRef.current));
+            }
+        }
+    }, [isResizing]);
+    const [maxHeight, setMaxHeight] = useState<number>()
+    const [maxWidth, setMaxWidth] = useState<number>()
+    const [minWidth, setMinWidth] = useState<number>()
+    const [minHeight, setMinHeight] = useState<number>();
+
+    const getMaxHeight = async () => {
+        // Constantly check if all the parent's nodes children equal its current height
+        if (parentFlexDirection === 'column') {
+            let maximumHeight;
+            let heightSum = 0;
+            parentChildNodes?.forEach((node: any) => {
+                if (node.id !== id) {
+                    heightSum += node.offsetHeight
+                }
+            })
+            maximumHeight = parentNodeHeight! - heightSum;
+            if (maximumHeight <= 0) {
+                setMaxHeight(0)
+            } else {
+                setMaxHeight(maximumHeight - margin * 2)
+            }
+        }
+        if (parentFlexDirection === 'row') {
+            setMaxHeight(parentNodeHeight - margin * 2)
+        }
+    }
+    const getMaxWidth = async () => {
+        // Constantly check if all the parent's nodes children equal its current width
+        if (parentFlexDirection === 'column') {
+            setMaxWidth(parentNodeWidth - margin * 2)
+        }
+        if (parentFlexDirection === 'row') {
+            let maximumWidth;
+            let widthSum = 0;
+            parentChildNodes?.forEach((node: any) => {
+                if (node.id !== id) {
+                    widthSum += node.offsetWidth
+                }
+            })
+            maximumWidth = parentNodeWidth! - widthSum;
+            if (maximumWidth <= 0) {
+                setMaxWidth(0)
+            } else {
+                setMaxWidth(maximumWidth - margin * 2)
+            }
+        }
+    }
     return (
-        <div id={id} ref={(el: any) => connect(isResizing ? el : drag(ref.current = el))} draggable={!isResizing} >
-            <ResizableBox
-                resizeHandles={hasSelectedNode && !hasDraggedNode ? ["se", "e", "s", "n", 'w', "ne", 'nw', "sw"] : []} // Only show handles if selected
-                maxConstraints={[parentNodeWidth!, !maxHeight ? height : maxHeight]}
-                minConstraints={[minWidth, minHeight]}
-                width={width}
-                height={height}
-                axis="both" // Allows resizing in both directions
-                onResizeStop={(e: React.SyntheticEvent, { size }: any) => {
-                    setIsResizing(false);
-                    actions.setProp(id, (props: any) => {
-                        if (size.width > parentNodeWidth!) {
-                            props.width = parentNodeWidth;
-                        } else {
-                            props.width = size.width;
-                        }
-                        if (size.height > maxHeight) {
-                            props.height = maxHeight
-                        } else {
-                            props.height = size.height;
-                        }
-                    });
-                }}
 
-                onResize={(e: React.SyntheticEvent, { size }: any) => {
-                    // Constantly check if all the parent's nodes children equal its current height
-                    let maximumHeight;
-                    let heightSum = 0;
-                    console.log(innerWidth);
-                    parentChildNodes?.forEach((node: any) => {
-                        if (node.id !== id) {
-                            heightSum += node.offsetHeight
-                        }
-                    })
-                    maximumHeight = parentNodeHeight! - heightSum;
-                    if (maximumHeight <= 0) {
-                        setMaxHeight(0)
-                    } else {
-                        setMaxHeight(maximumHeight)
-                    }
-
-                }}
+        <div id={id} ref={(ref: any) => connect(isResizing ? ref : drag(ref))} draggable={!isResizing}>
+            <Resizable as={'div'}
+                size={{ width: width, height: height }}
                 onResizeStart={() => {
-                    console.log("start");
+                    setIsResizing(true)
                     if (hasChildNodes) {
                         let sumWidth = 0;
                         let minHeight = -Infinity;
@@ -107,25 +119,54 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
                         setMinWidth(sumWidth + padding * 2)
                         setMinHeight(minHeight + padding * 2)
                     }
-                    actions.selectNode(id)
-                    setIsResizing(true);
                 }}
+                maxHeight={maxHeight}
+                maxWidth={maxWidth}
+                minHeight={minHeight}
+                minWidth={minWidth}
+                onResize={() => {
+                    getMaxHeight()
+                    getMaxWidth()
 
+                }}
+                bounds={parentElement!}
+                boundsByDirection
+                onResizeStop={(_, __, ___, delta) => {
+                    setIsResizing(false)
+                    actions.setProp(id, (props) => {
+                        props.width = props.width + delta.width;
+                        props.height = props.height + delta.height
+                    })
+
+                }}
                 style={{
-                    width: '100%', height: '100%', display: 'flex', flexDirection, margin, padding, background, gap: `${gap}px`,
+                    display: 'flex', flexDirection, margin, padding, background, gap: `${gap}px`, width, height
                 }}
                 className={` relative ${selectedNode.values().toArray()[0] === id ? "outline outline-blue-800" : ""} ${isHovering && selectedNode.values().toArray()[0] !== id ? `outline-dashed outline-blue-800 outline-2` : ''} ${isHovering && selectedNode.values().toArray()[0] === id ? `outline outline-blue-800 outline-2` : ''} ${!isHovering && selectedNode.values().toArray()[0] === id ? `outline outline-blue-800 outline-2` : ''} justify-${alignMain} items-${alignAlt} outline-offset-1`}
+                defaultSize={{
+                    width: width,
+                    height: height,
+                }}
             >
                 {children}
-            </ResizableBox>
+            </Resizable>
         </div>
+
+
     )
 }
+
+
 
 export const ContainerSettings = () => {
     const { actions: { setProp }, props } = useNode((node) => ({
         props: node.data.props,
     }));
+    useEffect(() => {
+
+        console.log(props.width, props.height);
+
+    }, []);
     const [color, setColor] = useState<string>("#000000");
     return (
         <div>
@@ -134,12 +175,12 @@ export const ContainerSettings = () => {
                 <div className='flex w-full flex-col gap-2'>
                     <div className='w-full justify-between items-center flex'>
                         <Caption>Width</Caption>
-                        <Input className='w-1/3 text-xs' endDecorator={'px'} value={props.width} onChange={(e) => setProp((props: any) => props.width = e.target.value)} />
+                        <Input className='w-1/3 text-xs' endDecorator={'px'} value={props.width} onChange={(e) => setProp((props: any) => props.width = parseInt(e.target.value))} />
 
                     </div>
                     <div className='w-full justify-between items-center flex'>
                         <Caption>Height</Caption>
-                        <Input className='w-1/3 text-xs' endDecorator={'px'} value={props.height} onChange={(e) => setProp((props: any) => props.height = e.target.value)} />
+                        <Input className='w-1/3 text-xs' endDecorator={'px'} value={props.height} onChange={(e) => setProp((props: any) => props.height = parseInt(e.target.value))} />
 
                     </div>
                     <div className='w-full flex flex-col gap-2 justify-end items-end'>

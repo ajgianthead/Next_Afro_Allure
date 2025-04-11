@@ -38,6 +38,8 @@ export default function Page() {
     const { editor_id } = useParams()
     const [loadingEditorData, setLoadingEditorData] = useState<boolean>(true)
     const [editorData, setEditorData] = useState<any>()
+    const [screenSize, setScreenSize] = useState<string>("360")
+
     useEffect(() => {
         const activeTrigger = document.getElementById(state) as HTMLElement;
         if (spanRef.current) {
@@ -51,7 +53,7 @@ export default function Page() {
             <div>
                 {/* TODO: Put Transform Wrapper in a component and use useEditor() */}
                 <Editor resolver={{ Container, EditableButton, EditableText, ImageContainer, Video, Hyperlink }}>
-                    <Toolbar editorId={editor_id!} setEditorData={setEditorData} setLoadingEditorData={setLoadingEditorData} />
+                    <Toolbar screenSize={screenSize} setScreenSize={setScreenSize} editorId={editor_id!} setEditorData={setEditorData} setLoadingEditorData={setLoadingEditorData} />
 
                     <main className='flex h-[calc(100vh-40px)] w-full bg-gray-100'>
                         <section className='h-full bg-white w-[400px] p-5 border-r border-[#D4D4D4]'>
@@ -135,7 +137,7 @@ export default function Page() {
                             <CircularProgress />
                             <Caption>Loading Editor Data...</Caption>
                         </div> : <div className='flex overflow-y-hidden' ref={containerRef}>
-                            <EditorSpace jsonData={editorData} />
+                            <EditorSpace screenSize={screenSize} jsonData={editorData} />
                         </div>}
 
 
@@ -155,7 +157,7 @@ export default function Page() {
     )
 }
 
-const EditorSpace = ({ jsonData }: any) => {
+const EditorSpace = ({ jsonData, screenSize }: any) => {
     const [isPanningEnabled, setIsPanningEnabled] = useState(false);
     const { actions, query, enabled } = useEditor((state) => ({
         enabled: state.options.enabled
@@ -176,13 +178,12 @@ const EditorSpace = ({ jsonData }: any) => {
     useEffect(() => {
         if (jsonData) {
             actions.deserialize(jsonData)
-
         }
-    }, [jsonData]);
+    }, [jsonData, screenSize]);
 
     return (
         <div onMouseDown={handleMouseDown} onMouseUp={handleMouseUp}>
-            <TransformWrapper panning={{ disabled: !isPanningEnabled }} centerZoomedOut={true} minScale={0.5} initialScale={0.6} maxScale={5} initialPositionX={1280 / 2 - 550}>
+            <TransformWrapper panning={{ disabled: !isPanningEnabled }} centerZoomedOut={true} minScale={0.5} initialScale={0.6} maxScale={5} initialPositionX={parseInt(screenSize) / 2 - 550}>
                 <TransformComponent>
                     <section>
                         <div className='w-full h-screen bg-gray-100'>

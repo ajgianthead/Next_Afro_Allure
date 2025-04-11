@@ -175,7 +175,7 @@ export default function Layout({
                     onClick={() => setIsMenuOpen(false)}
                 />
             )}
-            <main className={twMerge('lg:ml-auto lg:w-[calc(100vw-16rem)]', isMenuOpen && 'pointer-events-none opacity-50')}>
+            <main className={twMerge('lg:ml-72 lg:w-[calc(100vw-20rem)]', isMenuOpen && 'pointer-events-none opacity-50')}>
                 <div className="feedback-bg flex-col sticky top-0 z-20 flex items-end justify-between  pl-[1.25rem] py-3 lg:py-4">
                     <div className='flex-row flex justify-between w-full'>
                         <div className="flex items-center gap-2 pr-6">

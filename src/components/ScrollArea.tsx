@@ -24,7 +24,7 @@ const ScrollAreaScrollBar = React.forwardRef<
     {
         className,
         children,
-        orientation = "vertical",
+        orientation = "horizontal",
         ...props
     }, forwardedRef
 ) => {

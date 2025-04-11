@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
                     },
                 },
             })
-            
+
            return await supabase.from('business_users').insert([
                 {
                     business_name: name,
@@ -100,6 +100,30 @@ export async function POST(request: NextRequest) {
                 }
             ]).select().single().then(async (res) => {
                 const business = res.data
+                 // Create policy
+                await supabase.from('business_policies').insert([
+                    {
+                        business: business?.business_id,
+                        deposit: {
+                            enabled: true,
+                            settings: {
+                                type: 'percent',
+                                value: 20
+                            }
+                        },
+                        late_fee: {
+                            enabled: false
+                        },
+                        no_show: {
+                            enabled: true,
+                            level: "strict"
+                        }
+                    }
+                ]).select().single().then(async (res) => {
+                    await supabase.from('business_users').update({
+                        booking_policies: res.data?.id
+                    }).eq('business_id', business?.business_id!)
+                })
                 return await supabase.from('services').insert([
                     {
                         name: "Test Service",

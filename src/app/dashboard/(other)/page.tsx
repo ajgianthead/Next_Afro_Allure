@@ -10,11 +10,11 @@ import { StackedAreaChart } from '@components/dashboard/StackedAreas';
 export default function App() {
     return (
         <>
-            <div className="h-screen overflow-visible lg:flex">
+            <div className="h-screen overflow-y-visible lg:flex">
                 <main>
-                    <div className="p-6 space-y-6">
+                    <div className=" p-6 lg:p-0 space-y-6">
                         <StackedCards />
-                        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                        <div className="mt-6 lg:w-[calc(100vw-20rem)] grid gap-6 lg:grid-cols-2">
                             <TwoAreasChart />
                             <SimpleBarChart />
                             <Traffic />
