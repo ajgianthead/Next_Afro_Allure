@@ -175,7 +175,7 @@ export default function Layout({
                     onClick={() => setIsMenuOpen(false)}
                 />
             )}
-            <main className={twMerge('lg:ml-72 lg:w-[calc(100vw-20rem)]', isMenuOpen && 'pointer-events-none opacity-50')}>
+            <main className={twMerge('lg:ml-72 lg:w-[calc(100vw-20rem)] h-screen flex flex-col', isMenuOpen && 'pointer-events-none opacity-50')}>
                 <div className="feedback-bg flex-col sticky top-0 z-20 flex items-end justify-between  pl-[1.25rem] py-3 lg:py-4">
                     <div className='flex-row flex justify-between w-full'>
                         <div className="flex items-center gap-2 pr-6">
@@ -197,7 +197,7 @@ export default function Layout({
                         </div>
                     </div>
 
-                    {userData && !userData?.completed_stripe_onboarding ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
+                    {/* {userData && !userData?.completed_stripe_onboarding ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
                         <Banner.Content>
                             <CircleAlert className="size-5 text-[--body-text-color]" />
                             <div className="space-y-2">
@@ -207,10 +207,10 @@ export default function Layout({
 
                             </div>
                         </Banner.Content>
-                    </Banner.Root> : <></>}
+                    </Banner.Root> : <></>} */}
                 </div>
 
-                <div className='w-full'>
+                <div className='w-full flex-1 max-h-min'>
                     <SiteWrapper>
                         {children}
                     </SiteWrapper>
