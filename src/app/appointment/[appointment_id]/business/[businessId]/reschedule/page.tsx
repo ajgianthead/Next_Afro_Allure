@@ -7,7 +7,7 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider'
 import Button from '@tailus-ui/Button'
 import Card from '@tailus-ui/Card'
-import { Caption, Title } from '@tailus-ui/typography'
+import { Caption, Text, Title } from '@tailus-ui/typography'
 import { BookingData, useBooking } from '@utils/context/BookingDataContext'
 import { getAvailability, getUnavailability, rescheduleAppointment } from 'app/[businessName]/actions'
 import { TimeSlot } from 'app/[businessName]/book/page'
@@ -17,29 +17,32 @@ import { useParams } from 'next/navigation'
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { getSlots } from 'slot-calculator'
 
-export default function page() {
+export default function Page() {
     const { appointment_id, businessId } = useParams<{ appointment_id: string, businessId: string }>()
     const [date, setDate] = useState<any>();
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [slots, setSlots] = useState<any>({})
     const [currSlots, setCurrSlots] = useState<any>([]);
-    const [availability, setAvailability] = useState<null | any>({});
     const [appointments, setAppointments] = useState<any[]>([])
 
-    const getData = async (startDate: string, endDate: string, availability: any, appointments: any[]) => {
+    const getData = async (startDate: string, endDate: string, availabilities: any[], appointments: any[]) => {
+        console.log(businessId);
         // Get availability id for server actions
         const appointment = appointments.filter((appointment: Appointment, index: number) => appointment.id === appointment_id)[0]
+        const availability = availabilities.filter((availability) => availability.id === appointment.service_data.availability)[0]
         // Check if reschedules is at its reschedule limit
-        //
-        //
-        //
-        //
+        if (!(appointment.reschedules > 0)) {
+            setCanReschedule(false)
+        } else {
+            setCanReschedule(true)
+        }
         setAppointment(appointment)
+        setAvailability(availability.availability_data[0])
         setSelectedDateTime({
             start: DateTime.fromJSDate(new Date(appointment.start)).toISO()!,
             end: DateTime.fromJSDate(new Date(appointment.end)).toISO()!
         })
-        const formattedAvailability = await getAvailability(startDate, endDate, availability)
+        const formattedAvailability = await getAvailability(startDate, endDate, availability.availability_data[0])
         const formattedUnavailability = await getUnavailability(startDate, endDate, appointments!)
         const { availableSlotsByDay } = getSlots({
             from: startDate,
@@ -84,43 +87,42 @@ export default function page() {
         end: ""
     });
     const [appointment, setAppointment] = useState<any>({});
-
+    const [availability, setAvailability] = useState<any>({})
+    const [availabilities, setAvailabilities] = useState<Availability[]>([])
     useEffect(() => {
         const fetchData = async () => {
             const res = await fetch(`http://localhost:3000/api/${businessId}/availabilities`, {
                 method: 'GET'
             })
             const result = await res.json();
-            const availability = result.result
+            const availabilities = result.result.availabilities
+            setAvailabilities(availabilities)
             const _res = await fetch(`http://localhost:3000/api/${businessId}/appointments`, {
                 method: "GET"
             })
             const appointments = await _res.json();
 
             return {
-                availability: availability[0],
+                availabilities: availabilities,
                 appointments: appointments.appointments
             }
         }
-        const initialize = async (availability: any, appointments: any) => {
+        const initialize = async (availabilities: any, appointments: any) => {
             const startDate = DateTime.now().startOf("day").toISO()
             const endDate = DateTime.now().endOf("month").toISO()
-            await getData(startDate, endDate, availability, appointments)
+            await getData(startDate, endDate, availabilities, appointments)
             setIsLoading(false)
-
-
         }
         const start = async () => {
-            if (!Object.keys(availability).length || !appointments?.length) {
-                fetchData().then(async ({ availability, appointments }) => {
-                    await initialize(availability, appointments)
-                    setAvailability(availability)
+            if (!appointments?.length && !availabilities.length) {
+                fetchData().then(async ({ availabilities, appointments }) => {
+                    await initialize(availabilities, appointments)
                     setAppointments(appointments)
                 })
             }
         }
         start()
-    }, [availability, appointments, selectedDateTime]);
+    }, [availabilities, appointments, selectedDateTime]);
 
     const handleMonthChange = async (month: DateTime<boolean>) => {
         if (appointments.length && Object.keys(availability).length) {
@@ -134,7 +136,7 @@ export default function page() {
                 startDate = month.toISO()!
             }
             endDate = month.endOf("month").toISO()!
-            await getData(startDate, endDate, availability, appointments)
+            await getData(startDate, endDate, availabilities, appointments)
             setIsLoading(false)
         }
     }
@@ -166,8 +168,14 @@ export default function page() {
     }
     const [sendingData, setSendingData] = useState(false)
     const [confirmed, setConfirmed] = useState(false)
+    const [canReschedule, setCanReschedule] = useState<boolean | null>(null)
     return (
-        <div>
+        <div>{canReschedule === null ? <div className='w-full h-screen flex justify-center items-center'>
+            <CircularProgress />
+        </div> : canReschedule === false ? <div className='w-full px-5 flex-col text-center h-screen gap-2 flex justify-center items-center'>
+            <Caption>You have reached the maximum number of reschedule requests according to this business's policies.</Caption>
+            <Caption>Contact INSERT BUSINESS NAME directly about rescheduling your appointment</Caption>
+        </div> : <div>
             {confirmed ? <RescheduleConfirmation /> : <div className='flex justify-center items-center w-full h-screen'>
                 <div className='w-[1280px] flex flex-col justify-center items-center'>
                     <Card className='flex items-start gap-10'>
@@ -206,24 +214,26 @@ export default function page() {
                         <Button.Root disabled={isDisabled} onClick={async () => {
                             setSendingData(true)
                             setIsDisabled(true)
-                            const res = await rescheduleAppointment(appointment_id, {
+                            await rescheduleAppointment(appointment_id, {
                                 start: selectedDateTime.start,
                                 end: selectedDateTime.end,
                                 appointmentLength: appointment.service_data.length
-                            }, businessId).then(() => {
-                                setConfirmed(true)
+                            }, businessId, availability.id).then((res) => {
+                                if (res) {
+                                    setConfirmed(true)
+                                }
                             })
-                            console.log(res);
 
                         }}>
                             <Button.Label>{
-                                sendingData ? <CircularProgress size='sm' /> : "Reschedule"
+                                sendingData ? <CircularProgress size='sm' /> : "Reschedule Appointment"
                             }</Button.Label>
                         </Button.Root>
                     </div>
                 </div>
             </div>}
         </div>
+        }</div>
     )
 }
 

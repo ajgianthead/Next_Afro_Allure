@@ -1,13 +1,14 @@
 import { createClient } from "@utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import twilio from 'twilio';
 import { Database } from "../../../../lib/database.types";
-import mailchimp from '@mailchimp/mailchimp_transactional'
-
+import FormData from "form-data"; // form-data v4.0.1
+import Mailgun from "mailgun.js";
+import { data } from "@tailus-ui/visualizations/data";
 
 // Edit an appointment
 export async function PUT(request: NextRequest) {
     const supabase = createClient<Database>();
+    
     // I dont know man??
     const { id, start, end, status } = await request.json();
     const { data, error } = await supabase.from('appointments').update(
@@ -30,9 +31,12 @@ export async function PUT(request: NextRequest) {
 // Create an appointment
 export async function POST(request: NextRequest) {
     const supabase = createClient<Database>();
-    const mctx = mailchimp(process.env.NEXT_PUBLIC_MAILCHIMP_API_KEY!);
-    // I dont know man??
-    const {business, client_metadata, start, end, service_data, status, require_deposit, policy_id, paid_deposit, deposit_charge_id, reschedules} = await request.json();
+    const mailgun = new Mailgun(FormData);
+    const mg = mailgun.client({
+        username: "api",
+        key: process.env.NEXT_PUBLIC_EMAIL_SENDING_API_KEY || "API_KEY",
+      });
+    const {business, client_metadata, start, end, service_data, status, require_deposit, policy_id, paid_deposit, deposit_charge_id, reschedules, deposit_price, addons} = await request.json();
     const { data, error } = await supabase.from('appointments').insert([
        {
         business: business,
@@ -46,71 +50,21 @@ export async function POST(request: NextRequest) {
         require_deposit: require_deposit,
         paid_deposit: paid_deposit,
         deposit_charge_id: deposit_charge_id,
-        reschedules: reschedules
+        reschedules: reschedules,
+        deposit_price: deposit_price,
+        selected_addons: addons
        }
     ]).select();
     if (data?.length) {
         try {
-            // Also send email
-            const response = await mctx.messages.sendTemplate({
-                template_name: 'confirm-appointment',
-                template_content: [],
-                message: {
-                    subject: 'Confirm your appointment',
-                    from_email: 'notifications@afroallure.co',
-                    from_name: "notifications@afroallure.co",
-                    to: [{
-                            email: 'abijahnesbitt@afroallure.co',
-                            type: 'to'
-                            
-                        }],
-                        "global_merge_vars": [
-                            {
-                                name: "stylist_name",
-                                content: "LadyPlutoLooks" // Insert stylist name
-                            },
-                            {
-                                name: "appointment_date",
-                                content: '' // Format Appointment Date
-                            },
-                            {
-                                name: "appointment_time",
-                                content: '' // Format Appointment Time
-                            },
-                            {
-                                name: "business_address",
-                                content: '' // Insert Business Address
-                            },
-                            {
-                                name: "service_name",
-                                content: service_data.name // Format Appointment Date
-                            },
-                            {
-                                name: "appointment_id",
-                                content: `${data[0].id}` // Insert stylist name
-                            },
-                            {
-                                name: "business_id",
-                                content: `${business}` // Insert stylist name
-                            },
-                            // http://localhost:3000/appointment/*|APPOINTMENT_ID/business/*|BUSINESS_ID|*/confirm
-                            { 
-                                name: "facebook_url",
-                                content: '' // Format Appointment Date
-                            },
-                            {
-                                name: "instagram_url",
-                                content: 'https://www.instagram.com/afroallure_/' // Format Appointment Date
-                            },
-                            {
-                                name: "twitter_url",
-                                content: '' // Format Appointment Date
-                            },
-                        ],
-                       
-                }
-            })
-        console.log(response);
+            const res = await mg.messages.create("sandboxe74723706fb54da7853bdbd32f560d50.mailgun.org", {
+                from: "Mailgun Sandbox <postmaster@sandboxe74723706fb54da7853bdbd32f560d50.mailgun.org>",
+                to: ["Abijah Keith Nesbitt <abijah.nez@gmail.com>"],
+                subject: "Booking Confirmation",
+                text: `Thank you for booking your appointment. Confirm your appointment by clicking this link: http://localhost:3000/appointment/${data[0].id}/business/${business}/confirm`,
+              });
+          
+              console.log(data);
         } catch (error) {
             return new NextResponse(JSON.stringify({ error: error }), {
                 headers: { 'Content-Type': 'application/json' },

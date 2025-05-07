@@ -5,7 +5,7 @@ import { Database } from "../../../../../../lib/database.types";
 
 export async function GET(request: NextRequest, {params} : {params: {id: string}}) {
     const supabase = createClient<Database>();
-    const {id} = params
+    const {id} = await params
     const { data, error } = await supabase.from("business_policies").select("*").eq("id", id).single()
 
     if (error) {

@@ -17,13 +17,15 @@ import Image from 'next/image'
 import { TagsInput } from "react-tag-input-component";
 import Separator from '@tailus-ui/Separator'
 import Chip from '@mui/joy/Chip';
-import { CircleCheck, EllipsisVertical, Pencil, Plus, Trash, X } from 'lucide-react'
+import { CircleCheck, Edit2, EllipsisVertical, Pencil, Plus, Trash, X } from 'lucide-react'
 import DropdownMenu from '@components/DropdownMenu'
 import AlertDialog from '@components/AlertDialog'
 import CircularProgress from '@mui/joy/CircularProgress'
 import Tooltip from '@tailus-ui/Tooltip'
 import Toast from '@components/Toast'
 import Select from '@components/Select'
+import Checkbox from '@components/Checkbox'
+import { CheckedState } from '@radix-ui/react-checkbox'
 
 export default function Page() {
     // Get services from business
@@ -31,19 +33,19 @@ export default function Page() {
     const [loading, setLoading] = useState<boolean>(true);
     const [availabilities, setAvailabilities] = useState<any>([])
     const [defaultAvailability, setDefaultAvailability] = useState<string>("")
+    const [serviceAddons, setServiceAddons] = useState<any>([])
     useEffect(() => {
         const getServices = async () => {
             const { business_id } = user
             const res = await fetch(`http://localhost:3000/api/${business_id}/services/availabilities`)
             const services = await res.json()
-            console.log(services);
-            setServices(services.result)
-            if (services.result.length) {
-                setAvailabilities(services.result[0].business_users.availabilities)
-                setDefaultAvailability(services.result[0].business_users.default_availability)
+            if (services.data.length) {
+                setServiceAddons(services.data[0].business_users.service_addons);
+                setServices(services.data)
+                setAvailabilities(services.data[0].business_users.availabilities)
+                setDefaultAvailability(services.data[0].business_users.default_availability)
             }
         }
-        console.log(user);
         if (user.business_id) {
             setBusinessID(user.business_id)
             getServices()
@@ -89,17 +91,231 @@ export default function Page() {
         title: "",
         description: "",
     })
+    const [openAddon, setOpenAddon] = useState<boolean>(false)
+    const [addon, setAddon] = useState({
+        name: "",
+        price: ""
+    })
+    const createAddon = async () => {
+        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services/addon`, {
+            method: 'POST',
+            body: JSON.stringify(addon)
+        })
+        const result = await res.json()
+        if (result.message === "Service Addon created!") {
+            setServiceAddons([
+                ...serviceAddons,
+                result.data
+            ])
+            setOpenAddon(false)
+            setConfirmation(true)
+            setConfirmationData({
+                title: "Success",
+                description: result.message
+            })
+            setAddon({
+                name: "",
+                price: ""
+            })
+        }
+        else { // If error
+            console.log(result);
+        }
+    }
+    const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+    const [isEditingAddon, setIsEditingAddon] = useState<boolean>(false)
+    const [currAddon, setCurrAddon] = useState<any>()
+    const [addonIndex, setAddonIndex] = useState<number>(0)
+    const editAddon = async (index: number) => {
+        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services/addon`, {
+            method: 'PUT',
+            body: JSON.stringify(currAddon)
+        })
+        const result = await res.json()
+        if (result.message === "Service Addon updated!") {
+            let temp = [...serviceAddons]
+            temp[addonIndex] = currAddon
+            setServiceAddons(temp)
+            setIsEditingAddon(false)
+            setOpenAddon(false)
+            setConfirmation(true)
+            setConfirmationData({
+                title: "Success",
+                description: result.message
+            })
+            setCurrAddon({})
+        }
+        else { // If error
+            console.log(result);
+        }
+    }
+    const deleteAddon = async () => {
+        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services/addon/${currAddon.id}`, {
+            method: 'DELETE',
+        })
+        const result = await res.json()
+        if (result.message === "Service Addon deleted!") {
+            let temp = [...serviceAddons]
+            temp.splice(addonIndex, 1)
+            setServiceAddons(temp)
+            setIsEditingAddon(false)
+            setOpenAddon(false)
+            setConfirmation(true)
+            setConfirmationData({
+                title: "Success",
+                description: result.message
+            })
+            setCurrAddon({})
+        }
+        else { // If error
+            console.log(result);
+        }
+    }
     return (
         <div className='px-6'>
-            <CreateServiceDialog availabilities={availabilities} defaultAvailability={defaultAvailability} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={user.business_id} />
-            <EditServiceDialog availabilities={availabilities} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} setDeleteOpen={setOpen} services={services} setServices={setServices} open={isEditing} setIsOpen={setIsEditing} oldService={service} user={user} index={currIndex} />
+            <Dialog.Root open={openAddon} onOpenChange={(open) => setOpenAddon(open)}>
+                <Dialog.Portal>
+                    <Dialog.Overlay className='z-40' />
+                    <Dialog.Content className="max-w-lg z-50">
+                        <Dialog.Title className='flex flex-col mb-5'>
+                            <Title>{!isEditingAddon ? "Create " : "Edit "}Addon</Title>
+                            <Caption>Service Addons are additional sub-services you offer with your main service. Ex. Hair Wash, Complex Hairstyle, etc.</Caption>
+                        </Dialog.Title>
+                        <Dialog.Description className='flex gap-5 flex-col'></Dialog.Description>
+                        <div className='flex flex-col gap-3'>
+                            <div>
+                                <Label htmlFor='addon-name'>Name</Label>
+                                <Input onChange={(e) => {
+                                    if (isEditingAddon) {
+                                        setCurrAddon({
+                                            ...currAddon,
+                                            name: e.target.value
+                                        })
+                                    } else {
+                                        setAddon({
+                                            ...addon,
+                                            name: e.target.value
+                                        })
+                                    }
+
+                                }} value={isEditingAddon ? currAddon.name : addon.name} id='addon-name' placeholder='ex. Wash' />
+                            </div>
+                            <div>
+                                <Label htmlFor='addon-price'>Price</Label>
+                                <Input value={isEditingAddon ? currAddon.price : addon.price} onChange={(e) => {
+                                    if (isEditingAddon) {
+                                        setCurrAddon({
+                                            ...currAddon,
+                                            price: e.target.value
+                                        })
+                                    } else {
+                                        setAddon({
+                                            ...addon,
+                                            price: e.target.value
+                                        })
+                                    }
+                                }} id='addon-price' placeholder='ex. 10' />
+                            </div>
+                        </div>
+
+                        <Dialog.Actions>
+                            <Dialog.Close asChild>
+                                <Button.Root variant="outlined" size="sm" intent="gray">
+                                    <Button.Label>Cancel</Button.Label>
+                                </Button.Root>
+                            </Dialog.Close>
+                            {isEditingAddon && <Button.Root intent='danger' variant='soft' onClick={async () => {
+                                if (isEditingAddon) {
+                                    await deleteAddon()
+                                } else {
+                                    await createAddon()
+                                }
+                            }} size="sm">
+                                <Button.Label>Delete Addon</Button.Label>
+                            </Button.Root>}
+                            <Button.Root disabled={isEditingAddon && (serviceAddons[addonIndex].name == currAddon.name && serviceAddons[addonIndex].price == currAddon.price)} onClick={async () => {
+                                if (isEditingAddon) {
+                                    await editAddon(addonIndex)
+                                } else {
+                                    await createAddon()
+                                }
+                            }} size="sm">
+                                <Button.Label>{isEditingAddon ? "Save Changes" : "Create Addon"}</Button.Label>
+                            </Button.Root>
+                        </Dialog.Actions>
+                    </Dialog.Content>
+                </Dialog.Portal>
+
+            </Dialog.Root>
+            <CreateServiceDialog serviceAddons={serviceAddons} availabilities={availabilities} defaultAvailability={defaultAvailability} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={user.business_id} />
+            <EditServiceDialog serviceAddons={serviceAddons} availabilities={availabilities} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} setDeleteOpen={setOpen} services={services} setServices={setServices} open={isEditing} setIsOpen={setIsEditing} oldService={service} user={user} index={currIndex} />
             <div className="flex justify-between items-center mt-3">
                 <Title>Services</Title>
-                <Button.Root>
-                    <Button.Label onClick={() => {
+                <div className='flex gap-2'>
+                    <Button.Root onClick={() => {
                         setCreateOpen(true)
-                    }}>Create Service</Button.Label>
-                </Button.Root>
+                    }}>
+                        <Button.Label >Create Service</Button.Label>
+                    </Button.Root>
+                    <DropdownMenu.Root open={dropdownOpen} onOpenChange={(open: boolean) => {
+                        setDropdownOpen(open)
+                    }}>
+                        <DropdownMenu.Trigger>
+                            <Button.Root intent='neutral' variant='outlined'>
+                                <Button.Label>Service Add-Ons</Button.Label>
+                            </Button.Root>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Portal>
+                            <DropdownMenu.Content data-shade="900"
+                                side="bottom"
+                                mixed
+                                align="end"
+                                sideOffset={6}
+                                intent="gray"
+                                variant="soft"
+                                className="z-50 w-60 dark:[--caption-text-color:theme(colors.gray.400)]">
+                                <div className='w-full p-2'>
+                                    <Button.Root intent='gray' variant='soft' className='w-full' onClick={() => {
+                                        setDropdownOpen(false)
+                                        setIsEditingAddon(false)
+                                        setOpenAddon(true)
+                                    }}>
+                                        <Button.Label>
+                                            Create Add-on
+                                        </Button.Label>
+                                    </Button.Root>
+                                </div>
+                                <DropdownMenu.Separator />
+                                <div className='flex flex-col'>
+                                    {serviceAddons.length ? serviceAddons.map((addon: any, index: number) => {
+                                        return (
+                                            <div key={index}>
+                                                <DropdownMenu.Item onClick={() => {
+                                                    setIsEditingAddon(true)
+                                                    setCurrAddon({ ...addon })
+                                                    setAddonIndex(index)
+                                                    console.log(index)
+                                                    setDropdownOpen(false)
+                                                    setOpenAddon(true)
+                                                }} className='py-5 px-5 cursor-pointer'>
+                                                    <div className='flex w-full items-center'>
+                                                        <div className='flex justify-between items-center w-full gap-1'>
+                                                            <Text>{addon.name}</Text>
+                                                            <Caption>${addon.price}</Caption>
+                                                        </div>
+
+                                                    </div>
+                                                </DropdownMenu.Item>
+                                            </div>
+                                        )
+                                    }) : <div className='w-full text-center'>
+                                        <Caption>No add-ons</Caption></div>}
+                                </div>
+                            </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                    </DropdownMenu.Root>
+
+                </div>
             </div>
             <Separator className="my-4 w-full" />
             <div className='w-full h-full flex flex-wrap'>
@@ -132,7 +348,7 @@ export default function Page() {
     )
 }
 
-const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user, setConfirmationData, setConfirmation, defaultAvailability, availabilities }: any) => {
+const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIsOpen, user, setConfirmationData, setConfirmation, defaultAvailability, availabilities }: any) => {
     const supabase = createClient<Database>();
     const [service, setService] = useState<Service>({
         name: "",
@@ -150,22 +366,24 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user, set
         availability: defaultAvailability
     });
     useEffect(() => {
+        console.log(availabilities);
+
         setService({
             ...service,
             business: user
         })
-        console.log(user);
+        console.log(services);
 
-        if (services.length) {
-            let newArr: Array<string> = [];
-            services.forEach((service: any, index: number) => {
-                if (!newArr.includes(service)) {
-                    newArr.push(service)
-                }
-            })
-            setCategories(newArr)
-        }
-    }, [user, services]);
+        // if (services.length) {
+        //     let newArr: Array<string> = [];
+        //     services.forEach((service: any, index: number) => {
+        //         if (!newArr.includes(service)) {
+        //             newArr.push(service)
+        //         }
+        //     })
+        //     setCategories(newArr)
+        // }
+    }, [user, services, availabilities]);
     const [categories, setCategories] = useState<Array<string>>([])
     const uploadImage = async () => {
         const id = crypto.randomUUID();
@@ -191,13 +409,11 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user, set
         let clone;
         if (image.imageURL) {
             let res = await uploadImage()
-            console.log("hit")
             imageURL = res?.url
             clone = { ...service }
             clone.photo_url = imageURL!;
             clone.imagePath = res?.path!;
-            clone.addons = [...addOns]
-
+            clone.addons = [...Array.from(checkedAddons)]
         }
         const res = await fetch(`http://localhost:3000/api/${user}/services`, {
             method: 'POST',
@@ -256,7 +472,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user, set
         name: string;
         price: number;
     }[]>([]);
-
+    const [checkedAddons, setCheckedAddons] = useState(new Set<string>())
     const defaultA = availabilities.filter((availability: any) => availability.id === defaultAvailability)
     let defaultAvailabilityName;
     if (defaultA.length) {
@@ -297,16 +513,18 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user, set
                                         <Select.Content mixed className="z-50">
                                             <Select.Viewport>
                                                 {
-                                                    availabilities.map((availability: any, index: number) => (
-                                                        <div key={index}>
-                                                            <Select.Item value={availability.id} className="pl-7 items-center">
-                                                                <Select.ItemIndicator />
-                                                                <Select.ItemText>
-                                                                    {availability.name}
-                                                                </Select.ItemText>
-                                                            </Select.Item>
-                                                        </div>
-                                                    ))
+                                                    availabilities.map((availability: any, index: number) => {
+                                                        return (
+                                                            <div key={index}>
+                                                                <Select.Item value={availability.id}>
+                                                                    <Select.ItemIndicator />
+                                                                    <Select.ItemText>
+                                                                        {availability.availability_data?.name}
+                                                                    </Select.ItemText>
+                                                                </Select.Item>
+                                                            </div>
+                                                        )
+                                                    })
                                                 }
                                             </Select.Viewport>
                                         </Select.Content>
@@ -376,56 +594,39 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user, set
                                 }} />
                             </div>
                             <div>
-                                <Button.Root onClick={() => {
-                                    setAddOns([
-                                        ...addOns, {
-                                            name: "",
-                                            price: 0
-                                        }
-                                    ])
-                                }} className='w-full' variant='soft'>
-                                    <Button.Label className='font-medium'>+ Create a service add-on</Button.Label>
-                                </Button.Root>
-                            </div>
-                            <div>
-                                {addOns.map((addOn, index) => {
-                                    return (
-                                        <div key={index} className='flex justify-between'>
-                                            <div>
-                                                <Caption>Name</Caption>
-                                                <Input placeholder='ex. Wash' className='w-1/2' value={addOn.name} onChange={(e) => {
-                                                    let clone = [...addOns]
-                                                    clone[index].name = e.target.value
-                                                    setAddOns(clone)
-                                                }} />
+                                <Label className='font-medium'>Service Addons</Label>
+                                <Caption className='mb-2'>Choose any addons you want available for this service</Caption>
+                                <div className='flex flex-col gap-1'>
+                                    {serviceAddons.map((addon: any, index: number) => {
+                                        return (
+                                            <div key={index} className='flex gap-2 items-center'>
+                                                <Checkbox.Root onCheckedChange={(e: CheckedState) => {
+                                                    if (e) {
+                                                        if (checkedAddons.has(addon.id)) {
+                                                            let temp = checkedAddons;
+                                                            temp.delete(addon.id)
+                                                            setCheckedAddons(temp)
+                                                            setService({
+                                                                ...service,
+                                                                addons: Array.from(temp)
+                                                            })
+                                                        }
+                                                        else {
+                                                            let temp = checkedAddons;
+                                                            temp.add(addon.id)
+                                                            setCheckedAddons(temp)
+                                                        }
+                                                    }
+                                                }} value={addon.id}>
+                                                    <Checkbox.Indicator />
+                                                </Checkbox.Root>
+                                                <Label>{addon.name}</Label>
                                             </div>
-                                            <div>
-                                                <div className='flex flex-col items-end text-left'>
-                                                    <Caption>Price</Caption>
-                                                    <div className='flex justify-end gap-2'>
-                                                        <Input placeholder='ex. 20' className='w-1/2' value={addOn.price.toString()} onChange={(e) => {
-                                                            if (!Number.isNaN(e.target.value)) {
-                                                                let clone = [...addOns]
-                                                                clone[index].price = Number(e.target.value)
-                                                                setAddOns(clone)
-                                                            }
-                                                        }} />
-                                                        <Button.Root variant='outlined' intent='gray' onClick={() => {
-                                                            let clone = [...addOns]
-                                                            clone.splice(index, 1)
-                                                            setAddOns(clone)
-                                                        }}>
-                                                            <Button.Icon>
-                                                                <X size={"xs"} />
-                                                            </Button.Icon>
-                                                        </Button.Root>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )
-                                })}
+                                        )
+                                    })}
+                                </div>
                             </div>
+
                         </Dialog.Description>
 
                         <Dialog.Actions>
@@ -463,7 +664,7 @@ const CreateServiceDialog = ({ services, setServices, open, setIsOpen, user, set
         </div>
     )
 }
-const EditServiceDialog = ({ availabilities, services, setServices, open, setIsOpen, user, oldService, index, setConfirmation, setConfirmationData }: any) => {
+const EditServiceDialog = ({ serviceAddons, availabilities, services, setServices, open, setIsOpen, user, oldService, index, setConfirmation, setConfirmationData }: any) => {
     const [tooltip, setTooltip] = useState<boolean>(false);
     const supabase = createClient<Database>();
     const [service, setService] = useState<any>(oldService);
@@ -488,16 +689,20 @@ const EditServiceDialog = ({ availabilities, services, setServices, open, setIsO
         name: string,
         price: number
     }[]>([])
+    const [checkedAddons, setCheckedAddons] = useState<any>(new Set<string>())
     useEffect(() => {
+        console.log(availabilities);
         if (oldService) {
             setService(oldService)
             setImage({
                 ...image,
                 imageURL: oldService.photo_url
             })
-            setAddOns([...oldService.addons])
+            console.log(oldService.addons);
+
+            setCheckedAddons(new Set([...oldService.addons]))
         }
-    }, [oldService]);
+    }, [oldService, availabilities]);
     const editImage = async () => {
         const id = crypto.randomUUID();
         const path = `images/${user.business_id}/services/${id}`
@@ -514,7 +719,7 @@ const EditServiceDialog = ({ availabilities, services, setServices, open, setIsO
     }
     const handleSubmit = async () => {
         setDataSending(true)
-        let clone = { ...service }
+        let clone = { ...service, addons: Array.from(checkedAddons) }
         const hasImage = Object.values(image.imageBlob!)
         if (hasImage.length) {
             let imageURL = await editImage()
@@ -523,13 +728,13 @@ const EditServiceDialog = ({ availabilities, services, setServices, open, setIsO
         }
         const res = await fetch(`http://localhost:3000/api/${user.business_id}/services`, {
             method: 'PUT',
-            body: JSON.stringify(hasImage.length ? clone : service)
+            body: JSON.stringify(hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })
         })
         const dataBack = await res.json();
 
         // Update my component state
         let newServices = [...services];
-        newServices.splice(index, 1, image.imageBlob ? clone : service)
+        newServices.splice(index, 1, image.imageBlob ? clone : { ...service, addons: Array.from(checkedAddons) })
 
         setServices(newServices)
         setDataSending(false)
@@ -567,6 +772,14 @@ const EditServiceDialog = ({ availabilities, services, setServices, open, setIsO
     let defaultAvailabilityName;
     if (defaultA.length) {
         defaultAvailabilityName = defaultA[0].name
+    }
+    const handleClose = () => {
+        setService(oldService)
+        setImage({
+            imageBlob: null,
+            imageURL: oldService.photo_url
+        })
+        setCheckedAddons(new Set([...oldService.addons]))
     }
 
     return (
@@ -606,7 +819,12 @@ const EditServiceDialog = ({ availabilities, services, setServices, open, setIsO
                 </AlertDialog.Portal>
             </AlertDialog.Root>
             <div>
-                <Dialog.Root open={open} onOpenChange={setIsOpen}>
+                <Dialog.Root open={open} onOpenChange={(open: boolean) => {
+                    setIsOpen(open)
+                    if (!open) {
+                        handleClose()
+                    }
+                }}>
                     <Dialog.Portal>
                         <Dialog.Overlay className='z-40' />
                         <Dialog.Content className="max-w-lg z-50 overflow-y-scroll">
@@ -639,16 +857,18 @@ const EditServiceDialog = ({ availabilities, services, setServices, open, setIsO
                                             <Select.Content mixed className="z-50">
                                                 <Select.Viewport>
                                                     {
-                                                        availabilities.map((availability: any, index: number) => (
-                                                            <div key={index}>
-                                                                <Select.Item value={availability.id} className="pl-7 items-center">
-                                                                    <Select.ItemIndicator />
-                                                                    <Select.ItemText>
-                                                                        {availability.name}
-                                                                    </Select.ItemText>
-                                                                </Select.Item>
-                                                            </div>
-                                                        ))
+                                                        availabilities.map((availability: any, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Select.Item value={availability.id}>
+                                                                        <Select.ItemIndicator />
+                                                                        <Select.ItemText>
+                                                                            {availability.availability_data.name}
+                                                                        </Select.ItemText>
+                                                                    </Select.Item>
+                                                                </div>
+                                                            )
+                                                        })
                                                     }
                                                 </Select.Viewport>
                                             </Select.Content>
@@ -718,67 +938,44 @@ const EditServiceDialog = ({ availabilities, services, setServices, open, setIsO
                                     }} />
                                 </div>
                                 <div>
-                                    <Button.Root onClick={() => {
-                                        setAddOns([
-                                            ...addOns, {
-                                                name: "",
-                                                price: 0
-                                            }
-                                        ])
-                                    }} className='w-full' variant='soft'>
-                                        <Button.Label className='font-medium'>+ Create a service add-on</Button.Label>
-                                    </Button.Root>
-                                </div>
-                                <div>
-                                    {addOns.map((addOn, index) => {
-                                        return (
-                                            <div key={index} className='flex justify-between'>
-                                                <div>
-                                                    <Caption>Name</Caption>
-                                                    <Input placeholder='ex. Wash' className='w-1/2' value={addOn.name} onChange={(e) => {
-                                                        let clone = [...addOns]
-                                                        clone[index].name = e.target.value
-                                                        setAddOns(clone)
-                                                    }} />
+                                    <Label className='font-medium'>Service Addons</Label>
+                                    <Caption className='mb-2'>Choose any addons you want available for this service</Caption>
+                                    <div className='flex flex-col gap-1'>
+                                        {serviceAddons.map((addon: any, index: number) => {
+                                            return (
+                                                <div key={index} className='flex gap-2 items-center'>
+                                                    <Checkbox.Root defaultChecked={checkedAddons.has(addon.id)} onCheckedChange={(e: CheckedState) => {
+                                                        if (e) {
+                                                            if (checkedAddons.has(addon.id)) {
+                                                                let temp = checkedAddons;
+                                                                temp.delete(addon.id)
+                                                                setCheckedAddons(temp)
+                                                                setService({
+                                                                    ...service,
+                                                                    addons: Array.from(temp)
+                                                                })
+                                                            }
+                                                            else {
+                                                                let temp = checkedAddons;
+                                                                temp.add(addon.id)
+                                                                setCheckedAddons(temp)
+                                                            }
+                                                        }
+                                                    }} value={addon.id}>
+                                                        <Checkbox.Indicator />
+                                                    </Checkbox.Root>
+                                                    <Label>{addon.name}</Label>
                                                 </div>
-                                                <div>
-                                                    <div className='flex flex-col items-end text-left'>
-                                                        <Caption>Price</Caption>
-                                                        <div className='flex justify-end gap-2'>
-                                                            <Input placeholder='ex. 20' className='w-1/2' value={addOn.price.toString()} onChange={(e) => {
-                                                                if (!Number.isNaN(e.target.value)) {
-                                                                    let clone = [...addOns]
-                                                                    clone[index].price = Number(e.target.value)
-                                                                    setAddOns(clone)
-                                                                }
-                                                            }} />
-                                                            <Button.Root variant='outlined' intent='gray' onClick={() => {
-                                                                let clone = [...addOns]
-                                                                clone.splice(index, 1)
-                                                                setAddOns(clone)
-                                                            }}>
-                                                                <Button.Icon>
-                                                                    <X size={"xs"} />
-                                                                </Button.Icon>
-                                                            </Button.Root>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
+                                            )
+                                        })}
+                                    </div>
                                 </div>
                             </Dialog.Description>
 
                             <Dialog.Actions>
                                 <Dialog.Close asChild>
                                     <Button.Root onClick={() => {
-                                        setService(oldService)
-                                        setImage({
-                                            imageBlob: null,
-                                            imageURL: oldService.photo_url
-                                        })
-                                        setAddOns([])
+                                        handleClose()
                                     }} variant="outlined" disabled={dataSending} size="sm" intent="gray">
                                         <Button.Label>Cancel</Button.Label>
                                     </Button.Root>

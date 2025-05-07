@@ -98,14 +98,13 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
     start: string;
     end: string;
     appointmentLength: number;
-}, businessId: string) => {
+}, businessId: string, availability_id: string) => {
     const client = await pool.connect()
     try {
         await client.query('BEGIN');
         // Check if timeslot is still available
         // 1. Get availability and appointments
-        const availabilities = (await client.query(`SELECT availabilities FROM business_users bu WHERE bu.business_id = $1`, [businessId])).rows[0].availabilities
-        const availability = availabilities.filter((availability: any, index: number) => availability.id === "04a81a4a-f598-47d4-bc40-38a1f4d37e48")[0]
+        const availability = (await client.query(`SELECT availability_data FROM availabilities av WHERE av.id = $1`, [availability_id])).rows[0].availability_data[0]        
         const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows 
         let available: boolean = false
         const availableSlots = await checkSlots(timeSlot, availability, appointments)
@@ -114,17 +113,14 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
                 available = true
             }
         })
-        
-        
         if(!available){
             throw Error("Timeslot is no longer available")
         }
-        console.log('works');
         const ogAppointment = appointments.filter((appointment: Appointment, index: number) => appointment.id === appointmentID)[0]
         
         // UPDATE appointment timeslot
         // FIXME: Update "updated_at" timestamp
-        const appointment = await client.query(`UPDATE appointments SET start = $1, "end" = $2, reschedules = $3 WHERE id = $4 RETURNING *`, [timeSlot.start, timeSlot.end, ogAppointment.reschedules + 1, appointmentID])        
+        const appointment = await client.query(`UPDATE appointments SET start = $1, "end" = $2, reschedules = $3 WHERE id = $4 RETURNING *`, [timeSlot.start, timeSlot.end, parseInt(ogAppointment.reschedules) - 1, appointmentID])        
         await client.query('COMMIT')
         return appointment.rows[0]
     }catch (error: any) {
@@ -260,9 +256,7 @@ export const getUnavailability = async (startDate: string, endDate: string, appo
         let start = DateTime.fromISO(startDate);
         let end = DateTime.fromISO(endDate);
                
-        let curr = start;
-console.log(appointments);
-        
+        let curr = start;        
             for(let i = 0; i < appointments.length; i++){
                 
                 
@@ -277,8 +271,6 @@ console.log(appointments);
     } catch (error: any) {
         console.log(error)
         throw new Error(error.message)
-    }    
-    console.log(slotResult);
-    
+    }        
     return slotResult
 }

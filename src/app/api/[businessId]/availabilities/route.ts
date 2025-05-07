@@ -32,7 +32,7 @@ export async function PUT(request: NextRequest, { params }: { params: { business
 export async function GET(request: NextRequest, { params }: { params: { businessId: string } }) {
     const supabase = createClient<Database>();
     const { businessId } = await params;
-    const { data, error } = await supabase.from('business_users').select('availabilities, default_availability').eq("business_id", businessId);
+    const { data, error } = await supabase.from('business_users').select('availabilities(id, business_id, availability_data), default_availability').eq("business_id", businessId).single();
 
     if (error) {
         return new NextResponse(JSON.stringify({ error: error }), {
@@ -40,8 +40,8 @@ export async function GET(request: NextRequest, { params }: { params: { business
             status: 500
         })
     }
-    if (data?.length) {
-        return new NextResponse(JSON.stringify({ result: {availabilities: data[0].availabilities, default: data[0].default_availability} }), {
+    if (data) {
+        return new NextResponse(JSON.stringify({ result: {availabilities: data.availabilities, defaultAvailability: data.default_availability} }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200
         })

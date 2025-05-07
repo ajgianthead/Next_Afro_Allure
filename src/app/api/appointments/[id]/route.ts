@@ -5,7 +5,7 @@ import { Database } from "../../../../../lib/database.types";
 // Get an appointments
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     const supabase = createClient<Database>();
-    const { id } = params;
+    const { id } = await params;
     let { data: appointments, error } = await supabase
         .from('appointments')
         .select(`*`)
