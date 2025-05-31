@@ -5,11 +5,11 @@
 /.pnp
 .pnp.js
 .yarn/install-state.gz
-/lib
-/utils
-/config
-/supabase
-/tests
+lib/
+utils/
+config/
+supabase/
+tests/
 
 # testing
 /coverage
