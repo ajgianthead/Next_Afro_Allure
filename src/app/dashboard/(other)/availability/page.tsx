@@ -99,7 +99,9 @@ export default function Page() {
             const result = await res.json()
             const availabilities = result;
             setAvailabilities(availabilities.result.availabilities === null ? [] : availabilities.result.availabilities)
-            setDefaultAvailable(availabilities.result.default)
+            setDefaultAvailable(availabilities.result.defaultAvailability)
+            console.log(availabilities.result.availabilities);
+
         }
         if (user.business_id) {
             (async () => {
@@ -130,20 +132,14 @@ export default function Page() {
         }
     }
     const [availabilities, setAvailabilities] = useState<any>([])
-    // Send availabilities to API
-    // 
-    // 
-    // 
     const uploadAvailability = async (isEdit: boolean, index?: number) => {
         if (!isEdit) {
-            let clone = [...availabilities]
-            clone.push(availability)
-            setAvailabilities(clone)
             const result = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities`,
                 {
-                    method: "PUT",
+                    method: "POST",
                     body: JSON.stringify({
-                        availabilities: clone
+                        businessId: user.business_id,
+                        availabilityData: availability
                     }),
                     headers: {
                         "Content-Type": "application/json"
@@ -151,6 +147,9 @@ export default function Page() {
                 }
             );
             const res = await result.json()
+            setAvailabilities([...availabilities,
+            res.result
+            ])
             setConfirmationData({
                 title: "Success",
                 description: "Availability Created"
@@ -158,14 +157,12 @@ export default function Page() {
             setConfirmation(true)
         } else {
             if (index != undefined) {
-                let clone = [...availabilities]
-                clone[index] = availability
-                setAvailabilities(clone)
                 const result = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities`,
                     {
                         method: "PUT",
                         body: JSON.stringify({
-                            availabilities: clone,
+                            availability: availability,
+                            id: availability.id,
                             defaultAvailability: isDefault ? availability.id : defaultAvailable
                         }),
                         headers: {
@@ -174,6 +171,11 @@ export default function Page() {
                     }
                 );
                 const res = await result.json()
+                console.log(res.result);
+
+                let clone = [...availabilities]
+                clone[index] = res.result
+                setAvailabilities(clone)
             }
             setisEditing(false)
             setConfirmationData({
@@ -191,26 +193,22 @@ export default function Page() {
         console.log(availabilities[index]);
         setCurrEditIndex(index)
         setisEditing(true)
-        setAvailability(availabilities[index])
+        setAvailability(availabilities[index].availability_data)
         setOpenCreate(true)
     }
     const handleDelete = async (index: number) => {
-        let clone = [...availabilities]
-        clone.splice(index, 1)
-        setAvailabilities(clone)
-        // Update Supabase
-        const result = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities`,
+        const result = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities/${availability.id}`,
             {
-                method: "PUT",
-                body: JSON.stringify({
-                    availabilities: clone
-                }),
+                method: "DELETE",
                 headers: {
                     "Content-Type": "application/json"
                 }
             }
         );
         const res = await result.json()
+        let clone = [...availabilities]
+        clone.splice(index, 1)
+        setAvailabilities(clone)
         setConfirmationData({
             title: "Success",
             description: "Availability Deleted"
@@ -474,8 +472,6 @@ export default function Page() {
             {/* Map through availabilities */}
             <div className='flex flex-wrap gap-2 w-full'>
                 {availabilities.length ? availabilities.map((element: any, index: number) => {
-                    console.log(element);
-
                     return (
                         <div className='' onClick={() => {
                             handleEdit(index)
@@ -483,7 +479,7 @@ export default function Page() {
                         }}>
                             <Card variant='outlined' className='w-full pr-20 min-w-max cursor-pointer'>
                                 <div className='mb-2'>
-                                    <Text className='font-medium'>{element.name}</Text>
+                                    <Text className='font-medium'>{element.availability_data.name}</Text>
                                     <Caption className='text-xs italic'>MON, TUE, WED, FRI</Caption>
                                 </div>
                                 <Caption className='text-xs'>Created on: <span className='underline'>10/15/2024</span></Caption>

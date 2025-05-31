@@ -29,8 +29,9 @@ import { Elements, EmbeddedCheckout, EmbeddedCheckoutProvider, PaymentElement, u
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { BookingData, BookingWrapper, useBooking } from '@utils/context/BookingDataContext';
 import { QueryResult } from 'pg';
+import { Card as MUICard, Checkbox } from '@mui/joy';
 
-export default function page() {
+export default function Page() {
     const params = useParams();
     const { businessName } = params
     return <BookingWrapper businessName={businessName}>
@@ -180,11 +181,29 @@ const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentInten
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const elements = useElements();
     const stripe = useStripe();
+    const [selectedAddons, setSelectedAddons] = useState<any[]>([])
+    const [addonSum, setAddonSum] = useState<number>(0)
+    useEffect(() => {
+        const addons = data.services.filter((service, index) => service.id === data.selectedService)[0].addonDetails
+        let selected_addons: any = []
+        let sum = 0
+        addons.forEach((addon: any, index: number) => {
+            if (data.selectedAddons.includes(addon.id)) {
+                selected_addons.push(addon)
+                sum += addon.price
+            }
+        })
+        console.log(service.price / 100, sum, data.booking_policy.deposit.settings.value);
+        setSelectedAddons(selected_addons)
+        setAddonSum(sum)
+
+    }, []);
     const handleSubmit = async (event: any) => {
         event.preventDefault();
         if (!stripe || !elements) {
             return;
         }
+
         // const res = await fetch('http://localhost:3000/api/bookingAuto', {
         //     method: 'POST',
         //     body: JSON.stringify({
@@ -201,7 +220,7 @@ const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentInten
         // const result = await res.json();
         // console.log(result.appointment);
 
-        await bookAppointment(paymentIntentID, data.business_id, data.booking_policy.id, service, data.clientInfo, { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length }).then(async (appointment: any) => {
+        await bookAppointment(data.selectedAddons, paymentIntentID, data.business_id, data.booking_policy.id, service, data.clientInfo, { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length }).then(async (appointment: any) => {
             console.log(appointment)
             const { error } = await stripe?.confirmPayment({
                 //`Elements` instance that was used to create the Payment Element
@@ -217,12 +236,82 @@ const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentInten
         })
     }
     return (
-        <form onSubmit={handleSubmit}>
-            <PaymentElement className='w-full' />
-            <Button.Root disabled={!stripe}>
-                <Button.Label>Book Appointment</Button.Label>
-            </Button.Root>
-        </form>
+        <div className='flex lg:flex-row flex-col gap-2 justify-between w-full  max-w-[1280px]'>
+            <div className='lg:w-1/2 w-full m-2'>
+                <MUICard sx={{
+                    width: '100%',
+                    height: '100%',
+                    padding: 3
+                }}>
+                    <div className='flex flex-col justify-between h-full'>
+                        <div>
+                            <div className='text-center lg:text-left'>
+                                <Title>Appointment Summary</Title>
+                                <Caption>This amount is the deposit price needed to confirm your appointment</Caption>
+                            </div>
+                            <div className='flex gap-2 w-full mt-5'>
+                                <div className='w-full flex flex-col gap-5'>
+                                    <div className='flex lg:flex-row flex-col gap-2'>
+                                        <div className='w-full lg:w-1/2 lg:text-left justify-center text-center'>
+                                            <Text className='font-medium'>Date:</Text>
+                                            <Caption>April 20th, 2025</Caption>
+                                        </div>
+                                        <div className='w-full lg:w-1/2 lg:text-left text-center' >
+                                            <Text className='font-medium'>Time:</Text>
+                                            <Caption>4:00 PM ~ 7:00 PM</Caption>
+                                        </div>
+                                    </div>
+                                    <div className="flex lg:flex-row flex-col gap-5">
+                                        <div className='w-full lg:w-1/2 lg:text-left text-center'>
+                                            <Text className='font-medium'>Service Information:</Text>
+                                            <Caption>Name: {service.name}</Caption>
+                                            <Caption>Price: ${service.price / 100}</Caption>
+                                            <Caption>Deposit Required: <strong>{data.booking_policy.deposit.enabled ? 'YES' : 'NO'}</strong></Caption>
+                                        </div>
+                                        <div className='w-full lg:w-1/2 lg:text-left text-center'>
+                                            <Text className='font-medium'>Client Information:</Text>
+                                            <div className='w-full flex flex-col gap-1'>
+                                                <Caption>Name: {data.clientInfo.firstName + " " + data.clientInfo.lastName}</Caption>
+                                                <Caption>Email: {data.clientInfo.email}</Caption>
+                                                <Caption>Phone Number: ({data.clientInfo.phoneNumber.slice(0, 3)}) {data.clientInfo.phoneNumber.slice(3, 6)}-{data.clientInfo.phoneNumber.slice(6)}</Caption>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className='w-full lg:w-1/2 lg:text-left text-center'>
+                                        <Text className='font-medium'>Add-ons:</Text>
+                                        {selectedAddons.map((addon: any, index: number) => {
+                                            return (
+                                                <Caption key={index}>{addon.name}: ${addon.price}</Caption>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div className='flex w-full lg:justify-end justify-center mt-5'>
+                            <Title>Due Now: ${data.booking_policy.deposit.settings.type === 'flat' ? data.booking_policy.deposit.settings.value : ((service.price / 100) + addonSum) * (data.booking_policy.deposit.settings.value / 100)}</Title>
+                        </div>
+                    </div>
+                </MUICard>
+            </div>
+            <div className='w-full lg:w-1/2 h-full m-2'>
+                <MUICard sx={{
+                    width: '100%',
+                    height: '100%',
+                    padding: 3
+                }}>
+                    <Caption><i>*You are required to pay a deposit to confirm this appointment</i></Caption>
+                    <form onSubmit={handleSubmit}>
+                        <PaymentElement className='w-full' />
+                        <Button.Root disabled={!stripe}>
+                            <Button.Label>Book Appointment</Button.Label>
+                        </Button.Root>
+                    </form>
+                </MUICard>
+            </div>
+        </div>
+
     )
 }
 
@@ -298,7 +387,9 @@ const DateTimePicker = () => {
 
     const getData = async (startDate: string, endDate: string) => {
         // Get availability id for server actions
-        const formattedAvailability = await getAvailability(startDate, endDate, data.availabilities)
+        let availability = data.services.filter((service) => service.id === data.selectedService)[0].availability
+        let currAvailability = data.availabilities?.filter((el: any) => el.id === availability)[0]
+        const formattedAvailability = await getAvailability(startDate, endDate, currAvailability?.availability_data)
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!)
 
         const { availableSlotsByDay } = getSlots({
@@ -475,6 +566,8 @@ const ServiceSelection = () => {
     const [loading, setLoading] = useState<boolean>(true)
     useEffect(() => {
         if (data.services.length > 0) {
+            console.log(data.services);
+
             setLoading(false)
         }
     }, [data.services]);
@@ -486,8 +579,8 @@ const ServiceSelection = () => {
                 <div className='flex flex-wrap gap-2 mr-5 h-[350px]'>
                     {data.services.map((service: any, index: number) => {
                         return (
-                            <Skeleton variant='overlay' loading={loading}>
-                                <div key={index}>
+                            <Skeleton key={index} variant='overlay' loading={loading}>
+                                <div>
                                     <ServiceCard service={service} />
                                 </div>
                             </Skeleton>
@@ -504,8 +597,13 @@ const ServiceSelection = () => {
 
 const ServiceCard = ({ service }: any) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
+    const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set<string>([...data.selectedAddons]))
     return (
-        <Dialog.Root>
+        <Dialog.Root onOpenChange={(open) => {
+            if (!open) {
+                setSelectedAddons(new Set<string>([...data.selectedAddons]))
+            }
+        }}>
             <Dialog.Trigger asChild>
                 <div onClick={() => {
                     console.log(service);
@@ -515,15 +613,22 @@ const ServiceCard = ({ service }: any) => {
                     borderColor: service.id === data.selectedService ? 'indigo' : "#ECECEC"
                 }}>
 
-                    <Image style={{
+                    {service.photo_url.length ? <Image style={{
                         // height: '100%',
                         // width: '35%'
-                    }} objectFit='cover' width={150} height={100} src={service.photo_url} alt='locs' />
+                    }} objectFit='cover' width={150} height={100} src={service.photo_url} alt='locs' /> : <></>}
 
                     <div className='p-3 '>
-                        <Caption className='text-xs'>Locs</Caption>
+                        <div className='flex gap-1'>
+                            {service && service.categories.map((category: string, index: number) => {
+                                return (
+                                    <Caption className='text-xs'>{category}</Caption>
+                                )
+                            })}
+                        </div>
+
                         <Title className='font-medium'>{service.name}</Title>
-                        <Text className='font-bold'>$60</Text>
+                        <Text className='font-bold'>${service.price / 100}</Text>
                         <Caption className='text-sm'>{service.description}</Caption>
                     </div>
                 </div>
@@ -532,7 +637,27 @@ const ServiceCard = ({ service }: any) => {
                 <Dialog.Overlay className='z-30' />
                 <Dialog.Content className="max-w-sm z-40">
                     <Dialog.Title>{service.name}</Dialog.Title>
-                    <Dialog.Description className="mt-2">{service.description}</Dialog.Description>
+                    <Caption>{service.description}</Caption>
+                    <Text>${service.price / 100}</Text>
+
+                    <Text className='mt-5 mb-2'>Select Addons:</Text>
+                    <div className='flex flex-col gap-1'>
+                        {service.addonDetails.map((addon: any, index: number) => {
+                            return (
+                                <Checkbox onChange={(e) => {
+                                    if (selectedAddons.has(addon.id)) {
+                                        let temp = new Set([...selectedAddons]);
+                                        temp.delete(addon.id)
+                                        setSelectedAddons(temp)
+                                    } else {
+                                        let temp = new Set([...selectedAddons]);
+                                        temp.add(addon.id)
+                                        setSelectedAddons(temp)
+                                    }
+                                }} checked={selectedAddons.has(addon.id)} key={index} label={`${addon.name} - $${addon.price}`} />
+                            )
+                        })}
+                    </div>
 
                     <Dialog.Actions>
                         <Dialog.Close asChild>
@@ -544,7 +669,8 @@ const ServiceCard = ({ service }: any) => {
                             <Button.Root size="sm" onClick={() => {
                                 setData({
                                     ...data,
-                                    selectedService: service.id
+                                    selectedService: service.id,
+                                    selectedAddons: [...selectedAddons]
                                 })
                             }}>
                                 <Button.Label>Select Service</Button.Label>

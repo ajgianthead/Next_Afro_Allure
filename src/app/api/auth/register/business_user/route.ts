@@ -5,7 +5,7 @@ import { Database, Json } from "../../../../../../lib/database.types";
 import { stripe } from "@lib/utils";
 import { Time } from "@internationalized/date";
 
-const defaultAvailability : any = [{
+const defaultAvailability: any = {
         id: crypto.randomUUID(),
         name: "Default",
         week: [{
@@ -58,7 +58,7 @@ const defaultAvailability : any = [{
             }]
         }],
         specificDates: {}
-    }]
+    }
 
 // Register a business user
 export async function POST(request: NextRequest) {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
                     user_id: data.data.user?.id,
                     email: data.data.user?.email!,
                     stripe_acc_id: account.id,
-                    availabilities: defaultAvailability
+                    default_availability: defaultAvailability.id
                 }
             ]).select().single().then(async (res) => {
                 const business = res.data
@@ -137,7 +137,14 @@ export async function POST(request: NextRequest) {
                         categories: ["test", "default", "service"],
 
                     }
-                ]).select(`business_users(*)`).single()
+                ]).select(`*`).single().then(async (res) => {
+                    return await supabase.from('availabilities').insert([
+                        {
+                            business_id: res.data?.business,
+                            availability_data: defaultAvailability
+                        }
+                    ]).select(`business_users(*)`).single()
+                })
             })
 
         })

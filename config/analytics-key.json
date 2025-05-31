@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "afroallure-461018",
+  "private_key_id": "23eb4861612028b17d1b51570b701519cd5bb535",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC0bTHCq4nTGSN+\nZj5ai5jVekYlG32w5dF+uMuJfKt+n0ztk50WETTP6tauIms6zwcCf5sZ942Q/axT\nPKZDs1pIILmgwuqzh1Y7yqZZH1sxzEB6aAwGaRX7djo/MaR8rIrfWqQno+NzYVuf\ntsc3Smj61qMtB8l8C/XYjeWUL8I6j+j4AAoC4sbNai8HqarjXCkAfEXlFGhq+Qs2\nvzXira/+zDSDpUCP7m8cFyTSegDUmoQICv4WLjfh2laxDnSJc9mrBT7EmqD2NOpt\nt0yG2RxXijRsq6ytC1yAscnHPkaXrPHelWWbiu9Kl5knVGEsXkbm4r30T87qwRg3\nXUaEF0dZAgMBAAECggEAQzmuQTTN8RAcR/PLhswdoWjiKuBP2DIA+SDcgXkootCz\nBpAqBvdZQKDk5VPgtTQ/DeDCxw2UOzIxW4AtCOuSF27OC0ak0Uh7SmLq0SkcPvU2\nDwWmeVr9PEjkUfhqq6NUSP1KTZTEYhCj5WHiX0kDzXZcrSIKIgSI0Oup3yleSpgD\n9FQULehUSJRt0xsvH13Kp7IYiwzwohGQ5dF8PLV70h27cqsatPCMiIoktkOdehZc\ndKqqvCcJm992+M0tUR986zyWmTPqVtxZjhU8qgcKlgkpCMtAAYCvXe4LIQjMR/Zx\n2JUVFN96vOWM5hQLHcZvmnJl7RZdIkv/PmvZRsNNmwKBgQDx6IDIECyQGCVBcKZ6\nj2g/kkRAGL9ac/pHx/E5cqIWIKkJA5EjiRRuWBdnmVzWdCYtewAoM+oDFqQw86dv\n+3HEZDWBa8EyTWLDN52maJMzCEvM1HaZiiohCigjP6KxDCAYWYvA6uAIB4qfnCOf\nbRCDF4S4ByzQZpSTNhDCB9vHWwKBgQC+79XkD2E5bfoQWp7ARU7Hybl64rR4r2TC\n3NgqUs8LxhTlPmmS5soNVberpdwJjLlmaFDrzAhV3w0q69wscqhmBrExAHxsn2jg\nDDFzLKef/BKg67am7KvJddzIF8xXXNZGfmr5ROHn3wwjYihB83SFDLaqXEiSPhvi\n8PbOAIxeWwKBgQDTXwSnyvolLfPfqj7M+GFuqq9YEkehEZWvAtWUDMXz77XDWoqH\nMk/X2sEYlLi56eMx+je46SOgbzgoTb4P6vUNVUIrQ6wb9+JEEWR+8wErpiQVZc/7\neO420Fkh84iEisPAgv3KI3B9k5lcvWGi+/lhkjs1UY+myPspZiReZd9z4QKBgQC3\n2Tea4TQ8mCiwlpFFkXbJ6PMv4BrmGfxrpTp/hjzWmWSFWBNP3+mt7Vtta8bzaw0a\nDlfctBlSlfOX4IOgSMbddpQnGtCzxsq08QisXdMJuS42xMCa+khvM43jHQclF787\nIX7fhfP/0EVfzKP23PTVJ+i7ISC/sA4p9tuuf9ipAQKBgGRg9sX1zTyrbsDfmctc\n7hjyCk56m4+4WuYuwYQGlPYhD8mOpEx1ew8aKTMAy99qmieHYIXH0xB564pd/UI6\nBdh+b0Epf0l6E8HRLcHA95mcrxedMwdhVLxS41bPi34dSEwbVj4ncdGiOfg/3cGg\nng+VEoKyz1AJCU7durZcuONS\n-----END PRIVATE KEY-----\n",
+  "client_email": "analytics-reporter@afroallure-461018.iam.gserviceaccount.com",
+  "client_id": "107980675967677539943",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/analytics-reporter%40afroallure-461018.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

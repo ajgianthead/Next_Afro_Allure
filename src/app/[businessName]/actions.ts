@@ -131,7 +131,7 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
     }
 }
 
-export const bookAppointment = async (paymentIntentID: string, businessId: string, policyId: string, serviceData: Service, client_metadata: any, timeSlot: {
+export const bookAppointment = async (addons: any, paymentIntentID: string, businessId: string, policyId: string, serviceData: Service, client_metadata: any, timeSlot: {
     start?: string;
     end?: string;
     appointmentLength: number;
@@ -169,7 +169,7 @@ export const bookAppointment = async (paymentIntentID: string, businessId: strin
         const businessPolicy = await client.query(`SELECT * FROM business_policies bp WHERE bp.id = $1`, [policy.rows[0].booking_policies])        
         
         let appointment;
-        if(businessPolicy.rows[0].deposit.enabled){
+        if(paymentIntentID.length){
             appointment = await client.query(`INSERT INTO appointments (start, "end", business, client_metadata, status, service_data, deposit_charge_id) VALUES ($1, $2, $3, $4, 'PROCESSING', $5, $6) RETURNING *`, [timeSlot.start, timeSlot.end, businessId, client_metadata, serviceData, paymentIntentID])                               
             //TODO: Create charge with Stripe -> LATER!!
             

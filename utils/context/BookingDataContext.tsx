@@ -9,12 +9,13 @@ const BookingDataContext = createContext<any>(false);
 const supabase = createClient<Database>()
 export type BookingData = {
     business_id: string;
-    availabilities: Json | null;
+    availabilities: any[] | null;
     booking_policy: any
     appointments?: Json[];
-    services: Service[];
+    services: any[];
     stripe_id: string;
-    selectedService: string,
+    selectedService: string;
+    selectedAddons: string[];
     selectedDateTime: {
         start?: string,
         end?: string
@@ -34,13 +35,14 @@ export type BookingData = {
 export function BookingWrapper({ children, businessName }: any) {
     let [data, setData] = useState<BookingData>({
         business_id: "",
-        availabilities: {},
+        availabilities: [],
         services: [],
         booking_policy: null,
         stripe_id: "",
         options: {
             clientSecret: ""
         },
+        selectedAddons: [],
         clientInfo: {
             firstName: "",
             lastName: "",
@@ -56,15 +58,15 @@ export function BookingWrapper({ children, businessName }: any) {
                 method: "GET"
             })
             const businessData = await res.json();
-            let availability = []
-            if (businessData.result != "Business doesn't exist") {
-                availability = businessData.result.availabilities.filter((element: any) => element.id === "04a81a4a-f598-47d4-bc40-38a1f4d37e48")
-            }
+            console.log(businessData);
             return {
                 business_id: businessData.result.business_id,
-                availabilities: availability[0],
+                availabilities: businessData.result.availabilities,
                 booking_policies: businessData.result.booking_policies,
-                stripe_id: businessData.result.stripe_acc_id
+                stripe_id: businessData.result.stripe_acc_id,
+                services: businessData.result.services,
+                appointments: businessData.result.appointments
+
             }
         }
         // Get policy
@@ -81,33 +83,18 @@ export function BookingWrapper({ children, businessName }: any) {
                 return result.policy
             }
         }
-        // Get services
-        const getServices = async (businessID: string) => {
-            const res = await fetch(`http://localhost:3000/api/${businessID}/services`, {
-                method: "GET",
-            })
-            const services = await res.json();
-            return services.result
-        }
 
         fetchBusiness().then(async (res: any) => {
             if (res !== "Business doesn't exist") {
                 await getPolicy(res).then(async (policy: any) => {
-                    await getServices(res.business_id).then(async (services: any) => {
-                        // Get appointments
-                        const result = await fetch(`http://localhost:3000/api/${res.business_id}/appointments`, {
-                            method: "GET"
-                        })
-                        const appointments = await result.json();
-                        setData({
-                            ...data,
-                            business_id: res.business_id,
-                            services: services,
-                            availabilities: res.availabilities,
-                            stripe_id: res.stripe_id,
-                            appointments: appointments.appointments,
-                            booking_policy: policy
-                        })
+                    setData({
+                        ...data,
+                        business_id: res.business_id,
+                        services: res.services,
+                        availabilities: res.availabilities,
+                        stripe_id: res.stripe_id,
+                        appointments: res.appointments,
+                        booking_policy: policy
                     })
                 })
 
