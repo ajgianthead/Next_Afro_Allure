@@ -17,19 +17,19 @@ const sendBusinessEmail = async (businessData: {
   start: string;
   end: string;
 }) => {
-  try {
-    const { data, error } = await resend.emails.send({
-      from: 'appointment-reminder <noreply@reminder.afroallure.co>',
-      to: businessData.email,
-      subject: 'Appointment Reminder',
-      react: EmailTemplate({ firstName: 'Abijah' }),
-    });
-    if (error) {
-      return error;
-    }
-  } catch (error) {
-    return error
-  }
+  // try {
+  //   const { data, error } = await resend.emails.send({
+  //     from: 'appointment-reminder <noreply@reminder.afroallure.co>',
+  //     to: businessData.email,
+  //     subject: 'Appointment Reminder',
+  //     react: EmailTemplate({ firstName: 'Abijah' }),
+  //   });
+  //   if (error) {
+  //     return error;
+  //   }
+  // } catch (error) {
+  //   return error
+  // }
 }
 const sendClientEmail = async (appointmentData: {
   id: string;
@@ -42,19 +42,19 @@ const sendClientEmail = async (appointmentData: {
     email: string;
     phoneNumber: string;
   }) => {
-  try {
-    const { data, error } = await resend.emails.send({
-      from: 'appointment-reminder <noreply@reminder.afroallure.co>',
-      to: clientData.email,
-      subject: 'Appointment Reminder',
-      react: EmailTemplate({ firstName: 'Abijah' }),
-    });
-    if (error) {
-      return error;
-    }
-  } catch (error) {
-    return error
-  }
+  // try {
+  //   const { data, error } = await resend.emails.send({
+  //     from: 'appointment-reminder <noreply@reminder.afroallure.co>',
+  //     to: clientData.email,
+  //     subject: 'Appointment Reminder',
+  //     react: EmailTemplate({ firstName: 'Abijah' }),
+  //   });
+  //   if (error) {
+  //     return error;
+  //   }
+  // } catch (error) {
+  //   return error
+  // }
 }
 
 export type ReminderProps = {
