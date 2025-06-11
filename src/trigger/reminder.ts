@@ -1,6 +1,5 @@
 "use server"
 
-import { EmailTemplate } from "@components/email_templates/test";
 import { task } from "@trigger.dev/sdk/v3";
 import { createClient } from "@utils/supabase/server";
 import { Resend } from "resend";
