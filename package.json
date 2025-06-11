@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "email": "email dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -44,6 +45,7 @@
     "@radix-ui/react-toast": "^1.2.4",
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.6",
+    "@react-email/components": "0.0.42",
     "@stripe/connect-js": "^3.3.27-preview-1",
     "@stripe/react-connect-js": "^3.3.27-preview-1",
     "@stripe/react-stripe-js": "^2.8.1",
@@ -51,6 +53,7 @@
     "@supabase/ssr": "^0.5.1",
     "@supabase/supabase-js": "^2.45.2",
     "@tailus/themer": "^0.1.8",
+    "@trigger.dev/sdk": "^3.3.17",
     "@types/mailchimp__mailchimp_transactional": "^1.0.10",
     "bull": "^4.16.5",
     "bullmq": "^5.52.2",
@@ -59,14 +62,12 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
     "dropzone": "^6.0.0-beta.2",
-    "font-picker-react": "^3.5.2",
     "framer-motion": "^11.11.8",
     "ioredis": "^5.4.2",
     "lucide-react": "^0.428.0",
     "lzutf8": "^0.6.3",
     "mailgun.js": "^12.0.1",
     "next": "^15.3.2",
-    "nextjs-cors": "^2.2.0",
     "pg": "^8.13.1",
     "re-resizable": "^6.9.11",
     "react": "^18",
@@ -88,6 +89,7 @@
     "react-tag-input-component": "^2.0.2",
     "react-zoom-pan-pinch": "^3.7.0",
     "recharts": "^2.15.3",
+    "resend": "^4.5.2",
     "sass": "^1.77.8",
     "slot-calculator": "^2.2.1",
     "stripe": "^17.6.0-beta.3",
@@ -100,6 +102,7 @@
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
     "@playwright/test": "^1.51.1",
+    "@trigger.dev/build": "^3.3.17",
     "@types/luxon": "^3.4.2",
     "@types/node": "^20.17.16",
     "@types/pg": "^8.11.10",
@@ -112,6 +115,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "postcss": "^8",
+    "react-email": "4.0.16",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }

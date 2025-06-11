@@ -46,7 +46,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/app/dashboard/booking-site",
-    "src/app/dashboard/(booking-site)/preview"
+    "src/app/dashboard/(booking-site)/preview",
+    "trigger.config.ts"
   ],
   "exclude": [
     "node_modules"

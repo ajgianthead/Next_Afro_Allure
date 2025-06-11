@@ -34,6 +34,14 @@ import { Card as MUICard, Checkbox } from '@mui/joy';
 export default function Page() {
     const params = useParams();
     const { businessName } = params
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'business_page_view', {
+                business_slug: businessName, // or dynamically pulled from the route
+                page_type: 'book',
+            });
+        }
+    }, []);
     return <BookingWrapper businessName={businessName}>
         <Book />
     </BookingWrapper>

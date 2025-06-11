@@ -59,8 +59,6 @@ const Page = () => {
                 setServices(result.services)
                 if (result.appointments) {
                     let temp = []
-                    console.log(result.appointments[0].selected_addons);
-
                     for (let i = 0; i < result.appointments.length; i++) {
                         temp.push({
                             id: result.appointments[i].id,

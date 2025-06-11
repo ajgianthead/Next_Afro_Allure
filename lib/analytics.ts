@@ -11,7 +11,7 @@ type Params = {
 }
 
 const analyticsDataClient = new BetaAnalyticsDataClient({
-  keyFilename: './config/analytics-key.json', // ← this is the keyFilename
+    keyFilename: './config/analytics-key.json', // ← this is the keyFilename
 })
 
 const MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
@@ -23,12 +23,63 @@ const propertyId = process.env.NEXT_PUBLIC_ANALYTICS_PROPERTY_ID;
 export type ReportFilters = {
     businessId?: string;
     eventName?: string; // Ex. appointment_booked
-    startDate?: string; // Ex. 2025-05-03 - So the start of a month and the end of another
-    endDate?: string; // Or NdaysAgo,
+    dataRanges: {
+        startDate: string;
+        endDate: string;
+    }[]
     businessName?: string;
 }
 
-export async function runTrafficSourceReport(filters: ReportFilters){
+
+type GA4ReportRow = {
+    [key: string]: string | number;
+};
+
+export async function formatGA4Report(response: any) {
+    const dimensionHeaders = response.dimensionHeaders?.map((d: any) => d.name) || [];
+    const metricHeaders = response.metricHeaders?.map((m: any) => m.name) || [];
+
+    return (response.rows || []).map((row: any) => {
+        const formatted: GA4ReportRow = {};
+
+        row.dimensionValues.forEach((dim: any, i: any) => {
+            formatted[dimensionHeaders[i]] = dim.value;
+        });
+
+        row.metricValues.forEach((metric: any, i: any) => {
+            formatted[metricHeaders[i]] = parseFloat(metric.value);
+        });
+
+        return formatted;
+    });
+}
+
+export async function runCancelledReasonReport(filters: ReportFilters) {
+    const [response] = await analyticsDataClient.runReport({
+        property: `properties/${propertyId}`,
+        dimensions: [
+            { name: 'customEvent:reason' }
+        ],
+        metrics: [
+            { name: 'eventCount' }
+        ],
+        dimensionFilter: {
+            filter: {
+                fieldName: 'eventName',
+                stringFilter: {
+                    value: 'appointment_cancelled',
+                    matchType: 'EXACT',
+                },
+            },
+        },
+        dateRanges: [
+            ...filters.dataRanges
+        ],
+    });
+    return response;
+}
+
+export async function runTrafficSourceReport(filters: ReportFilters) {
     const [response] = await analyticsDataClient.runReport({
         property: `properties/${propertyId}`,
         dimensions: [
@@ -41,159 +92,150 @@ export async function runTrafficSourceReport(filters: ReportFilters){
         ],
         dimensionFilter: {
             filter: {
-            fieldName: 'pagePath',
-            stringFilter: {
-                value: `/${filters.businessName}`,
-                matchType: 'EXACT',
-            },
+                fieldName: 'pagePath',
+                stringFilter: {
+                    value: `/${filters.businessName}`,
+                    matchType: 'CONTAINS',
+                },
             },
         },
-        dateRanges: [{ startDate: filters.startDate, endDate: filters.endDate }],
+        dateRanges: [
+            ...filters.dataRanges
+        ],
     });
-    
+
     return response
 }
 
 // Page Views
-export async function runPageViewReport(filters: ReportFilters){
+export async function runPageViewReport(filters: ReportFilters) {
     const [response] = await analyticsDataClient.runReport({
-  property: `properties/${propertyId}`,
-  dimensions: [
-    { name: 'hostName' },
-    { name: 'pagePath' },
-  ],
-  metrics: [
-    { name: 'activeUsers' },
-  ],
-  dimensionFilter: {
-    andGroup: {
-      expressions: [
-        {
-          filter: {
-            fieldName: 'hostName',
-            stringFilter: {
-              value: 'afroallure.co',
-              matchType: 'EXACT',
+        property: `properties/${propertyId}`,
+        dimensions: [
+            { name: 'pagePath' },
+        ],
+        metrics: [
+            { name: 'activeUsers' },
+        ],
+        dimensionFilter: {
+            filter: {
+                fieldName: 'pagePath',
+                stringFilter: {
+                    value: `/${filters.businessName}/book`,
+                    matchType: 'CONTAINS',
+                },
             },
-          },
         },
-        {
-          filter: {
-            fieldName: 'pagePath',
-            stringFilter: {
-              value: `/${filters.businessName}`,
-              matchType: 'EXACT',
-            },
-          },
-        },
-      ],
-    },
-  },
-  dateRanges: [{ startDate: filters.startDate, endDate: filters.endDate }],
-});
-return response
+        dateRanges: [
+            ...filters.dataRanges
+        ],
+    });
+    return formatGA4Report(response)
 }
 
 // Could be used for appointment_booked, appointment_completed, appointment_cancelled, etc.
 export async function runTotalReport(filters: ReportFilters) {
-  const [response] = await analyticsDataClient.runReport({
-    property: `properties/${propertyId}`,
-    dimensions: filters.eventName === 'appointment_cancelled' ? [
-      { name: 'customEvent:businessId' },
-      { name: 'eventName' },
-      { name: 'customEvent:reason'}
-    ] : [
-      { name: 'customEvent:businessId' },
-      { name: 'eventName' },
-        ] ,
-    metrics: [{ name: 'eventCount' }],
-    dateRanges: [{ startDate: filters.startDate, endDate: filters.endDate }],
-    dimensionFilter: {
-      andGroup: {
-        expressions: [
-          {
-            filter: {
-              fieldName: 'eventName',
-              stringFilter: {
-                value: filters.eventName,
-                matchType: 'EXACT',
-              },
-            },
-          },
-          {
-            filter: {
-              fieldName: 'customEvent:businessId',
-              stringFilter: {
-                value: filters.businessId,
-                matchType: 'EXACT',
-              },
-            },
-          },
-        ],
-      },
-    },
-  })
+    console.log(filters);
 
-  return Number(response.rows?.[0]?.metricValues?.[0]?.value ?? 0);
+    const [response] = await analyticsDataClient.runReport({
+        property: `properties/${propertyId}`,
+        dimensions: [
+            { name: 'customEvent:business_id' },
+            { name: 'eventName' },
+        ],
+        metrics: [{ name: 'eventCount' }],
+        dateRanges: [
+            ...filters.dataRanges
+        ],
+        dimensionFilter: {
+            andGroup: {
+                expressions: [
+                    {
+                        filter: {
+                            fieldName: 'eventName',
+                            stringFilter: {
+                                value: filters.eventName,
+                                matchType: 'EXACT',
+                            },
+                        },
+                    },
+                    {
+                        filter: {
+                            fieldName: 'customEvent:business_id',
+                            stringFilter: {
+                                value: filters.businessId,
+                                matchType: 'EXACT',
+                            },
+                        },
+                    },
+                ],
+            },
+        },
+    })
+    console.log(response);
+
+    return formatGA4Report(response);
 
 }
 
 // Give # of appointment_booked byt each service
 export async function runServiceReport(filters: ReportFilters) {
-  const [response] = await analyticsDataClient.runReport({
-    property: `properties/${propertyId}`,
-    dimensions: [
-      { name: 'customEvent:serviceId' },
-    ],
-    metrics: [{ name: 'eventCount' }],
-    dateRanges: [{ startDate: filters.startDate, endDate: filters.endDate }],
-    dimensionFilter: {
-      andGroup: {
-        expressions: [
-          {
-            filter: {
-              fieldName: 'eventName',
-              stringFilter: {
-                value: 'appointment_booked',
-                matchType: 'EXACT',
-              },
-            },
-          },
-          {
-            filter: {
-              fieldName: 'customEvent:businessId',
-              stringFilter: {
-                value: filters.businessId,
-                matchType: 'EXACT',
-              },
-            },
-          },
+    const [response] = await analyticsDataClient.runReport({
+        property: `properties/${propertyId}`,
+        dimensions: [
+            { name: 'customEvent:service_name' },
         ],
-      },
-    },
-  })
+        metrics: [{ name: 'eventCount' }],
+        dateRanges: [
+            ...filters.dataRanges
+        ],
+        dimensionFilter: {
+            andGroup: {
+                expressions: [
+                    {
+                        filter: {
+                            fieldName: 'eventName',
+                            stringFilter: {
+                                value: 'appointment_booked',
+                                matchType: 'EXACT',
+                            },
+                        },
+                    },
+                    {
+                        filter: {
+                            fieldName: 'customEvent:business_id',
+                            stringFilter: {
+                                value: filters.businessId,
+                                matchType: 'EXACT',
+                            },
+                        },
+                    },
+                ],
+            },
+        },
+    })
 
-  return response.rows?.map(row => ({
-    serviceId: row.dimensionValues?.[0]?.value,
-    bookings: Number(row.metricValues?.[0]?.value),
-  })) ?? [];
+    return response.rows?.map(row => ({
+        serviceId: row.dimensionValues?.[0]?.value,
+        bookings: Number(row.metricValues?.[0]?.value),
+    })) ?? [];
 }
 
 
 // EVENT TRACKING
 
 
-export const trackAppointmentBooked = async (data: Params) => {    
+export const trackAppointmentBooked = async (data: Params) => {
     const payload = {
         client_id: data.userId, // or a random UUID if you don't have this
         events: [
             {
                 name: 'appointment_booked',
                 params: {
-                business_id: data.businessId,
-                service_id: data.serviceId,
-                type: data.appointmentType,
-                debug_mode: true,
+                    business_id: data.businessId,
+                    service_id: data.serviceId,
+                    type: data.appointmentType,
+                    debug_mode: true,
                 },
             },
         ],
@@ -208,17 +250,17 @@ export const trackAppointmentBooked = async (data: Params) => {
     return res
 }
 
-export const trackAppointmentRescheduled = async (data: Params) => {    
+export const trackAppointmentRescheduled = async (data: Params) => {
     const payload = {
         client_id: data.userId, // or a random UUID if you don't have this
         events: [
             {
                 name: 'appointment_rescheduled',
                 params: {
-                business_id: data.businessId,
-                service_id: data.serviceId,
-                type: data.appointmentType,
-                debug_mode: true
+                    business_id: data.businessId,
+                    service_id: data.serviceId,
+                    type: data.appointmentType,
+                    debug_mode: true
                 },
             },
         ],
@@ -233,18 +275,18 @@ export const trackAppointmentRescheduled = async (data: Params) => {
     return res
 }
 
-export const trackAppointmentCancelled = async (data: Params) => {    
+export const trackAppointmentCancelled = async (data: Params) => {
     const payload = {
         client_id: data.userId, // or a random UUID if you don't have this
         events: [
             {
                 name: 'appointment_cancelled',
                 params: {
-                business_id: data.businessId,
-                service_id: data.serviceId,
-                type: data.appointmentType,
-                debug_mode: true,
-                reason: data.reason
+                    business_id: data.businessId,
+                    service_id: data.serviceId,
+                    type: data.appointmentType,
+                    debug_mode: true,
+                    reason: data.reason
                 },
             },
         ],
@@ -259,18 +301,18 @@ export const trackAppointmentCancelled = async (data: Params) => {
     return res
 }
 
-export const trackAppointmentAbadonment = async (data: Params) => {    
+export const trackAppointmentAbadonment = async (data: Params) => {
     const payload = {
         client_id: data.userId, // or a random UUID if you don't have this
         events: [
             {
                 name: 'appointment_abandoned',
                 params: {
-                business_id: data.businessId,
-                service_id: data.serviceId,
-                type: data.appointmentType,
-                debug_mode: true,
-                reason: data.reason
+                    business_id: data.businessId,
+                    service_id: data.serviceId,
+                    type: data.appointmentType,
+                    debug_mode: true,
+                    reason: data.reason
                 },
             },
         ],

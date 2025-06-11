@@ -12,6 +12,7 @@ export type Database = {
       appointments: {
         Row: {
           business: string
+          cancellation_reason: string | null
           client: string | null
           client_metadata: Json | null
           created_at: string
@@ -23,6 +24,7 @@ export type Database = {
           policy_id: string | null
           require_deposit: boolean
           reschedules: number
+          selected_addons: Json[]
           service_data: Json | null
           start: string
           status: Database["public"]["Enums"]["status"]
@@ -30,6 +32,7 @@ export type Database = {
         }
         Insert: {
           business?: string
+          cancellation_reason?: string | null
           client?: string | null
           client_metadata?: Json | null
           created_at?: string
@@ -41,6 +44,7 @@ export type Database = {
           policy_id?: string | null
           require_deposit?: boolean
           reschedules?: number
+          selected_addons?: Json[]
           service_data?: Json | null
           start: string
           status?: Database["public"]["Enums"]["status"]
@@ -48,6 +52,7 @@ export type Database = {
         }
         Update: {
           business?: string
+          cancellation_reason?: string | null
           client?: string | null
           client_metadata?: Json | null
           created_at?: string
@@ -59,6 +64,7 @@ export type Database = {
           policy_id?: string | null
           require_deposit?: boolean
           reschedules?: number
+          selected_addons?: Json[]
           service_data?: Json | null
           start?: string
           status?: Database["public"]["Enums"]["status"]
@@ -200,7 +206,6 @@ export type Database = {
       }
       business_users: {
         Row: {
-          availabilities: Json[] | null
           booking_policies: string
           business_id: string
           business_name: string
@@ -217,7 +222,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          availabilities?: Json[] | null
           booking_policies?: string
           business_id?: string
           business_name: string
@@ -234,7 +238,6 @@ export type Database = {
           user_id?: string
         }
         Update: {
-          availabilities?: Json[] | null
           booking_policies?: string
           business_id?: string
           business_name?: string
@@ -284,6 +287,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string
+          business_id: string
+          created_at: string
+          id: string
+          read: boolean
+          title: string
+          type: string
+        }
+        Insert: {
+          body: string
+          business_id: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
       }
       service_addons: {
         Row: {
