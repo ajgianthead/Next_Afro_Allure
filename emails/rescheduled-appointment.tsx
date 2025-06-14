@@ -1,29 +1,8 @@
 import { Button, Container, Font, Head, Heading, Hr, Html, Img, Link, Preview, Tailwind, Text } from "@react-email/components";
 import * as React from "react";
 import { DateTime } from "luxon";
+import { EmailTemplate } from "./new-appointment";
 
-export interface EmailTemplate {
-    socials: {
-        facebook: string;
-        instagram: string;
-        twitter: string;
-    }
-    serviceName: string;
-    clientData: {
-        firstName: string;
-        lastName: string;
-    }
-    businessData: {
-        id: string;
-        name: string;
-        businessAddress: string;
-    }
-    appointmentData: {
-        id: string;
-        start: string;
-        end: string;
-    }
-}
 
 export default function RescheduledAppointment({ socials, serviceName, clientData, businessData, appointmentData }: EmailTemplate) {
     return (

@@ -110,11 +110,11 @@ export default function LayoutComp({
                                         </Link.Icon>
                                         <Link.Label>Services</Link.Label>
                                     </Link.Root>
-                                    <Link.Root link="/dashboard/booking-policies" isActive={pathname === "/dashboard/booking-policies"}>
+                                    <Link.Root link="/dashboard/booking-policies" isActive={pathname === "/dashboard/booking-settings"}>
                                         <Link.Icon>
                                             <Scale />
                                         </Link.Icon>
-                                        <Link.Label>Policies</Link.Label>
+                                        <Link.Label>Booking Settings</Link.Label>
                                     </Link.Root>
                                     <Link.Root link="/dashboard/booking-site" isActive={pathname === "/dashboard/booking-site"}>
                                         <Link.Icon>

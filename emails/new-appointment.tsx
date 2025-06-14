@@ -16,7 +16,7 @@ export interface EmailTemplate {
     businessData: {
         id: string;
         name: string;
-        businessAddress: string;
+        businessAddress?: string;
     }
     appointmentData: {
         id: string;
