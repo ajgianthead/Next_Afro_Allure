@@ -1,14 +1,16 @@
-"use server"
-
-import { task } from "@trigger.dev/sdk/v3";
+import { configure, task } from "@trigger.dev/sdk/v3";
 import { createClient } from "@utils/supabase/server";
 import { Resend } from "resend";
 import { Database } from "../../lib/database.types";
 import ReminderBusiness from "../../emails/reminder-business";
 import ReminderClient from "../../emails/reminder-client";
 
+configure({
+  // this is the default and if the `TRIGGER_SECRET_KEY` environment variable is set, can omit calling configure
+  secretKey: process.env.NEXT_PUBLIC_TRIGGER_API_KEY,
+});
+
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
-const supabase = createClient<Database>();
 
 export type AppointmentReminderData = {
   serviceName: string;
@@ -119,14 +121,17 @@ export type ReminderProps = {
 }
 
 const configureReminder = async (props: ReminderProps) => {
+  // const supabase = createClient<Database>();
+
   if (props.sendToType === 'business') {
     // Send to notification system
-    await supabase.from('notifications').insert({
-      business_id: props.businessData.id,
-      title: 'Appointment Reminder',
-      body: `You have an appointment with ${props.clientData.firstName} in ${props.delay}`,
-      type: 'reminder'
-    })
+
+    // await supabase.from('notifications').insert({
+    //   business_id: props.businessData.id,
+    //   title: 'Appointment Reminder',
+    //   body: `You have an appointment with ${props.clientData.firstName} in ${props.delay}`,
+    //   type: 'reminder'
+    // })
     if (props.sendBy === 'email') {
       // Send via email
       await sendBusinessEmail({
@@ -181,19 +186,13 @@ const configureReminder = async (props: ReminderProps) => {
   }
 }
 
-// Send appointmentReminder
-// Going to have to call this function twice (One for the Business and one for the client)
-export const sendAppointmentReminder = async (props: ReminderProps) => {
-  const reminderTask = task({
-    id: `remind-${props.appointmentData.id}`,
-    // Set an optional maxDuration to prevent tasks from running indefinitely
-    maxDuration: 300, // Stop executing after 300 secs (5 mins) of compute
-    run: async () => {
-      await configureReminder(props)
-    },
-  });
-
-  return reminderTask
-}
+export const reminderTask = task({
+  id: `remind-appointment`,
+  // Set an optional maxDuration to prevent tasks from running indefinitely
+  maxDuration: 300, // Stop executing after 300 secs (5 mins) of compute
+  run: async (payload: ReminderProps) => {
+    await configureReminder(payload)
+  },
+});
 
 // Send EOA paymentLink

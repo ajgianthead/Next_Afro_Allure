@@ -62,7 +62,8 @@ export default function Page() {
                 body: JSON.stringify({
                     connectedAccountId: stripeID,
                     price: appointment.deposit_price,
-                    app_fee: 200 // Change Stripe Account ID to be dynamic to business
+                    app_fee: 200,// Change Stripe Account ID to be dynamic to business
+                    appointmentID: appointment_id
                 }),
             });
             if (!response.ok) {
@@ -138,6 +139,8 @@ export default function Page() {
                 end: appointmentData.end,
                 // Deposit stuff too TODO:
                 status: "CONFIRMED"
+                // deposit_charge_id
+                // deposit_paid
             })
         });
         if (!response.ok) {
@@ -145,20 +148,6 @@ export default function Page() {
             const { error } = await response.json();
             throw new Error("An error occurred: ", error);
         } else {
-            // Send job
-            // const reminderData: AppointmentReminderData = {
-            //     appointmentData: {
-            //         start: appointmentData.start,
-            //         end: appointmentData.end
-            //     },
-            //     appointmentId: appointmentData.id,
-            //     businessId: appointmentData.business,
-            //     client_metadata: appointmentData.client_metadata,
-            //     service_data: appointmentData.service_data
-            // }
-            // appointmentReminders.add(appointmentData.id, reminderData, {
-            //     delay: 5000 //TODO: Change to calculated milliseconds
-            // })
             setCompleted(true)
         }
     }

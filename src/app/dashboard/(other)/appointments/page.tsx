@@ -170,7 +170,7 @@ const Page = () => {
             let depositPrice;
             if (depositRequired) {
                 if (policy.deposit.settings.type === 'percent') {
-                    depositPrice = service.price * policy.deposit.settings.value
+                    depositPrice = (service.price * (policy.deposit.settings.value / 100)) * 100
                 }
                 else if (policy.deposit.settings.type === 'flat') {
                     depositPrice = policy.deposit.settings.value
@@ -228,7 +228,7 @@ const Page = () => {
 
             setConfirmation({
                 title: "Appointment Created!",
-                description: "Waiting for client approval"
+                description: "Confirmation sent to client email. Waiting for client approval"
             })
             setConfirmationOpen(true)
             setClientInformation({
@@ -340,9 +340,9 @@ const Page = () => {
                             {slotInfo && isEditingDateTime && <div className='flex mt-2 flex-col gap-1'>
                                 <DateInput
                                     maxValue={parseAbsoluteToLocal(slotInfo?.end.plus({ minute: 1 }).toISO()!)}
-                                    onChange={(value: ZonedDateTime) => {
+                                    onChange={(value: ZonedDateTime | null) => {
                                         setSlotInfo({
-                                            start: DateTime.fromISO(value.toAbsoluteString()),
+                                            start: DateTime.fromISO(value!.toAbsoluteString()),
                                             end: slotInfo.end
                                         })
                                     }}
@@ -352,9 +352,9 @@ const Page = () => {
                                 />
                                 <DateInput
                                     minValue={parseAbsoluteToLocal(slotInfo?.start.plus({ minute: 1 }).toISO()!)}
-                                    onChange={(value: ZonedDateTime) => {
+                                    onChange={(value: ZonedDateTime | null) => {
                                         setSlotInfo({
-                                            end: DateTime.fromISO(value.toAbsoluteString()),
+                                            end: DateTime.fromISO(value!.toAbsoluteString()),
                                             start: slotInfo.start
                                         })
                                     }}
@@ -664,9 +664,9 @@ const EditAppointment = ({ setIsSending, setConfirmation, setConfirmationOpen, s
                                 <div className='flex mt-2 flex-col gap-1'>
                                     <DateInput
                                         maxValue={parseAbsoluteToLocal(slotInfo?.end.plus({ minute: 1 }).toISO()!)}
-                                        onChange={(value: ZonedDateTime) => {
+                                        onChange={(value: ZonedDateTime | null) => {
                                             setSlotInfo({
-                                                start: DateTime.fromISO(value.toAbsoluteString()),
+                                                start: DateTime.fromISO(value!.toAbsoluteString()),
                                                 end: slotInfo.end
                                             })
                                         }}
@@ -676,9 +676,9 @@ const EditAppointment = ({ setIsSending, setConfirmation, setConfirmationOpen, s
                                     />
                                     <DateInput
                                         minValue={parseAbsoluteToLocal(slotInfo?.start.plus({ minute: 1 }).toISO()!)}
-                                        onChange={(value: ZonedDateTime) => {
+                                        onChange={(value: ZonedDateTime | null) => {
                                             setSlotInfo({
-                                                end: DateTime.fromISO(value.toAbsoluteString()),
+                                                end: DateTime.fromISO(value!.toAbsoluteString()),
                                                 start: slotInfo.start
                                             })
                                         }}
