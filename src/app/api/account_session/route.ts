@@ -6,38 +6,40 @@ export async function POST(request: NextRequest) {
     const { account } = await request.json();
     try {
         const accountSession = await stripe.accountSessions.create(
-            
+
             {
-            account: account,
-            
-            components: {
-                payments: {
-                    enabled: true,
-                    features: {
-                        refund_management: true,
-                        dispute_management: true,
-                        capture_payments: true,
-                        destination_on_behalf_of_charge_management: false,
+                account: account,
+
+                components: {
+                    payments: {
+                        enabled: true,
+                        features: {
+                            refund_management: true,
+                            dispute_management: true,
+                            capture_payments: true,
+                            destination_on_behalf_of_charge_management: false,
+                        },
                     },
-                },
-                balances: {
-                    enabled: true,
-                    features: {
-                        instant_payouts: true,
-                        standard_payouts: true,
-                        edit_payout_schedule: true,
+                    balances: {
+                        enabled: true,
+                        features: {
+                            instant_payouts: true,
+                            standard_payouts: true,
+                            edit_payout_schedule: true,
+                        }
+                    },
+                    payouts_list: {
+                        enabled: true
+                    },
+                    reporting_chart: {
+                        enabled: true,
                     }
-                },
-                payouts_list: {
-                    enabled: true
-                },
-                // reporting_chart: {
-                //     enabled: true,
-                // }
-            },
-            
-        } 
-        )        
+                } as any,
+
+            }, {
+            apiVersion: '2023-10-16; embedded_connect_beta=v2;'
+        }
+        )
         return new NextResponse(JSON.stringify({ clientSecret: accountSession.client_secret }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200

@@ -6,15 +6,15 @@ import { Database } from "../../../../../lib/database.types";
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     const supabase = createClient<Database>();
     const { id } = await params;
-    let { data: appointments, error } = await supabase
+    let { data: appointment, error } = await supabase
         .from('appointments')
-        .select(`*`)
-        .eq('id', id);
+        .select(`*, business_users(business_name)`)
+        .eq('id', id).single();
     if (error) {
         throw new Error(error.message)
     }
-    if (appointments?.length) {
-        return new NextResponse(JSON.stringify({ appointment: appointments[0] }), {
+    if (appointment) {
+        return new NextResponse(JSON.stringify({ appointment: appointment }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200
         })

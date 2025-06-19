@@ -1,6 +1,5 @@
 import { twMerge } from "tailwind-merge";
 import React from "react";
-import Stripe from 'stripe';
 
 
 /**
@@ -12,6 +11,7 @@ import Stripe from 'stripe';
  */
 
 import { Settings } from "luxon";
+import Stripe from "stripe";
 
 Settings.defaultZone = 'system'
 
@@ -20,4 +20,4 @@ export function cloneElement(element: React.ReactElement, classNames: string) {
         className: twMerge(element.props.className, classNames)
     });
 }
-export const stripe = require('stripe')(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY, { apiVersion: '2024-12-18.acacia' }) as Stripe;
+export const stripe = require('stripe')(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) as Stripe;

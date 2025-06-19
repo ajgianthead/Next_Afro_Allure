@@ -31,8 +31,8 @@ const config: Config = {
           '800': '#7e2d2d',
           '900': '#622121',
           '950': '#471515',
-      },
-      primary: {
+        },
+        primary: {
           '50': '#757580',
           '100': '#60606c',
           '200': '#4c4c59',
@@ -44,8 +44,8 @@ const config: Config = {
           '800': '#0e0d15',
           '900': '#08080e',
           '950': '#040408',
-      },
-      accent: {
+        },
+        accent: {
           '50': '#92bdb8',
           '100': '#7fb2ac',
           '200': '#6ca7a1',
@@ -57,8 +57,8 @@ const config: Config = {
           '800': '#1d4643',
           '900': '#143532',
           '950': '#0c2523',
-      },
-      gray: {
+        },
+        gray: {
           '50': '#f6f7f9',
           '100': '#eceef2',
           '200': '#d6d9e1',
@@ -70,8 +70,8 @@ const config: Config = {
           '800': '#3b4151',
           '900': '#30343f',
           '950': '#23262e',
-      },
-      danger: {
+        },
+        danger: {
           '50': "#fef2f2",
           '100': "#fee2e2",
           '200': "#fecaca",
@@ -83,8 +83,8 @@ const config: Config = {
           '800': "#991b1b",
           '900': "#7f1d1d",
           '950': "#450a0a",
-      },
-      warning: {
+        },
+        warning: {
           '50': "#fefce8",
           '100': "#fef9c3",
           '200': "#fef08a",
@@ -96,8 +96,8 @@ const config: Config = {
           '800': "#854d0e",
           '900': "#713f12",
           '950': "#422006",
-      },
-      success: {
+        },
+        success: {
           '50': "#f0fdf4",
           '100': "#dcfce7",
           '200': "#bbf7d0",
@@ -109,8 +109,8 @@ const config: Config = {
           '800': "#166534",
           '900': "#14532d",
           '950': "#052e16",
-      },
-      info: {
+        },
+        info: {
           '50': "#eff6ff",
           '100': "#dbeafe",
           '200': "#bfdbfe",
@@ -122,7 +122,7 @@ const config: Config = {
           '800': "#1e40af",
           '900': "#1e3a8a",
           '950': "#172554",
-      },
+        },
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

@@ -45,9 +45,19 @@ export default function Earnings() {
                 fetchClientSecret: fetchClientSecret,
                 fonts: [
                     {
-                        cssSrc: 'https://fonts.googleapis.com/css?family=Open+Sans'
+                        cssSrc: `url(https://fonts.googleapis.com/css?family=Open+Sans)`,
+                        family: 'Other'
+                    },
+                    {
+                        src: `url(https://fonts.cdnfonts.com/s/19795/Inter-Light-BETA.woff)`,
+                        family: "Default Font"
                     }
-                ]
+                ],
+                appearance: {
+                    variables: {
+                        fontFamily: 'Default Font',
+                    },
+                }
             })
         }
 
@@ -81,12 +91,12 @@ export default function Earnings() {
                             </div>
                             <div className='w-full flex md:flex-row flex-col gap-2'>
                                 <div className='md:w-1/2 w-full p-5 border border-[#ECECEC] rounded'>
-                                    {/* <ConnectReportingChart
+                                    <ConnectReportingChart
                                         reportName="net_volume"
-                                        intervalStart={new Date(2023, 11, 17)}
-                                        intervalEnd={new Date(2024, 8, 18)}
+                                        intervalStart={new Date(2025, 3, 17)}
+                                        intervalEnd={new Date()}
                                         intervalType="day"
-                                    /> */}
+                                    />
                                 </div>
                                 <div className='md:w-1/2 flex flex-col gap-5 w-full p-5 border border-[#ECECEC] rounded'>
                                     <Caption className='font-medium'>Payments</Caption>

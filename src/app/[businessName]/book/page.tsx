@@ -142,7 +142,8 @@ const DepositPayment = () => {
                 body: JSON.stringify({
                     connectedAccountId: data.stripe_id,
                     app_fee: 123,
-                    price: selectedServiceData[0].price
+                    price: selectedServiceData[0].price,
+                    appointmentID: ""
                 }),
             });
             if (!response.ok) {

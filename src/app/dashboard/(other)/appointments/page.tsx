@@ -170,7 +170,7 @@ const Page = () => {
             let depositPrice;
             if (depositRequired) {
                 if (policy.deposit.settings.type === 'percent') {
-                    depositPrice = (service.price * (policy.deposit.settings.value / 100)) * 100
+                    depositPrice = (service.price * (policy.deposit.settings.value / 100))
                 }
                 else if (policy.deposit.settings.type === 'flat') {
                     depositPrice = policy.deposit.settings.value
@@ -246,9 +246,10 @@ const Page = () => {
 
     // Delete an appointment
     const handleDelete = async (appointmentID: string) => {
-        const res = await fetch(`http://localhost:3000/api/appointments/${appointmentID}`, {
+        const res = await fetch(`http://localhost:3000/api/appointments`, {
             method: 'PUT',
             body: JSON.stringify({
+                id: appointmentID,
                 start: eventData.start,
                 end: eventData.end,
                 status: 'CANCELLED'
@@ -257,8 +258,8 @@ const Page = () => {
         const response = await res.json();
         // Delete in local state
         let clone = [...appointments]
-        const index = clone.indexOf(response)
-        clone.splice(index, 1);
+        let id = clone.findIndex((appointment) => appointment.id === response.data.id)
+        clone[id] = response.data
         setAppointments(clone)
 
         return response
@@ -580,7 +581,7 @@ const Page = () => {
                                 }}>Edit Appointment</MUIButton>
                                 <MUIButton color='danger' onClick={async () => {
                                     setIsSending(true)
-                                    await manuallyCancel(user.business_id, eventData.id).then(() => {
+                                    await handleDelete(eventData.id).then(async () => {
                                         setIsSending(false)
                                         setConfirmation({
                                             title: "Appointment Cancelled!",
@@ -760,20 +761,30 @@ const EditAppointment = ({ setIsSending, setConfirmation, setConfirmationOpen, s
                             <Button.Root onClick={async () => {
                                 setIsSending(true)
                                 const res = services.find((value: Service, index: number) => value.id === currentServiceID)
-                                const result = await businessRescheduling(business_id, res!, clientInformation, appointment_id, {
-                                    start: slotInfo.start.toISO()!,
-                                    end: slotInfo.end.toISO()!,
-                                    appointmentLength: service_data.length
-                                }, false)
+                                const result = await fetch(`http://localhost:3000/api/appointments`, {
+                                    method: 'PUT',
+                                    body: JSON.stringify({
+                                        id: appointment_id,
+                                        start: slotInfo.start.toISO()!,
+                                        end: slotInfo.end.toISO()!,
+                                        status: 'CONFIRMED'
+                                    })
+                                })
+                                const data = await result.json()
+                                // const result = await businessRescheduling(business_id, res!, clientInformation, appointment_id, {
+                                //     start: slotInfo.start.toISO()!,
+                                //     end: slotInfo.end.toISO()!,
+                                //     appointmentLength: service_data.length
+                                // }, false)
                                 let clone = [...appointments]
                                 const id = clone.findIndex((element) => element.id === appointment_id)
                                 clone[id] = {
                                     id: appointment_id,
                                     start: new Date(slotInfo.start.toISO()!),
                                     end: new Date(slotInfo.start.toISO()!),
-                                    title: `${result.service_data.name} with ${clientInformation.firstName}`,
+                                    title: `${data.service_data.name} with ${clientInformation.firstName}`,
                                     client_metadata: clientInformation,
-                                    service_data: result.service_data,
+                                    service_data: data.service_data,
                                     status: result.status
                                 }
                                 setAppointments(clone)

@@ -18,6 +18,7 @@ import Button from '@tailus-ui/Button'
 import { AppointmentReminderData, appointmentReminders } from '@utils/bull_mq'
 import { Card } from '@mui/joy';
 import Head from 'next/head';
+import { DateTime } from 'luxon';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
     stripeAccount: "acct_1Q6tUcFpD7KoueRC",
@@ -30,11 +31,12 @@ export default function Page() {
         clientSecret: any,
         onComplete?: any
     }>();
-    const { appointment_id } = useParams<{ appointment_id: string }>()
+    const { appointment_id, businessId } = useParams<{ appointment_id: string, businessId: string }>()
     const [policies, setPolicies] = useState<any>();
     const [appointmentData, setAppointmentData] = useState<any>({})
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [stripeID, setStripeID] = useState<string | null>(null)
+    const [businessData, setBusinessData] = useState<any>({})
     useEffect(() => {
         // Fetch appointment data with appointmentID, when use businessID
         // that's attached to the appointment to fetch the business's policies
@@ -63,7 +65,8 @@ export default function Page() {
                     connectedAccountId: stripeID,
                     price: appointment.deposit_price,
                     app_fee: 200,// Change Stripe Account ID to be dynamic to business
-                    appointmentID: appointment_id
+                    appointmentID: appointment_id,
+                    paymentIntent: appointment.deposit_charge_id
                 }),
             });
             if (!response.ok) {
@@ -97,21 +100,24 @@ export default function Page() {
                 return result.policy
             }
         }
+
         const getBusinessData = async (businessID: string) => {
             const res = await fetch(`http://localhost:3000/api/${businessID}`, {
                 method: 'GET'
             })
             const result = await res.json();
             setStripeID(result.data.stripe_acc_id)
+            setBusinessData(result.data)
+            console.log(result.data);
+
             return result.data
         }
-        fetchAppointment().then((appointment) => {
+        fetchAppointment().then(async (appointment) => {
             console.log(appointment);
-
             if (appointment.status === "CONFIRMED") {
+                await getBusinessData(businessId)
                 setCompleted(true)
             } else {
-
                 getPolicies(appointment).then((policy) => {
                     getBusinessData(appointment.business).then((businessData) => {
                         if (policy.deposit.enabled) {
@@ -183,11 +189,11 @@ export default function Page() {
                                                     <div className='flex lg:flex-row flex-col gap-2'>
                                                         <div className='w-full lg:w-1/2 lg:text-left justify-center text-center'>
                                                             <Text className='font-medium'>Date:</Text>
-                                                            <Caption>April 20th, 2025</Caption>
+                                                            <Caption>{DateTime.fromISO(appointmentData.start).toFormat('DDDD')}</Caption>
                                                         </div>
                                                         <div className='w-full lg:w-1/2 lg:text-left text-center' >
                                                             <Text className='font-medium'>Time:</Text>
-                                                            <Caption>4:00 PM ~ 7:00 PM</Caption>
+                                                            <Caption>{`${DateTime.fromISO(appointmentData.start).toFormat('t')} ~ ${DateTime.fromISO(appointmentData.end).toFormat('t')}`}</Caption>
                                                         </div>
                                                     </div>
                                                     <div className="flex lg:flex-row flex-col gap-5">
@@ -241,7 +247,7 @@ export default function Page() {
                             <CircleCheckBig color='green' />
                             <Title>Appointment Confirmed</Title></div>
                         <div className='text-center'>
-                            <Caption>If you have any questions regarding your appointment, please contact {"INSERT BUSINESS NAME"}</Caption>
+                            <Caption>If you have any questions regarding your appointment, please contact {businessData.business_name}</Caption>
                         </div>
                     </div>}
                 </div> : <div>

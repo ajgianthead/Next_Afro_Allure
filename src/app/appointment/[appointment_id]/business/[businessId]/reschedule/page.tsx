@@ -26,7 +26,6 @@ export default function Page() {
     const [appointments, setAppointments] = useState<any[]>([])
 
     const getData = async (startDate: string, endDate: string, availabilities: any[], appointments: any[]) => {
-        console.log(businessId);
         // Get availability id for server actions
         const appointment = appointments.filter((appointment: Appointment, index: number) => appointment.id === appointment_id)[0]
         const availability = availabilities.filter((availability) => availability.id === appointment.service_data.availability)[0]
@@ -37,12 +36,12 @@ export default function Page() {
             setCanReschedule(true)
         }
         setAppointment(appointment)
-        setAvailability(availability.availability_data[0])
+        setAvailability(availability.availability_data)
         setSelectedDateTime({
             start: DateTime.fromJSDate(new Date(appointment.start)).toISO()!,
             end: DateTime.fromJSDate(new Date(appointment.end)).toISO()!
         })
-        const formattedAvailability = await getAvailability(startDate, endDate, availability.availability_data[0])
+        const formattedAvailability = await getAvailability(startDate, endDate, availability.availability_data)
         const formattedUnavailability = await getUnavailability(startDate, endDate, appointments!)
         const { availableSlotsByDay } = getSlots({
             from: startDate,

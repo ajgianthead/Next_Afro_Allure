@@ -28,10 +28,8 @@ export async function POST(request: NextRequest) {
     })
   }
   const paymentIntent = event.data.object as Stripe.PaymentIntent;
-  const appointmentID = "ee4f0747-0cb7-4b3d-a88f-4200c7b2c4d6"
   const client = await pool.connect()
   // const businessID = await (await client.query(`SELECT business FROM business_users bu WHERE bu.stripe_acc_id = $1`, [event.account])).rows[0].business
-  const businessID = "a2c9f0d8-35b8-4eea-81ed-e1926ae2cf90"
   const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
 
 
@@ -41,7 +39,7 @@ export async function POST(request: NextRequest) {
       // Delete appointment
       try {
         await client.query('BEGIN')
-        const appointment = await client.query(`DELETE FROM appointments app WHERE app.id = $1  RETURNING *`, [appointmentID])
+        const appointment = await client.query(`DELETE FROM appointments app WHERE app.deposit_charge_id = $1  RETURNING *`, [paymentIntent.id])
         await client.query('COMMIT')
         // Send email and/or SMS confirming appointment
       } catch (error: any) {
@@ -57,8 +55,8 @@ export async function POST(request: NextRequest) {
       await client.query('BEGIN')
       const res = (await client.query(`WITH updated AS (
   UPDATE appointments
-  SET status = 'CONFIRMED'
-  WHERE id = $1
+  SET status = 'CONFIRMED', paid_deposit = $1
+  WHERE deposit_charge_id = $2
   RETURNING *
 )
 SELECT 
@@ -67,7 +65,7 @@ SELECT
   business_users.email
 FROM updated
 JOIN business_users
-  ON updated.business = business_users.business_id`, [appointmentID])).rows[0]
+  ON updated.business = business_users.business_id`, [true, paymentIntent.id])).rows[0]
       await client.query('COMMIT')
       try {
         await resend.emails.send({
