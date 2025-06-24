@@ -11,8 +11,9 @@ export type Database = {
     Tables: {
       appointments: {
         Row: {
+          amount_due: number
           business: string
-          cancellation_reason: string | null
+          cancellation_reason: string[] | null
           client: string | null
           client_metadata: Json | null
           created_at: string
@@ -21,18 +22,24 @@ export type Database = {
           end: string
           id: string
           paid_deposit: boolean
+          payment_link_id: string | null
           policy_id: string | null
+          reminder_ids: Json | null
           require_deposit: boolean
           reschedules: number
           selected_addons: Json[]
+          service_charge_id: string
           service_data: Json | null
+          service_paid: boolean | null
+          service_paid_type: Database["public"]["Enums"]["paid_type"] | null
           start: string
           status: Database["public"]["Enums"]["status"]
           updated_at: string
         }
         Insert: {
+          amount_due?: number
           business?: string
-          cancellation_reason?: string | null
+          cancellation_reason?: string[] | null
           client?: string | null
           client_metadata?: Json | null
           created_at?: string
@@ -41,18 +48,24 @@ export type Database = {
           end: string
           id?: string
           paid_deposit?: boolean
+          payment_link_id?: string | null
           policy_id?: string | null
+          reminder_ids?: Json | null
           require_deposit?: boolean
           reschedules?: number
           selected_addons?: Json[]
+          service_charge_id?: string
           service_data?: Json | null
+          service_paid?: boolean | null
+          service_paid_type?: Database["public"]["Enums"]["paid_type"] | null
           start: string
           status?: Database["public"]["Enums"]["status"]
           updated_at?: string
         }
         Update: {
+          amount_due?: number
           business?: string
-          cancellation_reason?: string | null
+          cancellation_reason?: string[] | null
           client?: string | null
           client_metadata?: Json | null
           created_at?: string
@@ -61,11 +74,16 @@ export type Database = {
           end?: string
           id?: string
           paid_deposit?: boolean
+          payment_link_id?: string | null
           policy_id?: string | null
+          reminder_ids?: Json | null
           require_deposit?: boolean
           reschedules?: number
           selected_addons?: Json[]
+          service_charge_id?: string
           service_data?: Json | null
+          service_paid?: boolean | null
+          service_paid_type?: Database["public"]["Enums"]["paid_type"] | null
           start?: string
           status?: Database["public"]["Enums"]["status"]
           updated_at?: string
@@ -457,6 +475,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      paid_type: "PLATFORM" | "CASH"
       status:
         | "PENDING"
         | "CONFIRMED"
@@ -579,6 +598,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      paid_type: ["PLATFORM", "CASH"],
       status: [
         "PENDING",
         "CONFIRMED",

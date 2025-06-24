@@ -4,7 +4,7 @@ import Checkbox from '@components/Checkbox'
 import Input from '@components/Input'
 import Label from '@components/Label'
 import Textarea from '@components/TextArea'
-import { CircularProgress } from '@mui/joy'
+import { CircularProgress, Input as JoyInput, Checkbox as JoyCheckbox } from '@mui/joy'
 import Button from '@tailus-ui/Button'
 import { Caption, Text, Title } from '@tailus-ui/typography'
 import { useUserContext } from '@utils/context/UserContext'
@@ -23,7 +23,7 @@ enum Type {
 type Policy = {
     deposit: {
         enabled: boolean;
-        settings?: {
+        settings: {
             type: Type,
             value: number
         }
@@ -62,7 +62,11 @@ export default function Page() {
     }, [user.business_id]);
     const [bookingPolicy, setBookingPolicy] = useState<Policy>({
         deposit: {
-            enabled: false
+            enabled: false,
+            settings: {
+                type: Type.PERCENT,
+                value: 20
+            }
         },
         lateFee: {
             enabled: false
@@ -136,14 +140,16 @@ export default function Page() {
                                         level: undefined
                                     },
                                     deposit: {
-                                        enabled: !bookingPolicy.deposit.enabled
+                                        enabled: !bookingPolicy.deposit.enabled,
+                                        settings: bookingPolicy.deposit.settings
                                     }
                                 })
                             } else {
                                 setBookingPolicy({
                                     ...bookingPolicy,
                                     deposit: {
-                                        enabled: !bookingPolicy.deposit.enabled
+                                        enabled: !bookingPolicy.deposit.enabled,
+                                        settings: bookingPolicy.deposit.settings
                                     }
                                 })
                             }
@@ -152,6 +158,55 @@ export default function Page() {
                         </Checkbox.Root>
                         <Label>Require a deposit during booking</Label>
                     </div>
+                    {bookingPolicy.deposit.enabled && <div className='ml-5 flex flex-col gap-2 font-medium'>
+                        <div className="flex gap-2 items-center">
+                            <div>
+                                <div className='flex gap-2 items-center mb-2'>
+                                    <JoyCheckbox checked={bookingPolicy.deposit.settings?.type === Type.PERCENT} onChange={(e) => {
+                                        let clone = { ...bookingPolicy }
+                                        if (bookingPolicy.deposit.settings?.type === Type.PERCENT) {
+                                            clone.deposit.settings.type = Type.FLAT
+                                        } else {
+                                            clone.deposit.settings.type = Type.PERCENT
+                                        }
+                                        setBookingPolicy(clone)
+                                    }} />
+                                    <Caption>Percentage Price</Caption>
+                                </div>
+                                <JoyInput onChange={(e) => {
+                                    setBookingPolicy({
+                                        ...bookingPolicy,
+                                        deposit: {
+                                            enabled: true,
+                                            settings: {
+                                                value: parseInt(e.target.value),
+                                                type: Type.PERCENT
+
+                                            }
+                                        }
+                                    })
+                                }} value={bookingPolicy.deposit.settings?.value} disabled={bookingPolicy.deposit.settings?.type !== Type.PERCENT} endDecorator={'%'} />
+                            </div>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                            <div>
+                                <div className='flex gap-2 items-center mb-2'>
+                                    <JoyCheckbox checked={bookingPolicy.deposit.settings?.type === Type.FLAT} onChange={(e) => {
+                                        let clone = { ...bookingPolicy };
+                                        if (bookingPolicy.deposit.settings?.type === Type.PERCENT) {
+                                            clone.deposit.settings.type = Type.FLAT
+                                        } else {
+                                            clone.deposit.settings.type = Type.PERCENT
+                                        }
+                                        setBookingPolicy(clone)
+                                    }} />
+                                    <Caption>Flat Price</Caption>
+                                </div>
+                                <JoyInput disabled={bookingPolicy.deposit.settings?.type !== Type.FLAT} startDecorator={'$'} />
+                            </div>
+                        </div>
+
+                    </div>}
                     <div className="flex gap-2 items-center">
                         <Checkbox.Root checked={bookingPolicy.lateFee.enabled} onClick={() => {
                             setBookingPolicy({

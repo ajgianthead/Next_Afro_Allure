@@ -68,9 +68,32 @@ const Book = () => {
         }
     }, [data]);
 
-    const handleSubmit = () => {
-        // Validate data and input -> Make sure everthing is there
-        // POST request to appointments table via a postgres transaction
+    const handleSubmit = async () => {
+        const response = await fetch(`http://localhost:3000/api/appointments`, {
+            method: "POST",
+            body: JSON.stringify({
+                business: data.business_id,
+                start: data.selectedDateTime.start,
+                end: data.selectedDateTime.end,
+                status: "CONFIRMED",
+                client_metadata: data.clientInfo,
+                service_data: data.services.filter((service) => service.id === data.selectedService)[0],
+                policy_id: data.booking_policy.id,
+                require_deposit: false,
+                paid_deposit: false,
+                deposit_charge_id: null,
+                reschedules: data.booking_policy.reschedule_limit,
+                deposit_price: null,
+                selected_addons: data.selectedAddons
+            })
+        });
+        if (!response.ok) {
+            // Handle errors on the client side here
+            const { error } = await response.json();
+            throw new Error("An error occurred: ", error);
+        } else {
+            console.log(await response.json());
+        }
     }
 
     return (
@@ -116,9 +139,7 @@ const Book = () => {
                     }}>
                         <Button.Label>Next</Button.Label>
                     </Button.Root> : <Button.Root onClick={async () => {
-                        const selectedServiceData = data.services.filter((service: Service, index: number) => service.id === data.selectedService)
-                        //const appointment = await bookAppointment(data.business_id, data.booking_policy.id, data.selectedService, data.clientInfo, { ...data.selectedDateTime, appointmentLength: selectedServiceData[0].length }, null, null)
-
+                        await handleSubmit()
                     }}>
                         <Button.Label>Book Appointment</Button.Label>
                     </Button.Root>}

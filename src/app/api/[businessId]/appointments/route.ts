@@ -7,10 +7,24 @@ import { Database } from "../../../../../lib/database.types";
 export async function GET(request: NextRequest, { params }: { params: { businessId: string } }) {
     const supabase = createClient<Database>();
     const { businessId } = await params;
-    let { data: appointments, error } = await supabase
-        .from('appointments')
-        .select(`*`)
-        .eq('business', businessId);
+    const status = request.nextUrl.searchParams.get('status') as Database['public']['Enums']['status'] | null
+    let appointments;
+    let error;
+    if (status) {
+        let { data, error: supabaseError } = await supabase
+            .from('appointments')
+            .select(`*`)
+            .eq('business', businessId).eq('status', status).order('start', { ascending: true }).limit(5);
+        appointments = data;
+        error = supabaseError
+    } else {
+        let { data, error: supabaseError } = await supabase
+            .from('appointments')
+            .select(`*`)
+            .eq('business', businessId);
+        appointments = data;
+        error = supabaseError
+    }
     if (error) {
         return new NextResponse(JSON.stringify({ error: error }), {
             headers: { 'Content-Type': 'application/json' },

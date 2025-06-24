@@ -2,7 +2,7 @@ import { stripe } from "@lib/utils";
 import pool from "@utils/dbPool";
 import { NextRequest, NextResponse } from "next/server";
 import mailchimp from '@mailchimp/mailchimp_transactional'
-import { reminderTask } from "trigger/reminder";
+import { reminderTask, sendPaymentLink } from "trigger/reminder";
 import { DateTime } from "luxon";
 import NewAppointment from "../../../../emails/new-appointment";
 import { Resend } from "resend";
@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
     })
   }
   const paymentIntent = event.data.object as Stripe.PaymentIntent;
+  const { purpose: paymentPurpose, appointment_id: appointmentID } = paymentIntent.metadata
+
   const client = await pool.connect()
   // const businessID = await (await client.query(`SELECT business FROM business_users bu WHERE bu.stripe_acc_id = $1`, [event.account])).rows[0].business
   const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
       // Delete appointment
       try {
         await client.query('BEGIN')
-        const appointment = await client.query(`DELETE FROM appointments app WHERE app.deposit_charge_id = $1  RETURNING *`, [paymentIntent.id])
+        const appointment = await client.query(`DELETE FROM appointments app WHERE app.id = $1  RETURNING *`, [appointmentID])
         await client.query('COMMIT')
         // Send email and/or SMS confirming appointment
       } catch (error: any) {
@@ -53,134 +55,168 @@ export async function POST(request: NextRequest) {
       break;
     case 'payment_intent.succeeded':
       await client.query('BEGIN')
-      const res = (await client.query(`WITH updated AS (
-  UPDATE appointments
-  SET status = 'CONFIRMED', paid_deposit = $1
-  WHERE deposit_charge_id = $2
-  RETURNING *
-)
-SELECT 
-  updated.*,
-  business_users.business_name,
-  business_users.email
-FROM updated
-JOIN business_users
-  ON updated.business = business_users.business_id`, [true, paymentIntent.id])).rows[0]
-      await client.query('COMMIT')
-      try {
-        await resend.emails.send({
-          from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
-          to: res.client_metadata?.email,
-          subject: "Appointment Confirmed",
-          react: AppointmentConfirmed({
-            socials: {
-              facebook: "",
-              instagram: "",
-              twitter: ""
-            },
-            clientData: {
-              firstName: res.client_metadata.firstName,
-              lastName: res.client_metadata.lastName,
-            },
-            businessData: {
-              id: res.business,
-              name: res.business_name,
-              businessAddress: "2800 SW 35th Place, Gainesville, FL"
-            },
-            appointmentData: {
-              id: res.id,
-              start: DateTime.fromJSDate(res.start).toISO()!,
-              end: DateTime.fromJSDate(res.end).toISO()!
-            },
-            serviceName: res.service_data.name
-          }),
-        })
-        await resend.emails.send({
-          from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
-          to: res?.email!,
-          subject: "Booking Alert",
-          react: NewAppointment({
-            socials: {
-              facebook: "",
-              instagram: "",
-              twitter: ""
-            },
-            clientData: {
-              firstName: res.client_metadata.firstName,
-              lastName: res.client_metadata.lastName,
-            },
-            businessData: {
-              id: res.business,
-              name: res.business_name,
-              businessAddress: "2800 SW 35th Place, Gainesville, FL"
-            },
-            appointmentData: {
-              id: res.id,
-              start: DateTime.fromJSDate(res.start).toISO()!,
-              end: DateTime.fromJSDate(res.end).toISO()!
-            },
-            serviceName: res.service_data.name
-          }),
-        });
+      if (paymentPurpose === 'EOA') {
+        const res = (await client.query(`WITH updated AS (
+          UPDATE appointments
+          SET service_paid = '$1', service_paid_type = 'PLATFORM', service_charge_id = $2
+          WHERE id = $3
+          RETURNING *
+        )
+        SELECT 
+          updated.*,
+          business_users.business_name,
+          business_users.email
+        FROM updated
+        JOIN business_users
+          ON updated.business = business_users.business_id`, [true, paymentIntent.id, appointmentID])).rows[0]
+        // Send reciept to email
+      } else {
+        const res = (await client.query(`WITH updated AS (
+          UPDATE appointments
+          SET status = 'CONFIRMED', paid_deposit = $1
+          WHERE id = $2
+          RETURNING *
+        )
+        SELECT 
+          updated.*,
+          business_users.business_name,
+          business_users.email
+        FROM updated
+        JOIN business_users
+          ON updated.business = business_users.business_id`, [true, appointmentID])).rows[0]
+        await client.query('COMMIT')
+        try {
+          await resend.emails.send({
+            from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
+            to: res.client_metadata?.email,
+            subject: "Appointment Confirmed",
+            react: AppointmentConfirmed({
+              socials: {
+                facebook: "",
+                instagram: "",
+                twitter: ""
+              },
+              clientData: {
+                firstName: res.client_metadata.firstName,
+                lastName: res.client_metadata.lastName,
+              },
+              businessData: {
+                id: res.business,
+                name: res.business_name,
+                businessAddress: "2800 SW 35th Place, Gainesville, FL"
+              },
+              appointmentData: {
+                id: res.id,
+                start: DateTime.fromJSDate(res.start).toISO()!,
+                end: DateTime.fromJSDate(res.end).toISO()!
+              },
+              serviceName: res.service_data.name
+            }),
+          })
+          await resend.emails.send({
+            from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
+            to: res?.email!,
+            subject: "Booking Alert",
+            react: NewAppointment({
+              socials: {
+                facebook: "",
+                instagram: "",
+                twitter: ""
+              },
+              clientData: {
+                firstName: res.client_metadata.firstName,
+                lastName: res.client_metadata.lastName,
+              },
+              businessData: {
+                id: res.business,
+                name: res.business_name,
+                businessAddress: "2800 SW 35th Place, Gainesville, FL"
+              },
+              appointmentData: {
+                id: res.id,
+                start: DateTime.fromJSDate(res.start).toISO()!,
+                end: DateTime.fromJSDate(res.end).toISO()!
+              },
+              serviceName: res.service_data.name
+            }),
+          });
 
-        // Send Reminder
-        const dayBefore = DateTime.fromJSDate(res.start).minus({ day: 1 })
-        const remindClient = await reminderTask.trigger({
-          serviceName: res.service_data.name,
-          delay: dayBefore.toISO()!,
-          sendToType: 'client',
-          sendBy: 'email',
-          appointmentData: {
-            id: res.id,
-            start: DateTime.fromJSDate(res.start).toISO()!,
-            end: DateTime.fromJSDate(res.end).toISO()!,
-          },
-          businessData: {
-            id: res.business,
-            name: res.business_name,
-            email: res.email,
-            address: "2800 SW 35th Place, Gainesville, FL",
-          },
-          clientData: {
-            firstName: res.client_metadata.firstName,
-            lastName: res.client_metadata.lastName,
-            email: res.client_metadata.email,
-            phoneNumber: res.client_metadata.phoneNumber,
-          },
-        }, { delay: dayBefore.toISO()! })
-        const remindBusiness = await reminderTask.trigger({
-          serviceName: res.service_data.name,
-          delay: dayBefore.toISO()!,
-          sendToType: 'business',
-          sendBy: 'email',
-          appointmentData: {
-            id: res.id,
-            start: DateTime.fromJSDate(res.start).toISO()!,
-            end: DateTime.fromJSDate(res.end).toISO()!,
-          },
-          businessData: {
-            id: res.business,
-            name: res.business_name,
-            email: res.email,
-            address: "2800 SW 35th Place, Gainesville, FL",
-          },
-          clientData: {
-            firstName: res.client_metadata.firstName,
-            lastName: res.client_metadata.lastName,
-            email: res.client_metadata.email,
-            phoneNumber: res.client_metadata.phoneNumber,
-          },
-        }, { delay: dayBefore.toISO()! })
-        // Save run id to appointment for later
-      } catch (error) {
-        console.log(error);
-        return new NextResponse(JSON.stringify({ error: error }), {
-          headers: { 'Content-Type': 'application/json' },
-          status: 400
-        })
+          // Send Reminder
+          const dayBefore = DateTime.fromJSDate(res.start).minus({ day: 1 })
+          const remindClient = await reminderTask.trigger({
+            serviceName: res.service_data.name,
+            delay: dayBefore.toISO()!,
+            sendToType: 'client',
+            sendBy: 'email',
+            appointmentData: {
+              id: res.id,
+              start: DateTime.fromJSDate(res.start).toISO()!,
+              end: DateTime.fromJSDate(res.end).toISO()!,
+            },
+            businessData: {
+              id: res.business,
+              name: res.business_name,
+              email: res.email,
+              address: "2800 SW 35th Place, Gainesville, FL",
+            },
+            clientData: {
+              firstName: res.client_metadata.firstName,
+              lastName: res.client_metadata.lastName,
+              email: res.client_metadata.email,
+              phoneNumber: res.client_metadata.phoneNumber,
+            },
+          }, { delay: dayBefore.toISO()! })
+          const remindBusiness = await reminderTask.trigger({
+            serviceName: res.service_data.name,
+            delay: dayBefore.toISO()!,
+            sendToType: 'business',
+            sendBy: 'email',
+            appointmentData: {
+              id: res.id,
+              start: DateTime.fromJSDate(res.start).toISO()!,
+              end: DateTime.fromJSDate(res.end).toISO()!,
+            },
+            businessData: {
+              id: res.business,
+              name: res.business_name,
+              email: res.email,
+              address: "2800 SW 35th Place, Gainesville, FL",
+            },
+            clientData: {
+              firstName: res.client_metadata.firstName,
+              lastName: res.client_metadata.lastName,
+              email: res.client_metadata.email,
+              phoneNumber: res.client_metadata.phoneNumber,
+            },
+          }, { delay: dayBefore.toISO()! })
+          const linkDelay = DateTime.fromJSDate(res.end).minus({ minutes: 30 })
+          const timedPaymentLink = await sendPaymentLink.trigger({
+            businessData: {
+              id: res.business,
+              name: res.business_name,
+              email: res.email,
+            },
+            clientData: {
+              firstName: res.client_metadata.firstName,
+              lastName: res.client_metadata.lastName,
+              email: res.client_metadata.email,
+              phoneNumber: res.client_metadata.phoneNumber,
+            },
+            serviceName: res.service_data.name,
+            appointmentID: res.id
+          }, { delay: linkDelay.toISO()! })
+          // Save run id to appointment for later
+          await client.query('BEGIN')
+          await client.query(`UPDATE appointments SET reminder_ids = $1, payment_link_id = $2 WHERE appointments.id = $3  RETURNING *`, [{ business: remindBusiness.id, client: remindClient.id }, timedPaymentLink.id, appointmentID])
+          await client.query('COMMIT')
+        } catch (error) {
+          console.log(error);
+          return new NextResponse(JSON.stringify({ error: error }), {
+            headers: { 'Content-Type': 'application/json' },
+            status: 400
+          })
+        }
       }
-
-
       break;
     // ... handle other event types
     default:

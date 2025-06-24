@@ -63,7 +63,7 @@ export default function Page() {
                 method: "POST",
                 body: JSON.stringify({
                     connectedAccountId: stripeID,
-                    price: appointment.deposit_price,
+                    price: appointment.amount_due,
                     app_fee: 200,// Change Stripe Account ID to be dynamic to business
                     appointmentID: appointment_id,
                     paymentIntent: appointment.deposit_charge_id
@@ -75,7 +75,6 @@ export default function Page() {
                 throw new Error("An error occurred: ", error);
             } else {
                 const val = await response.json();
-                console.log(val.clientSecret);
                 const clientSecret = val.clientSecret;
                 const opt = { clientSecret }
                 setOptions({
@@ -108,25 +107,21 @@ export default function Page() {
             const result = await res.json();
             setStripeID(result.data.stripe_acc_id)
             setBusinessData(result.data)
-            console.log(result.data);
-
             return result.data
         }
         fetchAppointment().then(async (appointment) => {
-            console.log(appointment);
             if (appointment.status === "CONFIRMED") {
                 await getBusinessData(businessId)
                 setCompleted(true)
             } else {
                 getPolicies(appointment).then((policy) => {
                     getBusinessData(appointment.business).then((businessData) => {
-                        if (policy.deposit.enabled) {
-
+                        if (appointment.require_deposit) {
                             fetchSession(businessData.stripe_acc_id, appointment, policy);
-
                         } else {
+                            setCompleted(false)
                             // Updates the appointment status and change the completed state
-                            handleCompleted()
+                            // handleCompleted()
                         }
                     })
 
@@ -143,10 +138,7 @@ export default function Page() {
                 id: appointment_id,
                 start: appointmentData.start,
                 end: appointmentData.end,
-                // Deposit stuff too TODO:
-                status: "CONFIRMED"
-                // deposit_charge_id
-                // deposit_paid
+                status: "CONFIRMED",
             })
         });
         if (!response.ok) {
@@ -157,8 +149,6 @@ export default function Page() {
             setCompleted(true)
         }
     }
-
-
     return (
         <div>
             <Head>
@@ -242,14 +232,77 @@ export default function Page() {
                                 </Card>
                             </div>
                         </div>
-                    </Elements> : <div className='flex h-[500px] gap-2 px-5 flex-col w-screen justify-center items-center'>
-                        <div className='flex gap-3'>
-                            <CircleCheckBig color='green' />
-                            <Title>Appointment Confirmed</Title></div>
-                        <div className='text-center'>
-                            <Caption>If you have any questions regarding your appointment, please contact {businessData.business_name}</Caption>
-                        </div>
-                    </div>}
+                    </Elements> : <div>
+                        {!completed ? <div>
+                            <div className='w-full m-2'>
+                                <Card sx={{
+                                    width: '100%',
+                                    height: '100%',
+                                    padding: 3
+                                }}>
+                                    <div className='flex flex-col justify-between h-full'>
+                                        <div>
+                                            <div className='text-center lg:text-left'>
+                                                <Title>Appointment Summary</Title>
+                                                <Caption>This amount is the deposit price needed to confirm your appointment</Caption>
+                                            </div>
+                                            <div className='flex gap-2 w-full mt-5'>
+                                                <div className='w-full flex flex-col gap-5'>
+                                                    <div className='flex lg:flex-row flex-col gap-2'>
+                                                        <div className='w-full lg:w-1/2 lg:text-left justify-center text-center'>
+                                                            <Text className='font-medium'>Date:</Text>
+                                                            <Caption>{DateTime.fromISO(appointmentData.start).toFormat('DDDD')}</Caption>
+                                                        </div>
+                                                        <div className='w-full lg:w-1/2 lg:text-left text-center' >
+                                                            <Text className='font-medium'>Time:</Text>
+                                                            <Caption>{`${DateTime.fromISO(appointmentData.start).toFormat('t')} ~ ${DateTime.fromISO(appointmentData.end).toFormat('t')}`}</Caption>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex lg:flex-row flex-col gap-5">
+                                                        <div className='w-full lg:w-1/2 lg:text-left text-center'>
+                                                            <Text className='font-medium'>Service Information:</Text>
+                                                            <Caption>Name: {appointmentData.service_data.name}</Caption>
+                                                            <Caption>Price: ${appointmentData.service_data.price / 100}</Caption>
+                                                            <Caption>Deposit Required: <strong>{appointmentData.require_deposit ? 'YES' : 'NO'}</strong></Caption>
+                                                            <Caption>Deposit Amount: ${appointmentData.deposit_price / 100}</Caption>
+                                                        </div>
+                                                        <div className='w-full lg:w-1/2 lg:text-left text-center'>
+                                                            <Text className='font-medium'>Client Information:</Text>
+                                                            <div className='w-full flex flex-col gap-1'>
+                                                                <Caption>Name: {appointmentData.client_metadata.firstName + " " + appointmentData.client_metadata.lastName}</Caption>
+                                                                <Caption>Email: {appointmentData.client_metadata.email}</Caption>
+                                                                <Caption>Phone Number: ({appointmentData.client_metadata.phoneNumber.slice(0, 3)}) {appointmentData.client_metadata.phoneNumber.slice(3, 6)}-{appointmentData.client_metadata.phoneNumber.slice(6)}</Caption>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className='w-full lg:w-1/2 lg:text-left text-center'>
+                                                        <Text className='font-medium'>Add-ons:</Text>
+                                                        {appointmentData.selected_addons.map((addon: any, index: number) => {
+                                                            return (
+                                                                <Caption key={index}>{addon.name}: ${addon.price}</Caption>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <Button.Root onClick={async () => {
+                                        await handleCompleted()
+                                    }}>
+                                        <Button.Label>Confirm Appointment</Button.Label>
+                                    </Button.Root>
+                                </Card>
+                            </div>
+                        </div> : <div className='flex h-[500px] gap-2 px-5 flex-col w-screen justify-center items-center'>
+                            <div className='flex gap-3'>
+                                <CircleCheckBig color='green' />
+                                <Title>Appointment Confirmed</Title></div>
+                            <div className='text-center'>
+                                <Caption>If you have any questions regarding your appointment, please contact {businessData.business_name}</Caption>
+                            </div>
+                        </div>}</div>}
                 </div> : <div>
                     <Text>Something went wrong :(</Text>
                 </div>}

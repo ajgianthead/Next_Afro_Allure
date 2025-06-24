@@ -2,9 +2,10 @@ import Button from '@tailus-ui/Button';
 import type { ReactNode } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-export const Link = ({ isActive = false, label, link, children }: { isActive?: boolean; children?: ReactNode; label?: string; link: string }) => {
+export const Link = ({ isActive = false, label, link, children, disabled = false }: { isActive?: boolean; children?: ReactNode; label?: string; link: string; disabled?: boolean }) => {
   return (
     <Button.Root
+      disabled={disabled}
       href={link}
       variant={isActive ? 'outlined' : 'ghost'}
       intent="gray"
@@ -22,8 +23,9 @@ export const Link = ({ isActive = false, label, link, children }: { isActive?: b
   );
 };
 
-export const Root = ({ isActive = false, link, children }: { isActive?: boolean; children: ReactNode; link: string }) => (
+export const Root = ({ isActive = false, link, children, disabled = false }: { isActive?: boolean; children: ReactNode; link: string, disabled?: boolean }) => (
   <Button.Root
+    disabled={disabled}
     href={link}
     variant={isActive ? 'soft' : 'ghost'}
     intent="primary"

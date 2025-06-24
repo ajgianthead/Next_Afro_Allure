@@ -4,6 +4,7 @@ import { Resend } from "resend";
 import { Database } from "../../lib/database.types";
 import ReminderBusiness from "../../emails/reminder-business";
 import ReminderClient from "../../emails/reminder-client";
+import PaymentLinkEmail from "../../emails/payment-link";
 
 configure({
   // this is the default and if the `TRIGGER_SECRET_KEY` environment variable is set, can omit calling configure
@@ -120,6 +121,22 @@ export type ReminderProps = {
   }
 }
 
+export type PaymentLinkProps = {
+  clientData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+  }
+  businessData: {
+    id: string;
+    name: string;
+    email: string;
+  },
+  serviceName: string;
+  appointmentID: string;
+}
+
 const configureReminder = async (props: ReminderProps) => {
   // const supabase = createClient<Database>();
 
@@ -186,6 +203,37 @@ const configureReminder = async (props: ReminderProps) => {
   }
 }
 
+const sendLink = async (props: PaymentLinkProps) => {
+  try {
+    const { error } = await resend.emails.send({
+      from: 'pay-appointment <noreply@reminder.afroallure.co>',
+      to: props.clientData.email,
+      subject: 'Pay for Appointment',
+      react: PaymentLinkEmail({
+        appointmentID: props.appointmentID,
+        serviceName: props.serviceName,
+        clientData: {
+          firstName: props.clientData.firstName,
+          lastName: props.clientData.lastName,
+          email: props.clientData.email,
+          phoneNumber: props.clientData.phoneNumber
+        },
+        businessData: {
+          id: props.businessData.id,
+          name: props.businessData.name,
+          email: props.businessData.email
+        }
+      }),
+    });
+    // Then send SMS message via text
+    if (error) {
+      return error;
+    }
+  } catch (error) {
+    return error
+  }
+}
+
 export const reminderTask = task({
   id: `remind-appointment`,
   // Set an optional maxDuration to prevent tasks from running indefinitely
@@ -196,3 +244,10 @@ export const reminderTask = task({
 });
 
 // Send EOA paymentLink
+export const sendPaymentLink = task({
+  id: `send-payment-link`,
+  maxDuration: 300,
+  run: async (payload: PaymentLinkProps) => {
+    await sendLink(payload)
+  }
+})

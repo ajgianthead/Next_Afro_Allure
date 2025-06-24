@@ -19,6 +19,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation';
 import { getUser } from './getUser';
+import { Chip } from '@mui/joy';
 
 
 export default function LayoutComp({
@@ -131,13 +132,13 @@ export default function LayoutComp({
                                 </div>
                                 <div>
                                     <Caption className="mx-2 my-2">Client Rewards</Caption>
-                                    <Link.Root link="#">
+                                    <Link.Root disabled={true} link="#">
                                         <Link.Icon>
                                             <Tag />
                                         </Link.Icon>
-                                        <Link.Label>Loyalty Program</Link.Label>
+                                        <Link.Label><div className='flex items-center'>Loyalty Program</div></Link.Label>
                                     </Link.Root>
-                                    <Link.Root link="/dashboard/discounts" isActive={pathname === "/dashboard/discounts"}>
+                                    <Link.Root link="#" isActive={pathname === "/dashboard/discounts"}>
                                         <Link.Icon>
                                             <Percent />
                                         </Link.Icon>
