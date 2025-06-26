@@ -11,7 +11,7 @@ import Dialog from '@components/Dialog';
 import Input from '@components/Input';
 import Textarea from '@components/TextArea';
 import { useEffect, useState } from 'react';
-import { createClient } from '@utils/supabase/server';
+import { createClient } from '@utils/supabase/client';
 import { Database } from '../../../lib/database.types';
 import { useUserContext } from '@utils/context/UserContext';
 
