@@ -563,7 +563,7 @@ const DateTimePicker = () => {
     )
 }
 
-export const TimeSlot = ({ startTime }: {
+const TimeSlot = ({ startTime }: {
     startTime: DateTime
 }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
