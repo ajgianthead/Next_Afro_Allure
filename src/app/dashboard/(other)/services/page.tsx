@@ -92,9 +92,12 @@ export default function Page() {
         description: "",
     })
     const [openAddon, setOpenAddon] = useState<boolean>(false)
-    const [addon, setAddon] = useState({
+    const [addon, setAddon] = useState<{
+        name: string;
+        price: number;
+    }>({
         name: "",
-        price: ""
+        price: 0
     })
     const createAddon = async () => {
         const res = await fetch(`http://localhost:3000/api/${user.business_id}/services/addon`, {
@@ -115,7 +118,7 @@ export default function Page() {
             })
             setAddon({
                 name: "",
-                price: ""
+                price: 0
             })
         }
         else { // If error
@@ -194,7 +197,7 @@ export default function Page() {
                                     } else {
                                         setAddon({
                                             ...addon,
-                                            name: e.target.value
+                                            name: e.target.value,
                                         })
                                     }
 
@@ -202,16 +205,16 @@ export default function Page() {
                             </div>
                             <div>
                                 <Label htmlFor='addon-price'>Price</Label>
-                                <Input value={isEditingAddon ? currAddon.price : addon.price} onChange={(e) => {
+                                <Input value={isEditingAddon ? currAddon.price / 100 : addon.price / 100} onChange={(e) => {
                                     if (isEditingAddon) {
                                         setCurrAddon({
                                             ...currAddon,
-                                            price: e.target.value
+                                            price: parseInt(e.target.value) * 100
                                         })
                                     } else {
                                         setAddon({
                                             ...addon,
-                                            price: e.target.value
+                                            price: parseInt(e.target.value) * 100
                                         })
                                     }
                                 }} id='addon-price' placeholder='ex. 10' />
@@ -301,7 +304,7 @@ export default function Page() {
                                                     <div className='flex w-full items-center'>
                                                         <div className='flex justify-between items-center w-full gap-1'>
                                                             <Text>{addon.name}</Text>
-                                                            <Caption>${addon.price}</Caption>
+                                                            <Caption>${addon.price / 100}</Caption>
                                                         </div>
 
                                                     </div>
@@ -886,10 +889,10 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
                                 </div>
                                 <div>
                                     <Label className='font-medium'>Base Price</Label>
-                                    <Input value={service.price.toString()} onChange={(e) => {
+                                    <Input value={(service.price / 100).toString()} onChange={(e) => {
                                         let temp;
                                         if (!Number.isNaN(e.target.value)) {
-                                            temp = Number(e.target.value)
+                                            temp = Number(e.target.value) * 100
                                             setService({
                                                 ...service,
                                                 price: temp
@@ -1038,7 +1041,7 @@ const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService, 
                 </div>
                 <div>
                     <Title>{service.name}</Title>
-                    <Text>${service.price}</Text>
+                    <Text>${service.price / 100}</Text>
                     <Caption>{service.description}</Caption>
                 </div>
             </Card>

@@ -554,7 +554,7 @@ const Page = () => {
                                     <Text>Service Details</Text>
                                     <div className='flex flex-col gap-1'>
                                         <Caption>Service: {eventData.service_data.name}</Caption>
-                                        <Caption>Price: ${eventData.service_data.price}</Caption>
+                                        <Caption>Price: ${eventData.service_data.price / 100}</Caption>
                                         <div className='flex gap-1 max-w'><Caption className='min-w-max'>Add-Ons:</Caption> <div className='flex flex-wrap gap-1'>
                                             {eventData.addons.map((addon: any, index: number) => {
                                                 return (

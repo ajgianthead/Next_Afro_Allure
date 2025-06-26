@@ -11,10 +11,10 @@ export const SimpleBarChart = () => {
     <Card className="space-y-6" variant="outlined">
       <div>
         <Title as="h2" size="lg" weight="medium" className="mb-1">
-          New Orders
+          New Clients
         </Title>
         <Text className="mb-0 mt-1" size="sm">
-          Visualize your main activities data
+          Visualize new clientele per month
         </Text>
       </div>
       <AspectRatio data-shade="900" ratio={16 / 9}>
