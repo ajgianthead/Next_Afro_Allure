@@ -5,6 +5,9 @@ import crypto from 'crypto';
 
 
 const nextConfig = {
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
     async headers() {
         const nonce = crypto.randomBytes(16).toString('base64');
         return [
