@@ -28,31 +28,36 @@ export default function LayoutComp({
     children: React.ReactNode;
 }>) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const { user } = useUserContext();
+    const { user, setUser } = useUserContext();
     const [userData, setUserData] = useState<any>(null)
     const router = useRouter()
     const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
         console.log(user);
-
-        const fetchUserData = async () => {
+        const fetchUserData = async (user_id: string) => {
             if (user.business_id) {
-                const res = await fetch(`/api/${user.business_id}`, {
+                const res = await fetch(`/api/data/${user_id}/true`, {
                     method: 'GET'
                 })
                 const userData = await res.json()
-                setUserData(userData.data)
+                setUserData(userData.businessUser)
+                setUser({
+                    user_id: user_id,
+                    role: 'business',
+                    business_id: userData.businessUser.business_id,
+                    client_id: undefined
+                })
             }
         }
         (async () => {
             const thisUser = await fetchUser()
             if (thisUser) {
-                fetchUserData()
+                await fetchUserData(thisUser.id)
+
                 setLoading(false)
             } else {
                 router.replace('/login')
             }
-
         })()
     }, [user.business_id]);
     const pathname = usePathname()
