@@ -6,11 +6,21 @@ export async function POST(request: NextRequest) {
     const { account } = await request.json();
     try {
         const accountSession = await stripe.accountSessions.create(
-
             {
                 account: account,
-
                 components: {
+                    account_management: {
+                        enabled: true,
+                        features: {
+                            external_account_collection: true,
+                        },
+                    },
+                    tax_settings: {
+                        enabled: true
+                    },
+                    tax_registrations: {
+                        enabled: true,
+                    },
                     payments: {
                         enabled: true,
                         features: {
@@ -33,7 +43,10 @@ export async function POST(request: NextRequest) {
                     },
                     reporting_chart: {
                         enabled: true,
-                    }
+                    },
+                    // payment_method_settings: {
+                    //     enabled: true,
+                    // },
                 } as any,
 
             }, {

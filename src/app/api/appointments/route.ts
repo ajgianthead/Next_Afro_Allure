@@ -19,7 +19,6 @@ import { runs } from "@trigger.dev/sdk/v3";
 
 
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
-const supabase = createClient<Database>();
 
 
 const sendRescheduledEmails = async (data: any) => {
@@ -195,6 +194,8 @@ export const sendCancelledEmails = async (data: any) => {
     });
 }
 const sendReminders = async (res: any) => {
+    const supabase = createClient<Database>();
+
     const dayBefore = DateTime.fromJSDate(res.start).minus({ day: 1 })
     const remindClient = await reminderTask.trigger({
         serviceName: res.service_data.name,
@@ -270,6 +271,8 @@ const sendReminders = async (res: any) => {
 
 // Edit an appointment
 export async function PUT(request: NextRequest) {
+    const supabase = createClient<Database>();
+
     // I dont know man??
     const { id, start, end, status, reason } = await request.json();
     const res = await supabase.from('appointments').select('status').eq('id', id).single()
@@ -329,6 +332,8 @@ export async function PUT(request: NextRequest) {
 
 // Create an appointment
 export async function POST(request: NextRequest) {
+    const supabase = createClient<Database>();
+
     const { business, client_metadata, start, end, service_data, status, require_deposit, policy_id, paid_deposit, deposit_charge_id, reschedules, deposit_price, addons } = await request.json();
     const { data, error } = await supabase.from('appointments').insert([
         {

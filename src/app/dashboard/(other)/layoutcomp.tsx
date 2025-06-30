@@ -91,11 +91,11 @@ export default function LayoutComp({
                                     </Link.Icon>
                                     <Link.Label>Clients</Link.Label>
                                 </Link.Root>
-                                <Link.Root link="/dashboard/earnings" isActive={pathname === "/dashboard/earnings"}>
+                                <Link.Root link="/dashboard/monetization" isActive={pathname === "/dashboard/monetization"}>
                                     <Link.Icon>
                                         <CircleDollarSign />
                                     </Link.Icon>
-                                    <Link.Label>Earnings</Link.Label>
+                                    <Link.Label>Monetization</Link.Label>
                                 </Link.Root>
                                 <div>
                                     <Caption className="mx-2 my-2">Automated Booking</Caption>

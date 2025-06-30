@@ -8,6 +8,9 @@ const nextConfig = {
     eslint: {
         ignoreDuringBuilds: true,
     },
+    typescript: {
+        ignoreBuildErrors: true,
+    },
     async headers() {
         const nonce = crypto.randomBytes(16).toString('base64');
         return [

@@ -1,42 +1,48 @@
-'use server'
-import React, { useEffect, useState } from 'react'
+
+import React from 'react'
 import lz from "lzutf8";
 import Image from 'next/image';
 
-export const Container: React.FC<any> = async ({ children, ...props }) => (
+const Container: React.FC<any> = async ({ children, ...props }) => (
     <div style={{ ...props, display: 'flex', flexDirection: props.flexDirection }}>
         {children}
     </div>
 );
 
-export const EditableButton: React.FC<any> = async ({ text, ...props }) => (
+const EditableButton: React.FC<any> = async ({ text, ...props }) => (
     <button style={{ ...props }}>
         {text}
     </button>
 );
 
-export const EditableText: React.FC<any> = async ({ text, ...props }) => (
+const EditableText: React.FC<any> = async ({ text, ...props }) => (
     <p style={{ ...props }}>
         {text}
     </p>
 );
-export const Video: React.FC<any> = async ({ url, ...props }) => (
+const Video: React.FC<any> = async ({ url, ...props }) => (
     <div style={{ ...props }}>
         <iframe src={url} className="w-full h-full" allowFullScreen loading="lazy" />
     </div>
 )
-export const ImageContainer: React.FC<any> = async ({ url, ...props }) => (
+const ImageContainer: React.FC<any> = async ({ url, ...props }) => (
     <div style={{ ...props }}>
         <Image src={url} style={{ ...props }} alt='image' />
     </div>
 )
-export const Hyperlink: React.FC<any> = async ({ text, ...props }) => (
+const Hyperlink: React.FC<any> = async ({ text, ...props }) => (
     <div style={{ ...props }}>
         <a>{text}</a>
     </div>
 )
 
-export default async function Page({ params }: { params: { businessName: string } }) {
+interface PageProps {
+    params: {
+        businessName: string;
+    };
+}
+
+export default async function Page({ params }: PageProps) {
     const resolver = {
         "Container": Container,
         "EditableButton": EditableButton,
@@ -65,11 +71,13 @@ export default async function Page({ params }: { params: { businessName: string 
         }
     }
 
-    const { businessName } = await params;
+    const { businessName } = params;
     const result = await getBusinessData(businessName);
 
     // Decompress and parse editor data
     const json = lz.decompress(lz.decodeBase64(result.editor_data));
+    console.log("json");
+
     const parsedData = JSON.parse(json);
 
     // Extract nodes from ROOT

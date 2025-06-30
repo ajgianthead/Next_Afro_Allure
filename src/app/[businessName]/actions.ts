@@ -203,11 +203,12 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
         await client.query('BEGIN');
         // Check if timeslot is still available
         // 1. Get availability and appointments
-        const availabilities = (await client.query(`SELECT availabilities FROM business_users bu WHERE bu.business_id = $1`, [businessId])).rows[0].availabilities
+        const availabilities = (await client.query(`SELECT availability_data FROM availabilities av WHERE av.business_id = $1`, [businessId])).rows
         const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows
-        const availability = availabilities.filter((availability: any, index: number) => availability.id === "e69f4e31-6648-4be5-8577-bb004333a332")[0]
+        const availability = availabilities.filter((availability: any, index: number) => availability.availability_data.id === serviceData.availability)[0].availability_data
 
         let available: boolean = false
+        console.log(availabilities, availability)
         const availableSlots = await checkSlots(timeSlot, availability, appointments)
 
         availableSlots.forEach((slot: string | null, index: number) => {

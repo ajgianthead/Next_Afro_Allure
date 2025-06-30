@@ -11,7 +11,6 @@ import IconButton from '@mui/joy/IconButton';
 import { SketchPicker } from 'react-color';
 import { TbBoxMargin } from "react-icons/tb";
 import { TbBoxPadding } from "react-icons/tb";
-import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import { useEditorContext } from '@utils/context/EditorContext';
 import Select from '@mui/joy/Select';
@@ -20,7 +19,7 @@ import { Resizable } from 're-resizable';
 
 
 
-export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flexDirection = 'column', margin = 0, padding = 0, children, width = 500, height = 200, alignMain = "start", alignAlt = "start" }: any) => {
+export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flexDirection = 'column', margin = 0, padding = 0, children, width, height, alignMain = "start", alignAlt = "start" }: any) => {
     const { connectors: { connect, drag }, id, hasSelectedNode, parentElement, parentFlexDirection, hasChildNodes, childNodes, hasDraggedNode, parentChildNodes, isHovering, parentNodeWidth, parentNodeHeight, actions: { setProp } } = useNode((state) => ({
         hasChildNodes: state.dom?.hasChildNodes,
         parentFlexDirection: state.dom?.parentElement?.style.flexDirection,
@@ -33,22 +32,45 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
         hasDraggedNode: state.events.dragged,
         isHovering: state.events.hovered
     }));
-    const { hoveringId, selectedNode, actions } = useEditor((state) => ({
+    const { hoveringId, selectedNode, actions, query } = useEditor((state) => ({
         hoveringId: state.events.hovered,
         selectedNode: state.events.selected
     }));
+
     const nodeRef = useRef<HTMLDivElement>(null);
     const [innerWidth, setInnerWidth] = useState(0);
     const { isResizing, setIsResizing } = useEditorContext();
     useEffect(() => {
-        if (nodeRef.current) {
-            if (isResizing) {
-                connect(nodeRef.current);
-            } else {
-                connect(drag(nodeRef.current));
-            }
+        if (!parentElement) return;
+
+        // if (nodeRef.current) {
+        //     if (isResizing) {
+        //         connect(nodeRef.current);
+        //     } else {
+        //         connect(drag(nodeRef.current));
+        //     }
+        // }
+        if (parentElement?.offsetWidth && parentElement?.offsetHeight && id !== 'ROOT') {
+            actions.setProp(id, (props) => {
+                props.width = parentElement.offsetWidth / 2; // ✅ Half width
+                props.height = parentElement.offsetHeight / 2;    // Optional, keep full height or adjust
+            });
         }
-    }, [isResizing]);
+        if (id !== "ROOT") {
+            const observer = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    const parentWidth = entry.contentRect.width;
+                    const parentHeight = entry.contentRect.height;
+                    actions.setProp(id, (props) => {
+                        props.width = parentWidth * (props.width / parentWidth); // or '50%' if styled properly
+                        props.height = props.height;
+                    });
+                }
+            });
+            observer.observe(parentElement);
+            return () => observer.disconnect();
+        }
+    }, [parentElement]);
     const [maxHeight, setMaxHeight] = useState<number>()
     const [maxWidth, setMaxWidth] = useState<number>()
     const [minWidth, setMinWidth] = useState<number>()
@@ -120,24 +142,42 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
                         setMinHeight(minHeight + padding * 2)
                     }
                 }}
-                maxHeight={maxHeight}
-                maxWidth={maxWidth}
-                minHeight={minHeight}
-                minWidth={minWidth}
-                onResize={() => {
-                    getMaxHeight()
-                    getMaxWidth()
-
+                // maxHeight={maxHeight}
+                // maxWidth={maxWidth}
+                // minHeight={minHeight}
+                // minWidth={minWidth}
+                snap={{
+                    x: [parentNodeWidth, parentNodeWidth / 2, ...Array.prototype.slice.call(childNodes ?? []).map((node) => {
+                        return node.offsetWidth + padding * 2
+                    }), ...Array.prototype.slice.call(parentChildNodes ?? []).map((node) => {
+                        return node.offsetWidth
+                    }), query.node("ROOT").get().dom?.offsetWidth! - padding * 2, query.node("ROOT").get().dom?.offsetWidth! / 2], y: [parentNodeHeight, parentNodeHeight / 2, ...Array.prototype.slice.call(childNodes ?? []).map((node) => {
+                        return node.offsetHeight + padding * 2
+                    }), ...Array.prototype.slice.call(parentChildNodes ?? []).map((node) => {
+                        return node.offsetHeight
+                    }), query.node("ROOT").get().dom?.offsetHeight, padding * 2, query.node("ROOT").get().dom?.offsetHeight! / 2]
                 }}
-                bounds={parentElement!}
-                boundsByDirection
+                snapGap={20}
+                // bounds={parentElement!}
+                // boundsByDirection
                 onResizeStop={(_, __, ___, delta) => {
                     setIsResizing(false)
+                    const currentWidth = typeof width === 'string' ? parseFloat(width) : width;
+                    const newWidth = currentWidth + delta.width;
+
                     actions.setProp(id, (props) => {
-                        props.width = props.width + delta.width;
+                        props.width = newWidth;
                         props.height = props.height + delta.height
                     })
-
+                    if (nodeRef.current) {
+                        Array.from(nodeRef.current.children).forEach((child) => {
+                            const childEl = child as HTMLElement;
+                            const originalChildWidth = childEl.offsetWidth;
+                            const percent = (originalChildWidth / currentWidth) * 100;
+                            const newChildWidth = (newWidth * percent) / 100;
+                            childEl.style.width = `${newChildWidth}px`;
+                        });
+                    }
                 }}
                 style={{
                     display: 'flex', flexDirection, margin, padding, background, gap: `${gap}px`, width, height
@@ -355,8 +395,8 @@ Container.craft = {
         settings: ContainerSettings
     },
     props: {
-        width: 500,
-        height: 200,
+        // width: 500,
+        // height: 200,
         margin: 0,
         padding: 0,
         flexDirection: 'row',
