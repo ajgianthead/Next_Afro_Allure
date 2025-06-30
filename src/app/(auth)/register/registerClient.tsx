@@ -37,7 +37,7 @@ export default function Register() {
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         if (asBusiness) {
-            const result = await fetch("http://localhost:3000/api/auth/register/business_user", {
+            const result = await fetch("/api/auth/register/business_user", {
                 method: "post",
                 headers: myHeaders,
                 body: JSON.stringify({
@@ -49,9 +49,9 @@ export default function Register() {
             const res = await result.json();
             console.log(res.data);
 
-            router.replace(`http://localhost:3000/onboarding/${res.data.business_users.stripe_acc_id}`)
+            router.replace(`/onboarding/${res.data.business_users.stripe_acc_id}`)
         } else {
-            const result = await fetch("http://localhost:3000/api/auth/register/client_user", {
+            const result = await fetch("/api/auth/register/client_user", {
                 method: "POST",
                 headers: myHeaders,
                 body: JSON.stringify({

@@ -63,7 +63,7 @@ export default function PaymentLinkEmail(props: PaymentLinkProps) {
                 <Hr />
                 <Container className="font-sans mt-5">
                     <div className="text-center">
-                        <Button href={`http://localhost:3000/appointments/${props.appointmentID}/business/${props.businessData.id}/eoa-payment`} className="bg-black text-white p-5 font-bold rounded">Pay for Appointment</Button>
+                        <Button href={`/appointments/${props.appointmentID}/business/${props.businessData.id}/eoa-payment`} className="bg-black text-white p-5 font-bold rounded">Pay for Appointment</Button>
                     </div>
                 </Container>
                 <Container className=" flex flex-col">

@@ -40,7 +40,7 @@ export const UserDropdown = () => {
                   <Button.Label>Manage</Button.Label>
                 </Button.Root>
                 <Button.Root onClick={async () => {
-                  const signOut = await fetch(`http://localhost:3000/api/auth/signout`, {
+                  const signOut = await fetch(`/api/auth/signout`, {
                     method: 'POST'
                   })
                   const res = await signOut.json();

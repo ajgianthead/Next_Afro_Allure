@@ -20,7 +20,7 @@ export default function CancelClient() {
 
     useEffect(() => {
         (async () => {
-            const result = await fetch(`http://localhost:3000/api/appointments/${appointment_id}`,
+            const result = await fetch(`/api/appointments/${appointment_id}`,
                 {
                     method: 'GET'
                 }
@@ -81,7 +81,7 @@ export default function CancelClient() {
                                         let index = clone.findIndex((value) => value === 'other')
                                         clone.splice(index, 1, otherReason)
                                     }
-                                    const res = await fetch(`http://localhost:3000/api/appointments`, {
+                                    const res = await fetch(`/api/appointments`, {
                                         method: 'PUT',
                                         body: JSON.stringify({
                                             id: appointment_id,

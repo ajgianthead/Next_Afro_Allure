@@ -49,7 +49,7 @@ const AppointmentsClient = () => {
     useEffect(() => {
         if (user.business_id && policy === null) {
             (async () => {
-                const res = await fetch(`http://localhost:3000/api/${user.business_id}/booking`, {
+                const res = await fetch(`/api/${user.business_id}/booking`, {
                     method: 'GET'
                 })
                 const result = await res.json()
@@ -201,7 +201,7 @@ const AppointmentsClient = () => {
                 deposit_price: depositRequired ? depositPrice : null,
                 addons: addonResult
             }
-            const res = await fetch(`http://localhost:3000/api/appointments`, {
+            const res = await fetch(`/api/appointments`, {
                 method: 'POST',
                 body: JSON.stringify(appointment)
             })
@@ -246,7 +246,7 @@ const AppointmentsClient = () => {
 
     // Delete an appointment
     const handleDelete = async (appointmentID: string) => {
-        const res = await fetch(`http://localhost:3000/api/appointments`, {
+        const res = await fetch(`/api/appointments`, {
             method: 'PUT',
             body: JSON.stringify({
                 id: appointmentID,
@@ -761,7 +761,7 @@ const EditAppointment = ({ setIsSending, setConfirmation, setConfirmationOpen, s
                             <Button.Root onClick={async () => {
                                 setIsSending(true)
                                 const res = services.find((value: Service, index: number) => value.id === currentServiceID)
-                                const result = await fetch(`http://localhost:3000/api/appointments`, {
+                                const result = await fetch(`/api/appointments`, {
                                     method: 'PUT',
                                     body: JSON.stringify({
                                         id: appointment_id,

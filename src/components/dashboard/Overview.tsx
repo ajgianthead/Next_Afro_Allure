@@ -18,7 +18,7 @@ export const StackedCards = () => {
   useEffect(() => {
     if (user.business_id) {
       (async () => {
-        const result = await fetch(`http://localhost:3000/api/${user.business_id}/appointments?status=CONFIRMED`, {
+        const result = await fetch(`/api/${user.business_id}/appointments?status=CONFIRMED`, {
           method: 'GET'
         })
         const res = await result.json()
@@ -109,7 +109,7 @@ const AppointmentCard = ({ appointment }: { appointment: any }) => {
                 <QRCode
                   size={256}
                   style={{ height: "100%", maxWidth: "100%", width: "100%" }}
-                  value={`http://localhost:3000/appointments/${appointment.id}/business/${appointment.business}/eoa-payment`}
+                  value={`/appointments/${appointment.id}/business/${appointment.business}/eoa-payment`}
                   viewBox={`0 0 256 256`}
                 />
               </div>

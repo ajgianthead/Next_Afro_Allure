@@ -41,7 +41,7 @@ export default function ConfirmAppClient() {
         // Fetch appointment data with appointmentID, when use businessID
         // that's attached to the appointment to fetch the business's policies
         const fetchAppointment = async () => {
-            const response = await fetch(`http://localhost:3000/api/appointments/${appointment_id}`, {
+            const response = await fetch(`/api/appointments/${appointment_id}`, {
                 method: "GET",
             });
             if (!response.ok) {
@@ -59,7 +59,7 @@ export default function ConfirmAppClient() {
                 stripeAccount: stripeID,
             });
             setStripePromise(stripePromise)
-            const response = await fetch("http://localhost:3000/api/checkout", {
+            const response = await fetch("/api/checkout", {
                 method: "POST",
                 body: JSON.stringify({
                     connectedAccountId: stripeID,
@@ -86,7 +86,7 @@ export default function ConfirmAppClient() {
             }
         }
         const getPolicies = async (data: any) => {
-            const response = await fetch(`http://localhost:3000/api/policies/policy/${data.policy_id}`, {
+            const response = await fetch(`/api/policies/policy/${data.policy_id}`, {
                 method: "GET",
             });
             if (!response.ok) {
@@ -101,7 +101,7 @@ export default function ConfirmAppClient() {
         }
 
         const getBusinessData = async (businessID: string) => {
-            const res = await fetch(`http://localhost:3000/api/${businessID}`, {
+            const res = await fetch(`/api/${businessID}`, {
                 method: 'GET'
             })
             const result = await res.json();
@@ -132,7 +132,7 @@ export default function ConfirmAppClient() {
     const [completed, setCompleted] = useState<boolean | null>(null);
     const handleCompleted = async () => {
         // Update the appointment status, then change the completed state
-        const response = await fetch(`http://localhost:3000/api/appointments`, {
+        const response = await fetch(`/api/appointments`, {
             method: "PUT",
             body: JSON.stringify({
                 id: appointment_id,
@@ -326,7 +326,7 @@ const PaymentForm = ({ promise, appointmentID, stripeID }: { promise: Promise<St
             //`Elements` instance that was used to create the Payment Element
             elements,
             confirmParams: {
-                return_url: `http://localhost:3000/appointment/${appointmentID}/${stripeID}/complete`,
+                return_url: `/appointment/${appointmentID}/${stripeID}/complete`,
 
             },
         })!;

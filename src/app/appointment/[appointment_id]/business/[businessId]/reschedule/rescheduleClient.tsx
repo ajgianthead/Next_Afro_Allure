@@ -89,13 +89,13 @@ export default function RescheduleClient() {
     const [availabilities, setAvailabilities] = useState<Availability[]>([])
     useEffect(() => {
         const fetchData = async () => {
-            const res = await fetch(`http://localhost:3000/api/${businessId}/availabilities`, {
+            const res = await fetch(`/api/${businessId}/availabilities`, {
                 method: 'GET'
             })
             const result = await res.json();
             const availabilities = result.result.availabilities
             setAvailabilities(availabilities)
-            const _res = await fetch(`http://localhost:3000/api/${businessId}/appointments`, {
+            const _res = await fetch(`/api/${businessId}/appointments`, {
                 method: "GET"
             })
             const appointments = await _res.json();

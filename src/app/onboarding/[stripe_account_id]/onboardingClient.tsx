@@ -10,7 +10,7 @@ export default function OnboardingClient() {
     const router = useRouter();
     useEffect(() => {
         const fetchLink = async () => {
-            const res = await fetch("http://localhost:3000/api/accountLink", {
+            const res = await fetch("/api/accountLink", {
                 method: "POST",
                 body: JSON.stringify({
                     account: accountID

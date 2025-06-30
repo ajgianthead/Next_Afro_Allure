@@ -37,7 +37,7 @@ export default function LayoutComp({
 
         const fetchUserData = async () => {
             if (user.business_id) {
-                const res = await fetch(`http://localhost:3000/api/${user.business_id}`, {
+                const res = await fetch(`/api/${user.business_id}`, {
                     method: 'GET'
                 })
                 const userData = await res.json()

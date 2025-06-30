@@ -37,7 +37,7 @@ export default function ServicesClient() {
     useEffect(() => {
         const getServices = async () => {
             const { business_id } = user
-            const res = await fetch(`http://localhost:3000/api/${business_id}/services/availabilities`)
+            const res = await fetch(`/api/${business_id}/services/availabilities`)
             const services = await res.json()
             if (services.data.length) {
                 setServiceAddons(services.data[0].business_users.service_addons);
@@ -57,7 +57,7 @@ export default function ServicesClient() {
     const [createOpen, setCreateOpen] = useState<boolean>(false)
     const handleDelete = async (serviceID: string, index: number) => {
         // Delete in supabase, then component state
-        const result = await fetch(`http://localhost:3000/api/${user.business_id}/services/${serviceID}`, {
+        const result = await fetch(`/api/${user.business_id}/services/${serviceID}`, {
             method: 'DELETE',
         });
         let clone = [...services];
@@ -100,7 +100,7 @@ export default function ServicesClient() {
         price: 0
     })
     const createAddon = async () => {
-        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services/addon`, {
+        const res = await fetch(`/api/${user.business_id}/services/addon`, {
             method: 'POST',
             body: JSON.stringify(addon)
         })
@@ -130,7 +130,7 @@ export default function ServicesClient() {
     const [currAddon, setCurrAddon] = useState<any>()
     const [addonIndex, setAddonIndex] = useState<number>(0)
     const editAddon = async (index: number) => {
-        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services/addon`, {
+        const res = await fetch(`/api/${user.business_id}/services/addon`, {
             method: 'PUT',
             body: JSON.stringify(currAddon)
         })
@@ -153,7 +153,7 @@ export default function ServicesClient() {
         }
     }
     const deleteAddon = async () => {
-        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services/addon/${currAddon.id}`, {
+        const res = await fetch(`/api/${user.business_id}/services/addon/${currAddon.id}`, {
             method: 'DELETE',
         })
         const result = await res.json()
@@ -419,7 +419,7 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
             clone.imagePath = res?.path!;
             clone.addons = [...Array.from(checkedAddons)]
         }
-        const res = await fetch(`http://localhost:3000/api/${user}/services`, {
+        const res = await fetch(`/api/${user}/services`, {
             method: 'POST',
             body: JSON.stringify(image.imageBlob ? clone : { ...service, price: service.price * 100 })
         })
@@ -730,7 +730,7 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
             clone.photo_url = imageURL;
             console.log(imageURL);
         }
-        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services`, {
+        const res = await fetch(`/api/${user.business_id}/services`, {
             method: 'PUT',
             body: JSON.stringify(hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })
         })
@@ -754,7 +754,7 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
         // Delete in supabase
         setDataSending(true)
         const id = services[index].id
-        const res = await fetch(`http://localhost:3000/api/${user.business_id}/services/${id}`, {
+        const res = await fetch(`/api/${user.business_id}/services/${id}`, {
             method: 'DELETE'
         })
         const result = await res.json();

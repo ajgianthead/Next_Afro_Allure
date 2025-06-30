@@ -93,7 +93,7 @@ export default function AvailabilityClient() {
     }
     useEffect(() => {
         const getData = async () => {
-            const res = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities`, {
+            const res = await fetch(`/api/${user.business_id}/availabilities`, {
                 method: 'GET'
             })
             const result = await res.json()
@@ -134,7 +134,7 @@ export default function AvailabilityClient() {
     const [availabilities, setAvailabilities] = useState<any>([])
     const uploadAvailability = async (isEdit: boolean, index?: number) => {
         if (!isEdit) {
-            const result = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities`,
+            const result = await fetch(`/api/${user.business_id}/availabilities`,
                 {
                     method: "POST",
                     body: JSON.stringify({
@@ -157,7 +157,7 @@ export default function AvailabilityClient() {
             setConfirmation(true)
         } else {
             if (index != undefined) {
-                const result = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities`,
+                const result = await fetch(`/api/${user.business_id}/availabilities`,
                     {
                         method: "PUT",
                         body: JSON.stringify({
@@ -197,7 +197,7 @@ export default function AvailabilityClient() {
         setOpenCreate(true)
     }
     const handleDelete = async (index: number) => {
-        const result = await fetch(`http://localhost:3000/api/${user.business_id}/availabilities/${availability.id}`,
+        const result = await fetch(`/api/${user.business_id}/availabilities/${availability.id}`,
             {
                 method: "DELETE",
                 headers: {

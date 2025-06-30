@@ -82,7 +82,7 @@ export default function BookingSettingsClient() {
         refundPolicy: ""
     });
     const getPolicy = async (id: string) => {
-        const result = await fetch(`http://localhost:3000/api/policies/${id}`, {
+        const result = await fetch(`/api/policies/${id}`, {
             method: "GET"
         })
         const { policies } = await result.json()
@@ -102,7 +102,7 @@ export default function BookingSettingsClient() {
     const handlePolicy = async () => {
         // Send policy data to database
         // Handle validation
-        const result = await fetch("http://localhost:3000/api/policies", {
+        const result = await fetch("/api/policies", {
             method: 'POST',
             body: JSON.stringify({
                 business: businessID,

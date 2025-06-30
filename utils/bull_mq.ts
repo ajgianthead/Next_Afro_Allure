@@ -22,7 +22,7 @@ export const appointmentReminders = new Queue('appointmentReminders', { connecti
 
 // Create workers
 const sendReminders = new Worker('sendReminder', async (job: Job) => {
-    const reminderData : AppointmentReminderData = job.data;
+    const reminderData: AppointmentReminderData = job.data;
     // Send email and/or SMS appointment reminder
     try {
         const response = await mctx.messages.sendTemplate({ //TODO: Change template and template data
@@ -33,58 +33,58 @@ const sendReminders = new Worker('sendReminder', async (job: Job) => {
                 from_email: 'notifications@afroallure.co',
                 from_name: "notifications@afroallure.co",
                 to: [{
-                        email: 'abijahnesbitt@afroallure.co',
-                        type: 'to'
-                    }],
-                    "global_merge_vars": [
-                        {
-                            name: "stylist_name",
-                            content: "LadyPlutoLooks" // Insert stylist name
-                        },
-                        {
-                            name: "appointment_date",
-                            content: '' // Format Appointment Date
-                        },
-                        {
-                            name: "appointment_time",
-                            content: '' // Format Appointment Time
-                        },
-                        {
-                            name: "business_address",
-                            content: '' // Insert Business Address
-                        },
-                        {
-                            name: "service_name",
-                            content: reminderData.service_data.name // Format Appointment Date
-                        },
-                        {
-                            name: "appointment_id",
-                            content: `${reminderData.appointmentId}` // Insert stylist name
-                        },
-                        {
-                            name: "business_id",
-                            content: `${reminderData.businessId}` // Insert stylist name
-                        },
-                        // http://localhost:3000/appointment/*|APPOINTMENT_ID/business/*|BUSINESS_ID|*/confirm
-                        { 
-                            name: "facebook_url",
-                            content: '' // Format Appointment Date
-                        },
-                        {
-                            name: "instagram_url",
-                            content: 'https://www.instagram.com/afroallure_/' // Format Appointment Date
-                        },
-                        {
-                            name: "twitter_url",
-                            content: '' // Format Appointment Date
-                        },
-                    ],
-                   
+                    email: 'abijahnesbitt@afroallure.co',
+                    type: 'to'
+                }],
+                "global_merge_vars": [
+                    {
+                        name: "stylist_name",
+                        content: "LadyPlutoLooks" // Insert stylist name
+                    },
+                    {
+                        name: "appointment_date",
+                        content: '' // Format Appointment Date
+                    },
+                    {
+                        name: "appointment_time",
+                        content: '' // Format Appointment Time
+                    },
+                    {
+                        name: "business_address",
+                        content: '' // Insert Business Address
+                    },
+                    {
+                        name: "service_name",
+                        content: reminderData.service_data.name // Format Appointment Date
+                    },
+                    {
+                        name: "appointment_id",
+                        content: `${reminderData.appointmentId}` // Insert stylist name
+                    },
+                    {
+                        name: "business_id",
+                        content: `${reminderData.businessId}` // Insert stylist name
+                    },
+                    // /appointment/*|APPOINTMENT_ID/business/*|BUSINESS_ID|*/confirm
+                    {
+                        name: "facebook_url",
+                        content: '' // Format Appointment Date
+                    },
+                    {
+                        name: "instagram_url",
+                        content: 'https://www.instagram.com/afroallure_/' // Format Appointment Date
+                    },
+                    {
+                        name: "twitter_url",
+                        content: '' // Format Appointment Date
+                    },
+                ],
+
             }
         })
         return true
     } catch (error) {
-        
+
     }
 }, {
     connection,

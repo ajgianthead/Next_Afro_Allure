@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
     try {
         const accountLink = await stripe.accountLinks.create({
             account: account,
-            refresh_url: `http://localhost:3000/onboarding/${account}`,
-            return_url: `http://localhost:3000/onboarding/${account}/return`,
+            refresh_url: `/onboarding/${account}`,
+            return_url: `/onboarding/${account}/return`,
             type: 'account_onboarding',
             collection_options: {
                 fields: "eventually_due"
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         })
         // Saving onboarding link
         const supabase = createClient<Database>();
-        const {data} = await supabase.from('business_users').update({
+        const { data } = await supabase.from('business_users').update({
             current_onboarding_link: accountLink.url
         }).eq('stripe_acc_id', account).select().single();
 

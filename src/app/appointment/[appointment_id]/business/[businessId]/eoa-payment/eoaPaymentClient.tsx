@@ -41,7 +41,7 @@ export default function EOAClient() {
         // Fetch appointment data with appointmentID, when use businessID
         // that's attached to the appointment to fetch the business's policies
         const fetchAppointment = async () => {
-            const response = await fetch(`http://localhost:3000/api/appointments/${appointment_id}`, {
+            const response = await fetch(`/api/appointments/${appointment_id}`, {
                 method: "GET",
             });
             if (!response.ok) {
@@ -59,7 +59,7 @@ export default function EOAClient() {
                 stripeAccount: stripeID,
             });
             setStripePromise(stripePromise)
-            const response = await fetch("http://localhost:3000/api/checkout", {
+            const response = await fetch("/api/checkout", {
                 method: "POST",
                 body: JSON.stringify({
                     connectedAccountId: stripeID,
@@ -88,7 +88,7 @@ export default function EOAClient() {
             }
         }
         const getPolicies = async (data: any) => {
-            const response = await fetch(`http://localhost:3000/api/policies/policy/${data.policy_id}`, {
+            const response = await fetch(`/api/policies/policy/${data.policy_id}`, {
                 method: "GET",
             });
             if (!response.ok) {
@@ -102,7 +102,7 @@ export default function EOAClient() {
             }
         }
         const getBusinessData = async (businessID: string) => {
-            const res = await fetch(`http://localhost:3000/api/${businessID}`, {
+            const res = await fetch(`/api/${businessID}`, {
                 method: 'GET'
             })
             const result = await res.json();
@@ -245,7 +245,7 @@ const PaymentForm = ({ promise, appointmentID, stripeID }: { promise: Promise<St
             //`Elements` instance that was used to create the Payment Element
             elements,
             confirmParams: {
-                return_url: `http://localhost:3000/appointment/${appointmentID}/${stripeID}/complete`,
+                return_url: `/appointment/${appointmentID}/${stripeID}/complete`,
 
             },
         })!;

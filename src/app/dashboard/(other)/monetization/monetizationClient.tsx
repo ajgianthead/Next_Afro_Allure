@@ -20,7 +20,7 @@ export default function MonetizationClient() {
     useEffect(() => {
         const getAccount = async () => {
             console.log(user);
-            const result = await fetch(`http://localhost:3000/api/${user.business_id}`, {
+            const result = await fetch(`/api/${user.business_id}`, {
                 method: 'GET',
             })
             const res = await result.json();
@@ -28,7 +28,7 @@ export default function MonetizationClient() {
         }
         const run = async (accountID: string) => {
             const fetchClientSecret = async () => {
-                const response = await fetch('http://localhost:3000/api/account_session', {
+                const response = await fetch('/api/account_session', {
                     method: 'POST',
                     body: JSON.stringify({
                         account: accountID

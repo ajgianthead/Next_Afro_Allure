@@ -54,7 +54,7 @@ export function BookingWrapper({ children, businessName }: any) {
     });
     useEffect(() => {
         const fetchBusiness = async () => {
-            const res = await fetch(`http://localhost:3000/api/businessUsers/${businessName}`, {
+            const res = await fetch(`/api/businessUsers/${businessName}`, {
                 method: "GET"
             })
             const businessData = await res.json();
@@ -71,7 +71,7 @@ export function BookingWrapper({ children, businessName }: any) {
         }
         // Get policy
         const getPolicy = async (businessData: any) => {
-            const response = await fetch(`http://localhost:3000/api/policies/policy/${businessData.booking_policies}`, {
+            const response = await fetch(`/api/policies/policy/${businessData.booking_policies}`, {
                 method: "GET",
             });
             if (!response.ok) {

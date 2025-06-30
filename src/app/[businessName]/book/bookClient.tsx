@@ -10,7 +10,6 @@ import Step from '@mui/joy/Step';
 import StepButton from '@mui/joy/StepButton';
 import StepIndicator from '@mui/joy/StepIndicator';
 import { Check } from 'lucide-react'
-import Label from '@components/Label'
 import Card from '@tailus-ui/Card'
 import Separator from "@tailus-ui/Separator"
 import Link from 'next/link'
@@ -20,15 +19,13 @@ import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import Skeleton from '@mui/joy/Skeleton';
 import { DateTime } from 'luxon'
 import { bookAppointment, getAvailability, getUnavailability } from '../actions'
-import { getSlots, OutputSlot } from "slot-calculator"
+import { getSlots } from "slot-calculator"
 import { useParams } from 'next/navigation'
-import { Json } from '../../../../lib/database.types'
 import CircularProgress from '@mui/joy/CircularProgress'
 import Dialog from '@components/Dialog';
-import { Elements, EmbeddedCheckout, EmbeddedCheckoutProvider, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { BookingData, BookingWrapper, useBooking } from '@utils/context/BookingDataContext';
-import { QueryResult } from 'pg';
 import { Card as MUICard, Checkbox } from '@mui/joy';
 
 export default function BookClient() {
@@ -69,7 +66,7 @@ const Book = () => {
     }, [data]);
 
     const handleSubmit = async () => {
-        const response = await fetch(`http://localhost:3000/api/appointments`, {
+        const response = await fetch(`/api/appointments`, {
             method: "POST",
             body: JSON.stringify({
                 business: data.business_id,
@@ -158,7 +155,7 @@ const DepositPayment = () => {
     const selectedServiceData = data.services.filter((service: Service, index: number) => service.id === data.selectedService)
     useEffect(() => {
         const fetchSession = async () => {
-            const response = await fetch("http://localhost:3000/api/checkout", {
+            const response = await fetch("/api/checkout", {
                 method: "POST",
                 body: JSON.stringify({
                     connectedAccountId: data.stripe_id,
@@ -233,7 +230,7 @@ const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentInten
             return;
         }
 
-        // const res = await fetch('http://localhost:3000/api/bookingAuto', {
+        // const res = await fetch('/api/bookingAuto', {
         //     method: 'POST',
         //     body: JSON.stringify({
         //         paymentIntentID: paymentIntentID,
@@ -255,7 +252,7 @@ const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentInten
                 //`Elements` instance that was used to create the Payment Element
                 elements,
                 confirmParams: {
-                    return_url: `http://localhost:3000/appointment/${appointment.id}/${data.stripe_id}/complete`,
+                    return_url: `/appointment/${appointment.id}/${data.stripe_id}/complete`,
 
                 },
             })!;
