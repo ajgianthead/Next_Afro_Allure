@@ -6,59 +6,59 @@ import { stripe } from "@lib/utils";
 import { Time } from "@internationalized/date";
 
 const defaultAvailability: any = {
-        id: crypto.randomUUID(),
-        name: "Default",
-        week: [{
-            isChecked: true,
-            timeRanges: [{
-                start: new Time(9),
-                end: new Time(17)
-            }]
-        },
-        {
-            isChecked: true,
-            timeRanges: [{
-                start: new Time(9),
-                end: new Time(17)
-            }]
-        },
-        {
-            isChecked: true,
-            timeRanges: [{
-                start: new Time(9),
-                end: new Time(17)
-            }]
-        },
-        {
-            isChecked: true,
-            timeRanges: [{
-                start: new Time(9),
-                end: new Time(17)
-            }]
-        },
-        {
-            isChecked: true,
-            timeRanges: [{
-                start: new Time(9),
-                end: new Time(17)
-            }]
-        },
-        {
-            isChecked: false,
-            timeRanges: [{
-                start: new Time(9),
-                end: new Time(17)
-            }]
-        },
-        {
-            isChecked: false,
-            timeRanges: [{
-                start: new Time(9),
-                end: new Time(17)
-            }]
-        }],
-        specificDates: {}
-    }
+    id: crypto.randomUUID(),
+    name: "Default",
+    week: [{
+        isChecked: true,
+        timeRanges: [{
+            start: new Time(9),
+            end: new Time(17)
+        }]
+    },
+    {
+        isChecked: true,
+        timeRanges: [{
+            start: new Time(9),
+            end: new Time(17)
+        }]
+    },
+    {
+        isChecked: true,
+        timeRanges: [{
+            start: new Time(9),
+            end: new Time(17)
+        }]
+    },
+    {
+        isChecked: true,
+        timeRanges: [{
+            start: new Time(9),
+            end: new Time(17)
+        }]
+    },
+    {
+        isChecked: true,
+        timeRanges: [{
+            start: new Time(9),
+            end: new Time(17)
+        }]
+    },
+    {
+        isChecked: false,
+        timeRanges: [{
+            start: new Time(9),
+            end: new Time(17)
+        }]
+    },
+    {
+        isChecked: false,
+        timeRanges: [{
+            start: new Time(9),
+            end: new Time(17)
+        }]
+    }],
+    specificDates: {}
+}
 
 // Register a business user
 export async function POST(request: NextRequest) {
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
                 },
             })
 
-           return await supabase.from('business_users').insert([
+            return await supabase.from('business_users').insert([
                 {
                     business_name: name,
                     user_id: data.data.user?.id,
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
                 }
             ]).select().single().then(async (res) => {
                 const business = res.data
-                 // Create policy
+                // Create policy
                 await supabase.from('business_policies').insert([
                     {
                         business: business?.business_id,
@@ -126,14 +126,14 @@ export async function POST(request: NextRequest) {
                 })
                 return await supabase.from('services').insert([
                     {
-                        name: "Test Service",
+                        name: "Box Braids",
                         business: business?.business_id!,
-                        description: "This is a test service",
+                        description: "This is an example service",
                         length: 180,
-                        price: 100,
+                        price: 8000,
                         photo_url: "",
                         imagePath: "",
-                        addons: null,
+                        addons: [],
                         categories: ["test", "default", "service"],
 
                     }
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
             })
 
         })
-        
+
     if (error) {
         return new Response(JSON.stringify({ error: error }), {
             headers: { 'Content-Type': 'application/json' },

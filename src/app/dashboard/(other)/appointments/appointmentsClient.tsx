@@ -9,7 +9,7 @@ import { Caption, Text, Title } from '@tailus-ui/typography';
 import DropdownMenu from "@components/DropdownMenu";
 import Select from '@components/Select';
 import { parseAbsoluteToLocal, Time, ZonedDateTime } from "@internationalized/date";
-import { CheckIcon, ChevronDown, ChevronsDown, ChevronsUpDown, EllipsisVertical, Info, Pencil, Trash, X } from 'lucide-react';
+import { CheckCircle2, CheckIcon, ChevronDown, ChevronsDown, ChevronsUpDown, EllipsisVertical, Info, Pencil, Trash, X, XCircle } from 'lucide-react';
 import Label from '@components/Label';
 import { useUserContext } from '@utils/context/UserContext';
 import "./calendar.css"
@@ -21,13 +21,14 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { TimeInput, DateInput, DateInputValue, TimeInputValue } from '@nextui-org/date-input';
 import Chip from '@mui/joy/Chip';
 import Checkbox from '@components/Checkbox';
-import { Checkbox as MUICheckBox, Skeleton } from '@mui/joy';
+import { Checkbox as MUICheckBox, Skeleton, Snackbar } from '@mui/joy';
 import Aligner from '@components/Aligner';
 import { businessRescheduling, manuallyCancel } from './actions';
 import { Drawer, ModalClose, Button as MUIButton } from '@mui/joy';
 import Toast from '@components/Toast';
 import { Backdrop } from '@mui/material';
 import { CheckedState } from '@radix-ui/react-checkbox';
+import { keyframes } from '@mui/system';
 
 const color: any = {
     "PENDING": "warning",
@@ -37,44 +38,43 @@ const color: any = {
     "CANCELLED": "danger"
 }
 
+interface PageProps {
+    appointmentData: Appointment[]
+    policyData: Policy,
+    servicesData: Service[]
+}
 
-const AppointmentsClient = () => {
+const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageProps) => {
     // Get all appointments and convert from ISO => DateTimes
     const { user } = useUserContext();
     const [loadingData, setLoadingData] = useState<boolean>(true);
-    const [appointments, setAppointments] = useState<any>([]);
+    const [appointments, setAppointments] = useState<any>(appointmentData);
     const [cancelledAppointmentsChecked, setCancelledAppointmentsChecked] = useState<boolean>(true)
-    const [policy, setPolicy] = useState<any>(null)
+    const [policy, setPolicy] = useState<any>(policyData)
     const [filteredAppointments, setFilteredAppointments] = useState<any>([]);
     useEffect(() => {
         if (user.business_id && policy === null) {
             (async () => {
-                const res = await fetch(`/api/${user.business_id}/booking`, {
-                    method: 'GET'
-                })
-                const result = await res.json()
-                console.log(result)
-                setDepositRequired(result.policy.deposit.enabled)
-                setPolicy(result.policy)
-                setServices(result.services)
-                if (result.appointments) {
+
+                setDepositRequired(policy.deposit.enabled)
+                if (appointments.length) {
                     let temp = []
-                    for (let i = 0; i < result.appointments.length; i++) {
+                    for (let i = 0; i < appointments.length; i++) {
                         temp.push({
-                            id: result.appointments[i].id,
-                            start: new Date(result.appointments[i].start),
-                            end: new Date(result.appointments[i].end),
-                            title: `${result.appointments[i].service_data.name} with ${result.appointments[i].client_metadata.firstName}`,
-                            status: result.appointments[i].status,
-                            client_metadata: result.appointments[i].client_metadata,
-                            service_data: result.appointments[i].service_data,
-                            require_deposit: result.appointments[i].require_deposit,
-                            paid_deposit: result.appointments[i].paid_deposit,
-                            policy_id: result.appointments[i].policy_id,
-                            deposit_charge_id: result.appointments[i].deposit_charge_id,
-                            reschedules: result.appointments[i].reschedules,
-                            deposit_price: result.appointments[i].deposit_price,
-                            addons: [...result.appointments[i].selected_addons]
+                            id: appointments[i].id,
+                            start: new Date(appointments[i].start),
+                            end: new Date(appointments[i].end),
+                            title: `${appointments[i].service_data.name} with ${appointments[i].client_metadata.firstName}`,
+                            status: appointments[i].status,
+                            client_metadata: appointments[i].client_metadata,
+                            service_data: appointments[i].service_data,
+                            require_deposit: appointments[i].require_deposit,
+                            paid_deposit: appointments[i].paid_deposit,
+                            policy_id: appointments[i].policy_id,
+                            deposit_charge_id: appointments[i].deposit_charge_id,
+                            reschedules: appointments[i].reschedules,
+                            deposit_price: appointments[i].deposit_price,
+                            addons: [...appointments[i].selected_addons]
 
                         })
                     }
@@ -141,7 +141,7 @@ const AppointmentsClient = () => {
     }
     const [isOpen, setIsOpen] = useState<boolean>(false)
     const [slotInfo, setSlotInfo] = useState<DateRange>()
-    const [services, setServices] = useState<any[]>([])
+    const [services, setServices] = useState<any[]>(servicesData)
     const localizer = luxonLocalizer(DateTime)
     const [currentAddons, setCurrentAddons] = useState(new Set<string>())
     const handleSelection = (slot: any) => {
@@ -155,7 +155,7 @@ const AppointmentsClient = () => {
         } else {
             setHasError(true)
             setErrorMessage({
-                title: "Error: Selection Denied",
+                title: "Selection Denied",
                 description: "Unable to create appointment in the past"
             })
         }
@@ -205,6 +205,8 @@ const AppointmentsClient = () => {
                 method: 'POST',
                 body: JSON.stringify(appointment)
             })
+            console.log(appointment);
+
             setAppointments([
                 ...appointments,
                 {
@@ -227,7 +229,7 @@ const AppointmentsClient = () => {
             ])
 
             setConfirmation({
-                title: "Appointment Created!",
+                title: "Appointment Created Successfully!",
                 description: "Confirmation sent to client email. Waiting for client approval"
             })
             setConfirmationOpen(true)
@@ -293,24 +295,81 @@ const AppointmentsClient = () => {
     const onNavigate = useCallback((newDate: any) => setDate(newDate), [setDate])
     const [isSending, setIsSending] = useState<boolean>(false)
 
+    const animationDuration = 600;
+
+    const handleClose = () => {
+        setConfirmationOpen(false)
+        setHasError(false)
+    };
+    const inAnimation = keyframes`
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+`;
+
+    const outAnimation = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+`;
     return (
         <div className=' max-h-min  w-full'>
-            <Toast.Provider>
-                <Toast.Root open={confirmationOpen || hasError} onOpenChange={(open: boolean) => {
-                    if (confirmationOpen) {
-                        setConfirmationOpen(open)
-                    } else {
-                        setHasError(open)
-                    }
-                }}>
-                    <Toast.Title>{confirmationOpen ? confirmation.title : errorMessage.title}</Toast.Title>
-                    <Toast.Description>{confirmationOpen ? confirmation.description : errorMessage.description}</Toast.Description>
-                    <Toast.Action altText='action' />
-                    <Toast.Close />
-                </Toast.Root>
+            <Snackbar
+                size='lg'
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                open={confirmationOpen}
+                color='success'
+                onClose={handleClose}
+                autoHideDuration={4000}
+                animationDuration={animationDuration}
+                sx={[
+                    confirmationOpen && {
+                        animation: `${inAnimation} ${animationDuration}ms forwards`,
+                    },
+                    !confirmationOpen && {
+                        animation: `${outAnimation} ${animationDuration}ms forwards`,
+                    },
+                ]}
+                variant={'soft'}
 
-                <Toast.Viewport />
-            </Toast.Provider>
+            >
+                <div className='flex gap-2 items-center'>
+                    <CheckCircle2 size={20} />{confirmation.title}Appointment Created Successfully
+                </div>
+            </Snackbar>
+            <Snackbar
+                size='lg'
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                open={hasError}
+                color='danger'
+                onClose={handleClose}
+                autoHideDuration={4000}
+                animationDuration={animationDuration}
+                sx={[
+                    hasError && {
+                        animation: `${inAnimation} ${animationDuration}ms forwards`,
+                    },
+                    !hasError && {
+                        animation: `${outAnimation} ${animationDuration}ms forwards`,
+                    },
+                ]}
+                variant={'soft'}
+
+            >
+                <div className='flex gap-2 items-center'>
+                    <XCircle size={20} />{errorMessage.title}: {errorMessage.description}
+                </div>
+            </Snackbar>
             <Dialog.Root open={isOpen} onOpenChange={(open) => {
                 setIsEditingDateTime(false)
                 setIsOpen(open)
@@ -504,7 +563,7 @@ const AppointmentsClient = () => {
                     </Dialog.Content>
                 </Dialog.Portal>
             </Dialog.Root>
-            {!loadingData ? <div className='w-full h-screen gap-2  flex flex-col justify-between'>
+            <div className='w-full h-screen gap-2  flex flex-col justify-between'>
                 <MUICheckBox label="Hide Cancelled Appointments" checked={cancelledAppointmentsChecked} onChange={(e) => {
                     setCancelledAppointmentsChecked(e.target.checked)
                 }} />
@@ -598,14 +657,7 @@ const AppointmentsClient = () => {
                     </div> : <></>}
                 </div>
 
-            </div> :
-                <div className='w-full h-screen flex justify-center items-center'>
-                    {/* <CircularProgress size='sm' /> */}
-                    <Skeleton>
-                        <div className='w-full h-screen'></div>
-                    </Skeleton>
-                </div>
-            }
+            </div>
 
         </div>
 

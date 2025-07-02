@@ -27,32 +27,20 @@ import Select from '@components/Select'
 import Checkbox from '@components/Checkbox'
 import { CheckedState } from '@radix-ui/react-checkbox'
 
-export default function ServicesClient() {
+interface PageProps {
+    servicesData: Service[];
+    serviceAddonsData: any[];
+    availabilitiesData: any[];
+    defaultAvail: string;
+}
+
+export default function ServicesClient({ servicesData, serviceAddonsData, availabilitiesData, defaultAvail }: PageProps) {
     // Get services from business
     const { user } = useUserContext();
-    const [loading, setLoading] = useState<boolean>(true);
-    const [availabilities, setAvailabilities] = useState<any>([])
-    const [defaultAvailability, setDefaultAvailability] = useState<string>("")
-    const [serviceAddons, setServiceAddons] = useState<any>([])
-    useEffect(() => {
-        const getServices = async () => {
-            const { business_id } = user
-            const res = await fetch(`/api/${business_id}/services/availabilities`)
-            const services = await res.json()
-            if (services.data.length) {
-                setServiceAddons(services.data[0].business_users.service_addons);
-                setServices(services.data)
-                setAvailabilities(services.data[0].business_users.availabilities)
-                setDefaultAvailability(services.data[0].business_users.default_availability)
-            }
-        }
-        if (user.business_id) {
-            setBusinessID(user.business_id)
-            getServices()
-            setLoading(false)
-        }
-    }, [user]);
-    const [services, setServices] = useState<any[]>([])
+    const [availabilities, setAvailabilities] = useState<any>(availabilitiesData)
+    const [defaultAvailability, setDefaultAvailability] = useState<string>(defaultAvail)
+    const [serviceAddons, setServiceAddons] = useState<any>(serviceAddonsData)
+    const [services, setServices] = useState<any[]>(servicesData)
     const [businessID, setBusinessID] = useState<string>("")
     const [createOpen, setCreateOpen] = useState<boolean>(false)
     const handleDelete = async (serviceID: string, index: number) => {
@@ -322,10 +310,8 @@ export default function ServicesClient() {
             </div>
             <Separator className="my-4 w-full" />
             <div className='w-full h-full flex flex-wrap'>
-
-                {loading ? <div className='w-full h-[calc(100vh-200px)] flex justify-center items-center'><CircularProgress size={'sm'} /></div> : services.map((service: Service, index: number) => {
+                {services.map((service: Service, index: number) => {
                     return (
-
                         <div key={index}>
                             <div>
                                 <ServiceCard setService={setService} service={service} index={index} setIndex={setCurrIndex} setIsEditing={setIsEditing} open={open} setOpen={setOpen} />

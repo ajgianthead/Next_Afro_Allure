@@ -4,10 +4,9 @@ import { Check, ChevronRight, HelpCircle, LogOut, MessageCircleQuestion, Setting
 import { Caption, Title } from '@tailus-ui/typography';
 import { AdminAvatar } from './AdminAvatar';
 import { TAILUS_AVATAR } from './../const';
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
-export const UserDropdown = () => {
-  const router = useRouter()
+export const UserDropdown = ({ businessData }: any) => {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger className="rounded-[--avatar-radius] hover:ring ring-[--ui-soft-bg] data-[state=open]:ring">
@@ -28,9 +27,9 @@ export const UserDropdown = () => {
             <AdminAvatar />
             <div>
               <Title className="text-sm" as="span" weight="medium">
-                Méschac Irung
+                {businessData.business_name}
               </Title>
-              <Caption>hello@tailus.io</Caption>
+              <Caption>{businessData.email}</Caption>
 
               <div className="mt-4 grid grid-cols-2 gap-3" data-rounded="large">
                 <Button.Root className="bg-gray-50" variant="outlined" size="xs" intent="gray">
@@ -45,7 +44,7 @@ export const UserDropdown = () => {
                   })
                   const res = await signOut.json();
                   console.log(res.message);
-                  router.replace('/login')
+                  redirect('/login')
 
                 }} className="bg-gray-50" variant="outlined" size="xs" intent="gray">
                   <Button.Icon size="xs" type="leading">

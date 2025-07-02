@@ -12,20 +12,7 @@ import { DialogContent, DialogTitle, Divider, Modal, ModalClose, ModalDialog, Ty
 import QRCode from "react-qr-code";
 
 
-export const StackedCards = () => {
-  const { user } = useUserContext()
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  useEffect(() => {
-    if (user.business_id) {
-      (async () => {
-        const result = await fetch(`/api/${user.business_id}/appointments?status=CONFIRMED`, {
-          method: 'GET'
-        })
-        const res = await result.json()
-        setAppointments(res.appointments)
-      })()
-    }
-  }, [user]);
+export const StackedCards = ({ appointments }: { appointments: Appointment[] }) => {
   return (
     <Card variant="outlined" className="w-full lg:w-[calc(100vw-20rem)] border-none">
       <Title as="h2" size="lg" weight="medium" className="mb-1">

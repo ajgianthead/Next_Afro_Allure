@@ -10,3 +10,9 @@ export const fetchUser = async () => {
     return data?.user
 
 }
+
+export const fetchBusinessUser = async (user_id: string) => {
+    const supabase = createClient<Database>()
+    const { data: business, error } = await supabase.from('business_users').select().eq('user_id', user_id).single()
+    return business
+}

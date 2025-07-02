@@ -23,47 +23,16 @@ import { Chip } from '@mui/joy';
 
 
 export default function LayoutComp({
-    children,
+    children, businessData
 }: Readonly<{
     children: React.ReactNode;
+    businessData: Business
 }>) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const { user, setUser } = useUserContext();
-    const [userData, setUserData] = useState<any>(null)
-    const router = useRouter()
-    const [loading, setLoading] = useState<boolean>(true);
-    useEffect(() => {
-        console.log(user);
-        const fetchUserData = async (user_id: string) => {
-            if (user.business_id) {
-                const res = await fetch(`/api/data/${user_id}/true`, {
-                    method: 'GET'
-                })
-                const userData = await res.json()
-                setUserData(userData.businessUser)
-                setUser({
-                    user_id: user_id,
-                    role: 'business',
-                    business_id: userData.businessUser.business_id,
-                    client_id: undefined
-                })
-            }
-        }
-        (async () => {
-            const thisUser = await fetchUser()
-            if (thisUser) {
-                await fetchUserData(thisUser.id)
-
-                setLoading(false)
-            } else {
-                router.replace('/login')
-            }
-        })()
-    }, [user.business_id]);
     const pathname = usePathname()
 
     return (
-        !loading ? <div lang="en">
+        <div lang="en">
             <div
                 className={twMerge(
                     'fixed inset-y-0 left-0 z-30 flex -translate-x-72  transition-transform duration-300 lg:translate-x-0',
@@ -201,16 +170,16 @@ export default function LayoutComp({
                         </div>
                         <div className="flex items-center gap-4 pr-6">
                             <Notifications />
-                            <UserDropdown />
+                            <UserDropdown businessData={businessData} />
                         </div>
                     </div>
 
-                    {userData && !userData?.completed_stripe_onboarding ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
+                    {businessData && !businessData?.completed_stripe_onboarding ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
                         <Banner.Content>
                             <CircleAlert className="size-5 text-[--body-text-color]" />
                             <div className="space-y-2">
                                 <Text size="sm" className="my-0 text-warning-800 dark:text-warning-300">
-                                    To launch your booking site, you need to finish  <a target='_blank' href={`${userData.current_onboarding_link}`}><strong>onboarding with Stripe</strong></a> to start accepting payments
+                                    To launch your booking site, you need to finish  <a target='_blank' href={`${businessData.current_onboarding_link}`}><strong>onboarding with Stripe</strong></a> to start accepting payments
                                 </Text>
 
                             </div>
@@ -225,7 +194,7 @@ export default function LayoutComp({
                 </div>
 
             </main>
-        </div> : <div></div>
+        </div>
     );
 }
 

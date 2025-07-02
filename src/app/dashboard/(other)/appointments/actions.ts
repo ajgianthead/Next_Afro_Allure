@@ -1,10 +1,22 @@
 'use server'
 
+import { SupabaseClient } from "@supabase/supabase-js";
 import pool from "@utils/dbPool";
 import { checkSlots } from "app/[businessName]/actions";
 import { sendCancelledEmails } from "app/api/appointments/route";
 import { DateTime } from "luxon";
 import { OutputSlot } from "slot-calculator";
+
+export const assignAddons = async (supabase: SupabaseClient, services: Service[]) => {
+    const uniqueAddonIds = [...new Set(services?.flatMap(service => service.addons))]
+    const { data: addons, error } = await supabase.from('service_addons').select("*").in('id', uniqueAddonIds)
+    const addonsById = Object.fromEntries((addons ?? []).map(addon => [addon.id, addon]))
+    const servicesWithAddons = services?.map(service => ({
+        ...service,
+        addonDetails: service.addons!.map((id: any) => addonsById[id]).filter(Boolean)
+    }));
+    return servicesWithAddons
+}
 
 export const manuallyCancel = async (businessId: string, appointmentID: string) => {
     // Make sure appointment exists and isn't CANCELLED
