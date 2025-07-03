@@ -140,6 +140,7 @@ export async function POST(request: NextRequest) {
                 ]).select(`*`).single().then(async (res) => {
                     return await supabase.from('availabilities').insert([
                         {
+                            id: defaultAvailability.id,
                             business_id: res.data?.business,
                             availability_data: defaultAvailability
                         }

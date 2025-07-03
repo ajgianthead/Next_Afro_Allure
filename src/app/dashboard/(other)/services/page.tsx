@@ -16,7 +16,7 @@ export default async function Page() {
     if (user) {
         const business = await fetchBusinessUser(user.id)
         const services = await getServices(business?.business_id!)
-        return <ServicesClient servicesData={services!} serviceAddonsData={services![0].business_users.service_addons} defaultAvail={services![0].business_users.default_availability} availabilitiesData={services![0].business_users.availabilities} />;
+        return <ServicesClient businessId={business?.business_id!} servicesData={services!} serviceAddonsData={services![0].business_users.service_addons} defaultAvail={services![0].business_users.default_availability} availabilitiesData={services![0].business_users.availabilities} />;
     }
     redirect('/login')
 

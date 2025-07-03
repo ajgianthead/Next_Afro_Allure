@@ -6,19 +6,21 @@ import { Database } from "../../../../../lib/database.types";
 export async function POST(request: NextRequest) {
     const supabase = createClient<Database>();
     const {
+        id,
         name,
-            description,
-            price,
-            length,
-            addons ,
-            imagePath,
-            photo_url,
-            business,
-            categories,
-            availability
+        description,
+        price,
+        length,
+        addons,
+        imagePath,
+        photo_url,
+        business,
+        categories,
+        availability
     } = await request.json();
     let { data, error } = await supabase.from('services').insert([
         {
+            id: id,
             name: name,
             description: description,
             price: price,
@@ -47,7 +49,7 @@ export async function PUT(request: NextRequest) {
     const supabase = createClient<Database>();
     const { id, name, price, description, addons, length, photo_url, business, category } = await request.json();
     console.log(id);
-    
+
     let { data, error } = await supabase.from('services').update(
         {
             name: name,
@@ -71,7 +73,7 @@ export async function PUT(request: NextRequest) {
 export async function GET(request: NextRequest, { params }: { params: { businessId: string } }) {
     const supabase = createClient<Database>();
     const { businessId } = await params;
-    let { data, error } = await supabase.from("services").select("*").eq("business", businessId).order("created_at", {ascending: true})
+    let { data, error } = await supabase.from("services").select("*").eq("business", businessId).order("created_at", { ascending: true })
     if (error) {
         return new NextResponse(JSON.stringify({ result: error, message: error.message }), {
             headers: { 'Content-Type': 'application/json' },

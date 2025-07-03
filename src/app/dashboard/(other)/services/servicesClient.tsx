@@ -32,20 +32,19 @@ interface PageProps {
     serviceAddonsData: any[];
     availabilitiesData: any[];
     defaultAvail: string;
+    businessId: string;
 }
 
-export default function ServicesClient({ servicesData, serviceAddonsData, availabilitiesData, defaultAvail }: PageProps) {
+export default function ServicesClient({ servicesData, serviceAddonsData, availabilitiesData, defaultAvail, businessId }: PageProps) {
     // Get services from business
-    const { user } = useUserContext();
     const [availabilities, setAvailabilities] = useState<any>(availabilitiesData)
     const [defaultAvailability, setDefaultAvailability] = useState<string>(defaultAvail)
     const [serviceAddons, setServiceAddons] = useState<any>(serviceAddonsData)
     const [services, setServices] = useState<any[]>(servicesData)
-    const [businessID, setBusinessID] = useState<string>("")
     const [createOpen, setCreateOpen] = useState<boolean>(false)
     const handleDelete = async (serviceID: string, index: number) => {
         // Delete in supabase, then component state
-        const result = await fetch(`/api/${user.business_id}/services/${serviceID}`, {
+        const result = await fetch(`/api/${businessId}/services/${serviceID}`, {
             method: 'DELETE',
         });
         let clone = [...services];
@@ -65,7 +64,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
         addons: [],
         imagePath: "",
         photo_url: "",
-        business: user,
+        business: businessId,
         categories: [],
         availability: ""
     })
@@ -88,7 +87,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
         price: 0
     })
     const createAddon = async () => {
-        const res = await fetch(`/api/${user.business_id}/services/addon`, {
+        const res = await fetch(`/api/${businessId}/services/addon`, {
             method: 'POST',
             body: JSON.stringify(addon)
         })
@@ -118,7 +117,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
     const [currAddon, setCurrAddon] = useState<any>()
     const [addonIndex, setAddonIndex] = useState<number>(0)
     const editAddon = async (index: number) => {
-        const res = await fetch(`/api/${user.business_id}/services/addon`, {
+        const res = await fetch(`/api/${businessId}/services/addon`, {
             method: 'PUT',
             body: JSON.stringify(currAddon)
         })
@@ -141,7 +140,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
         }
     }
     const deleteAddon = async () => {
-        const res = await fetch(`/api/${user.business_id}/services/addon/${currAddon.id}`, {
+        const res = await fetch(`/api/${businessId}/services/addon/${currAddon.id}`, {
             method: 'DELETE',
         })
         const result = await res.json()
@@ -238,8 +237,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
                 </Dialog.Portal>
 
             </Dialog.Root>
-            <CreateServiceDialog serviceAddons={serviceAddons} availabilities={availabilities} defaultAvailability={defaultAvailability} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={user.business_id} />
-            <EditServiceDialog serviceAddons={serviceAddons} availabilities={availabilities} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} setDeleteOpen={setOpen} services={services} setServices={setServices} open={isEditing} setIsOpen={setIsEditing} oldService={service} user={user} index={currIndex} />
+            <CreateServiceDialog serviceAddons={serviceAddons} availabilities={availabilities} defaultAvailability={defaultAvailability} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} services={services} setServices={setServices} open={createOpen} setIsOpen={setCreateOpen} user={businessId} />
             <div className="flex md:flex-row flex-col justify-between items-center mt-3">
                 <Title className='text-left w-full mb-2'>Services</Title>
                 <div className='flex gap-2 w-full md:flex-row flex-col justify-end'>
@@ -314,7 +312,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
                     return (
                         <div key={index}>
                             <div>
-                                <ServiceCard setService={setService} service={service} index={index} setIndex={setCurrIndex} setIsEditing={setIsEditing} open={open} setOpen={setOpen} />
+                                <ServiceCard isEditing={isEditing} availabilities={availabilities} serviceAddons={serviceAddons} services={services} setServices={setServices} setService={setService} service={service} index={index} setIndex={setCurrIndex} setIsEditing={setIsEditing} open={open} setOpen={setOpen} setConfirmationData={setConfirmationData} setConfirmation={setConfirmation} />
                             </div>
                         </div>
                     )
@@ -339,11 +337,12 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
 
 const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIsOpen, user, setConfirmationData, setConfirmation, defaultAvailability, availabilities }: any) => {
     const supabase = createClient<Database>();
+    const [id, setId] = useState<string>(crypto.randomUUID())
     const [service, setService] = useState<Service>({
         name: "",
         created_at: "",
         updated_at: "",
-        id: "",
+        id: id,
         description: "",
         price: 0,
         length: 0,
@@ -354,40 +353,28 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         categories: [],
         availability: defaultAvailability
     });
-    useEffect(() => {
-        console.log(availabilities);
-
-        setService({
-            ...service,
-            business: user
-        })
-        console.log(services);
-
-        // if (services.length) {
-        //     let newArr: Array<string> = [];
-        //     services.forEach((service: any, index: number) => {
-        //         if (!newArr.includes(service)) {
-        //             newArr.push(service)
-        //         }
-        //     })
-        //     setCategories(newArr)
-        // }
-    }, [user, services, availabilities]);
-    const [categories, setCategories] = useState<Array<string>>([])
     const uploadImage = async () => {
-        const id = crypto.randomUUID();
-        const path = `images/${user}/services/${id}`
+        const session = await supabase.auth.getUser();
+        if (!session.data.user) {
+            console.error("User not authenticated");
+            return;
+        }
+        const path = `private/images/${user}/services/${id}`
         try {
-            const { data, error } = await supabase.storage.from('Service Photos').upload(path, image.imageBlob!, {
+            const { data, error } = await supabase.storage.from('service-photos').upload(path, image.imageBlob!, {
                 contentType: 'image/*'
             })
+
             if (error) {
                 console.log(error)
             }
-            return { url: supabase.storage.from("Service Photos").getPublicUrl(path).data.publicUrl, path: path }
+            const url = await supabase
+                .storage
+                .from('service-photos')
+                .createSignedUrl(path, 60 * 60 * 24)
+            return { url: url.data?.signedUrl, path: path }
         } catch (error) {
             console.log(error);
-
         }
 
     }
@@ -398,6 +385,8 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         let clone;
         if (image.imageURL) {
             let res = await uploadImage()
+            console.log(res);
+
             imageURL = res?.url
             clone = { ...service }
             clone.photo_url = imageURL!;
@@ -422,7 +411,7 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
             name: "",
             created_at: "",
             updated_at: "",
-            id: "",
+            id: crypto.randomUUID(),
             description: "",
             price: 0,
             length: 0,
@@ -433,7 +422,6 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
             categories: [],
             availability: defaultAvailability
         })
-        setAddOns([])
         setDataSending(false)
         setIsOpen(false)
         setConfirmationData({
@@ -458,19 +446,32 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         })
     }, [])
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
-    const [addOns, setAddOns] = useState<{
-        name: string;
-        price: number;
-    }[]>([]);
-    const [checkedAddons, setCheckedAddons] = useState(new Set<string>())
-    const defaultA = availabilities.filter((availability: any) => availability.id === defaultAvailability)
-    let defaultAvailabilityName;
-    if (defaultA.length) {
-        defaultAvailabilityName = defaultA[0].name
-    }
+    const [checkedAddons, setCheckedAddons] = useState(new Set<string>());
     return (
         <div>
-            <Dialog.Root open={open} onOpenChange={setIsOpen}>
+            <Dialog.Root open={open} onOpenChange={(open) => {
+                setIsOpen(open);
+                setService({
+                    name: "",
+                    created_at: "",
+                    updated_at: "",
+                    id: crypto.randomUUID(),
+                    description: "",
+                    price: 0,
+                    length: 0,
+                    addons: [],
+                    imagePath: "",
+                    photo_url: "",
+                    business: user,
+                    categories: [],
+                    availability: defaultAvailability
+                })
+                setDataSending(false)
+                setImage({
+                    imageURL: null,
+                    imageBlob: null
+                })
+            }}>
                 <Dialog.Portal>
                     <Dialog.Overlay className='z-40' />
                     <Dialog.Content className="max-w-lg z-50 overflow-y-scroll">
@@ -495,7 +496,7 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
                                 <Caption className='mb-2'>Choose the availability you want use when clients book this service on your booking site</Caption>
                                 <Select.Root defaultValue={defaultAvailability}>
                                     <Select.Trigger size="md" className="w-full flex justify-between">
-                                        <Select.Value placeholder="Availability" />
+                                        <Select.Value placeholder="Choose availability" />
                                         <Select.Icon />
                                     </Select.Trigger>
 
@@ -637,7 +638,6 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
                                         categories: [],
                                         availability: defaultAvailability
                                     })
-                                    setAddOns([])
                                 }} variant="outlined" disabled={dataSending} size="sm" intent="gray">
                                     <Button.Label>Cancel</Button.Label>
                                 </Button.Root>
@@ -654,7 +654,7 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         </div>
     )
 }
-const EditServiceDialog = ({ serviceAddons, availabilities, services, setServices, open, setIsOpen, user, oldService, index, setConfirmation, setConfirmationData }: any) => {
+const EditServiceDialog = ({ serviceAddons, availabilities, open, setIsOpen, services, setServices, oldService, index, setConfirmation, setConfirmationData }: any) => {
     const [tooltip, setTooltip] = useState<boolean>(false);
     const supabase = createClient<Database>();
     const [service, setService] = useState<any>(oldService);
@@ -663,7 +663,7 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
         imageURL: string | null
         imageBlob: Blob | null
     }>({
-        imageURL: oldService.photo_url,
+        imageURL: null,
         imageBlob: null
     });
     const onDrop = useCallback((acceptedFiles: any) => {
@@ -675,57 +675,55 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
         })
     }, [])
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
-    const [addOns, setAddOns] = useState<{
-        name: string,
-        price: number
-    }[]>([])
-    const [checkedAddons, setCheckedAddons] = useState<any>(new Set<string>())
+    const [checkedAddons, setCheckedAddons] = useState<any>(new Set<string>([...oldService.addons]))
     useEffect(() => {
-        console.log(availabilities);
-        if (oldService) {
-            setService(oldService)
+        (async () => {
+            const url = await supabase
+                .storage
+                .from('service-photos')
+                .createSignedUrl(oldService.imagePath, 60 * 60 * 24)
+            if (Object.values(service).length === 0) {
+                setService(oldService)
+            }
             setImage({
                 ...image,
-                imageURL: oldService.photo_url
+                imageURL: url.data?.signedUrl!
             })
-            console.log(oldService.addons);
-
-            setCheckedAddons(new Set([...oldService.addons]))
-        }
-    }, [oldService, availabilities]);
+        })()
+    }, []);
     const editImage = async () => {
-        const id = crypto.randomUUID();
-        const path = `images/${user.business_id}/services/${id}`
-        const { data, error } = await supabase.storage.from('Service Photos').upload(service.imagePath.length ? service.imagePath! : path, image.imageBlob!, {
-            upsert: service.imagePath.length > 0
-        })
-        console.log(data);
-
-        if (data?.path) {
-            const res = supabase.storage.from("Service Photos").getPublicUrl(data?.path)
-            return res.data.publicUrl
+        try {
+            const path = `private/images/${service.business}/services/${service.id}`
+            const { data, error } = await supabase.storage.from('service-photos').update(path, image.imageBlob!)
+            if (data?.path.length) {
+                const url = await supabase
+                    .storage
+                    .from('service-photos')
+                    .createSignedUrl(path, 60 * 60 * 24)
+                console.log(url.data?.signedUrl)
+                return url.data?.signedUrl
+            }
+        } catch (error: any) {
+            console.error(error.message)
+            return error
         }
-        return error;
+
     }
     const handleSubmit = async () => {
         setDataSending(true)
         let clone = { ...service, addons: Array.from(checkedAddons) }
-        const hasImage = Object.values(image.imageBlob!)
+        const hasImage = Object.values(image.imageBlob ? image.imageBlob : {})
         if (hasImage.length) {
             let imageURL = await editImage()
             clone.photo_url = imageURL;
-            console.log(imageURL);
         }
-        const res = await fetch(`/api/${user.business_id}/services`, {
+        await fetch(`/api/${service.business}/services`, {
             method: 'PUT',
             body: JSON.stringify(hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })
         })
-        const dataBack = await res.json();
-
         // Update my component state
         let newServices = [...services];
-        newServices.splice(index, 1, image.imageBlob ? clone : { ...service, addons: Array.from(checkedAddons) })
-
+        newServices.splice(index, 1, hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })
         setServices(newServices)
         setDataSending(false)
         setIsOpen(false)
@@ -740,11 +738,9 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
         // Delete in supabase
         setDataSending(true)
         const id = services[index].id
-        const res = await fetch(`/api/${user.business_id}/services/${id}`, {
+        await fetch(`/api/${service.business}/services/${id}`, {
             method: 'DELETE'
         })
-        const result = await res.json();
-        const response = result.result;
         // Delete in local state
         let clone = [...services]
         clone.splice(index, 1)
@@ -758,22 +754,24 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
         setConfirmation(true)
     }
     const [deleteOpen, setDeleteOpen] = useState(false)
-    const defaultA = availabilities.filter((availability: any) => availability.id === service.availability)
-    let defaultAvailabilityName;
-    if (defaultA.length) {
-        defaultAvailabilityName = defaultA[0].name
-    }
-    const handleClose = () => {
+    const handleClose = async () => {
+        setDataSending(false)
         setService(oldService)
+        const url = await supabase
+            .storage
+            .from('service-photos')
+            .createSignedUrl(oldService.imagePath, 60 * 60 * 24)
+        if (Object.values(service).length === 0) {
+            setService(oldService)
+        }
         setImage({
-            imageBlob: null,
-            imageURL: oldService.photo_url
+            ...image,
+            imageURL: url.data?.signedUrl!
         })
-        setCheckedAddons(new Set([...oldService.addons]))
     }
 
     return (
-        <div>
+        <div key={index}>
             <AlertDialog.Root open={deleteOpen} onOpenChange={setDeleteOpen}>
                 <AlertDialog.Portal>
                     <AlertDialog.Overlay className='z-50' />
@@ -813,6 +811,8 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
                     setIsOpen(open)
                     if (!open) {
                         handleClose()
+                    } else {
+                        setImage
                     }
                 }}>
                     <Dialog.Portal>
@@ -839,7 +839,7 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
                                     <Caption className='mb-2'>Choose the availability you want use when clients book this service on your booking site</Caption>
                                     <Select.Root defaultValue={service.availability}>
                                         <Select.Trigger size="md" className="w-full flex justify-between">
-                                            <Select.Value placeholder="Availability" />
+                                            <Select.Value />
                                             <Select.Icon />
                                         </Select.Trigger>
 
@@ -991,7 +991,9 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
                                 </Tooltip.Provider>
 
 
-                                <Button.Root disabled={dataSending} onClick={handleSubmit} size="sm">
+                                <Button.Root disabled={dataSending} onClick={async () => {
+                                    await handleSubmit()
+                                }} size="sm">
                                     <Button.Label>{dataSending ? <CircularProgress size='sm' /> : "Save Changes"}</Button.Label>
                                 </Button.Root>
 
@@ -1006,14 +1008,14 @@ const EditServiceDialog = ({ serviceAddons, availabilities, services, setService
 }
 
 // Individual Service Dialog + Edit and Delete Functionality
-const ServiceCard = ({ service, index, setIsEditing, open, setOpen, setService, setIndex }: any) => {
+const ServiceCard = ({ service, index, setIsEditing, isEditing, setOpen, setService, setIndex, services, setServices, serviceAddons, availabilities, confirmation, setConfirmation, setConfirmationData }: any) => {
+    const [open, setIsOpen] = useState<boolean>(false)
 
     return (
         <div className='w-[250px]' key={index}>
+            <EditServiceDialog serviceAddons={serviceAddons} availabilities={availabilities} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} setDeleteOpen={setOpen} services={services} setServices={setServices} open={open} setIsOpen={setIsOpen} oldService={service} index={index} />
             <Card variant="outlined" className='py-4 flex flex-col gap-1 cursor-pointer' onClick={() => {
-                setIsEditing(true)
-                setIndex(index)
-                setService(service)
+                setIsOpen(true)
             }}>
                 <div className='flex justify-between items-center'>
                     <div className="w-full flex flex-wrap">

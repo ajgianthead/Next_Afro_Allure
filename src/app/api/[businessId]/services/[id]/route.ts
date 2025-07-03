@@ -24,9 +24,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 // Delete service
 export async function DELETE(request: NextRequest, { params }: { params: { id: string, businessId: string } }) {
     const supabase = createClient<Database>();
-    const { id, businessId } = params;
-    let {data, error} = await supabase.from('services').delete().eq("id", id).eq("business", businessId).select().single()
-    if(error){
+    const { id, businessId } = await params;
+    let { data, error } = await supabase.from('services').delete().eq("id", id).eq("business", businessId).select().single()
+    if (error) {
         return new NextResponse(JSON.stringify({ result: error }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200
