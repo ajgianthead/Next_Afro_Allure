@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest) {
             photo_url: photo_url,
             categories: category,
         }
-    ).eq('business', business).eq('id', id).select().single();
+    ).eq('id', id).select().single();
     if (error) {
         throw new Error(error.message)
     }

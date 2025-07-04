@@ -26,6 +26,8 @@ import Toast from '@components/Toast'
 import Select from '@components/Select'
 import Checkbox from '@components/Checkbox'
 import { CheckedState } from '@radix-ui/react-checkbox'
+import { fetchUser } from '../actions'
+import { createImgSignedUrl, updateImg, uploadImg } from './actions'
 
 interface PageProps {
     servicesData: Service[];
@@ -336,13 +338,11 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
 }
 
 const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIsOpen, user, setConfirmationData, setConfirmation, defaultAvailability, availabilities }: any) => {
-    const supabase = createClient<Database>();
-    const [id, setId] = useState<string>(crypto.randomUUID())
     const [service, setService] = useState<Service>({
         name: "",
         created_at: "",
         updated_at: "",
-        id: id,
+        id: crypto.randomUUID(),
         description: "",
         price: 0,
         length: 0,
@@ -354,42 +354,44 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         availability: defaultAvailability
     });
     const uploadImage = async () => {
-        const session = await supabase.auth.getUser();
-        if (!session.data.user) {
+        console.log("session")
+        const session = await fetchUser()
+
+        if (!session) {
             console.error("User not authenticated");
             return;
         }
-        const path = `private/images/${user}/services/${id}`
-        try {
-            const { data, error } = await supabase.storage.from('service-photos').upload(path, image.imageBlob!, {
-                contentType: 'image/*'
-            })
 
-            if (error) {
-                console.log(error)
-            }
-            const url = await supabase
-                .storage
-                .from('service-photos')
-                .createSignedUrl(path, 60 * 60 * 24)
-            return { url: url.data?.signedUrl, path: path }
-        } catch (error) {
-            console.log(error);
+        if (!(image.imageBlob instanceof Blob)) {
+            console.error("Invalid imageBlob", image.imageBlob);
+            return;
         }
 
-    }
+        const path = `private/images/${service.business}/services/${service.id}`;
+
+        let url;
+        try {
+            console.log(path, image.imageBlob);
+            url = await uploadImg(path, image).then(async (e) => {
+                console.log("Upload finished");
+                return await createImgSignedUrl(path)
+            })
+        } catch (err) {
+            console.error("Upload threw error:", err);
+        }
+        console.log(service.id)
+        return url
+    };
     const [dataSending, setDataSending] = useState<boolean>(false)
     const handleSubmit = async () => {
         setDataSending(true)
-        let imageURL;
         let clone;
-        if (image.imageURL) {
+        if (image.imageURL?.length) {
+            console.log("hi");
             let res = await uploadImage()
-            console.log(res);
 
-            imageURL = res?.url
             clone = { ...service }
-            clone.photo_url = imageURL!;
+            clone.photo_url = res?.url!;
             clone.price = clone.price * 100
             clone.imagePath = res?.path!;
             clone.addons = [...Array.from(checkedAddons)]
@@ -398,6 +400,7 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
             method: 'POST',
             body: JSON.stringify(image.imageBlob ? clone : { ...service, price: service.price * 100 })
         })
+        console.log(clone!.id)
         const dataBack = await res.json();
         setServices([
             ...services,
@@ -678,36 +681,24 @@ const EditServiceDialog = ({ serviceAddons, availabilities, open, setIsOpen, ser
     const [checkedAddons, setCheckedAddons] = useState<any>(new Set<string>([...oldService.addons]))
     useEffect(() => {
         (async () => {
-            const url = await supabase
-                .storage
-                .from('service-photos')
-                .createSignedUrl(oldService.imagePath, 60 * 60 * 24)
-            if (Object.values(service).length === 0) {
-                setService(oldService)
-            }
+            const url = await createImgSignedUrl(oldService.imagePath)
+            setService(oldService)
             setImage({
                 ...image,
-                imageURL: url.data?.signedUrl!
+                imageURL: url?.url!
             })
         })()
-    }, []);
+    }, [open]);
     const editImage = async () => {
+        let url;
         try {
             const path = `private/images/${service.business}/services/${service.id}`
-            const { data, error } = await supabase.storage.from('service-photos').update(path, image.imageBlob!)
-            if (data?.path.length) {
-                const url = await supabase
-                    .storage
-                    .from('service-photos')
-                    .createSignedUrl(path, 60 * 60 * 24)
-                console.log(url.data?.signedUrl)
-                return url.data?.signedUrl
-            }
+            url = await updateImg(path, image)
         } catch (error: any) {
             console.error(error.message)
             return error
         }
-
+        return url
     }
     const handleSubmit = async () => {
         setDataSending(true)
@@ -738,13 +729,12 @@ const EditServiceDialog = ({ serviceAddons, availabilities, open, setIsOpen, ser
         // Delete in supabase
         setDataSending(true)
         const id = services[index].id
-        await fetch(`/api/${service.business}/services/${id}`, {
+        const res = await fetch(`/api/${service.business}/services/${id}`, {
             method: 'DELETE'
         })
+        const updatedServices = await res.json()
         // Delete in local state
-        let clone = [...services]
-        clone.splice(index, 1)
-        setServices(clone)
+        setServices(updatedServices.result)
         setDataSending(false)
         setIsOpen(false)
         setConfirmationData({

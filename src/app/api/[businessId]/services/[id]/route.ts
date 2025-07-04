@@ -25,14 +25,21 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string, businessId: string } }) {
     const supabase = createClient<Database>();
     const { id, businessId } = await params;
-    let { data, error } = await supabase.from('services').delete().eq("id", id).eq("business", businessId).select().single()
+
+    const { data: result, error } = await supabase.from('services').delete().eq("id", id).select().then(async (res) => {
+        // if imagePath exists, delete img
+        await supabase.storage.from('service_photos').remove([res.data![0].imagePath!])
+        let { data, error } = await supabase.from('services').select().eq("business", businessId).order("created_at", { ascending: true })
+        return { data, error }
+    })
+
     if (error) {
         return new NextResponse(JSON.stringify({ result: error }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200
         })
     }
-    return new NextResponse(JSON.stringify({ result: data }), {
+    return new NextResponse(JSON.stringify({ result: result }), {
         headers: { 'Content-Type': 'application/json' },
         status: 200
     })
