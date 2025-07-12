@@ -54,11 +54,30 @@ export async function POST(request: NextRequest) {
       // Then define and call a function to handle the event payment_intent.processing
       break;
     case 'payment_intent.succeeded':
+      const transaction = await stripe.tax.transactions.createFromCalculation({
+        calculation: paymentIntent.metadata.tax_calculation,
+        reference: paymentIntent.id
+      })
       await client.query('BEGIN')
       if (paymentPurpose === 'EOA') {
         const res = (await client.query(`WITH updated AS (
           UPDATE appointments
-          SET service_paid = '$1', service_paid_type = 'PLATFORM', service_charge_id = $2
+          SET service_paid = '$1', service_paid_type = 'PLATFORM', service_charge_id = $2, eoa_tax_transaction = $3
+          WHERE id = $4
+          RETURNING *
+        )
+        SELECT 
+          updated.*,
+          business_users.business_name,
+          business_users.email
+        FROM updated
+        JOIN business_users
+          ON updated.business = business_users.business_id`, [true, paymentIntent.id, transaction.id, appointmentID])).rows[0]
+        // Send reciept to email
+      } else {
+        const res = (await client.query(`WITH updated AS (
+          UPDATE appointments
+          SET status = 'CONFIRMED', paid_deposit = $1, deposit_tax_transaction = $2
           WHERE id = $3
           RETURNING *
         )
@@ -68,22 +87,7 @@ export async function POST(request: NextRequest) {
           business_users.email
         FROM updated
         JOIN business_users
-          ON updated.business = business_users.business_id`, [true, paymentIntent.id, appointmentID])).rows[0]
-        // Send reciept to email
-      } else {
-        const res = (await client.query(`WITH updated AS (
-          UPDATE appointments
-          SET status = 'CONFIRMED', paid_deposit = $1
-          WHERE id = $2
-          RETURNING *
-        )
-        SELECT 
-          updated.*,
-          business_users.business_name,
-          business_users.email
-        FROM updated
-        JOIN business_users
-          ON updated.business = business_users.business_id`, [true, appointmentID])).rows[0]
+          ON updated.business = business_users.business_id`, [true, transaction.id, appointmentID])).rows[0]
         await client.query('COMMIT')
         try {
           await resend.emails.send({

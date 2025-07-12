@@ -37,6 +37,7 @@ export default function ConfirmAppClient() {
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [stripeID, setStripeID] = useState<string | null>(null)
     const [businessData, setBusinessData] = useState<any>({})
+    const [amountDue, setAmountDue] = useState<number>()
     useEffect(() => {
         // Fetch appointment data with appointmentID, when use businessID
         // that's attached to the appointment to fetch the business's policies
@@ -69,12 +70,14 @@ export default function ConfirmAppClient() {
                     paymentIntent: appointment.deposit_charge_id
                 }),
             });
+
             if (!response.ok) {
                 // Handle errors on the client side here
                 const { error } = await response.json();
                 throw new Error("An error occurred: ", error);
             } else {
                 const val = await response.json();
+                setAmountDue(val.amountDue)
                 const clientSecret = val.clientSecret;
                 const opt = { clientSecret }
                 setOptions({
@@ -216,7 +219,7 @@ export default function ConfirmAppClient() {
                                             </div>
                                         </div>
                                         <div className='flex w-full lg:justify-end justify-center mt-5'>
-                                            <Title>Due Now: ${appointmentData.deposit_price / 100}</Title>
+                                            {amountDue ? <Title>Due Now: ${amountDue! / 100}</Title> : <CircularProgress size='sm' />}
                                         </div>
                                     </div>
                                 </Card>

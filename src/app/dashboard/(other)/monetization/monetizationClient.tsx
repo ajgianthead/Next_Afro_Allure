@@ -14,18 +14,13 @@ import Separator from '@tailus-ui/Separator'
 import { Tab, TabList, TabPanel, Tabs } from '@mui/joy';
 import Card from '@tailus-ui/Card';
 
+interface PageProps {
+    stripeId: string
+}
 
-export default function MonetizationClient() {
+export default function MonetizationClient({ stripeId }: PageProps) {
     const { user } = useUserContext()
     useEffect(() => {
-        const getAccount = async () => {
-            console.log(user);
-            const result = await fetch(`/api/${user.business_id}`, {
-                method: 'GET',
-            })
-            const res = await result.json();
-            return res.data.stripe_acc_id
-        }
         const run = async (accountID: string) => {
             const fetchClientSecret = async () => {
                 const response = await fetch('/api/account_session', {
@@ -65,20 +60,11 @@ export default function MonetizationClient() {
                 }
             })
         }
+        (async () => {
+            const instance = await run(stripeId);
+            setConnectInstance(instance)
+        })()
 
-        if (user.business_id) {
-            (async () => {
-                await getAccount().then(async (accountID: string) => {
-                    try {
-                        const instance = await run(accountID);
-                        setConnectInstance(instance)
-                    } catch (error) {
-                        console.error(error)
-                    }
-
-                })
-            })()
-        }
     }, [user]);
 
     const [stripeConnectInstance, setConnectInstance] = useState<StripeConnectInstance>();
@@ -206,7 +192,6 @@ const AccountManagement = () => {
     return (
         <div className='w-full'>
             <ConnectAccountManagement
-
             // Optional:
             // collectionOptions={{
             //   fields: 'eventually_due',
