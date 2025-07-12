@@ -14,6 +14,9 @@ import { createClient } from '@utils/supabase/client';
 import { Database } from '../../../../lib/database.types';
 import CircularProgress from '@mui/joy/CircularProgress';
 import { useRouter } from 'next/navigation';
+import { Alert } from '@mui/joy';
+import { register } from '../actions';
+import { PostgrestError } from '@supabase/supabase-js';
 
 
 interface RegisterForm {
@@ -32,24 +35,29 @@ export default function Register() {
         phone: ""
     })
     const router = useRouter()
-    const handleRoute = async () => {
+    const createBusiness = async () => {
         setIsLoading(true)
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         if (asBusiness) {
-            const result = await fetch("/api/auth/register/business_user", {
-                method: "post",
-                headers: myHeaders,
-                body: JSON.stringify({
-                    "name": formData.name,
-                    "email": formData.email,
-                    "password": formData.password
-                }),
-            })
-            const res = await result.json();
-            console.log(res.data);
+            const result = await register({ name: formData.name, email: formData.email, password: formData.password })
+            if (result === "Business name is already taken") {
+                setError(result)
+                setIsLoading(false)
+            }
+            else if (result === "Email is already in use") {
+                setError(result)
+                setIsLoading(false)
+            }
+            else if (result instanceof PostgrestError) {
+                setError(result.message)
+                setIsLoading(false)
 
-            router.replace(`/onboarding/${res.data.business_users.stripe_acc_id}`)
+            } else {
+                router.replace(`/onboarding/${result.business_users?.stripe_acc_id}`)
+                setIsLoading(false)
+
+            }
         } else {
             const result = await fetch("/api/auth/register/client_user", {
                 method: "POST",
@@ -65,7 +73,7 @@ export default function Register() {
 
     }
     const [isLoading, setIsLoading] = useState<boolean>(false)
-
+    const [error, setError] = useState<any>(null)
     return (
         <main className="inset-0 z-10 m-auto h-fit max-w-xl px-6 py-12 lg:absolute">
             <Card className="relative h-fit p-1 mt-28 shadow-xl shadow-gray-950/10" variant="mixed">
@@ -97,7 +105,8 @@ export default function Register() {
                                 </Caption>
                                 <Separator className="h-px border-b" />
                             </div>
-
+                            {error ? <Alert variant='soft' color='danger' >Error: {error}</Alert>
+                                : <></>}
                             <div className="space-y-4">
                                 {asBusiness ? <div className="space-y-2.5">
                                     <Label size="sm" htmlFor="name">
@@ -159,7 +168,7 @@ export default function Register() {
                             <Caption as="p" size="base">Join Afro Allure as a business by toggling the switch</Caption>
                         </Aligner>
 
-                        <Button.Root disabled={isLoading} onClick={handleRoute} className="w-full">
+                        <Button.Root disabled={isLoading} onClick={createBusiness} className="w-full">
                             <Button.Label className='flex items-center'>{isLoading ? <CircularProgress size='sm' /> : "Create an Account"}</Button.Label>
                         </Button.Root>
                     </div>

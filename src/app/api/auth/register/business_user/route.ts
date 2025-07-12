@@ -65,6 +65,13 @@ export async function POST(request: NextRequest) {
     const supabase = createClient<Database>();
     const { name, email, password } = await request.json();
     // Register user and put user in business_users table
+    const { data, error: nameError } = await supabase.from('business_users').select().eq('business_name', name).single()
+    if (data) {
+        return new Response(JSON.stringify({ message: "Business name is taken" }), {
+            headers: { 'Content-Type': 'application/json' },
+            status: 500
+        })
+    }
     const { data: user, error } = await supabase.auth.signUp({
         email: email,
         password: password,
@@ -151,7 +158,7 @@ export async function POST(request: NextRequest) {
         })
 
     if (error) {
-        return new Response(JSON.stringify({ error: error }), {
+        return new Response(JSON.stringify({ message: error }), {
             headers: { 'Content-Type': 'application/json' },
             status: 500
         })

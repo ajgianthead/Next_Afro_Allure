@@ -78,7 +78,7 @@ export default function Toolbox() {
     return (
         <div>
             <div className='flex flex-wrap gap-2'>
-                <button ref={(ref: any) => connectors.create(ref, <Element is={Container} padding={10} background="#eee" canvas />)} className='w-[calc(100%/3-8px)] flex gap-1 flex-col  rounded-t border-[#D4D4D4] justify-center items-center' >
+                <button ref={(ref: any) => connectors.create(ref, <Element is={Container} padding={10} width={'100%'} height={115} background="#eee" canvas />)} className='w-[calc(100%/3-8px)] flex gap-1 flex-col  rounded-t border-[#D4D4D4] justify-center items-center' >
                     <div className='w-full border border-[#D4D4D4] rounded flex justify-center py-5'>
                         <Box size={40} />
                     </div>

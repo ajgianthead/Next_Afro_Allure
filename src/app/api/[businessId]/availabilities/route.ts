@@ -6,39 +6,45 @@ export async function PUT(request: NextRequest, { params }: { params: { business
     const supabase = createClient<Database>();
     const { businessId } = await params
     const { availability, defaultAvailability, id } = await request.json()
-    console.log(id)
-    const { data, error } = await supabase.from("availabilities").update({
-        availability_data: availability,
-    }).eq("id", id).select("*").single();
-    
-        // await supabase.from('business_users').update({
-        //     default_availability: defaultAvailability
-        // }).eq('business_id', businessId)
-    
-    if (error) {
-        console.log(error, data);
-        return new NextResponse(JSON.stringify({ error: error }), {
+    const { data: oldAvailability, error: availabilityError } = await supabase.from('availabilities').select("id, business_users(default_availability)").eq('id', id)
+    if (oldAvailability?.length) {
+        const { data, error } = await supabase.from("availabilities").update({
+            availability_data: availability,
+        }).eq("id", id).select("*").single();
+
+        if (defaultAvailability !== oldAvailability[0].business_users?.default_availability) {
+            await supabase.from('business_users').update({
+                default_availability: defaultAvailability
+            })
+        }
+
+        if (error) {
+            console.log(error, data);
+            return new NextResponse(JSON.stringify({ error: error }), {
+                headers: { 'Content-Type': 'application/json' },
+                status: 500
+            })
+        }
+        if (data) {
+            return new NextResponse(JSON.stringify({ result: data }), {
+                headers: { 'Content-Type': 'application/json' },
+                status: 200
+            })
+        }
+    } else {
+        return new NextResponse(JSON.stringify({ message: "error" }), {
             headers: { 'Content-Type': 'application/json' },
             status: 500
         })
     }
-    if (data) {
-        return new NextResponse(JSON.stringify({ result: data }), {
-            headers: { 'Content-Type': 'application/json' },
-            status: 200
-        })
-    }
-    return new NextResponse(JSON.stringify({ result: "No availabilities to update" }), {
-        headers: { 'Content-Type': 'application/json' },
-        status: 401
-    })
+
 
 }
 // Create new availability
-export async function POST(request: NextRequest){
+export async function POST(request: NextRequest) {
     const supabase = createClient<Database>();
-    const {businessId, availabilityData} = await request.json()
-    const {data, error} = await supabase.from('availabilities').insert([{
+    const { businessId, availabilityData } = await request.json()
+    const { data, error } = await supabase.from('availabilities').insert([{
         availability_data: availabilityData,
         business_id: businessId,
         id: availabilityData.id
@@ -68,7 +74,7 @@ export async function GET(request: NextRequest, { params }: { params: { business
         })
     }
     if (data) {
-        return new NextResponse(JSON.stringify({ result: {availabilities: data, defaultAvailability: data[0].business_users?.default_availability} }), {
+        return new NextResponse(JSON.stringify({ result: { availabilities: data, defaultAvailability: data[0].business_users?.default_availability } }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200
         })

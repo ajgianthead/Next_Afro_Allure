@@ -38,91 +38,42 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
     }));
 
     const nodeRef = useRef<HTMLDivElement>(null);
-    const [innerWidth, setInnerWidth] = useState(0);
     const { isResizing, setIsResizing } = useEditorContext();
+    console.log(parentNodeWidth);
     useEffect(() => {
-        if (!parentElement) return;
-
-        // if (nodeRef.current) {
-        //     if (isResizing) {
-        //         connect(nodeRef.current);
-        //     } else {
-        //         connect(drag(nodeRef.current));
-        //     }
-        // }
-        if (parentElement?.offsetWidth && parentElement?.offsetHeight && id !== 'ROOT') {
+        if (width === '100%') {
             actions.setProp(id, (props) => {
-                props.width = parentElement.offsetWidth / 2; // ✅ Half width
-                props.height = parentElement.offsetHeight / 2;    // Optional, keep full height or adjust
-            });
-        }
-        if (id !== "ROOT") {
-            const observer = new ResizeObserver((entries) => {
-                for (let entry of entries) {
-                    const parentWidth = entry.contentRect.width;
-                    const parentHeight = entry.contentRect.height;
-                    actions.setProp(id, (props) => {
-                        props.width = parentWidth * (props.width / parentWidth); // or '50%' if styled properly
-                        props.height = props.height;
-                    });
-                }
-            });
-            observer.observe(parentElement);
-            return () => observer.disconnect();
+                props.width = parentNodeWidth;
+
+            })
         }
     }, [parentElement]);
-    const [maxHeight, setMaxHeight] = useState<number>()
-    const [maxWidth, setMaxWidth] = useState<number>()
-    const [minWidth, setMinWidth] = useState<number>()
-    const [minHeight, setMinHeight] = useState<number>();
 
-    const getMaxHeight = async () => {
-        // Constantly check if all the parent's nodes children equal its current height
-        if (parentFlexDirection === 'column') {
-            let maximumHeight;
-            let heightSum = 0;
-            parentChildNodes?.forEach((node: any) => {
-                if (node.id !== id) {
-                    heightSum += node.offsetHeight
-                }
-            })
-            maximumHeight = parentNodeHeight! - heightSum;
-            if (maximumHeight <= 0) {
-                setMaxHeight(0)
-            } else {
-                setMaxHeight(maximumHeight - margin * 2)
-            }
-        }
-        if (parentFlexDirection === 'row') {
-            setMaxHeight(parentNodeHeight - margin * 2)
-        }
+    const handleMarginChange = (e: any) => {
+
     }
-    const getMaxWidth = async () => {
-        // Constantly check if all the parent's nodes children equal its current width
-        if (parentFlexDirection === 'column') {
-            setMaxWidth(parentNodeWidth - margin * 2)
-        }
-        if (parentFlexDirection === 'row') {
-            let maximumWidth;
-            let widthSum = 0;
-            parentChildNodes?.forEach((node: any) => {
-                if (node.id !== id) {
-                    widthSum += node.offsetWidth
-                }
-            })
-            maximumWidth = parentNodeWidth! - widthSum;
-            if (maximumWidth <= 0) {
-                setMaxWidth(0)
-            } else {
-                setMaxWidth(maximumWidth - margin * 2)
-            }
-        }
-    }
+
     return (
-
         <div id={id} ref={(ref: any) => connect(isResizing ? ref : drag(ref))} draggable={!isResizing}>
+            {/* 🟠 Margin Overlay */}
+            {(hoveringId.values().toArray()[0] === id && id !== 'ROOT' && !isResizing) && (
+                <div
+                    style={{
+                        width: width + (margin * 2),
+                        height: margin * 2 + height,
+                        position: 'absolute',
+                        backgroundColor: 'rgba(255, 165, 0, 0.1)', // orange
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                    }}
+                >
+
+                </div>
+            )}
+
             <Resizable as={'div'}
-                size={{ width: width, height: height }}
+
+                size={{ width: width === '100%' ? parentNodeWidth : width, height: height }}
                 onResizeStart={() => {
                     setIsResizing(true)
                     if (hasChildNodes) {
@@ -138,8 +89,7 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
                                 }
                             }
                         })
-                        setMinWidth(sumWidth + padding * 2)
-                        setMinHeight(minHeight + padding * 2)
+
                     }
                 }}
                 // maxHeight={maxHeight}
@@ -147,7 +97,7 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
                 // minHeight={minHeight}
                 // minWidth={minWidth}
                 snap={{
-                    x: [parentNodeWidth, parentNodeWidth / 2, ...Array.prototype.slice.call(childNodes ?? []).map((node) => {
+                    x: [parentNodeWidth - margin * 2, parentNodeWidth / 2, ...Array.prototype.slice.call(childNodes ?? []).map((node) => {
                         return node.offsetWidth + padding * 2
                     }), ...Array.prototype.slice.call(parentChildNodes ?? []).map((node) => {
                         return node.offsetWidth
@@ -162,32 +112,88 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
                 // boundsByDirection
                 onResizeStop={(_, __, ___, delta) => {
                     setIsResizing(false)
-                    const currentWidth = typeof width === 'string' ? parseFloat(width) : width;
-                    const newWidth = currentWidth + delta.width;
+                    // const currentWidth = typeof width === 'string' ? parseFloat(width) : width;
+                    // const newWidth = currentWidth + delta.width;
+                    console.log(delta);
 
                     actions.setProp(id, (props) => {
-                        props.width = newWidth;
-                        props.height = props.height + delta.height
+                        props.width += delta.width;
+                        props.height += delta.height
                     })
-                    if (nodeRef.current) {
-                        Array.from(nodeRef.current.children).forEach((child) => {
-                            const childEl = child as HTMLElement;
-                            const originalChildWidth = childEl.offsetWidth;
-                            const percent = (originalChildWidth / currentWidth) * 100;
-                            const newChildWidth = (newWidth * percent) / 100;
-                            childEl.style.width = `${newChildWidth}px`;
-                        });
-                    }
+                    // if (nodeRef.current) {
+                    //     Array.from(nodeRef.current.children).forEach((child) => {
+                    //         const childEl = child as HTMLElement;
+                    //         const originalChildWidth = childEl.offsetWidth;
+                    //         const percent = (originalChildWidth / currentWidth) * 100;
+                    //         const newChildWidth = (newWidth * percent) / 100;
+                    //         childEl.style.width = `${newChildWidth}px`;
+                    //     });
+                    // }
                 }}
                 style={{
                     display: 'flex', flexDirection, margin, padding, background, gap: `${gap}px`, width, height
                 }}
-                className={` relative ${selectedNode.values().toArray()[0] === id ? "outline outline-blue-800" : ""} ${isHovering && selectedNode.values().toArray()[0] !== id ? `outline-dashed outline-blue-800 outline-2` : ''} ${isHovering && selectedNode.values().toArray()[0] === id ? `outline outline-blue-800 outline-2` : ''} ${!isHovering && selectedNode.values().toArray()[0] === id ? `outline outline-blue-800 outline-2` : ''} justify-${alignMain} items-${alignAlt} outline-offset-1`}
-                defaultSize={{
-                    width: width,
-                    height: height,
-                }}
+                className={` relative ${selectedNode.values().toArray()[0] === id ? "outline outline-blue-800" : ""}  ${isHovering && selectedNode.values().toArray()[0] !== id ? `outline-dashed outline-blue-800 outline-2` : ''} ${isHovering && selectedNode.values().toArray()[0] === id ? `outline outline-blue-800 outline-2` : ''} ${!isHovering && selectedNode.values().toArray()[0] === id ? `outline outline-blue-800 outline-2` : ''} justify-${alignMain} items-${alignAlt} outline-offset-1`}
+                defaultSize={{ width: width === '100%' ? parentElement?.offsetWidth : width, height: height }}
             >
+                {hoveringId.values().toArray()[0] === id && id !== 'ROOT' && !isResizing && (
+                    <div><div
+                        style={{
+                            position: 'absolute',
+                            height: padding,
+                            width: width,
+                            top: 0,
+                            left: 0,
+                            backgroundColor: 'rgba(0, 128, 0, 0.1)', // green
+                            zIndex: 0,
+                            pointerEvents: 'none',
+                            borderRadius: 4,
+                        }}
+                    >
+                    </div>
+                        <div
+                            style={{
+                                position: 'absolute',
+                                height: padding,
+                                width: width,
+                                top: height - padding,
+                                left: 0,
+                                backgroundColor: 'rgba(0, 128, 0, 0.1)', // green
+                                zIndex: 0,
+                                pointerEvents: 'none',
+                                borderRadius: 4,
+                            }}
+                        >
+                        </div>
+                        <div
+                            style={{
+                                position: 'absolute',
+                                height: height - padding * 2,
+                                width: padding,
+                                top: padding,
+                                left: 0,
+                                backgroundColor: 'rgba(0, 128, 0, 0.1)', // green
+                                zIndex: 0,
+                                pointerEvents: 'none',
+                                borderRadius: 4,
+                            }}
+                        >
+                        </div>
+                        <div
+                            style={{
+                                position: 'absolute',
+                                height: height - padding * 2,
+                                width: padding,
+                                top: padding,
+                                left: width - padding,
+                                backgroundColor: 'rgba(0, 128, 0, 0.1)', // green
+                                zIndex: 0,
+                                pointerEvents: 'none',
+                            }}
+                        >
+                        </div></div>
+                )}
+
                 {children}
             </Resizable>
         </div>
@@ -199,15 +205,23 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
 
 
 export const ContainerSettings = () => {
-    const { actions: { setProp }, props } = useNode((node) => ({
-        props: node.data.props,
+    const { actions: { setProp }, props, parentNodeHeight, parentNodeWidth } = useNode((state) => ({
+        props: state.data.props,
+        parentNodeWidth: state.dom?.parentElement?.clientWidth! - parseInt((state.dom?.parentElement?.style.padding.slice(0, state.dom?.parentElement?.style!.padding.length - 2))!) * 2,
+        parentNodeHeight: state.dom?.parentElement?.clientHeight! - parseInt((state.dom?.parentElement?.style.padding.slice(0, state.dom?.parentElement?.style!.padding.length - 2))!) * 2,
     }));
     useEffect(() => {
 
-        console.log(props.width, props.height);
-
     }, []);
     const [color, setColor] = useState<string>("#000000");
+    const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const margin = parseInt(e.target.value)
+        console.log(parentNodeWidth, props.width + margin)
+        if (props.width + margin * 2 > parentNodeWidth) {
+            setProp((props: Record<string, any>) => props.width = props.width - (props.width + (margin * 2) - parentNodeWidth))
+        }
+        setProp((props: any) => props.margin = margin)
+    }
     return (
         <div>
             <div>
@@ -227,7 +241,7 @@ export const ContainerSettings = () => {
                         <div className='w-full justify-between items-center flex'>
                             <Caption>Margin</Caption>
                             <div className='w-1/2 flex justify-end gap-1'>
-                                <Input className='w-4/6 text-xs' value={props.margin} onChange={(e) => setProp((props: any) => props.margin = parseInt(e.target.value))} endDecorator={'px'} />
+                                <Input className='w-4/6 text-xs' value={props.margin} onChange={handleMarginChange} endDecorator={'px'} />
                                 <IconButton variant='outlined'>
                                     <TbBoxMargin />
                                 </IconButton>
@@ -395,8 +409,8 @@ Container.craft = {
         settings: ContainerSettings
     },
     props: {
-        // width: 500,
-        // height: 200,
+        width: '100%',
+        height: 200,
         margin: 0,
         padding: 0,
         flexDirection: 'row',

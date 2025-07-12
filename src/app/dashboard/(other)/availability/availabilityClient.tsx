@@ -22,10 +22,12 @@ import { useUserContext } from '@utils/context/UserContext'
 import CircularProgress from '@mui/joy/CircularProgress'
 import Tooltip from '@tailus-ui/Tooltip'
 import Toast from '@components/Toast'
+import { DateTime } from 'luxon'
+import { VisuallyHidden } from '@nextui-org/react'
 
 
 const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-const shortCuts = {
+const shortCuts: any = {
     "Monday": "MON",
     "Tuesday": "TUE",
     "Wednesday": "WED",
@@ -35,7 +37,12 @@ const shortCuts = {
     "Sunday": "SUN"
 }
 
-export default function AvailabilityClient() {
+interface PageProps {
+    availabilitiesData: any,
+    defaultAvailabilityData: string
+}
+
+export default function AvailabilityClient({ availabilitiesData, defaultAvailabilityData }: PageProps) {
     const { user } = useUserContext()
     const defaultAvailability = {
         id: crypto.randomUUID(),
@@ -91,28 +98,11 @@ export default function AvailabilityClient() {
         }],
         specificDates: {}
     }
-    useEffect(() => {
-        const getData = async () => {
-            const res = await fetch(`/api/${user.business_id}/availabilities`, {
-                method: 'GET'
-            })
-            const result = await res.json()
-            const availabilities = result;
-            setAvailabilities(availabilities.result.availabilities === null ? [] : availabilities.result.availabilities)
-            setDefaultAvailable(availabilities.result.defaultAvailability)
-            console.log(availabilities.result.availabilities);
 
-        }
-        if (user.business_id) {
-            (async () => {
-                await getData()
-            })()
-        }
-
-    }, [user]);
     const [openCreate, setOpenCreate] = useState<boolean>(false)
     const [availability, setAvailability] = useState<any>(defaultAvailability)
-    const [dates, setDates] = useState<string[]>(Object.keys(availability.specificDates))
+    const [editingAvailability, setEditingAvailability] = useState<any>()
+    const [dates, setDates] = useState<string[]>(Object.keys(defaultAvailability.specificDates))
     const onDateSelect = (focused: any, clicked: any) => {
         let date = clicked.toString();
         if (!dates.includes(date)) {
@@ -131,7 +121,7 @@ export default function AvailabilityClient() {
             setDates(Object.keys(newObj.specificDates))
         }
     }
-    const [availabilities, setAvailabilities] = useState<any>([])
+    const [availabilities, setAvailabilities] = useState<any>(availabilitiesData)
     const uploadAvailability = async (isEdit: boolean, index?: number) => {
         if (!isEdit) {
             const result = await fetch(`/api/${user.business_id}/availabilities`,
@@ -188,12 +178,14 @@ export default function AvailabilityClient() {
     }
     const [isEditing, setisEditing] = useState(false);
     const [currEditIndex, setCurrEditIndex] = useState<number>();
-    const [defaultAvailable, setDefaultAvailable] = useState("")
-    const handleEdit = (index: number) => {
+    const [defaultAvailable, setDefaultAvailable] = useState(defaultAvailabilityData)
+    const handleEdit = (index: number, element: any) => {
         console.log(availabilities[index]);
         setCurrEditIndex(index)
         setisEditing(true)
-        setAvailability(availabilities[index].availability_data)
+        let clone = structuredClone(element.availability_data)
+        setAvailability(clone)
+        setEditingAvailability(availabilities[index].availability_data)
         setOpenCreate(true)
     }
     const handleDelete = async (index: number) => {
@@ -228,15 +220,21 @@ export default function AvailabilityClient() {
     return (
         <div className='px-6'>
             <Dialog.Root open={openCreate} onOpenChange={setOpenCreate}>
+                {/* TODO: onClose() handle getting rid of data during editing availability */}
                 <Dialog.Portal>
                     <Dialog.Overlay className='z-40' />
+                    <VisuallyHidden>
+                        <Dialog.Title>
+                            {isEditing ? "Edit" : "Create New"} Availability
+                        </Dialog.Title>
+                    </VisuallyHidden>
+
                     <Dialog.Content className="max-w-7xl z-50 overflow-y-scroll">
-                        {/* <Dialog.Title>{isEditing ? "Edit" : "Create"} Availability</Dialog.Title>
-                        <Caption>Enter your availability</Caption> */}
+                        <div className='mb-2'>
+                            <Title>{isEditing ? "Edit" : "Create New"} Availability</Title>
+                        </div>
                         <Dialog.Description className=''>
-                            <div className='mb-2'>
-                                <Title>{isEditing ? "Edit" : "Create New"} Availability</Title>
-                            </div>
+
                             <Input value={availability.name} onChange={(e) => {
                                 setAvailability({
                                     ...availability,
@@ -287,6 +285,8 @@ export default function AvailabilityClient() {
                                                                 start: new Time(9),
                                                                 end: new Time(17)
                                                             }]
+                                                            console.log(availability);
+
                                                             setAvailability(clone)
                                                         } else {
                                                             let clone = { ...availability }
@@ -365,10 +365,10 @@ export default function AvailabilityClient() {
                                         {Object.keys(availability.specificDates).map((date, index) => {
                                             return (
                                                 <div key={index}>
-                                                    {date}
+                                                    <Caption className='mt-3'>{DateTime.fromFormat(date, 'y/mm/dd').toFormat('DDD')}</Caption>
                                                     {availability.specificDates[date].map((range: any, rangeIndex: any) => {
                                                         return (
-                                                            <div className='mt-2 flex gap-2 items-center'>
+                                                            <div className='mt-2 flex gap-2 items-center' key={rangeIndex}>
                                                                 {range.start && range.end && rangeIndex === availability.specificDates[date].length - 1 && (range.end.hour !== 11 && range.end.minute < 58) ? <Button.Root className='justify-center' variant='ghost' size='sm' onClick={() => {
                                                                     let clone = { ...availability }
                                                                     clone.specificDates[date].push({
@@ -473,17 +473,22 @@ export default function AvailabilityClient() {
             <div className='flex flex-wrap gap-2 w-full'>
                 {availabilities.length ? availabilities.map((element: any, index: number) => {
                     return (
-                        <div className='' onClick={() => {
-                            handleEdit(index)
+                        <div key={index} className='' onClick={() => {
+                            console.log(element)
+                            handleEdit(index, element)
                             setisDefault(false)
                         }}>
                             <Card variant='outlined' className='w-full pr-20 min-w-max cursor-pointer'>
                                 <div className='mb-2'>
                                     <Text className='font-medium'>{element.availability_data.name}</Text>
-                                    <Caption className='text-xs italic'>MON, TUE, WED, FRI</Caption>
+                                    <Caption className='text-xs italic flex flex-row'>{element.availability_data.week.map((day: any, index: number) => {
+                                        return (
+                                            <Caption>{`${day.isChecked ? shortCuts[weekDays[index]] + ", " : ""}`}</Caption>
+                                        )
+                                    })}</Caption>
                                 </div>
-                                <Caption className='text-xs'>Created on: <span className='underline'>10/15/2024</span></Caption>
-                                <Caption className='text-xs'>Updated on: <span className='underline'>10/15/2024</span></Caption>
+                                <Caption className='text-xs italic'>Created on: <span className='underline'>{DateTime.fromISO(element.created_at).toFormat('D')}</span></Caption>
+                                <Caption className='text-xs italic'>Updated on: <span className='underline'>{DateTime.fromISO(element.updated_at).toFormat('D')}</span></Caption>
                             </Card>
                         </div>
                     )

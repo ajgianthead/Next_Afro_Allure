@@ -22,17 +22,6 @@ export const Toolbar = ({ editorId, setEditorData, setLoadingEditorData }: any) 
         const res = await sendEditorData(state, editorId)
         console.log(res);
     }
-    useEffect(() => {
-        const getData = async () => {
-            const res: any = await getEditorData(editorId)
-            const json = lz.decompress(lz.decodeBase64(res.editor_data!));
-            setEditorData(json)
-        }
-        getData()
-        setTimeout(() => {
-            setLoadingEditorData(false)
-        }, 5000);
-    }, [editorId]);
     const [screenSize, setScreenSize] = useState<string>("1280")
     const [confirmation, setConfirmation] = useState<boolean>(false)
     return (

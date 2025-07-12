@@ -33,12 +33,15 @@ interface TabsUIProps extends ListProps {
     indicatorVariant?: IndicatorProps["variant"]
 }
 
-export default function EditorClient() {
+interface EditorData {
+    editorData: string
+}
+
+export default function EditorClient({ editorData }: EditorData) {
     const [state, setState] = useState<TabsAppProps>("components");
     const spanRef = useRef<HTMLSpanElement>(null);
     const { editor_id } = useParams()
     const [loadingEditorData, setLoadingEditorData] = useState<boolean>(true)
-    const [editorData, setEditorData] = useState<any>()
     const [screenSize, setScreenSize] = useState<string>("360")
 
     useEffect(() => {
@@ -47,18 +50,18 @@ export default function EditorClient() {
             spanRef.current.style.left = activeTrigger.offsetLeft + "px";
             spanRef.current.style.width = activeTrigger.offsetWidth + "px";
         }
-    }, [state, editorData]);
+    }, [state]);
     const containerRef = useRef<any>(null);
     return (
         <EditorWrapper>
             <div>
                 {/* TODO: Put Transform Wrapper in a component and use useEditor() */}
                 <Editor resolver={{ Container, EditableButton, EditableText, ImageContainer, Video, Hyperlink }}>
-                    <Toolbar screenSize={screenSize} setScreenSize={setScreenSize} editorId={editor_id!} setEditorData={setEditorData} setLoadingEditorData={setLoadingEditorData} />
+                    <Toolbar screenSize={screenSize} setScreenSize={setScreenSize} editorId={editor_id!} setLoadingEditorData={setLoadingEditorData} />
 
                     <main className='flex h-[calc(100vh-40px)] w-full bg-gray-100'>
                         <section className='h-full bg-white w-[400px] p-5 border-r border-[#D4D4D4]'>
-                            {!loadingEditorData ? <Tabs.Root className="space-y-4" defaultValue={state} onValueChange={(value) => setState(value as TabsAppProps)}>
+                            <Tabs.Root className="space-y-4" defaultValue={state} onValueChange={(value) => setState(value as TabsAppProps)}>
                                 <Tabs.List data-shade="925" variant="soft" triggerVariant="plain" size="sm" className='h-12'>
                                     <Tabs.Indicator ref={spanRef} variant="elevated" className="bg-white" />
                                     <Tabs.Trigger value="layout" id="layout">Layouts</Tabs.Trigger>
@@ -131,13 +134,10 @@ export default function EditorClient() {
                                         </div>
                                     </div>
                                 </Tabs.Content>
-                            </Tabs.Root> : <></>}
+                            </Tabs.Root>
                         </section>
                         {/* Canvas */}
-                        {loadingEditorData ? <div className='w-full h-screen flex flex-col gap-2 justify-center items-center'>
-                            <CircularProgress />
-                            <Caption>Loading Editor Data...</Caption>
-                        </div> : <div className='flex overflow-y-hidden' ref={containerRef}>
+                        <div className='flex overflow-y-hidden' ref={containerRef}>
                             <ContextMenu.Root>
                                 <ContextMenu.Trigger>
                                     <EditorSpace screenSize={screenSize} jsonData={editorData} />
@@ -145,7 +145,7 @@ export default function EditorClient() {
                                 </ContextMenu.Trigger>
                             </ContextMenu.Root>
 
-                        </div>}
+                        </div>
 
 
                         {/* Settings Bar */}

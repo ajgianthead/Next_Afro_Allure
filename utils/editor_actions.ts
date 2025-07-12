@@ -11,9 +11,9 @@ export const sendEditorData = async (editorData: string, editorId: string | unde
     return data
 }
 
-export const getEditorData = async (editorId: string | undefined) => {
+export const getEditorData = async (businessId: string | undefined) => {
     const supabase = createClient<Database>();
-    const { data, error } = await supabase.from('web_editors').select("editor_data").eq("id", editorId!).single()
+    const { data, error } = await supabase.from('web_editors').select("editor_data").eq("business_id", businessId!).single()
     if (error) {
         return error
     }

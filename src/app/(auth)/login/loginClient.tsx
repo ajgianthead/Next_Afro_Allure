@@ -28,8 +28,8 @@ export default function Login() {
     const handleSubmit = async () => {
         setLoading(true)
         const res = await login(cred)
-        if (res.type === 'error') {
-            setError(res.res)
+        if (res instanceof AuthError) {
+            setError(res.message)
         }
         else {
             router.replace('/dashboard')
