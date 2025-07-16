@@ -20,9 +20,6 @@ import { Card } from '@mui/joy';
 import Head from 'next/head';
 import { DateTime } from 'luxon';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
-    stripeAccount: "acct_1Q6tUcFpD7KoueRC",
-});
 
 
 
@@ -64,7 +61,7 @@ export default function ConfirmAppClient() {
                 method: "POST",
                 body: JSON.stringify({
                     connectedAccountId: stripeID,
-                    price: appointment.amount_due,
+                    price: appointment.deposit_price,
                     app_fee: 200,// Change Stripe Account ID to be dynamic to business
                     appointmentID: appointment_id,
                     paymentIntent: appointment.deposit_charge_id

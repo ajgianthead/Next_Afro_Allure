@@ -195,7 +195,6 @@ export const sendCancelledEmails = async (data: any) => {
 }
 const sendReminders = async (res: any) => {
     const supabase = createClient<Database>();
-
     const dayBefore = DateTime.fromJSDate(res.start).minus({ day: 1 })
     const remindClient = await reminderTask.trigger({
         serviceName: res.service_data.name,
@@ -301,6 +300,15 @@ export async function PUT(request: NextRequest) {
     // Send email based on editting action
     if (res.data?.status === 'CONFIRMED' && data?.status === 'CONFIRMED') { // Client changed their appointment time and/or date
         await sendRescheduledEmails(data)
+        await supabase.from('notifications').insert({
+            body: `${data.client_metadata.firstName} just rescheduled on ${DateTime.fromISO(data.start).toFormat('LLLL dd, yyyy')} @ ${DateTime.fromISO(data.start).toLocaleString(DateTime.TIME_SIMPLE)}`,
+            title: "‼️Reschedule Alert‼️",
+            read: false,
+            business_id: data.business,
+            type: 'rescheduled-booking',
+            appointment_id: data.id
+        })
+
         // Edit scheduled reminders
         const dayBefore = DateTime.fromISO(data.start).minus({ day: 1 })
         const thirtyBefore = DateTime.fromISO(data.end).minus({ minutes: 30 })
@@ -310,12 +318,28 @@ export async function PUT(request: NextRequest) {
     } else if (data?.status === 'CANCELLED') { // Appointment was cancelled
         // Cancel reminders for business and client
         await sendCancelledEmails(data)
+        await supabase.from('notifications').insert({
+            body: `${data.client_metadata.firstName} just cancelled their appointment on ${DateTime.fromISO(data.start).toFormat('LLLL dd, yyyy')} @ ${DateTime.fromISO(data.start).toLocaleString(DateTime.TIME_SIMPLE)}`,
+            title: "‼️Cancelled Appointment Alert‼️",
+            read: false,
+            business_id: data.business,
+            type: 'cancelled-booking',
+            appointment_id: data.id
+        })
         await runs.cancel(data.reminder_ids.business)
         await runs.cancel(data.reminder_ids.client)
         await runs.cancel(data.payment_link_id)
     }
     else {
         await sendConfirmationEmail(data)
+        await supabase.from('notifications').insert({
+            body: `You have an appointment with ${data.client_metadata.firstName} on ${DateTime.fromISO(data.start).toFormat('LLLL dd, yyyy')} @ ${DateTime.fromISO(data.start).toLocaleString(DateTime.TIME_SIMPLE)}`,
+            title: "‼️New Booking Alert‼️",
+            read: false,
+            business_id: data.business,
+            type: 'new-booking',
+            appointment_id: data.id
+        })
         // Set reminders
         await sendReminders(data)
     }

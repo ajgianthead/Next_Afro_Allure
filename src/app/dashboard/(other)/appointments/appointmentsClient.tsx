@@ -60,6 +60,8 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                 if (appointments.length) {
                     let temp = []
                     for (let i = 0; i < appointments.length; i++) {
+                        console.log(appointments[i]);
+
                         temp.push({
                             id: appointments[i].id,
                             start: new Date(appointments[i].start),
@@ -74,7 +76,7 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                             deposit_charge_id: appointments[i].deposit_charge_id,
                             reschedules: appointments[i].reschedules,
                             deposit_price: appointments[i].deposit_price,
-                            addons: [...appointments[i].selected_addons]
+                            addons: [...appointments[i].addons]
 
                         })
                     }
@@ -102,7 +104,7 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                         deposit_charge_id: appointments[i].deposit_charge_id,
                         reschedules: appointments[i].reschedules,
                         deposit_price: appointments[i].deposit_price,
-                        addons: [...appointments[i].addons]
+                        addons: [...appointments[i].selected_addons]
                     })
                 }
                 if (eventData && appointments[i].id === eventData.id) {

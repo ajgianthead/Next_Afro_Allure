@@ -8,6 +8,8 @@ import NewAppointment from "../../../../emails/new-appointment";
 import { Resend } from "resend";
 import AppointmentConfirmed from "../../../../emails/appointment-confirmed";
 import Stripe from "stripe";
+import { createClient } from "@utils/supabase/server";
+import { Database } from "../../../../lib/database.types";
 
 
 export async function POST(request: NextRequest) {
@@ -37,6 +39,34 @@ export async function POST(request: NextRequest) {
 
   // Handle the event
   switch (event.type) {
+    case 'refund.created':
+      try {
+        const supabase = createClient<Database>()
+        const refund = event.data.object;
+        const appointment = await supabase.from('appointments').select("*, business_users(business_id, stripe_acc_id)").or(`deposit_charge_id.eq.${refund.payment_intent},service_charge_id.eq.${refund.payment_intent}`).single()
+        const paymentIntent = await stripe.paymentIntents.retrieve(refund.payment_intent?.toString()!, {
+          stripeAccount: appointment.data?.business_users.stripe_acc_id!
+        })
+        const { purpose } = paymentIntent.metadata
+        if (purpose === 'EOA') {
+          const transactionReversal = await stripe.tax.transactions.createReversal({
+            mode: 'full',
+            original_transaction: appointment.data?.eoa_tax_transaction!,
+            reference: refund.id,
+            expand: ['line_items'],
+          })
+        } else {
+          const transactionReversal = await stripe.tax.transactions.createReversal({
+            mode: 'full',
+            original_transaction: appointment.data?.deposit_tax_transaction!,
+            reference: refund.id,
+            expand: ['line_items'],
+          })
+        }
+      } catch (error) {
+
+      }
+      break;
     case 'payment_intent.canceled':
       // Delete appointment
       try {

@@ -19,17 +19,21 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation';
 import { getUser } from './getUser';
-import { Chip } from '@mui/joy';
+import { Badge, Chip } from '@mui/joy';
 
+interface BusinessNoti extends Business {
+    notifications: BusinessNotification[],
+}
 
 export default function LayoutComp({
     children, businessData
 }: Readonly<{
     children: React.ReactNode;
-    businessData: Business
+    businessData: BusinessNoti
 }>) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname()
+    const router = useRouter()
 
     return (
         <div lang="en">
@@ -169,7 +173,13 @@ export default function LayoutComp({
                             </Button.Root>
                         </div>
                         <div className="flex items-center gap-4 pr-6">
-                            <Notifications />
+                            {businessData.notifications.length === 0 ? <div onClick={() => {
+                                router.push('/dashboard/notifications')
+                            }}>
+                                <Badge badgeContent={businessData.notifications.length} badgeInset={8} color='danger' size='sm'>
+                                    <Notifications />
+                                </Badge>
+                            </div> : <Notifications />}
                             <UserDropdown businessData={businessData} />
                         </div>
                     </div>

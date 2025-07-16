@@ -16,6 +16,10 @@ export async function POST(request: NextRequest) {
     }
     try {
         const supabase = createClient<Database>()
+        const account = await stripe.accounts.retrieve(connectedAccountId);
+
+        console.log(price);
+
         const taxCalc = await stripe.tax.calculations.create({
             currency: 'usd',
             line_items: [
@@ -23,8 +27,22 @@ export async function POST(request: NextRequest) {
                     amount: price,
                     reference: "Appointment Payment"
                 }
-            ]
+            ],
+            customer_details: {
+                address: {
+                    line1: ' 2800 Post Oak Blvd',
+                    state: 'TX',
+                    city: 'Houston',
+                    country: 'US',
+                    postal_code: '77056'
+                },
+                address_source: 'billing'
+            }
         }, { stripeAccount: connectedAccountId })
+        console.log(taxCalc
+
+        );
+
 
         const paymentIntent = await stripe.paymentIntents.create({
             amount: taxCalc.amount_total,

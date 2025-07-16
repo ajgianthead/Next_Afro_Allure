@@ -20,4 +20,7 @@ export function cloneElement(element: React.ReactElement, classNames: string) {
         className: twMerge(element.props.className, classNames)
     });
 }
-export const stripe = require('stripe')(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) as Stripe;
+export const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-06-30.basil',
+});
+// export const stripe = require('stripe')(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) as Stripe;
