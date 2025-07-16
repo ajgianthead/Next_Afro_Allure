@@ -173,9 +173,7 @@ export default function LayoutComp({
                             </Button.Root>
                         </div>
                         <div className="flex items-center gap-4 pr-6">
-                            {businessData.notifications.length === 0 ? <div onClick={() => {
-                                router.push('/dashboard/notifications')
-                            }}>
+                            {businessData.notifications.filter((noti) => noti.read === false).length ? <div >
                                 <Badge badgeContent={businessData.notifications.length} badgeInset={8} color='danger' size='sm'>
                                     <Notifications />
                                 </Badge>

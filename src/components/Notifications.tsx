@@ -7,7 +7,9 @@ import { useRouter } from 'next/navigation';
 export const Notifications = () => {
   const router = useRouter()
   return (
-    <div className="relative">
+    <div className="relative" onClick={() => {
+      router.push('/dashboard/notifications')
+    }}>
       <Button.Root size="md" variant="ghost" intent="gray">
         <Button.Label hidden>Notifications</Button.Label>
         <Button.Icon type="only">
