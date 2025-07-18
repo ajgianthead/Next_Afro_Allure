@@ -1,20 +1,21 @@
 'use client'
 
-import { Badge, Button, Divider, IconButton, List, ListDivider, ListItem, ListItemButton, ListItemContent, Typography } from '@mui/joy';
+import { Badge, Button, Checkbox, Divider, IconButton, List, ListDivider, ListItem, ListItemButton, ListItemContent, Typography } from '@mui/joy';
 import { Caption, Title } from '@tailus-ui/typography';
 import React, { useEffect } from 'react';
-import { updateNotificationState } from './actions';
+import { deleteNotification, updateNotificationState } from './actions';
 import { PostgrestError } from '@supabase/supabase-js';
 import ConfirmAppointmentTemplate from '../../../../../emails/confirm-appointment';
 import RescheduledAppointment from '../../../../../emails/rescheduled-appointment';
 import { DateTime } from 'luxon';
 import CancelledAppointment from '../../../../../emails/cancelled-appointment';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Trash2 } from 'lucide-react';
 import { pretty, render } from '@react-email/components';
 import NewAppointment from '../../../../../emails/new-appointment';
 
 interface AppointmentNotification extends BusinessNotification {
-    appointments: Appointment
+    appointments: Appointment,
+    checked?: boolean
 }
 
 interface PageProps {
@@ -25,17 +26,63 @@ const NotificationsClient = ({ notifications }: PageProps) => {
     const [notificationState, setNotificationState] = React.useState<AppointmentNotification[]>(notifications)
     const [notiClicked, setNotiClicked] = React.useState<boolean>(false)
     const [noti, setNoti] = React.useState<AppointmentNotification | null>(null)
+    const [selectedNotis, setSelectedNotis] = React.useState<Set<string>>(new Set())
+    const handleSelectAll = (e: any) => {
+        const checked = e.target.checked
+        let notiClone = [...notificationState]
+        let selectedClone = new Set([...selectedNotis])
+        if (checked) {
+            notiClone.forEach((noti) => {
+                noti.checked = true
+                selectedNotis.add(noti.id)
+            })
+        } else {
+            notiClone.forEach((noti) => {
+                noti.checked = false
+                selectedNotis.delete(noti.id)
+
+            })
+        }
+        setNotificationState(notiClone)
+        console.log(notiClone);
+
+    }
+    const [loading, setLoading] = React.useState<boolean>(false)
     return (
         <div>
-
             {!notiClicked ? <div className='p-5'>
                 <Title className='mb-2'>Notifications</Title>
+                {selectedNotis.size > 0 ? <div className='flex pl-3 gap-5 w-full justify-between mb-2'>
+                    <Checkbox onChange={e => {
+                        handleSelectAll(e)
+                    }} size='sm' label="Select all" className='mt-2' />
+                    <Button loading={loading} onClick={async () => {
+                        setLoading(true)
+                        const res = await deleteNotification(selectedNotis)
+                        setNotificationState(res)
+                    }} disabled={selectedNotis.size === 0}
+                        startDecorator={<Trash2 size={20} />} variant='outlined' color='danger'>Delete</Button>
+                </div> : <></>}
                 <Divider />
                 <div className='mt-2'>
                     <List>
                         {notificationState.length ? notificationState.map((noti, index) => {
+                            console.log(noti);
+
                             return (
                                 <ListItem key={index}>
+                                    <Checkbox checked={noti.checked || selectedNotis.has(noti.id)} onChange={(e) => {
+                                        const isChecked = e.target.checked
+                                        let clone = [...notificationState]
+                                        clone[index].checked = isChecked
+                                        let selected = new Set([...selectedNotis])
+                                        if (isChecked) {
+                                            selected.add(noti.id)
+                                        } else {
+                                            selected.delete(noti.id)
+                                        }
+                                        setSelectedNotis(selected)
+                                    }} className='mr-2' />
                                     <ListItemButton onClick={async () => {
                                         const res = await updateNotificationState(noti.id)
                                         console.log(res)
@@ -59,6 +106,7 @@ const NotificationsClient = ({ notifications }: PageProps) => {
                                             alignItems: 'center',
                                             padding: 2
                                         }}>
+
                                             {!noti.read ? <Badge size='sm' /> : <></>}
                                             <div className='flex gap-5'>
                                                 <Typography level="title-sm">{noti.title}</Typography>

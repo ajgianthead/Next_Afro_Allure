@@ -14,3 +14,10 @@ export const updateNotificationState = async (notiId: string) => {
     return updatedNoti
 }
 
+export const deleteNotification = async (notiIds: Set<string>) => {
+    const notiArray = Array.from(notiIds)
+    const supabase = createClient<Database>()
+    const { data } = await supabase.from('notifications').delete().in('id', notiArray).select('*, appointments(*, business_users(*))')
+    return data!
+}
+
