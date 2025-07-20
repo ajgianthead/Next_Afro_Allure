@@ -327,6 +327,7 @@ export type Database = {
           read: boolean
           title: string
           type: string
+          updated_at: string
         }
         Insert: {
           appointment_id: string
@@ -337,6 +338,7 @@ export type Database = {
           read?: boolean
           title: string
           type: string
+          updated_at?: string
         }
         Update: {
           appointment_id?: string
@@ -347,6 +349,7 @@ export type Database = {
           read?: boolean
           title?: string
           type?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -462,6 +465,8 @@ export type Database = {
           created_at: string
           editor_data: string | null
           id: string
+          image_objects: Json[] | null
+          type: Database["public"]["Enums"]["web_editor"] | null
           updated_at: string | null
         }
         Insert: {
@@ -469,6 +474,8 @@ export type Database = {
           created_at?: string
           editor_data?: string | null
           id?: string
+          image_objects?: Json[] | null
+          type?: Database["public"]["Enums"]["web_editor"] | null
           updated_at?: string | null
         }
         Update: {
@@ -476,6 +483,8 @@ export type Database = {
           created_at?: string
           editor_data?: string | null
           id?: string
+          image_objects?: Json[] | null
+          type?: Database["public"]["Enums"]["web_editor"] | null
           updated_at?: string | null
         }
         Relationships: [
@@ -504,6 +513,7 @@ export type Database = {
         | "CANCELLED"
         | "COMPLETED"
         | "PROCESSING"
+      web_editor: "SECTIONS" | "CUSTOM"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -640,6 +650,7 @@ export const Constants = {
         "COMPLETED",
         "PROCESSING",
       ],
+      web_editor: ["SECTIONS", "CUSTOM"],
     },
   },
 } as const
