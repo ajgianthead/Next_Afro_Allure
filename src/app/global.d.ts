@@ -8,4 +8,5 @@ declare global {
     type Policy = Database['public']['Tables']['business_policies']['Row']
     type Availability = Database['public']['Tables']['availabilities']['Row']
     type BusinessNotification = Database['public']['Tables']['notifications']['Row']
+    type ImageObject = Database['public']['Tables']['image_section']['Row']
 }

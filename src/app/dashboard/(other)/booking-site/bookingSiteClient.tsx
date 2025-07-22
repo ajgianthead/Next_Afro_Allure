@@ -13,6 +13,7 @@ interface PageProps {
 
 const handleCreateEditorState = async (business_id: string) => {
     const editorState = await createEditorState(business_id)
+    // Get editor state if exists
     if (editorState instanceof PostgrestError) {
         console.log("Something went wrong")
     } else {

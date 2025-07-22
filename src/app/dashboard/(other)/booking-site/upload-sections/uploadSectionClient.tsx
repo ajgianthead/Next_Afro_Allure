@@ -1,11 +1,11 @@
 'use client'
 
-import { Button, styled } from '@mui/joy';
+import { Button, IconButton, styled } from '@mui/joy';
 import { Caption } from '@tailus-ui/typography';
 import Image from 'next/image';
 import React, { useState } from 'react';
-import { ImageObject, uploadImgSectionChanges } from '../actions';
-import { ChevronLeftIcon } from 'lucide-react';
+import { deleteSectionImage, editSectionImage, uploadImgSectionChanges } from '../actions';
+import { ChevronLeftIcon, Pencil, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 
@@ -23,15 +23,33 @@ const VisuallyHiddenInput = styled('input')`
 
 const UploadSectionClient = ({ businessId, editorId, imageObj }: { businessId: string, editorId: string, imageObj: ImageObject[] }) => {
     const [imageObjects, setImageObjects] = useState<ImageObject[]>(imageObj)
-    const handleImageUpload = (file: File) => {
-        const url = URL.createObjectURL(file)
-        setImageObjects([
-            ...imageObjects,
-            {
+
+    const handleImageUpload = async (file: File, isEdit?: boolean, id?: string, index?: number) => {
+        if (isEdit) {
+            const newUrl = await editSectionImage(id!, file, businessId)
+            let clone = [...imageObjects]
+            clone[index!].url = newUrl;
+            setImageObjects(clone)
+        } else {
+            const imageObj = await uploadImgSectionChanges({
                 id: crypto.randomUUID(),
                 fileBody: file,
-                url: URL.createObjectURL(file)
-            }
+            }, businessId, editorId, imageObjects.length)
+            setImageObjects([
+                ...imageObjects,
+                imageObj!
+            ])
+        }
+
+    }
+
+    const handleImageDeletion = async (businessId: string, imageId: string, index: number) => {
+        const resArray = await deleteSectionImage(businessId, imageId)
+        imageObjects.splice(index, imageObjects.length)
+        let newImgObj = imageObjects.concat(resArray)
+        console.log(newImgObj, resArray);
+        setImageObjects([
+            ...newImgObj
         ])
     }
     const router = useRouter()
@@ -42,9 +60,22 @@ const UploadSectionClient = ({ businessId, editorId, imageObj }: { businessId: s
             </div>
             {imageObjects.map((image, index) => {
                 return (
-                    <div className='w-2/3'>
-                        <Image width={1366 / 2} height={768 / 2} className='w-full' src={image.url} alt='web-section' />
+                    <div className='w-2/3' key={index}>
+                        <div className='relative'>
+                            <div className='absolute bg-white right-0 rounded-sm'>
+                                <IconButton component="label" tabIndex={-1}
+                                    role={undefined} color='warning' className='rounded-full bg-gray-300 max-w-min p-2'>
+                                    <VisuallyHiddenInput type="file" onChange={(e) => handleImageUpload(e.target.files![0], true, image.id, index)} />
+                                    <Pencil size={20} />
+                                </IconButton>
+                                <IconButton onClick={() => handleImageDeletion(businessId, image.id, index)} color='danger' className='rounded-full bg-gray-300 max-w-min p-2'>
+                                    <Trash size={20} />
+                                </IconButton>
+                            </div>
+                            <Image width={1366 / 2} height={768 / 2} className='w-full' src={`${image.url!}?t=${Date.now()}`} alt='web-section' />
+                        </div>
                     </div>
+
                 )
             })}
             <Button component="label"
@@ -53,7 +84,8 @@ const UploadSectionClient = ({ businessId, editorId, imageObj }: { businessId: s
                     paddingY: 5,
                     borderStyle: 'dashed',
                     borderWidth: 2,
-                    marginTop: 2
+                    marginTop: 2,
+                    marginBottom: 5
                 }}
                 tabIndex={-1}
                 variant="outlined"
@@ -63,12 +95,7 @@ const UploadSectionClient = ({ businessId, editorId, imageObj }: { businessId: s
                 </Caption>
                 <VisuallyHiddenInput type="file" onChange={(e) => handleImageUpload(e.target.files![0])} />
             </Button>
-            <Button sx={{ marginY: 3 }} onClick={async () => {
-                const imageObjs = await uploadImgSectionChanges(imageObjects, businessId, editorId)
-                if (imageObjs instanceof Array) {
-                    setImageObjects(imageObjs)
-                }
-            }}>Save Changes</Button>
+
         </div>
     );
 }

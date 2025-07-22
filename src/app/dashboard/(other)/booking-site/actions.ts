@@ -4,11 +4,6 @@ import { createClient } from "@utils/supabase/server"
 import { Database, Json } from "../../../../../lib/database.types"
 
 
-export interface ImageObject {
-    id: string,
-    fileBody: Blob,
-    url: string
-}
 
 export const createEditorState = async (business_id: string) => {
     try {
@@ -27,63 +22,58 @@ export const createEditorState = async (business_id: string) => {
     }
 }
 
-export const uploadImgSectionChanges = async (files: ImageObject[], business_id: string, editor_id: string) => {
+export const uploadImgSectionChanges = async (file: any, business_id: string, editor_id: string, array_length: number) => {
     const supabase = createClient<Database>();
-    try {
-        const res = await Promise.all(
-            files.map(async (file) => {
-                // Upload file
-                if (file.url.startsWith('blob')) {
-                    const uniqueId = file.id;
-                    const uploadRes = await supabase.storage
-                        .from('web-section-images')
-                        .upload(`private/${business_id}/${uniqueId}`, file.fileBody);
-
-                    if (uploadRes.error) throw uploadRes.error;
-
-                    const { data: imageURL } = supabase.storage
-                        .from('web-section-images')
-                        .getPublicUrl(uploadRes.data.path);
-
-                    return {
-                        id: uniqueId,
-                        fileBody: file.fileBody,
-                        url: imageURL.publicUrl,
-                    } as any;
-                } else {
-                    return file;
-                }
-            })
-        );
-
-        console.log("Result:", res);
-
-        const { data, error } = await supabase
-            .from('web_editors')
-            .update({ image_objects: res })
-            .eq('id', editor_id)
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        return res;
-    } catch (error: any) {
-        return error.message;
-    }
+    const url = await supabase.storage.from('web-section-images').upload(`private/${business_id}/${file.id}`, file.fileBody!).then((res) => {
+        return supabase.storage.from('web-section-images').getPublicUrl(res.data?.path!)
+    })
+    const { data, error } = await supabase.from('image_section').insert({
+        id: file.id,
+        fileBody: file.fileBody as any,
+        url: url.data.publicUrl,
+        editor_id: editor_id,
+        index: array_length
+    }).select().single()
+    return data
 };
 
 
-export const getSectionImages = async (business_id: string) => {
+export const getSectionImages = async (editor_id: string) => {
     const supabase = createClient<Database>()
-    let imageObjects: ImageObject[];
-    try {
-        const { data } = await supabase.from('web_editors').select('image_objects').eq('business_id', business_id).single()
-        imageObjects = data?.image_objects as unknown as ImageObject[]
-    } catch (error: any) {
-        return error.message
-    }
-    return imageObjects
+    const { data } = await supabase.from('image_section').select('*').eq('editor_id', editor_id).order("index", {
+        ascending: true
+    })
+    return data
+}
+
+export const editSectionImage = async (imgObjId: string, fileBody: File, businessId: string) => {
+    // Change image object image source
+    const supabase = createClient<Database>()
+    const newUrl = await supabase.storage.from('web-section-images').update(`private/${businessId}/${imgObjId}`, fileBody).then((res) => {
+        return supabase.storage.from('web-section-images').getPublicUrl(res.data?.path!)
+    })
+    return `${newUrl.data.publicUrl}?t=${Date.now()}`
+}
+
+export const deleteSectionImage = async (business_id: string, imageObjId: string) => {
+    // Delete in storage
+    const supabase = createClient<Database>();
+    const updatedArray = await supabase.storage.from('web-section-images').remove([`private/${business_id}/${imageObjId}`]).then(async (res) => {
+        return await supabase.from('image_section').delete().eq('id', imageObjId).select().single().then(async (res) => {
+            const { data } = await supabase.from('image_section').select().gt('index', res.data?.index)
+            if (data?.length) {
+                let res: ImageObject[] = []
+                for (let i = 0; i < data.length; i++) {
+                    const { data: newImgIndex } = await supabase.from('image_section').update({
+                        index: data[i].index - 1
+                    }).eq('id', data[i].id).select().single()
+                    res.push(newImgIndex!)
+                }
+                return res
+            }
+        })
+    })
+    return updatedArray || []
 }
 
 

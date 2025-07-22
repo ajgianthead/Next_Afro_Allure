@@ -15,10 +15,10 @@ const Page = async () => {
     const supabase = createClient<Database>()
     const business = await fetchBusinessUser(user?.id!)
     const editor_id = (await supabase.from('web_editors').select('*').eq('business_id', business?.business_id!).single()).data?.id!
-    const imageObjects = await getSectionImages(business?.business_id!)
+    const imageObjects = await getSectionImages(editor_id)
     return (
         <div className='flex justify-center'>
-            <UploadSectionClient businessId={business?.business_id!} editorId={editor_id} imageObj={imageObjects ?? []} />
+            <UploadSectionClient businessId={business?.business_id!} editorId={editor_id} imageObj={imageObjects!} />
         </div>
     );
 }
