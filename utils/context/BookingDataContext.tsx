@@ -32,13 +32,14 @@ export type BookingData = {
     }
 }
 
-export function BookingWrapper({ children, businessName }: any) {
+export function BookingWrapper({ children, businessData }: any) {
     let [data, setData] = useState<BookingData>({
-        business_id: "",
-        availabilities: [],
-        services: [],
-        booking_policy: null,
-        stripe_id: "",
+        business_id: businessData.business_id,
+        availabilities: businessData.availabilities,
+        appointments: businessData.appointments,
+        services: businessData.services,
+        booking_policy: businessData.policy,
+        stripe_id: businessData.stripe_acc_id,
         options: {
             clientSecret: ""
         },
@@ -52,60 +53,44 @@ export function BookingWrapper({ children, businessName }: any) {
         selectedService: "",
         selectedDateTime: {},
     });
-    useEffect(() => {
-        const fetchBusiness = async () => {
-            const res = await fetch(`/api/businessUsers/${businessName}`, {
-                method: "GET"
-            })
-            const businessData = await res.json();
-            console.log(businessData);
-            return {
-                business_id: businessData.result.business_id,
-                availabilities: businessData.result.availabilities,
-                booking_policies: businessData.result.booking_policies,
-                stripe_id: businessData.result.stripe_acc_id,
-                services: businessData.result.services,
-                appointments: businessData.result.appointments
+    // useEffect(() => {
+    //     // Get policy
+    //     const getPolicy = async (businessData: any) => {
+    //         const response = await fetch(`/api/policies/policy/${businessData.booking_policies}`, {
+    //             method: "GET",
+    //         });
+    //         if (!response.ok) {
+    //             // Handle errors on the client side here
+    //             const { error } = await response.json();
+    //             throw new Error("An error occurred: ", error);
+    //         } else {
+    //             const result = await response.json();
+    //             return result.policy
+    //         }
+    //     }
 
-            }
-        }
-        // Get policy
-        const getPolicy = async (businessData: any) => {
-            const response = await fetch(`/api/policies/policy/${businessData.booking_policies}`, {
-                method: "GET",
-            });
-            if (!response.ok) {
-                // Handle errors on the client side here
-                const { error } = await response.json();
-                throw new Error("An error occurred: ", error);
-            } else {
-                const result = await response.json();
-                return result.policy
-            }
-        }
+    //     fetchBusiness().then(async (res: any) => {
+    //         if (res !== "Business doesn't exist") {
+    //             await getPolicy(res).then(async (policy: any) => {
+    //                 setData({
+    //                     ...data,
+    //                     business_id: res.business_id,
+    //                     services: res.services,
+    //                     availabilities: res.availabilities,
+    //                     stripe_id: res.stripe_id,
+    //                     appointments: res.appointments,
+    //                     booking_policy: policy
+    //                 })
+    //             })
 
-        fetchBusiness().then(async (res: any) => {
-            if (res !== "Business doesn't exist") {
-                await getPolicy(res).then(async (policy: any) => {
-                    setData({
-                        ...data,
-                        business_id: res.business_id,
-                        services: res.services,
-                        availabilities: res.availabilities,
-                        stripe_id: res.stripe_id,
-                        appointments: res.appointments,
-                        booking_policy: policy
-                    })
-                })
+    //         } else {
+    //             // Return something like 404 business
+    //             console.log("error");
+    //         }
 
-            } else {
-                // Return something like 404 business
-                console.log("error");
-            }
+    //     })
 
-        })
-
-    }, [])
+    // }, [])
     return (
         <BookingDataContext.Provider value={{ data, setData }}>
             {children}

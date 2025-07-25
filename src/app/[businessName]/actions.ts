@@ -7,8 +7,28 @@ import { Resend } from "resend";
 import { getSlots, OutputSlot } from "slot-calculator";
 import AppointmentRescheduled from "../../../emails/appointment-rescheduled";
 import RescheduledAppointment from "../../../emails/rescheduled-appointment";
+import { createClient } from "@utils/supabase/server";
+import { Database } from "../../../lib/database.types";
+import { assignAddons } from "app/api/util/transformServices";
 
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+
+export const fetchBusinessData = async (businessName: string) => {
+    const supabase = createClient<Database>();
+    const { data, error } = await supabase.from("business_users").select("*, availabilities(*), services(*), appointments(*), web_editors(*)").eq("url_name", `${businessName}`).single();
+    const services = data?.services
+    if (error) {
+        return error
+    }
+    return { result: { ...data, services: await assignAddons(supabase, services!) } }
+}
+
+export const fetchBusinessPolicies = async (policyId: string) => {
+    const supabase = createClient<Database>();
+    const { data: policy, error } = await supabase.from('business_policies').select('*').eq('id', policyId).single()
+    return policy
+}
+
 
 // Helper function that checks to see if a certain timeslot if available for booking or rescheduling
 export const checkSlots = async (timeSlot: {

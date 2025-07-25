@@ -28,18 +28,19 @@ import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { BookingData, BookingWrapper, useBooking } from '@utils/context/BookingDataContext';
 import { Card as MUICard, Checkbox } from '@mui/joy';
 
-export default function BookClient() {
+export default function BookClient({ businessData }: {
+    businessData: any
+}) {
     const params = useParams();
-    const { businessName } = params
     useEffect(() => {
         if (typeof window !== 'undefined' && window.gtag) {
             window.gtag('event', 'business_page_view', {
-                business_slug: businessName, // or dynamically pulled from the route
+                business_slug: businessData.url_name, // or dynamically pulled from the route
                 page_type: 'book',
             });
         }
     }, []);
-    return <BookingWrapper businessName={businessName}>
+    return <BookingWrapper businessData={businessData}>
         <Book />
     </BookingWrapper>
 }
@@ -516,8 +517,6 @@ const DateTimePicker = () => {
                 let movingTime = DateTime.fromISO(fetchedSlots[i][0])
                 let timeEnd = DateTime.fromISO(fetchedSlots[i][fetchedSlots[i].length - 1])
                 const appointmentLength = data.services.filter((service: Service, index: number) => data.selectedService === service.id)[0].length
-                console.log(appointmentLength);
-
                 while (movingTime < timeEnd) {
                     movingTime = timeStart
                     movingTime = movingTime.plus({ minutes: appointmentLength })
