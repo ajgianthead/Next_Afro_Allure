@@ -374,7 +374,8 @@ export async function POST(request: NextRequest) {
             deposit_charge_id: deposit_charge_id,
             reschedules: reschedules,
             deposit_price: deposit_price,
-            selected_addons: addons
+            selected_addons: addons,
+            amount_due: service_data.price
         }
     ]).select("*,business_users(business_name, email)")
     if (data?.length) {

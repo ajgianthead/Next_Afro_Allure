@@ -1,7 +1,7 @@
 'use client'
 
 import { Button, IconButton, styled } from '@mui/joy';
-import { Caption } from '@tailus-ui/typography';
+import { Caption, Text, Title } from '@tailus-ui/typography';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import { deleteSectionImage, editSectionImage, uploadImgSectionChanges } from '../actions';
@@ -55,12 +55,14 @@ const UploadSectionClient = ({ businessId, editorId, imageObj }: { businessId: s
     const router = useRouter()
     return (
         <div className='w-full flex flex-col items-center justify-center'>
-            <div className='flex justify-start w-full mb-5'>
-                <Button onClick={() => router.push('/dashboard/booking-site')} variant='plain' className='flex gap-2'><ChevronLeftIcon size={20} />Back</Button>
+
+            <div className='flex w-full justify-start flex-col mb-10 pl-6'>
+                <Title>Upload and Edit Sections</Title>
+                <Caption>Below, you are able to upload, edit, or delete sections of your site. Click the pencil icon to edit a section, or the trash can icon to delete. <strong>Updates to your booking site happen in realtime</strong></Caption>
             </div>
             {imageObjects.map((image, index) => {
                 return (
-                    <div className='w-2/3' key={index}>
+                    <div className='w-2/3 hover:border-3 hover:border-dashed hover:border-black' key={index}>
                         <div className='relative'>
                             <div className='absolute bg-white right-0 rounded-sm'>
                                 <IconButton component="label" tabIndex={-1}

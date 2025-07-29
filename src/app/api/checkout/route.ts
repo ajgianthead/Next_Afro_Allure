@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
                 purpose: purpose,
                 tax_calculation: taxCalc.id
             },
-            application_fee_amount: app_fee,
+            application_fee_amount: 0.03 * taxCalc.amount_total,
         }, {
             stripeAccount: connectedAccountId
         });

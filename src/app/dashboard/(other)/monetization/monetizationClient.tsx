@@ -11,8 +11,11 @@ import { Caption, Title } from '@tailus-ui/typography';
 import { useUserContext } from '@utils/context/UserContext';
 import React, { useState, useEffect } from 'react'
 import Separator from '@tailus-ui/Separator'
-import { Tab, TabList, TabPanel, Tabs } from '@mui/joy';
+import { Button, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
 import Card from '@tailus-ui/Card';
+import { ExternalLink } from 'lucide-react';
+import { createStripeLoginLink } from './actions';
+import { useRouter } from 'next/navigation';
 
 interface PageProps {
     stripeId: string
@@ -66,6 +69,7 @@ export default function MonetizationClient({ stripeId }: PageProps) {
         })()
 
     }, [user]);
+    const router = useRouter()
 
     const [stripeConnectInstance, setConnectInstance] = useState<StripeConnectInstance>();
     const [active, setActive] = useState<number>(0)
@@ -75,6 +79,13 @@ export default function MonetizationClient({ stripeId }: PageProps) {
             <ConnectComponentsProvider connectInstance={stripeConnectInstance!}>
                 <div className='p-5'>
                     <Title>Monetization</Title>
+                    <Caption>Below are your earnings analytics as well as account, tax, and payment processor settings. <strong>For the full dashboard experience, open the Stripe Dashboard below</strong></Caption>
+                    <Button onClick={async () => {
+                        const url = await createStripeLoginLink(stripeId)
+                        window.open(url, '_blank')
+                    }} role='link' component="a" variant='outlined' size='sm' className='flex items-center gap-2' sx={{
+                        marginTop: 1
+                    }}>Open Dashboard <ExternalLink size={16} /></Button>
                 </div>
                 <Tabs className='px-5' defaultValue={0}>
                     <TabList>
@@ -84,6 +95,7 @@ export default function MonetizationClient({ stripeId }: PageProps) {
                         <Tab
                             variant="plain"
                             color="neutral">Settings</Tab>
+
                     </TabList>
                     <TabPanel value={0} className='p-0'>{
                         stripeConnectInstance ?

@@ -41,19 +41,19 @@ const color: any = {
 interface PageProps {
     appointmentData: Appointment[]
     policyData: Policy,
-    servicesData: Service[]
+    servicesData: Service[],
+    business_id: string
 }
 
-const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageProps) => {
+const AppointmentsClient = ({ business_id, appointmentData, policyData, servicesData }: PageProps) => {
     // Get all appointments and convert from ISO => DateTimes
-    const { user } = useUserContext();
     const [loadingData, setLoadingData] = useState<boolean>(true);
     const [appointments, setAppointments] = useState<any>(appointmentData);
     const [cancelledAppointmentsChecked, setCancelledAppointmentsChecked] = useState<boolean>(true)
     const [policy, setPolicy] = useState<any>(policyData)
     const [filteredAppointments, setFilteredAppointments] = useState<any>([]);
     useEffect(() => {
-        if (user.business_id && policy === null) {
+        if (business_id && policy === null) {
             (async () => {
 
                 setDepositRequired(policy.deposit.enabled)
@@ -76,7 +76,7 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                             deposit_charge_id: appointments[i].deposit_charge_id,
                             reschedules: appointments[i].reschedules,
                             deposit_price: appointments[i].deposit_price,
-                            addons: [...appointments[i].addons]
+                            selected_addons: [...appointments[i].selected_addons]
 
                         })
                     }
@@ -88,6 +88,7 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
         }
         if (cancelledAppointmentsChecked) {
             let temp = []
+            console.log(appointments)
             for (let i = 0; i < appointments.length; i++) {
                 if (appointments[i].status !== "CANCELLED") {
                     temp.push({
@@ -104,7 +105,7 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                         deposit_charge_id: appointments[i].deposit_charge_id,
                         reschedules: appointments[i].reschedules,
                         deposit_price: appointments[i].deposit_price,
-                        addons: [...appointments[i].selected_addons]
+                        selected_addons: [...appointments[i].selected_addons]
                     })
                 }
                 if (eventData && appointments[i].id === eventData.id) {
@@ -129,14 +130,14 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                     deposit_charge_id: appointments[i].deposit_charge_id,
                     reschedules: appointments[i].reschedules,
                     deposit_price: appointments[i].deposit_price,
-                    addons: [...appointments[i].addons]
+                    selected_addons: [...appointments[i].selected_addons]
 
                 })
 
             }
             setFilteredAppointments(temp)
         }
-    }, [user, cancelledAppointmentsChecked, appointments]);
+    }, [cancelledAppointmentsChecked, appointments]);
     interface DateRange {
         start: DateTime,
         end: DateTime
@@ -188,7 +189,7 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                 id: "",
                 created_at: "",
                 updated_at: "",
-                business: user.business_id,
+                business: business_id,
                 client: "",
                 start: slotInfo.start.toISO() || "",
                 end: slotInfo.end.toISO() || "",
@@ -201,13 +202,14 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                 deposit_charge_id: "",
                 reschedules: policy.reschedule_limit,
                 deposit_price: depositRequired ? depositPrice : null,
-                addons: addonResult
+                addons: addonResult,
             }
+
             const res = await fetch(`/api/appointments`, {
                 method: 'POST',
                 body: JSON.stringify(appointment)
             })
-            console.log(appointment);
+            console.log(await res.json());
 
             setAppointments([
                 ...appointments,
@@ -225,7 +227,7 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                     deposit_charge_id: "",
                     reschedules: policy.reschedule_limit,
                     deposit_price: appointment.deposit_price,
-                    addons: addonResult
+                    selected_addons: addonResult
 
                 }
             ])
@@ -654,7 +656,7 @@ const AppointmentsClient = ({ appointmentData, policyData, servicesData }: PageP
                             </div>}
 
                         </div>
-                        <EditAppointment setIsSending={setIsSending} setConfirmation={setConfirmation} setConfirmationOpen={setConfirmationOpen} setAppointments={setAppointments} id={eventData.id} appointments={appointments} business_id={user.business_id} appointment_id={eventData.id} eventData={eventData} client_metadata={eventData.client_metadata} isOpen={isOpen} setIsOpen={setIsOpen} services={services} service_data={eventData.service_data} />
+                        <EditAppointment setIsSending={setIsSending} setConfirmation={setConfirmation} setConfirmationOpen={setConfirmationOpen} setAppointments={setAppointments} id={eventData.id} appointments={appointments} business_id={business_id} appointment_id={eventData.id} eventData={eventData} client_metadata={eventData.client_metadata} isOpen={isOpen} setIsOpen={setIsOpen} services={services} service_data={eventData.service_data} />
 
                     </div> : <></>}
                 </div>

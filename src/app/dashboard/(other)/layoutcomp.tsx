@@ -95,7 +95,7 @@ export default function LayoutComp({
                                         </Link.Icon>
                                         <Link.Label>Booking Settings</Link.Label>
                                     </Link.Root>
-                                    <Link.Root link="/dashboard/booking-site" isActive={pathname === "/dashboard/booking-site"}>
+                                    <Link.Root link="/dashboard/booking-site/upload-sections" isActive={pathname === "/dashboard/booking-site/upload-sections"}>
                                         <Link.Icon>
                                             <PanelsTopLeft />
                                         </Link.Icon>

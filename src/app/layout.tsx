@@ -3,7 +3,7 @@ import RootLayout from "./layoutcomp";
 import { Database } from "../../lib/database.types";
 
 export const metadata = {
-  title: 'AfroAllure',
+  title: 'AfroAllure | Empowering Black Beauty Professionals',
   icons: {
     icon: '/unnamed.ico',
   },

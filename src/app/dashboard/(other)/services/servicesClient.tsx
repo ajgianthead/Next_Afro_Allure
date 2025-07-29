@@ -309,7 +309,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
                 </div>
             </div>
             <Separator className="my-4 w-full" />
-            <div className='w-full h-full flex flex-wrap'>
+            <div className='w-full h-full flex  gap-2 flex-wrap'>
                 {services.map((service: Service, index: number) => {
                     return (
                         <div key={index}>
@@ -396,12 +396,15 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
             clone.imagePath = res?.path!;
             clone.addons = [...Array.from(checkedAddons)]
         }
+        console.log(service)
+
         const res = await fetch(`/api/${user}/services`, {
             method: 'POST',
             body: JSON.stringify(image.imageBlob ? clone : { ...service, price: service.price * 100 })
         })
-        console.log(clone!.id)
         const dataBack = await res.json();
+        console.log(dataBack);
+
         setServices([
             ...services,
             dataBack.data
