@@ -8,7 +8,11 @@ import { BadgeDollarSign, Calendar, Globe, Lightbulb, Menu, MessageCircleMore, T
 import { CssVarsProvider, extendTheme } from '@mui/joy/styles';
 import HERO_BACKGROUND from '../../public/images/magicpattern-grid-pattern-1753632850729.png'
 import HERO_IMAGE from '../../public/images/localhost_3000_dashboard_appointments.png'
+import MONEY_IMG from '../../public/images/localhost_3000_dashboard_monetization.png'
+
 import LandingPageNavDrawer from "./landingPageNavDrawer";
+import { motion } from "motion/react"
+import { Caption } from "@tailus-ui/typography";
 
 const theme = extendTheme({
     "colorSchemes": {
@@ -64,7 +68,7 @@ export default function LandingPage() {
                     <LandingPageNavDrawer />
                 </div>
                 <header className="relative bg-white flex flex-col px-10 z-10 items-center text-center w-full gap-5 pt-24 mb-10">
-                    <Image className="absolute z-[-1] w-full h-[730px] blur-sm bg-cover top-0" src={HERO_BACKGROUND} alt="background" />
+                    <Image className="absolute z-[-1] w-full h-[730px] blur-lg bg-cover top-0" src={HERO_BACKGROUND} alt="background" />
                     <div className="flex flex-col items-center gap-5">
                         <div className=" lg:px-48">
                             <Typography level="h1">Empowering black-owned beauty businesses with advanced tools and features</Typography>
@@ -78,7 +82,7 @@ export default function LandingPage() {
                             <Button variant="outlined">Learn More </Button>
                         </div>
                         <div className="w-2/3 bg-white ">
-                            <Image src={HERO_IMAGE} alt="hero-image" className="border-black border-solid rounded-xl shadow-lg" />
+                            <AnimatedImage initial={{ opacity: 0, translateY: 50 }} animate={{ opacity: 1, translateY: 0, transition: { duration: 2 } }} src={HERO_IMAGE} alt="hero-image" className="border-black border-solid rounded-xl shadow-lg" />
                         </div>
                     </div>
 
@@ -132,25 +136,51 @@ export default function LandingPage() {
                         />
                     </div>
                 </section>
+                <section className="xl:pb-80 pb-24 xl:mt-48 mt-20  w-full flex justify-center overflow-x-hidden">
+                    <div className="w-[1280px] flex-col xl:flex-row flex justify-start items-center overflow-x-hidden">
+                        <div className="xl:w-2/5 w-full flex flex-col gap-5 px-10">
+                            <div>
+                                <Caption className="font-medium mb-2">Monetization</Caption>
+                                <Typography level="h2">Turn Every Appointment Into Opportunity</Typography>
 
-                <section className="bg-gray-100 py-16 px-6 md:px-16 text-center">
+                            </div>
+                            <Typography>AfroAllure helps you <strong>earn more</strong> with built-in monetization tools — whether you're working solo or running a team.</Typography>
+                            <ul className="pl-5 flex flex-col gap-1 mt-2 list-disc">
+                                <li>Integrated payments with deposits, tips, and add-ons</li>
+                                <li>Loyalty program to reward repeat clients <span className=" italic">(Coming Soon)</span></li>
+                                <li>Product upsells at checkout <span className=" italic">(Coming Soon)</span></li>
+                                <li>Analytics to track your best-earning services</li>
+                            </ul>
+
+                        </div>
+                        <div className="xl:absolute relative xl:mt-0 mt-10 xl:mx-0 mx-10  xl:right-[-500]">
+                            <AnimatedImage initial={{ opacity: 0, translateX: 200 }}
+                                whileInView={{ opacity: 1, translateX: 0, transition: { duration: 2 } }} width={1200} height={300} src={MONEY_IMG} alt="montization-image" className="border-black border-solid rounded-xl shadow-lg " />
+                        </div>
+
+                    </div>
+                </section>
+
+                <section className="bg-gray-100 py-16 px-6 md:px-16 text-center z-20">
                     <h2 className="text-3xl font-bold mb-4">Say Goodbye to Paper Calendars & Missed Payments</h2>
                     <p className="text-lg max-w-2xl mx-auto mb-6">
-                        Afro Allure helps you stay organized, get booked, and get paid — without giving up your freedom.
+                        AfroAllure helps you stay organized, get booked, and get paid — without giving up your freedom.
                     </p>
-                    <button className="bg-black text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-800 transition">
+                    <Button>
                         Claim Your Free Booking Page
-                    </button>
+                    </Button>
                 </section>
 
                 <footer className="py-8 px-6 md:px-16 text-center text-gray-600">
-                    &copy; {new Date().getFullYear()} Afro Allure. All rights reserved.
+                    &copy; {new Date().getFullYear()} AfroAllure. All rights reserved.
                 </footer>
             </div >
         </CssVarsProvider>
 
     );
 }
+
+const AnimatedImage = motion.create(Image)
 
 function Feature({ title, desc, icon }: { title: string, desc: string, icon: any }) {
     return (

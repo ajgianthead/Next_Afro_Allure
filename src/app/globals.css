@@ -22,6 +22,7 @@
 
 body {
   color: var(--foreground-rgb);
+  overflow-x: hidden;
 }
 
 @layer utilities {
