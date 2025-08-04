@@ -1,4 +1,4 @@
-import { stripe } from "../../../../lib/utils";
+import { stripe } from "../../../lib/utils";
 import { createClient } from "@utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { Database } from "../../../../lib/database.types";

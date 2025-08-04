@@ -1,4 +1,4 @@
-import { stripe } from "../../../../lib/utils";
+import { stripe } from "../../../lib/utils";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 

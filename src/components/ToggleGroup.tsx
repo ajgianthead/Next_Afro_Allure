@@ -1,6 +1,6 @@
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 import React, { createContext, useContext } from "react";
-import { cloneElement } from "../../lib/utils";
+import { cloneElement } from "../lib/utils";
 import { toggle, type ToggleRootProps } from "@tailus/themer";
 
 const { group, root: item, icon } = toggle();

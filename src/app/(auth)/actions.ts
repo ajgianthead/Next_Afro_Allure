@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../../utils/supabase/server'
 import { Database } from '../../../lib/database.types'
 import { Time } from '@internationalized/date'
-import { stripe } from '../../../lib/utils'
+import { stripe } from '../../lib/utils'
 
 
 const defaultAvailability: any = {

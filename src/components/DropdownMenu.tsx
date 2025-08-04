@@ -1,6 +1,6 @@
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import React from "react";
-import { cloneElement } from "../../lib/utils";
+import { cloneElement } from "../lib/utils";
 import {
     menu,
     menuSeparator as separator,

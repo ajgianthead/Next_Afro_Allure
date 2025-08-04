@@ -1,4 +1,4 @@
-import { stripe as SP } from "../../../../lib/utils";
+import { stripe as SP } from "../../../lib/utils";
 import pool from "@utils/dbPool";
 import { DateTime } from "luxon";
 import { NextRequest, NextResponse } from "next/server";

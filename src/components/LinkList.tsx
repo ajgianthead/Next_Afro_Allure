@@ -1,4 +1,4 @@
-import { cloneElement } from '../../lib/utils';
+import { cloneElement } from '../lib/utils';
 import * as Accordion from '@radix-ui/react-accordion';
 import Button from '@tailus-ui/Button';
 import { button } from '@tailus/themer';
