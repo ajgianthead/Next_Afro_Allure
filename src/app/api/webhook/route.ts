@@ -1,4 +1,4 @@
-import { stripe } from "@lib/utils";
+import { stripe } from "../../../../lib/utils";
 import pool from "@utils/dbPool";
 import { NextRequest, NextResponse } from "next/server";
 import mailchimp from '@mailchimp/mailchimp_transactional'

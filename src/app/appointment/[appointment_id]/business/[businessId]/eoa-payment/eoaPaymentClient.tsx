@@ -19,7 +19,7 @@ import { AppointmentReminderData, appointmentReminders } from '@utils/bull_mq'
 import { Card, FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
 import Head from 'next/head';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
+const stripePromise = loadStripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!, {
     stripeAccount: "acct_1Q6tUcFpD7KoueRC",
 });
 
@@ -55,7 +55,7 @@ export default function EOAClient() {
             }
         }
         const fetchSession = async (stripeID: string, appointment: any, policy: Policy) => {
-            const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
+            const stripePromise = loadStripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!, {
                 stripeAccount: stripeID,
             });
             setStripePromise(stripePromise)

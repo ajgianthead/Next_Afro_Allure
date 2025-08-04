@@ -1,5 +1,5 @@
 import React from "react";
-import { cloneElement } from "@lib/utils";
+import { cloneElement } from "../../../lib/utils";
 import { button, buttonIcon as icon, type ButtonProps as ButtonVariantsProps, type ButtonIconProps } from "@tailus/themer"
 
 export type Root = typeof Root;

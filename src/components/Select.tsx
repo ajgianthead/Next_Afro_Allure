@@ -1,6 +1,6 @@
 import React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { cloneElement } from "@lib/utils";
+import { cloneElement } from "../../lib/utils";
 
 import {
     caption,

@@ -12,7 +12,7 @@ const PaymentStatus = ({ stripeID }: { stripeID: any }) => {
     useEffect(() => {
         const something = async () => {
 
-            const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
+            const stripe = await loadStripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!, {
                 stripeAccount: stripeID
             });
             if (!stripe) {

@@ -2,7 +2,7 @@ import { corsHeaders } from "@utils/cors_headers";
 import { createClient } from "@utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { Database, Json } from "../../../../../../lib/database.types";
-import { stripe } from "@lib/utils";
+import { stripe } from "../../../../../../lib/utils";
 import { Time } from "@internationalized/date";
 
 const defaultAvailability: any = {

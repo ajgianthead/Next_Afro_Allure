@@ -1,6 +1,6 @@
 'use server'
 
-import { stripe } from "@lib/utils";
+import { stripe } from "../../../../../lib/utils";
 import { createClient } from "@utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 

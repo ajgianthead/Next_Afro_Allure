@@ -44,7 +44,7 @@ export default function MonetizationClient({ stripeId }: PageProps) {
             }
 
             return loadConnectAndInitialize({
-                publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
+                publishableKey: process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!,
                 fetchClientSecret: fetchClientSecret,
                 fonts: [
                     {
