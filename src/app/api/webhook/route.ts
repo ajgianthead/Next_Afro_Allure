@@ -10,6 +10,7 @@ import AppointmentConfirmed from "../../../../emails/appointment-confirmed";
 import Stripe from "stripe";
 import { createClient } from "@utils/supabase/server";
 import { Database } from "../../../../lib/database.types";
+import { trackAppointmentBooked } from "../../../../lib/analytics";
 
 
 export async function POST(request: NextRequest) {
@@ -243,6 +244,7 @@ export async function POST(request: NextRequest) {
           await client.query('BEGIN')
           await client.query(`UPDATE appointments SET reminder_ids = $1, payment_link_id = $2 WHERE appointments.id = $3  RETURNING *`, [{ business: remindBusiness.id, client: remindClient.id }, timedPaymentLink.id, appointmentID])
           await client.query('COMMIT')
+
         } catch (error) {
           console.log(error);
           return new NextResponse(JSON.stringify({ error: error }), {
@@ -250,6 +252,13 @@ export async function POST(request: NextRequest) {
             status: 400
           })
         }
+        await trackAppointmentBooked({
+          businessId: res.business,
+          serviceId: res.service_data.id,
+          serviceName: res.service_data.name,
+          servicePrice: res.service_data.price,
+          appointmentType: ""
+        })
       }
       break;
     // ... handle other event types

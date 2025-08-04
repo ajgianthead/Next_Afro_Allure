@@ -7,6 +7,10 @@ import { sendCancelledEmails } from "app/api/appointments/route";
 import { DateTime } from "luxon";
 import { OutputSlot } from "slot-calculator";
 
+export const markAppointmentAs = async () => {
+
+}
+
 export const assignAddons = async (supabase: SupabaseClient, services: Service[]) => {
     const uniqueAddonIds = [...new Set(services?.flatMap(service => service.addons))]
     const { data: addons, error } = await supabase.from('service_addons').select("*").in('id', uniqueAddonIds)

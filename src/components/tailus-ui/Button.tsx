@@ -44,9 +44,9 @@ export const Root = React.forwardRef<
   {
     className,
     intent = "primary",
-    variant = "solid",
-    size = "md",
     disabled,
+    variant = disabled ? "ghost" : "solid",
+    size = "md",
     href,
     type,
     children,

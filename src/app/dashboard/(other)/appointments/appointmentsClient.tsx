@@ -6,10 +6,9 @@ import { DateTime } from 'luxon';
 import Button from '@tailus-ui/Button';
 import Dialog from '@components/Dialog';
 import { Caption, Text, Title } from '@tailus-ui/typography';
-import DropdownMenu from "@components/DropdownMenu";
 import Select from '@components/Select';
 import { parseAbsoluteToLocal, Time, ZonedDateTime } from "@internationalized/date";
-import { CheckCircle2, CheckIcon, ChevronDown, ChevronsDown, ChevronsUpDown, EllipsisVertical, Info, Pencil, Trash, X, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, CheckIcon, ChevronDown, ChevronsDown, ChevronsUpDown, EllipsisVertical, Info, Pencil, Trash, X, XCircle } from 'lucide-react';
 import Label from '@components/Label';
 import { useUserContext } from '@utils/context/UserContext';
 import "./calendar.css"
@@ -21,7 +20,7 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { TimeInput, DateInput, DateInputValue, TimeInputValue } from '@nextui-org/date-input';
 import Chip from '@mui/joy/Chip';
 import Checkbox from '@components/Checkbox';
-import { Checkbox as MUICheckBox, Skeleton, Snackbar } from '@mui/joy';
+import { Divider, Dropdown, IconButton, Menu, MenuButton, MenuItem, Checkbox as MUICheckBox, Skeleton, Snackbar, Typography } from '@mui/joy';
 import Aligner from '@components/Aligner';
 import { businessRescheduling, manuallyCancel } from './actions';
 import { Drawer, ModalClose, Button as MUIButton } from '@mui/joy';
@@ -29,6 +28,7 @@ import Toast from '@components/Toast';
 import { Backdrop } from '@mui/material';
 import { CheckedState } from '@radix-ui/react-checkbox';
 import { keyframes } from '@mui/system';
+import { fa } from '@faker-js/faker';
 
 const color: any = {
     "PENDING": "warning",
@@ -52,6 +52,8 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
     const [cancelledAppointmentsChecked, setCancelledAppointmentsChecked] = useState<boolean>(true)
     const [policy, setPolicy] = useState<any>(policyData)
     const [filteredAppointments, setFilteredAppointments] = useState<any>([]);
+    const [openAppointmentDrawer, setOpenAppointmentDrawer] = useState<boolean>(false)
+    const [isEditing, setIsEditing] = useState<boolean>(false)
     useEffect(() => {
         if (business_id && policy === null) {
             (async () => {
@@ -144,6 +146,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
     }
     const [isOpen, setIsOpen] = useState<boolean>(false)
     const [slotInfo, setSlotInfo] = useState<DateRange>()
+    const [editingSlotInfo, setEditingSlotInfo] = useState<DateRange>()
     const [services, setServices] = useState<any[]>(servicesData)
     const localizer = luxonLocalizer(DateTime)
     const [currentAddons, setCurrentAddons] = useState(new Set<string>())
@@ -580,14 +583,12 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                         <Calendar date={date} onNavigate={onNavigate} enableAutoScroll className='w-full' onSelectEvent={handleEvent} view={view} onView={onView} selectable defaultView={Views.WEEK} events={filteredAppointments} showAllEvents onSelectSlot={handleSelection} localizer={localizer} startAccessor="start"
                             endAccessor="end" components={{
                                 eventWrapper: ({ event, children }: any) => (
-                                    <div onClick={() => {
+                                    <div className='' onClick={() => {
                                         setEventData(event)
+                                        setOpenAppointmentDrawer(true)
                                         console.log(event);
-
                                     }}>
-
                                         {children}
-
                                     </div>
                                 ),
                                 week: {
@@ -595,18 +596,21 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                 }
                             }} />
                     </div>
-                    {eventData !== null ? <div className='max-h-min w-[300px]'>
-                        <div className='p-5 flex flex-col flex-1 min-h-min justify-between gap-2'>
-                            <div className='flex flex-col gap-1'>
-                                <Title size="base" as="div" weight="medium">{eventData.title}</Title>
 
+                    {eventData ? <Drawer anchor='right' open={openAppointmentDrawer} onClose={() => {
+                        setOpenAppointmentDrawer(false)
+                        setIsEditing(false)
+                    }}>
+                        {!isEditing ? <div className='flex flex-col h-full'>
+                            <div className='w-full p-5 h-full flex flex-col gap-1 justify-between'>
+                                <Typography level='h4'>{eventData.title}</Typography>
                                 <Caption>{eventData.start?.toLocaleDateString()} @ {eventData.start?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })} - {eventData.end?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })}</Caption>
                                 <Aligner className='gap-x-1'>
                                     <Caption>Status:</Caption>
                                     <Chip variant='outlined' color={color[eventData.status]}>{eventData.status}</Chip>
                                 </Aligner>
                                 <div className='mt-5'>
-                                    <Text className='font-medium'>Client Details</Text>
+                                    <Typography className='font-medium'>Client Details</Typography>
                                     <div className='flex flex-col gap-1 mt-1'>
                                         <Caption>Name: {eventData.client_metadata.firstName + " " + eventData.client_metadata.lastName}</Caption>
                                         <Caption>Email: {eventData.client_metadata.email}</Caption>
@@ -614,21 +618,20 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                     </div>
                                 </div>
                                 <div className='mt-5'>
-                                    <Text>Service Details</Text>
+                                    <Typography className='font-medium'>Service Details</Typography>
                                     <div className='flex flex-col gap-1'>
                                         <Caption>Service: {eventData.service_data.name}</Caption>
                                         <Caption>Price: ${eventData.service_data.price / 100}</Caption>
                                         <div className='flex gap-1 max-w'><Caption className='min-w-max'>Add-Ons:</Caption> <div className='flex flex-wrap gap-1'>
-                                            {eventData.addons.map((addon: any, index: number) => {
+                                            {eventData.selected_addons.length ? eventData.selected_addons.map((addon: any, index: number) => {
                                                 return (
-                                                    index !== eventData.addons.length - 1 ? <Caption>{addon.name + ", "}</Caption> : <Caption>{addon.name}</Caption>
+                                                    index !== eventData.selected_addons.length - 1 ? <Caption>{addon.name + ", "}</Caption> : <Caption>{addon.name}</Caption>
                                                 )
-                                            })}</div></div>
+                                            }) : <Caption className='italic font-bold'>No addons selected</Caption>}</div></div>
                                     </div>
                                 </div>
-                                {/* Work on this */}
                                 <div className='mt-5'>
-                                    <Text>More Details</Text>
+                                    <Typography className="font-medium">More Details</Typography>
                                     <div className='flex flex-col gap-1'>
                                         <Caption>Deposit Required: {eventData.require_deposit ? "Yes" : "No"}</Caption>
                                         <Caption>Deposit Amount: ${eventData.deposit_price ? eventData.deposit_price / 100 : "N/A"}</Caption>
@@ -636,30 +639,97 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                     </div>
                                 </div>
 
+
+
+
                             </div>
-                            {eventData.status === "CANCELLED" ? <>
-                            </> : <div className='w-full flex flex-col gap-2 mt-10 mb-5'>
-                                <MUIButton color='warning' variant='outlined' onClick={() => {
-                                    setIsOpen(true)
-                                }}>Edit Appointment</MUIButton>
-                                <MUIButton color='danger' onClick={async () => {
-                                    setIsSending(true)
-                                    await handleDelete(eventData.id).then(async () => {
-                                        setIsSending(false)
-                                        setConfirmation({
-                                            title: "Appointment Cancelled!",
-                                            description: ""
+                            <div className='p-5'>
+                                {eventData.status === "CANCELLED" ? <>
+                                </> : <div className='w-full flex flex-col gap-2 mt-10 mb-5'>
+                                    {eventData.status === 'CONFIRMED' ? <Dropdown>
+                                        <MenuButton color='success' sx={{ width: '100%', display: 'flex', justifyContent: 'center', }}>
+                                            <div>Mark Appointment as...</div>
+                                        </MenuButton>
+                                        <Menu disablePortal>
+                                            <MenuItem color='success'>Completed (Paid Cash)</MenuItem>
+                                            <MenuItem color='warning'>Incomplete (Didn't Pay)</MenuItem>
+                                            <MenuItem color='danger'>Didn't Show</MenuItem>
+                                        </Menu>
+                                    </Dropdown> : <></>}
+                                    <MUIButton color='warning' variant='outlined' onClick={() => {
+                                        const initialTimeState = { start: DateTime.fromJSDate(eventData.start), end: DateTime.fromJSDate(eventData.end) }
+                                        setEditingSlotInfo(initialTimeState)
+                                        setIsEditing(true)
+                                    }}>Reschedule Appointment</MUIButton>
+                                    <MUIButton color='danger' onClick={async () => {
+                                        setIsSending(true)
+                                        await handleDelete(eventData.id).then(async () => {
+                                            setIsSending(false)
+                                            setConfirmation({
+                                                title: "Appointment Cancelled!",
+                                                description: ""
+                                            })
+                                            setConfirmationOpen(true)
                                         })
-                                        setConfirmationOpen(true)
-                                    })
-                                }}>Cancel Appointment</MUIButton>
-                            </div>}
+                                    }}>Cancel Appointment</MUIButton>
+                                </div>}
+                            </div>
+                        </div> : <div className='p-5 h-full flex flex-col justify-between'>
+                            <div>
+                                <div className='flex w-full mb-5 cursor-pointer' onClick={() => {
+                                    setIsEditing(false)
+                                }}>
+                                    <ArrowLeft size={16} />
+                                </div>
+                                <Typography>Reschedule Appointment</Typography>
+                                {Object.keys(editingSlotInfo!).length ? <div>
+                                    <Caption>{editingSlotInfo?.start.year === editingSlotInfo?.end.year && editingSlotInfo?.start.month === editingSlotInfo?.end.month && editingSlotInfo?.start.day === editingSlotInfo?.end.day ? `${editingSlotInfo?.start.toFormat("MMMM d, yyyy")}` : `${editingSlotInfo?.start.toFormat("MMMM d, yyyy")} - ${editingSlotInfo?.end.toFormat("MMMM d, yyyy")}`}</Caption>
+                                    <div className='flex gap-2 items-end'>
+                                        <Caption>{`${editingSlotInfo?.start.toFormat("h:mm a")} - ${editingSlotInfo?.end.toFormat("h:mm a")}`}</Caption>
+                                    </div>
+                                </div> : <></>}
+                                <div className='flex flex-col gap-2 mt-5'>
+                                    <DateInput
+                                        maxValue={parseAbsoluteToLocal(editingSlotInfo?.end.plus({ minute: 1 }).toISO()!)}
+                                        onChange={(value: ZonedDateTime | null) => {
+                                            setSlotInfo({
+                                                start: DateTime.fromISO(value!.toAbsoluteString()),
+                                                end: editingSlotInfo!.end
+                                            })
+                                        }}
+                                        value={parseAbsoluteToLocal(editingSlotInfo?.start.toISO()!)}
+                                        label={"Start Date & Time"}
+                                        labelPlacement="inside"
+                                    />
+                                    <DateInput
+                                        minValue={parseAbsoluteToLocal(editingSlotInfo?.start.plus({ minute: 1 }).toISO()!)}
+                                        onChange={(value: ZonedDateTime | null) => {
+                                            setSlotInfo({
+                                                end: DateTime.fromISO(value!.toAbsoluteString()),
+                                                start: editingSlotInfo!.start
+                                            })
+                                        }}
+                                        value={parseAbsoluteToLocal(editingSlotInfo?.end.toISO()!)}
+                                        label={"End Date & Time"}
+                                        labelPlacement="inside"
+                                    />
+                                </div>
+                                <div className='w-full flex mt-5'>
 
-                        </div>
-                        <EditAppointment setIsSending={setIsSending} setConfirmation={setConfirmation} setConfirmationOpen={setConfirmationOpen} setAppointments={setAppointments} id={eventData.id} appointments={appointments} business_id={business_id} appointment_id={eventData.id} eventData={eventData} client_metadata={eventData.client_metadata} isOpen={isOpen} setIsOpen={setIsOpen} services={services} service_data={eventData.service_data} />
 
-                    </div> : <></>}
+                                </div>
+                            </div>
+                            <div className='flex w-full'>
+                                <MUIButton className='w-full'>Save Changes</MUIButton>
+                            </div>
+
+                        </div>}
+
+                    </Drawer> : <></>}
                 </div>
+                {/* <EditAppointment setIsSending={setIsSending} setConfirmation={setConfirmation} setConfirmationOpen={setConfirmationOpen} setAppointments={setAppointments} id={eventData.id} appointments={appointments} business_id={business_id} appointment_id={eventData.id} eventData={eventData} client_metadata={eventData.client_metadata} isOpen={isOpen} setIsOpen={setIsOpen} services={services} service_data={eventData.service_data} /> */}
+
+
 
             </div>
 
@@ -697,167 +767,158 @@ const EditAppointment = ({ setIsSending, setConfirmation, setConfirmationOpen, s
 
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(open) => {
-            setIsOpen(open)
-            setClientInformation({ ...client_metadata })
-            setSlotInfo(initialTimeState)
-        }}>
-            <Dialog.Portal>
-                <Dialog.Overlay className='z-40' />
-                <Dialog.Content className="max-w-4xl z-50">
-                    <Dialog.Title>Edit Appointment</Dialog.Title>
-                    {Object.keys(slotInfo).length ? <div>
-                        <Caption>{slotInfo?.start.year === slotInfo?.end.year && slotInfo?.start.month === slotInfo?.end.month && slotInfo?.start.day === slotInfo?.end.day ? `${slotInfo?.start.toFormat("MMMM d, yyyy")}` : `${slotInfo?.start.toFormat("MMMM d, yyyy")} - ${slotInfo?.end.toFormat("MMMM d, yyyy")}`}</Caption>
-                        <div className='flex gap-2 items-end'>
-                            <Caption>{`${slotInfo?.start.toFormat("h:mm a")} - ${slotInfo?.end.toFormat("h:mm a")}`}</Caption>
+        <div>
+            <Dialog.Title>Edit Appointment</Dialog.Title>
+            {Object.keys(slotInfo).length ? <div>
+                <Caption>{slotInfo?.start.year === slotInfo?.end.year && slotInfo?.start.month === slotInfo?.end.month && slotInfo?.start.day === slotInfo?.end.day ? `${slotInfo?.start.toFormat("MMMM d, yyyy")}` : `${slotInfo?.start.toFormat("MMMM d, yyyy")} - ${slotInfo?.end.toFormat("MMMM d, yyyy")}`}</Caption>
+                <div className='flex gap-2 items-end'>
+                    <Caption>{`${slotInfo?.start.toFormat("h:mm a")} - ${slotInfo?.end.toFormat("h:mm a")}`}</Caption>
+                </div>
+            </div> : <></>}
+
+            <Dialog.Description className="mt-2">
+
+                <div className='flex justify-start items-start'>
+
+                    <div className='gap-3 flex flex-col justify-center'>
+                        <div className='flex mt-2 flex-col gap-1'>
+                            <DateInput
+                                maxValue={parseAbsoluteToLocal(slotInfo?.end.plus({ minute: 1 }).toISO()!)}
+                                onChange={(value: ZonedDateTime | null) => {
+                                    setSlotInfo({
+                                        start: DateTime.fromISO(value!.toAbsoluteString()),
+                                        end: slotInfo.end
+                                    })
+                                }}
+                                value={parseAbsoluteToLocal(slotInfo?.start.toISO()!)}
+                                label={"Start Date & Time"}
+                                labelPlacement="inside"
+                            />
+                            <DateInput
+                                minValue={parseAbsoluteToLocal(slotInfo?.start.plus({ minute: 1 }).toISO()!)}
+                                onChange={(value: ZonedDateTime | null) => {
+                                    setSlotInfo({
+                                        end: DateTime.fromISO(value!.toAbsoluteString()),
+                                        start: slotInfo.start
+                                    })
+                                }}
+                                value={parseAbsoluteToLocal(slotInfo?.end.toISO()!)}
+                                label={"End Date & Time"}
+                                labelPlacement="inside"
+                            />
                         </div>
-                    </div> : <></>}
+                        <div>
 
-                    <Dialog.Description className="mt-2">
+                            <Label className='text-sm font-medium'>Service</Label>
+                            <Select.Root defaultValue={currentServiceID} onValueChange={(value: string) => {
+                                setCurrentServiceID(value)
+                            }}>
+                                <Select.Trigger size="md" className="w-56 flex justify-between">
+                                    <Select.Value placeholder={
+                                        <Caption>Select a service</Caption>} />
+                                    <Select.Icon>
+                                        <ChevronDown size={16} />                                        </Select.Icon>
+                                </Select.Trigger>
 
-                        <div className='flex justify-start items-start'>
-
-                            <div className='gap-3 flex flex-col justify-center'>
-                                <div className='flex mt-2 flex-col gap-1'>
-                                    <DateInput
-                                        maxValue={parseAbsoluteToLocal(slotInfo?.end.plus({ minute: 1 }).toISO()!)}
-                                        onChange={(value: ZonedDateTime | null) => {
-                                            setSlotInfo({
-                                                start: DateTime.fromISO(value!.toAbsoluteString()),
-                                                end: slotInfo.end
-                                            })
-                                        }}
-                                        value={parseAbsoluteToLocal(slotInfo?.start.toISO()!)}
-                                        label={"Start Date & Time"}
-                                        labelPlacement="inside"
-                                    />
-                                    <DateInput
-                                        minValue={parseAbsoluteToLocal(slotInfo?.start.plus({ minute: 1 }).toISO()!)}
-                                        onChange={(value: ZonedDateTime | null) => {
-                                            setSlotInfo({
-                                                end: DateTime.fromISO(value!.toAbsoluteString()),
-                                                start: slotInfo.start
-                                            })
-                                        }}
-                                        value={parseAbsoluteToLocal(slotInfo?.end.toISO()!)}
-                                        label={"End Date & Time"}
-                                        labelPlacement="inside"
-                                    />
+                                <Select.Portal>
+                                    <Select.Content mixed className="z-50">
+                                        <Select.Viewport>
+                                            {
+                                                services.map((service) => (
+                                                    <SelectItem service={service} key={service.name} />
+                                                ))
+                                            }
+                                        </Select.Viewport>
+                                    </Select.Content>
+                                </Select.Portal>
+                            </Select.Root></div>
+                        <div>
+                            <Label className='text-sm font-medium'>Client Information</Label>
+                            <div className='flex flex-col gap-2'>
+                                <div className='flex gap-2'>
+                                    <Input placeholder="First Name" value={clientInformation.firstName} onChange={(e) => {
+                                        setClientInformation({
+                                            ...clientInformation,
+                                            firstName: e.target.value
+                                        })
+                                    }} />
+                                    <Input placeholder="Last Name" value={clientInformation.lastName} onChange={(e) => {
+                                        setClientInformation({
+                                            ...clientInformation,
+                                            lastName: e.target.value
+                                        })
+                                    }} />
                                 </div>
-                                <div>
+                                <Input placeholder="Email" value={clientInformation.email} onChange={(e) => {
+                                    setClientInformation({
+                                        ...clientInformation,
+                                        email: e.target.value
+                                    })
+                                }} />
+                                <Input placeholder="Phone Number" value={clientInformation.phoneNumber} onChange={(e) => {
+                                    setClientInformation({
+                                        ...clientInformation,
+                                        phoneNumber: e.target.value
+                                    })
+                                }} />
 
-                                    <Label className='text-sm font-medium'>Service</Label>
-                                    <Select.Root defaultValue={currentServiceID} onValueChange={(value: string) => {
-                                        setCurrentServiceID(value)
-                                    }}>
-                                        <Select.Trigger size="md" className="w-56 flex justify-between">
-                                            <Select.Value placeholder={
-                                                <Caption>Select a service</Caption>} />
-                                            <Select.Icon>
-                                                <ChevronDown size={16} />                                        </Select.Icon>
-                                        </Select.Trigger>
-
-                                        <Select.Portal>
-                                            <Select.Content mixed className="z-50">
-                                                <Select.Viewport>
-                                                    {
-                                                        services.map((service) => (
-                                                            <SelectItem service={service} key={service.name} />
-                                                        ))
-                                                    }
-                                                </Select.Viewport>
-                                            </Select.Content>
-                                        </Select.Portal>
-                                    </Select.Root></div>
-                                <div>
-                                    <Label className='text-sm font-medium'>Client Information</Label>
-                                    <div className='flex flex-col gap-2'>
-                                        <div className='flex gap-2'>
-                                            <Input placeholder="First Name" value={clientInformation.firstName} onChange={(e) => {
-                                                setClientInformation({
-                                                    ...clientInformation,
-                                                    firstName: e.target.value
-                                                })
-                                            }} />
-                                            <Input placeholder="Last Name" value={clientInformation.lastName} onChange={(e) => {
-                                                setClientInformation({
-                                                    ...clientInformation,
-                                                    lastName: e.target.value
-                                                })
-                                            }} />
-                                        </div>
-                                        <Input placeholder="Email" value={clientInformation.email} onChange={(e) => {
-                                            setClientInformation({
-                                                ...clientInformation,
-                                                email: e.target.value
-                                            })
-                                        }} />
-                                        <Input placeholder="Phone Number" value={clientInformation.phoneNumber} onChange={(e) => {
-                                            setClientInformation({
-                                                ...clientInformation,
-                                                phoneNumber: e.target.value
-                                            })
-                                        }} />
-
-                                    </div>
-                                </div>
                             </div>
                         </div>
-                    </Dialog.Description>
+                    </div>
+                </div>
+            </Dialog.Description>
 
-                    <Dialog.Actions>
-                        <Dialog.Close asChild>
-                            <Button.Root onClick={async () => {
-                                setIsOpen(false)
-                            }} variant="outlined" size="sm" intent="gray">
-                                <Button.Label>Cancel</Button.Label>
-                            </Button.Root>
-                        </Dialog.Close>
-                        <Dialog.Close asChild >
-                            <Button.Root onClick={async () => {
-                                setIsSending(true)
-                                const res = services.find((value: Service, index: number) => value.id === currentServiceID)
-                                const result = await fetch(`/api/appointments`, {
-                                    method: 'PUT',
-                                    body: JSON.stringify({
-                                        id: appointment_id,
-                                        start: slotInfo.start.toISO()!,
-                                        end: slotInfo.end.toISO()!,
-                                        status: 'CONFIRMED'
-                                    })
-                                })
-                                const data = await result.json()
-                                // const result = await businessRescheduling(business_id, res!, clientInformation, appointment_id, {
-                                //     start: slotInfo.start.toISO()!,
-                                //     end: slotInfo.end.toISO()!,
-                                //     appointmentLength: service_data.length
-                                // }, false)
-                                let clone = [...appointments]
-                                const id = clone.findIndex((element) => element.id === appointment_id)
-                                clone[id] = {
-                                    id: appointment_id,
-                                    start: new Date(slotInfo.start.toISO()!),
-                                    end: new Date(slotInfo.start.toISO()!),
-                                    title: `${data.service_data.name} with ${clientInformation.firstName}`,
-                                    client_metadata: clientInformation,
-                                    service_data: data.service_data,
-                                    status: result.status
-                                }
-                                setAppointments(clone)
-                                setIsSending(false)
-                                setConfirmation({
-                                    title: "Appointment Updated!",
-                                    description: "Changes saved"
-                                })
-                                setConfirmationOpen(true)
-                            }} size="sm">
-                                <Button.Label>Save Changes</Button.Label>
-                            </Button.Root>
-                        </Dialog.Close>
-                    </Dialog.Actions>
-                </Dialog.Content>
-            </Dialog.Portal>
-        </Dialog.Root>
+            <Dialog.Actions>
+                <Dialog.Close asChild>
+                    <Button.Root onClick={async () => {
+                        setIsOpen(false)
+                    }} variant="outlined" size="sm" intent="gray">
+                        <Button.Label>Cancel</Button.Label>
+                    </Button.Root>
+                </Dialog.Close>
+                <Dialog.Close asChild >
+                    <Button.Root onClick={async () => {
+                        setIsSending(true)
+                        const res = services.find((value: Service, index: number) => value.id === currentServiceID)
+                        const result = await fetch(`/api/appointments`, {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                                id: appointment_id,
+                                start: slotInfo.start.toISO()!,
+                                end: slotInfo.end.toISO()!,
+                                status: 'CONFIRMED'
+                            })
+                        })
+                        const data = await result.json()
+                        // const result = await businessRescheduling(business_id, res!, clientInformation, appointment_id, {
+                        //     start: slotInfo.start.toISO()!,
+                        //     end: slotInfo.end.toISO()!,
+                        //     appointmentLength: service_data.length
+                        // }, false)
+                        let clone = [...appointments]
+                        const id = clone.findIndex((element) => element.id === appointment_id)
+                        clone[id] = {
+                            id: appointment_id,
+                            start: new Date(slotInfo.start.toISO()!),
+                            end: new Date(slotInfo.start.toISO()!),
+                            title: `${data.service_data.name} with ${clientInformation.firstName}`,
+                            client_metadata: clientInformation,
+                            service_data: data.service_data,
+                            status: result.status
+                        }
+                        setAppointments(clone)
+                        setIsSending(false)
+                        setConfirmation({
+                            title: "Appointment Updated!",
+                            description: "Changes saved"
+                        })
+                        setConfirmationOpen(true)
+                    }} size="sm">
+                        <Button.Label>Save Changes</Button.Label>
+                    </Button.Root>
+                </Dialog.Close>
+            </Dialog.Actions>
+        </div>
     )
 }
 

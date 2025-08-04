@@ -16,6 +16,7 @@ import RescheduledAppointment from "../../../../emails/rescheduled-appointment";
 import AppointmentCancelled from "../../../../emails/appointment-cancelled";
 import CancelledAppointment from "../../../../emails/cancelled-appointment";
 import { runs } from "@trigger.dev/sdk/v3";
+import { trackAppointmentBooked, trackAppointmentCancelled, trackAppointmentRescheduled } from "../../../../lib/analytics";
 
 
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
@@ -314,6 +315,13 @@ export async function PUT(request: NextRequest) {
         const thirtyBefore = DateTime.fromISO(data.end).minus({ minutes: 30 })
         await runs.reschedule(data.reminder_ids.business, { delay: dayBefore.toISO()! })
         await runs.reschedule(data.reminder_ids.client, { delay: dayBefore.toISO()! })
+        await trackAppointmentRescheduled({
+            appointmentType: "",
+            businessId: data.business,
+            serviceId: data.service_data.id,
+            serviceName: data.service_data.name,
+            servicePrice: data.service_data.price
+        })
         await runs.reschedule(data.payment_link_id, { delay: thirtyBefore.toISO()! })
     } else if (data?.status === 'CANCELLED') { // Appointment was cancelled
         // Cancel reminders for business and client
@@ -329,6 +337,13 @@ export async function PUT(request: NextRequest) {
         await runs.cancel(data.reminder_ids.business)
         await runs.cancel(data.reminder_ids.client)
         await runs.cancel(data.payment_link_id)
+        await trackAppointmentCancelled({
+            appointmentType: "",
+            businessId: data.business,
+            serviceId: data.service_data.id,
+            serviceName: data.service_data.name,
+            servicePrice: data.service_data.price
+        })
     }
     else {
         await sendConfirmationEmail(data)
@@ -342,6 +357,14 @@ export async function PUT(request: NextRequest) {
         })
         // Set reminders
         await sendReminders(data)
+        // Track Appointment Data
+        await trackAppointmentBooked({
+            businessId: data.business,
+            serviceName: data.service_data.name,
+            serviceId: data.service_data.id,
+            servicePrice: data.service_data.price,
+            appointmentType: ""
+        })
     }
 
     if (error) {

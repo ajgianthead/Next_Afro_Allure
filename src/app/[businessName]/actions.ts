@@ -10,6 +10,7 @@ import RescheduledAppointment from "../../../emails/rescheduled-appointment";
 import { createClient } from "@utils/supabase/server";
 import { Database } from "../../../lib/database.types";
 import { assignAddons } from "app/api/util/transformServices";
+import { trackAppointmentRescheduled } from "../../../lib/analytics";
 
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
 
@@ -201,6 +202,13 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
                 serviceName: appointment.service_data.name
             }),
         });
+        await trackAppointmentRescheduled({
+            businessId: appointment.business,
+            serviceId: appointment.service_data.id,
+            serviceName: appointment.service_data.name,
+            servicePrice: appointment.service_data.price,
+            appointmentType: ""
+        })
 
         return appointment
     } catch (error: any) {

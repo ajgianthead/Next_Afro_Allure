@@ -23,11 +23,11 @@ export const Link = ({ isActive = false, label, link, children, disabled = false
   );
 };
 
-export const Root = ({ isActive = false, link, children, disabled = false }: { isActive?: boolean; children: ReactNode; link: string, disabled?: boolean }) => (
+export const Root = ({ isActive = false, link, children, variantVal = 'ghost', disabled = false }: { isActive?: boolean; variantVal?: "solid" | "outlined" | "soft" | "ghost"; children: ReactNode; link: string, disabled?: boolean }) => (
   <Button.Root
     disabled={disabled}
     href={link}
-    variant={isActive ? 'soft' : 'ghost'}
+    variant={isActive ? 'soft' : variantVal!}
     intent="primary"
     className={twMerge(
       'justify-start gap-3.5 px-4 hover:bg-[theme(colors.gray.200)] ',

@@ -14,9 +14,6 @@ export default async function Page() {
         const policy = (await supabase.from('business_policies').select("*").eq('id', res.data?.booking_policies!).single()).data
         const services = (await supabase.from('services').select('*').eq('business', business_id)).data
         const appointments = (await supabase.from('appointments').select().eq('business', business_id).gte('end', currentTimestamp)).data
-
-        console.log(services);
-
         return {
             policy: policy,
             services: services?.length ? await assignAddons(supabase, services!) : [],

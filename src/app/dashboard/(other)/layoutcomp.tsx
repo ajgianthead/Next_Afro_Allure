@@ -51,6 +51,8 @@ export default function LayoutComp({
                     <ScrollArea.Root className="-mx-1 pr-5 -my-4">
                         <ScrollArea.Viewport className="w-full px-1 py-4">
                             <div className="mt-4 space-y-1">
+                                <Caption className="mx-2 my-2">General</Caption>
+
                                 <Link.Root link="/dashboard" isActive={pathname === "/dashboard"}>
                                     <Link.Icon>
                                         <LayoutDashboard />
@@ -108,21 +110,6 @@ export default function LayoutComp({
                                         <Link.Label>Analytics</Link.Label>
                                     </Link.Root>
                                 </div>
-                                <div>
-                                    <Caption className="mx-2 my-2">Client Rewards</Caption>
-                                    <Link.Root disabled={true} link="#">
-                                        <Link.Icon>
-                                            <Tag />
-                                        </Link.Icon>
-                                        <Link.Label><div className='flex items-center'>Loyalty Program</div></Link.Label>
-                                    </Link.Root>
-                                    <Link.Root link="#" isActive={pathname === "/dashboard/discounts"}>
-                                        <Link.Icon>
-                                            <Percent />
-                                        </Link.Icon>
-                                        <Link.Label>Discounts</Link.Label>
-                                    </Link.Root>
-                                </div>
                             </div>
                         </ScrollArea.Viewport>
                         <ScrollArea.Scrollbar orientation="vertical" />
@@ -174,7 +161,7 @@ export default function LayoutComp({
                         </div>
                         <div className="flex items-center gap-4 pr-6">
                             {businessData.notifications.filter((noti) => noti.read === false).length ? <div >
-                                <Badge badgeContent={businessData.notifications.length} badgeInset={8} color='danger' size='sm'>
+                                <Badge badgeContent={businessData.notifications.filter((noti) => noti.read === false).length} badgeInset={8} color='danger' size='sm'>
                                     <Notifications />
                                 </Badge>
                             </div> : <Notifications />}

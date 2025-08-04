@@ -70,53 +70,55 @@ const NotificationsClient = ({ notifications }: PageProps) => {
                             console.log(noti);
 
                             return (
-                                <ListItem key={index}>
-                                    <Checkbox checked={noti.checked || selectedNotis.has(noti.id)} onChange={(e) => {
-                                        const isChecked = e.target.checked
-                                        let clone = [...notificationState]
-                                        clone[index].checked = isChecked
-                                        let selected = new Set([...selectedNotis])
-                                        if (isChecked) {
-                                            selected.add(noti.id)
-                                        } else {
-                                            selected.delete(noti.id)
-                                        }
-                                        setSelectedNotis(selected)
-                                    }} className='mr-2' />
-                                    <ListItemButton onClick={async () => {
-                                        const res = await updateNotificationState(noti.id)
-                                        console.log(res)
-                                        if (res instanceof PostgrestError) {
-                                            console.log(res.message);
-                                        } else {
+                                <div key={index} className='overflow-x-hidden'>
+                                    <ListItem>
+                                        <Checkbox checked={noti.checked || selectedNotis.has(noti.id)} onChange={(e) => {
+                                            const isChecked = e.target.checked
                                             let clone = [...notificationState]
-                                            clone.splice(index, 1, res!)
-                                            console.log(clone);
+                                            clone[index].checked = isChecked
+                                            let selected = new Set([...selectedNotis])
+                                            if (isChecked) {
+                                                selected.add(noti.id)
+                                            } else {
+                                                selected.delete(noti.id)
+                                            }
+                                            setSelectedNotis(selected)
+                                        }} className='mr-2' />
+                                        <ListItemButton onClick={async () => {
+                                            const res = await updateNotificationState(noti.id)
+                                            console.log(res)
+                                            if (res instanceof PostgrestError) {
+                                                console.log(res.message);
+                                            } else {
+                                                let clone = [...notificationState]
+                                                clone.splice(index, 1, res!)
+                                                console.log(clone);
 
-                                            setNotificationState(clone)
-                                            setNoti(noti)
-                                            setNotiClicked(true)
-                                        }
-                                    }} sx={{
-                                        borderRadius: 8
-                                    }}>
-                                        <ListItemContent sx={{
-                                            display: 'flex',
-                                            gap: 3,
-                                            alignItems: 'center',
-                                            padding: 2
+                                                setNotificationState(clone)
+                                                setNoti(noti)
+                                                setNotiClicked(true)
+                                            }
+                                        }} sx={{
+                                            borderRadius: 8
                                         }}>
+                                            <ListItemContent sx={{
+                                                display: 'flex',
+                                                gap: 3,
+                                                alignItems: 'center',
+                                                padding: 2
+                                            }}>
 
-                                            {!noti.read ? <Badge size='sm' /> : <></>}
-                                            <div className='flex gap-5'>
-                                                <Typography level="title-sm">{noti.title}</Typography>
-                                                <Typography level="body-sm" noWrap>
-                                                    {noti.body}
-                                                </Typography>
-                                            </div>
-                                        </ListItemContent>
-                                    </ListItemButton>
-                                </ListItem>
+                                                {!noti.read ? <Badge size='sm' /> : <></>}
+                                                <div className='flex lg:gap-5 gap-1 lg:flex-row flex-col'>
+                                                    <Typography level="title-sm">{noti.title}</Typography>
+                                                    <Typography level="body-sm" noWrap>
+                                                        {noti.body}
+                                                    </Typography>
+                                                </div>
+                                            </ListItemContent>
+                                        </ListItemButton>
+                                    </ListItem>
+                                </div>
                             )
                         }) : <div className='mt-5 w-full flex justify-center'>
                             <Caption className='italic'>You have no current notifications</Caption>

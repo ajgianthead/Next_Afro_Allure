@@ -1,11 +1,13 @@
 'use server'
 import fetch from 'node-fetch'
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
+import { google } from '@google-analytics/data/build/protos/protos';
 
 type Params = {
-    userId: string;
     businessId: string;
     serviceId: string;
+    serviceName: string;
+    servicePrice: number;
     appointmentType: string;
     reason?: string;
 }
@@ -23,7 +25,7 @@ const propertyId = process.env.NEXT_PUBLIC_ANALYTICS_PROPERTY_ID;
 export type ReportFilters = {
     businessId?: string;
     eventName?: string; // Ex. appointment_booked
-    dataRanges: {
+    dateRanges: {
         startDate: string;
         endDate: string;
     }[]
@@ -31,11 +33,11 @@ export type ReportFilters = {
 }
 
 
-type GA4ReportRow = {
+export type GA4ReportRow = {
     [key: string]: string | number;
 };
 
-export async function formatGA4Report(response: any) {
+export async function formatGA4Report(response: google.analytics.data.v1beta.IRunReportResponse) {
     const dimensionHeaders = response.dimensionHeaders?.map((d: any) => d.name) || [];
     const metricHeaders = response.metricHeaders?.map((m: any) => m.name) || [];
 
@@ -73,7 +75,7 @@ export async function runCancelledReasonReport(filters: ReportFilters) {
             },
         },
         dateRanges: [
-            ...filters.dataRanges
+            ...filters.dateRanges
         ],
     });
     return response;
@@ -95,16 +97,16 @@ export async function runTrafficSourceReport(filters: ReportFilters) {
                 fieldName: 'pagePath',
                 stringFilter: {
                     value: `/${filters.businessName}`,
-                    matchType: 'CONTAINS',
+                    matchType: 'EXACT',
                 },
             },
         },
         dateRanges: [
-            ...filters.dataRanges
+            ...filters.dateRanges
         ],
     });
 
-    return response
+    return formatGA4Report(response)
 }
 
 // Page Views
@@ -112,31 +114,42 @@ export async function runPageViewReport(filters: ReportFilters) {
     const [response] = await analyticsDataClient.runReport({
         property: `properties/${propertyId}`,
         dimensions: [
-            { name: 'pagePath' },
+            { name: 'customEvent:business_slug' }, // must match exactly your custom dimension name
         ],
         metrics: [
-            { name: 'activeUsers' },
+            { name: 'eventCount' },
         ],
         dimensionFilter: {
-            filter: {
-                fieldName: 'pagePath',
-                stringFilter: {
-                    value: `/${filters.businessName}/book`,
-                    matchType: 'CONTAINS',
-                },
+            andGroup: {
+                expressions: [
+                    {
+                        filter: {
+                            fieldName: 'eventName',
+                            stringFilter: {
+                                value: 'business_page_view',
+                                matchType: 'EXACT',
+                            },
+                        },
+                    },
+                    {
+                        filter: {
+                            fieldName: 'customEvent:business_slug',
+                            stringFilter: {
+                                value: filters.businessName,
+                                matchType: 'EXACT',
+                            },
+                        },
+                    },
+                ],
             },
         },
-        dateRanges: [
-            ...filters.dataRanges
-        ],
+        dateRanges: filters.dateRanges,
     });
-    return formatGA4Report(response)
+    return formatGA4Report(response);
 }
 
 // Could be used for appointment_booked, appointment_completed, appointment_cancelled, etc.
 export async function runTotalReport(filters: ReportFilters) {
-    console.log(filters);
-
     const [response] = await analyticsDataClient.runReport({
         property: `properties/${propertyId}`,
         dimensions: [
@@ -145,7 +158,7 @@ export async function runTotalReport(filters: ReportFilters) {
         ],
         metrics: [{ name: 'eventCount' }],
         dateRanges: [
-            ...filters.dataRanges
+            ...filters.dateRanges
         ],
         dimensionFilter: {
             andGroup: {
@@ -172,8 +185,6 @@ export async function runTotalReport(filters: ReportFilters) {
             },
         },
     })
-    console.log(response);
-
     return formatGA4Report(response);
 
 }
@@ -187,7 +198,7 @@ export async function runServiceReport(filters: ReportFilters) {
         ],
         metrics: [{ name: 'eventCount' }],
         dateRanges: [
-            ...filters.dataRanges
+            ...filters.dateRanges
         ],
         dimensionFilter: {
             andGroup: {
@@ -227,13 +238,14 @@ export async function runServiceReport(filters: ReportFilters) {
 
 export const trackAppointmentBooked = async (data: Params) => {
     const payload = {
-        client_id: data.userId, // or a random UUID if you don't have this
+        client_id: crypto.randomUUID(), // or a random UUID if you don't have this
         events: [
             {
                 name: 'appointment_booked',
                 params: {
                     business_id: data.businessId,
                     service_id: data.serviceId,
+                    service_price: data.servicePrice,
                     type: data.appointmentType,
                     debug_mode: true,
                 },
@@ -247,12 +259,14 @@ export const trackAppointmentBooked = async (data: Params) => {
     if (!res.ok) {
         console.error('Failed to send GA event', await res.text())
     }
+    console.log(res);
+
     return res
 }
 
 export const trackAppointmentRescheduled = async (data: Params) => {
     const payload = {
-        client_id: data.userId, // or a random UUID if you don't have this
+        client_id: crypto.randomUUID(), // or a random UUID if you don't have this
         events: [
             {
                 name: 'appointment_rescheduled',
@@ -277,7 +291,7 @@ export const trackAppointmentRescheduled = async (data: Params) => {
 
 export const trackAppointmentCancelled = async (data: Params) => {
     const payload = {
-        client_id: data.userId, // or a random UUID if you don't have this
+        client_id: crypto.randomUUID(), // or a random UUID if you don't have this
         events: [
             {
                 name: 'appointment_cancelled',
@@ -301,9 +315,35 @@ export const trackAppointmentCancelled = async (data: Params) => {
     return res
 }
 
+export const trackAppointmentCompletion = async (data: Params) => {
+    const payload = {
+        client_id: crypto.randomUUID(), // or a random UUID if you don't have this
+        events: [
+            {
+                name: 'appointment_completed',
+                params: {
+                    business_id: data.businessId,
+                    service_id: data.serviceId,
+                    type: data.appointmentType,
+                    debug_mode: true,
+                    reason: data.reason
+                },
+            },
+        ],
+    }
+    const res = await fetch(GA_ENDPOINT, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    })
+    if (!res.ok) {
+        console.error('Failed to send GA event', await res.text())
+    }
+    return res
+}
+
 export const trackAppointmentAbadonment = async (data: Params) => {
     const payload = {
-        client_id: data.userId, // or a random UUID if you don't have this
+        client_id: crypto.randomUUID(), // or a random UUID if you don't have this
         events: [
             {
                 name: 'appointment_abandoned',
