@@ -153,11 +153,14 @@ export default function LandingPage() {
                             </ul>
 
                         </div>
-                        <div className="xl:absolute relative xl:mt-0 mt-10 xl:mx-0 mx-10 xl:right-[-500]">
-                            <AnimatedImage initial={{ opacity: 0, translateX: 500 }}
-                                whileInView={{ opacity: 1, translateX: -100, transition: { duration: 2 } }} width={1200} height={300} src={MONEY_IMG} alt="montization-image" className="border-black border-solid rounded-xl shadow-lg " />
+                        <div className="xl:absolute relative xl:mt-0 mt-10 xl:mx-0 mx-10 xl:block hidden">
+                            <AnimatedImage initial={{ opacity: 0, translateX: 900 }}
+                                whileInView={{ opacity: 1, translateX: 600, transition: { duration: 2 } }} width={1200} height={300} src={MONEY_IMG} alt="montization-image" className="border-black border-solid rounded-xl shadow-lg " />
                         </div>
-
+                        <div className="xl:absolute relative xl:mt-0 mt-10 xl:mx-0 mx-10 xl:hidden block">
+                            <AnimatedImage initial={{ opacity: 0, translateX: 200 }}
+                                whileInView={{ opacity: 1, translateX: 0, transition: { duration: 2 } }} width={1200} height={300} src={MONEY_IMG} alt="montization-image" className="border-black border-solid rounded-xl shadow-lg " />
+                        </div>
                     </div>
                 </section>
 
