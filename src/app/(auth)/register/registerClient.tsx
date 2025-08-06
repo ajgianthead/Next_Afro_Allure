@@ -39,36 +39,21 @@ export default function Register() {
         setIsLoading(true)
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
-        if (asBusiness) {
-            const result = await register({ name: formData.name, email: formData.email, password: formData.password })
-            if (result === "Business name is already taken") {
-                setError(result)
-                setIsLoading(false)
-            }
-            else if (result === "Email is already in use") {
-                setError(result)
-                setIsLoading(false)
-            }
-            else if (result instanceof PostgrestError) {
-                setError(result.message)
-                setIsLoading(false)
+        const result = await register({ name: formData.name, email: formData.email, password: formData.password })
+        if (result === "Business name is already taken") {
+            setError(result)
+            setIsLoading(false)
+        }
+        else if (result === "Email is already in use") {
+            setError(result)
+            setIsLoading(false)
+        }
+        else if (result instanceof PostgrestError) {
+            setError(result.message)
+            setIsLoading(false)
 
-            } else {
-                router.replace(`/onboarding/${result.business_users?.stripe_acc_id}`)
-                setIsLoading(false)
-
-            }
         } else {
-            const result = await fetch("/api/auth/register/client_user", {
-                method: "POST",
-                headers: myHeaders,
-                body: JSON.stringify({
-                    "email": formData.email,
-                    "password": formData.password,
-                    "phone_number": formData.phone
-                }),
-            })
-            //let res = await result.json()
+            router.replace(`/onboarding/${result.business_users?.stripe_acc_id}`)
         }
 
     }
@@ -76,39 +61,26 @@ export default function Register() {
     const [error, setError] = useState<any>(null)
     return (
         <main className="inset-0 z-10 m-auto h-fit max-w-xl px-6 py-12 lg:absolute">
-            <Card className="relative h-fit p-1 mt-28 shadow-xl shadow-gray-950/10" variant="mixed">
+            <Card className="relative h-fit p-1 mt-18 shadow-xl shadow-gray-950/10" variant="mixed">
                 <div data-rounded="large" className="p-10">
                     <div>
                         <Title size="xl" className="mb-1">
                             Register with Afro Allure
                         </Title>
                         <Text className="my-0" size="sm">
-                            Welcome to Afro Allure! Register either as a regular user or as a business
+                            Welcome to Afro Allure! Fill the form below to register your business with the platform
                         </Text>
                     </div>
 
-                    <div className="mt-6 grid grid-cols-1 gap-3">
-                        <Button.Root disabled={isLoading} variant="outlined" intent="gray" size="lg" className="w-full">
-                            <Button.Icon type="leading" size="sm">
-                                <FcGoogle />
-                            </Button.Icon>
-                            <Button.Label>Google</Button.Label>
-                        </Button.Root>
-                    </div>
+
 
                     <div className="mx-auto mt-8 space-y-6">
                         <div className="space-y-4 rounded-[--btn-radius] shadow-sm shadow-gray-500/5">
-                            <div className="relative my-6 grid items-center gap-3 [grid-template-columns:1fr_auto_1fr]">
-                                <Separator className="h-px border-b" />
-                                <Caption as="span" className="block" size="sm">
-                                    Or continue with
-                                </Caption>
-                                <Separator className="h-px border-b" />
-                            </div>
+
                             {error ? <Alert variant='soft' color='danger' >Error: {error}</Alert>
                                 : <></>}
                             <div className="space-y-4">
-                                {asBusiness ? <div className="space-y-2.5">
+                                <div className="space-y-2.5">
                                     <Label size="sm" htmlFor="name">
                                         Business Name
                                     </Label>
@@ -118,17 +90,7 @@ export default function Register() {
                                             name: e.target.value
                                         })
                                     }} id="name" name="name" required variant="outlined" size="md" />
-                                </div> : <div className="space-y-2.5">
-                                    <Label size="sm" htmlFor="phone">
-                                        Phone Number
-                                    </Label>
-                                    <Input disabled={isLoading} value={formData.phone} onChange={(e) => {
-                                        setFormData({
-                                            ...formData,
-                                            phone: e.target.value
-                                        })
-                                    }} id="phone" name="phone" required variant="outlined" size="md" />
-                                </div>}
+                                </div>
                                 <div className="space-y-2.5">
                                     <Label size="sm" htmlFor="email">
                                         Email
@@ -155,18 +117,6 @@ export default function Register() {
                                 </div>
                             </div>
                         </div>
-                        <Aligner fromRight className="max-w-md">
-                            <Label htmlFor="airplane-mode">
-                                Register as Business
-                            </Label>
-                            <Switch.Root disabled={isLoading} checked={asBusiness} onCheckedChange={(e) => {
-                                setAsBusiness(e)
-
-                            }} className="mt-1" id="isBusiness" name='isBusiness'>
-                                <Switch.Thumb />
-                            </Switch.Root>
-                            <Caption as="p" size="base">Join Afro Allure as a business by toggling the switch</Caption>
-                        </Aligner>
 
                         <Button.Root disabled={isLoading} onClick={createBusiness} className="w-full">
                             <Button.Label className='flex items-center'>{isLoading ? <CircularProgress size='sm' /> : "Create an Account"}</Button.Label>

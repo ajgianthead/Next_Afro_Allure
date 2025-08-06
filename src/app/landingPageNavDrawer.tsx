@@ -21,8 +21,8 @@ const LandingPageNavDrawer = () => {
             setOpen(inOpen);
         };
     return (
-        <div className='sticky top-0 z-20'>
-            <nav className="w-full py-2 flex justify-center bg-white ">
+        <div className='sticky top-0 z-50'>
+            <nav className="w-full py-2 z-50 flex justify-center bg-white ">
                 <div className="w-[1280px] px-5 flex justify-start">
                     <IconButton onClick={toggleDrawer(true)}>
                         <Menu />
@@ -40,10 +40,10 @@ const LandingPageNavDrawer = () => {
                                     <ListItemButton disabled className='flex justify-center'>Marketplace</ListItemButton>
                                 </ListItem>
                                 <ListItem>
-                                    <ListItemButton className='flex justify-center'>Features</ListItemButton>
+                                    <ListItemButton component='a' href='#features' className='flex justify-center'>Features</ListItemButton>
                                 </ListItem>
                                 <ListItem>
-                                    <ListItemButton className='flex justify-center'>About</ListItemButton>
+                                    <ListItemButton component='a' href='#about' className='flex justify-center'>About</ListItemButton>
                                 </ListItem>
 
                             </List>
@@ -52,10 +52,10 @@ const LandingPageNavDrawer = () => {
                             }} />
                             <List>
                                 <ListItem>
-                                    <ListItemButton color='primary' className='flex justify-center'>Register your Business</ListItemButton>
+                                    <ListItemButton color='primary' href='/register' component='a' className='flex justify-center'>Register your Business</ListItemButton>
                                 </ListItem>
                                 <ListItem>
-                                    <ListItemButton className='flex justify-center'>Login</ListItemButton>
+                                    <ListItemButton component='a' href='/login' className='flex justify-center'>Login</ListItemButton>
                                 </ListItem>
 
                             </List>

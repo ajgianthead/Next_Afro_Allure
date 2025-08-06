@@ -54,7 +54,7 @@ export default function LandingPage() {
                                     <Link disabled color="neutral" fontSize={12}>Marketplace</Link>
                                 </Tooltip>
                                 <Link href="#features" color="neutral" fontSize={12}>Features</Link>
-                                <Link color="neutral" fontSize={12}>About</Link>
+                                <Link color="neutral" href='#about' fontSize={12}>About</Link>
                             </div>
                             <div className="flex items-center gap-5">
                                 <Button component='a' role="link" href="/register">Register your Business</Button>
@@ -64,7 +64,7 @@ export default function LandingPage() {
 
                     </div>
                 </nav>
-                <div className="md:hidden sticky top-0 z-20">
+                <div className="md:hidden sticky top-0 z-50">
                     <LandingPageNavDrawer />
                 </div>
                 <header className="relative bg-white flex flex-col px-10 z-10 items-center text-center w-full gap-5 pt-24 mb-10">
@@ -87,19 +87,24 @@ export default function LandingPage() {
                     </div>
 
                 </header>
-                <section className="flex w-full z-20 relative py-24 px-20 bg-[#272635]">
+                <section id="about" className="flex w-full justify-center z-20 relative py-24  text-white bg-[#272635]">
                     <div className="w-[1280px] gap-5 flex items-center text-center flex-col">
+                        <Caption className="text-white font-medium">About</Caption>
+                        <Typography level="h4"></Typography>
                         <div className="lg:px-48">
-                            <Typography sx={{ color: 'white' }} level="h2">Now in Open Beta — Finally, a Booking Platform That Gets It</Typography>
+                            <Typography sx={{ color: 'white' }} level="h2">Built to put Black beauty professionals on the map</Typography>
                         </div>
-                        <div className="lg:px-48">
-                            <Typography sx={{ color: 'white' }}>We're publicly beta testing AfroAllure to build the best possible platform for Black stylists.
-                                During this phase, you get early access to core features and can help shape the platform. All for <strong>FREE </strong>
-                                This is your chance to grow with us — and stay ahead of the curve.</Typography>
+                        <div className="flex justify-center px-20 items-center flex-col gap-2">
+                            <Typography sx={{ color: 'white' }}>AfroAllure was created for stylists, barbers, braiders, and beauty pros who are tired of being overlooked. We know how hard it is to grow a business when you're hidden by the algorithm, underbooked, or working in a city where your work isn’t seen or understood.</Typography>
+                            <Typography sx={{ color: 'white' }}>That’s why AfroAllure gives you the tools to run your business your way — from booking and payments to client management and visibility. And the best part? It’s made specifically with Black beauty in mind, so you're not just another listing — you're part of a movement.
+                            </Typography>
+                            <Typography sx={{ color: 'white', marginTop: 3 }} className="font-bold">You’ve got the talent. We’ve got the platform.
+
+                            </Typography>
                         </div>
-                        <Button sx={{ color: 'white' }} variant="outlined" component='a' role="link" href="/register">Become a Beta Stylist</Button>
                     </div>
                 </section>
+
                 <section className="py-16 px-6 md:px-16" id="features">
                     <h2 className="text-3xl font-bold mb-8 text-center">Everything You Need to Run Your Business</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -164,14 +169,18 @@ export default function LandingPage() {
                     </div>
                 </section>
 
-                <section className="bg-gray-100 py-16 px-6 md:px-16 text-center z-20">
-                    <h2 className="text-3xl font-bold mb-4">Say Goodbye to Paper Calendars & Missed Payments</h2>
-                    <p className="text-lg max-w-2xl mx-auto mb-6">
-                        AfroAllure helps you stay organized, get booked, and get paid — without giving up your freedom.
-                    </p>
-                    <Button>
-                        Claim Your Free Booking Page
-                    </Button>
+                <section className="flex w-full justify-center z-20 relative py-24 bg-[#272635]">
+                    <div className="w-[1280px] gap-5 flex items-center text-center flex-col">
+                        <div className="lg:px-48">
+                            <Typography sx={{ color: 'white' }} level="h2">Now in Open Beta — Finally, a Booking Platform That Gets It</Typography>
+                        </div>
+                        <div className="lg:px-48">
+                            <Typography sx={{ color: 'white' }}>We're publicly beta testing AfroAllure to build the best possible platform for Black stylists.
+                                During this phase, you get early access to core features and can help shape the platform. All for <strong>FREE </strong>
+                                This is your chance to grow with us — and stay ahead of the curve.</Typography>
+                        </div>
+                        <Button sx={{ color: 'white' }} variant="outlined" component='a' role="link" href="/register">Become a Beta Stylist</Button>
+                    </div>
                 </section>
 
                 <footer className="py-8 px-6 md:px-16 text-center text-gray-600">

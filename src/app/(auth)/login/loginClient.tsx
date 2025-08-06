@@ -34,7 +34,6 @@ export default function Login() {
         else {
             router.replace('/dashboard')
         }
-        setLoading(false)
     }
 
     return (
@@ -50,24 +49,10 @@ export default function Login() {
                         </Text>
                     </div>
 
-                    <div className="mt-6 grid grid-cols-1 gap-3">
-                        <Button.Root variant="outlined" intent="gray" size="lg" className="w-full">
-                            <Button.Icon type="leading" size="sm">
-                                <FcGoogle />
-                            </Button.Icon>
-                            <Button.Label>Google</Button.Label>
-                        </Button.Root>
-                    </div>
+
 
                     <form className="mx-auto mt-8 space-y-6">
                         <div className="space-y-6 rounded-[--btn-radius] shadow-sm shadow-gray-500/5">
-                            <div className="relative my-6 grid items-center gap-3 [grid-template-columns:1fr_auto_1fr]">
-                                <Separator className="h-px border-b" />
-                                <Caption as="span" className="block" size="sm">
-                                    Or continue with
-                                </Caption>
-                                <Separator className="h-px border-b" />
-                            </div>
                             {error ? <Alert variant='soft' color='danger' >Error: {error}</Alert>
                                 : <></>}
                             <div className="space-y-6">
@@ -100,18 +85,7 @@ export default function Login() {
                                 </div>
                             </div>
                         </div>
-                        <Aligner fromRight className="max-w-md">
-                            <Label htmlFor="airplane-mode">
-                                Business Account
-                            </Label>
-                            <Switch.Root checked={asBusiness} onCheckedChange={(e) => {
-                                setAsBusiness(e)
 
-                            }} className="mt-1" id="airplane-mode">
-                                <Switch.Thumb />
-                            </Switch.Root>
-                            <Caption as="p" size="base">Log in to your Afro Allure business account</Caption>
-                        </Aligner>
 
                         <Button.Root disabled={loading} type='submit' onClick={handleSubmit} className="w-full">
                             <Button.Label>{loading ? <CircularProgress size='sm' /> : "Sign In"}</Button.Label>

@@ -203,9 +203,9 @@ const configureReminder = async (props: ReminderProps) => {
   }
 }
 
-const sendLink = async (props: PaymentLinkProps) => {
+export const sendLink = async (props: PaymentLinkProps) => {
   try {
-    const { error } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: 'pay-appointment <noreply@reminder.afroallure.co>',
       to: props.clientData.email,
       subject: 'Pay for Appointment',
@@ -228,9 +228,23 @@ const sendLink = async (props: PaymentLinkProps) => {
     // Then send SMS message via text
     if (error) {
       return error;
+    } else {
+      return data
     }
   } catch (error) {
     return error
+  }
+}
+
+const checkPaymentStatus = async (appointmentId: string) => {
+  const supabase = createClient<Database>()
+  const { data } = await supabase.from('appointments').select().eq('id', appointmentId).single()
+  if (data?.service_paid) {
+    // IDK Something
+  } else {
+    // await supabase.from('appointments').update({
+    //   status: 
+    // }) //TODO: Have to make status values in Supabase first. Goodnight Abijah
   }
 }
 
@@ -249,5 +263,12 @@ export const sendPaymentLink = task({
   maxDuration: 300,
   run: async (payload: PaymentLinkProps) => {
     await sendLink(payload)
+  }
+})
+export const checkAppointmentStatus = task({
+  id: 'checkPaymentStatus',
+  maxDuration: 300,
+  run: async (payload) => {
+
   }
 })

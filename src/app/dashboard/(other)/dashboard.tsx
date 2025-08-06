@@ -7,38 +7,42 @@ import { StackedAreaChart } from '@components/dashboard/StackedAreas';
 import { createClient } from '@utils/supabase/server';
 import { Database } from '../../../../lib/database.types';
 import { fetchUser } from './actions';
+import { PostgrestError } from '@supabase/supabase-js';
 
 export default async function Dashboard() {
     const user = await fetchUser()
     const fetchData = async () => {
         const supabase = createClient<Database>();
-        const businessId = (await supabase.from('business_users').select("business_id").eq('user_id', user!.id).single()).data?.business_id
+        const { data: businessData } = await supabase.from('business_users').select("*").eq('user_id', user!.id).single()
         let { data, error: supabaseError } = await supabase
             .from('appointments')
             .select(`*`)
-            .eq('business', businessId!).eq('status', 'CONFIRMED').order('start', { ascending: true }).limit(5);
+            .eq('business', businessData?.business_id!).eq('status', 'CONFIRMED').order('start', { ascending: true }).limit(5);
         if (supabaseError) {
             return supabaseError
         }
-        return data
+        return { appointments: data, businessData: businessData }
     }
-    const appointments = await fetchData() as Appointment[]
-    return (
-        <>
-            <div className="h-screen overflow-y-visible lg:flex">
-                <main>
-                    <div className=" p-6 lg:p-0 space-y-6">
-                        <StackedCards appointments={appointments} />
-                        {/* <div className="mt-6 lg:w-[calc(100vw-20rem)] grid gap-6 lg:grid-cols-2">
+    const res = await fetchData()
+    if (!(res instanceof PostgrestError)) {
+        return (
+            <>
+                <div className="h-screen overflow-y-visible lg:flex">
+                    <main>
+                        <div className=" p-6 lg:p-0 space-y-6">
+                            <StackedCards businessData={res.businessData!} appointments={res.appointments!} />
+                            {/* <div className="mt-6 lg:w-[calc(100vw-20rem)] grid gap-6 lg:grid-cols-2">
                             <TwoAreasChart />
                             <SimpleBarChart />
                             <Traffic />
                             <StackedAreaChart />
                         </div>
                         <Orders /> */}
-                    </div>
-                </main>
-            </div>
-        </>
-    );
+                        </div>
+                    </main>
+                </div>
+            </>
+        );
+    }
+
 }
