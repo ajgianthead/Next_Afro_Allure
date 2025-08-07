@@ -8,6 +8,7 @@ import { createClient } from '@utils/supabase/server';
 import { Database } from '../../../../lib/database.types';
 import { fetchUser } from './actions';
 import { PostgrestError } from '@supabase/supabase-js';
+import { DateTime } from 'luxon';
 
 export default async function Dashboard() {
     const user = await fetchUser()
@@ -17,7 +18,7 @@ export default async function Dashboard() {
         let { data, error: supabaseError } = await supabase
             .from('appointments')
             .select(`*`)
-            .eq('business', businessData?.business_id!).eq('status', 'CONFIRMED').order('start', { ascending: true }).limit(5);
+            .eq('business', businessData?.business_id!).eq('status', 'CONFIRMED').gte('end', DateTime.now().toISO()).order('start', { ascending: true }).limit(5);
         if (supabaseError) {
             return supabaseError
         }

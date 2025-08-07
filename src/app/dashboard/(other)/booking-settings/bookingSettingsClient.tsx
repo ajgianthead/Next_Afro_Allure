@@ -25,7 +25,8 @@ type Policy = {
         enabled: boolean;
         settings: {
             type: Type,
-            value: number
+            value: number,
+            subtraction: boolean
         }
     };
     lateFee: {
@@ -65,7 +66,8 @@ export default function BookingSettingsClient() {
             enabled: false,
             settings: {
                 type: Type.PERCENT,
-                value: 20
+                value: 20,
+                subtraction: true
             }
         },
         lateFee: {
@@ -180,8 +182,8 @@ export default function BookingSettingsClient() {
                                             enabled: true,
                                             settings: {
                                                 value: parseInt(e.target.value),
-                                                type: Type.PERCENT
-
+                                                type: bookingPolicy.deposit.settings.type,
+                                                subtraction: bookingPolicy.deposit.settings.subtraction
                                             }
                                         }
                                     })

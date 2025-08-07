@@ -22,20 +22,22 @@ import Chip from '@mui/joy/Chip';
 import Checkbox from '@components/Checkbox';
 import { Divider, Dropdown, IconButton, Menu, MenuButton, MenuItem, Checkbox as MUICheckBox, Skeleton, Snackbar, Typography } from '@mui/joy';
 import Aligner from '@components/Aligner';
-import { businessRescheduling, manuallyCancel } from './actions';
+import { businessRescheduling, getPolicyById, manuallyCancel, markAppointmentAs } from './actions';
 import { Drawer, ModalClose, Button as MUIButton } from '@mui/joy';
 import Toast from '@components/Toast';
 import { Backdrop } from '@mui/material';
 import { CheckedState } from '@radix-ui/react-checkbox';
 import { keyframes } from '@mui/system';
-import { fa } from '@faker-js/faker';
-
+import randomColor from 'randomcolor'
+import { PostgrestError } from '@supabase/supabase-js';
 const color: any = {
     "PENDING": "warning",
     "CONFIRMED": "success",
-    "COMPLETED": 'info',
+    "COMPLETED": 'primary',
     "DENIED": 'danger',
-    "CANCELLED": "danger"
+    "CANCELLED": "danger",
+    'NO_SHOW': 'danger',
+    'INCOMPLETE': 'neutral'
 }
 
 interface PageProps {
@@ -48,7 +50,7 @@ interface PageProps {
 const AppointmentsClient = ({ business_id, appointmentData, policyData, servicesData }: PageProps) => {
     // Get all appointments and convert from ISO => DateTimes
     const [loadingData, setLoadingData] = useState<boolean>(true);
-    const [appointments, setAppointments] = useState<any>(appointmentData);
+    const [appointments, setAppointments] = useState<any[]>(appointmentData);
     const [cancelledAppointmentsChecked, setCancelledAppointmentsChecked] = useState<boolean>(true)
     const [policy, setPolicy] = useState<any>(policyData)
     const [filteredAppointments, setFilteredAppointments] = useState<any>([]);
@@ -78,7 +80,8 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                             deposit_charge_id: appointments[i].deposit_charge_id,
                             reschedules: appointments[i].reschedules,
                             deposit_price: appointments[i].deposit_price,
-                            selected_addons: [...appointments[i].selected_addons]
+                            selected_addons: [...appointments[i].selected_addons],
+                            amount_due: appointments[i].amount_due
 
                         })
                     }
@@ -107,7 +110,8 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                         deposit_charge_id: appointments[i].deposit_charge_id,
                         reschedules: appointments[i].reschedules,
                         deposit_price: appointments[i].deposit_price,
-                        selected_addons: [...appointments[i].selected_addons]
+                        selected_addons: [...appointments[i].selected_addons],
+                        amount_due: appointments[i].amount_due
                     })
                 }
                 if (eventData && appointments[i].id === eventData.id) {
@@ -132,7 +136,8 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                     deposit_charge_id: appointments[i].deposit_charge_id,
                     reschedules: appointments[i].reschedules,
                     deposit_price: appointments[i].deposit_price,
-                    selected_addons: [...appointments[i].selected_addons]
+                    selected_addons: [...appointments[i].selected_addons],
+                    amount_due: appointments[i].amount_due
 
                 })
 
@@ -170,6 +175,19 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
 
     const [selectedService, setSelectedService] = useState<string>("")
     // Create an appointment Supabase => Local State
+    const getContrastYIQ = (hexColor: string) => {
+        hexColor = hexColor.replace('#', '');
+
+        const r = parseInt(hexColor.substr(0, 2), 16);
+        const g = parseInt(hexColor.substr(2, 2), 16);
+        const b = parseInt(hexColor.substr(4, 2), 16);
+
+        // YIQ formula to determine brightness
+        const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+
+        return yiq >= 128 ? 'black' : 'white';
+    }
+
     const createAppointment = async () => {
         if (slotInfo?.start && slotInfo.end) {
             const service = services.filter((data: any, index: number) => data.id === selectedService)[0]
@@ -580,10 +598,19 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                         <Backdrop open={isSending} className='z-50 flex justify-center items-center'>
                             <CircularProgress size='sm' />
                         </Backdrop>
-                        <Calendar date={date} onNavigate={onNavigate} enableAutoScroll className='w-full' onSelectEvent={handleEvent} view={view} onView={onView} selectable defaultView={Views.WEEK} events={filteredAppointments} showAllEvents onSelectSlot={handleSelection} localizer={localizer} startAccessor="start"
+                        <Calendar eventPropGetter={(event) => {
+                            const backgroundColor = randomColor()
+                            const textColor = getContrastYIQ(backgroundColor);
+                            return {
+                                style: {
+                                    backgroundColor,
+                                    color: textColor
+                                }
+                            }
+                        }} date={date} onNavigate={onNavigate} enableAutoScroll className='w-full' onSelectEvent={handleEvent} view={view} onView={onView} selectable defaultView={Views.WEEK} events={filteredAppointments} showAllEvents onSelectSlot={handleSelection} localizer={localizer} startAccessor="start"
                             endAccessor="end" components={{
                                 eventWrapper: ({ event, children }: any) => (
-                                    <div className='' onClick={() => {
+                                    <div onClick={() => {
                                         setEventData(event)
                                         setOpenAppointmentDrawer(true)
                                         console.log(event);
@@ -601,14 +628,16 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                         setOpenAppointmentDrawer(false)
                         setIsEditing(false)
                     }}>
-                        {!isEditing ? <div className='flex flex-col h-full'>
-                            <div className='w-full p-5 h-full flex flex-col gap-1 justify-between'>
-                                <Typography level='h4'>{eventData.title}</Typography>
-                                <Caption>{eventData.start?.toLocaleDateString()} @ {eventData.start?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })} - {eventData.end?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })}</Caption>
-                                <Aligner className='gap-x-1'>
-                                    <Caption>Status:</Caption>
-                                    <Chip variant='outlined' color={color[eventData.status]}>{eventData.status}</Chip>
-                                </Aligner>
+                        {!isEditing ? <div className='flex flex-col justify-between h-full'>
+                            <div className='w-full p-5 flex flex-col justify-between'>
+                                <div className='flex flex-col gap-1'>
+                                    <Typography level='h4'>{eventData.title}</Typography>
+                                    <Caption>{eventData.start?.toLocaleDateString()} @ {eventData.start?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })} - {eventData.end?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })}</Caption>
+                                    <Aligner className='gap-x-1'>
+                                        <Caption>Status:</Caption>
+                                        <Chip variant='outlined' color={color[eventData.status]}>{eventData.status}</Chip>
+                                    </Aligner>
+                                </div>
                                 <div className='mt-5'>
                                     <Typography className='font-medium'>Client Details</Typography>
                                     <div className='flex flex-col gap-1 mt-1'>
@@ -634,28 +663,92 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                     <Typography className="font-medium">More Details</Typography>
                                     <div className='flex flex-col gap-1'>
                                         <Caption>Deposit Required: {eventData.require_deposit ? "Yes" : "No"}</Caption>
-                                        <Caption>Deposit Amount: ${eventData.deposit_price ? eventData.deposit_price / 100 : "N/A"}</Caption>
+                                        <Caption>Deposit Amount: {eventData.deposit_price ? `$${eventData.deposit_price / 100}` : "N/A"}</Caption>
                                         <Caption>Deposit Paid: {!eventData.deposit_charge_id.length ? "No" : "Yes"}</Caption>
+                                        <Caption>Amount Due: {eventData.amount_due ? `$${eventData.amount_due / 100}` : 'N/A'}</Caption>
                                     </div>
                                 </div>
-
-
-
-
                             </div>
                             <div className='p-5'>
-                                {eventData.status === "CANCELLED" ? <>
-                                </> : <div className='w-full flex flex-col gap-2 mt-10 mb-5'>
-                                    {eventData.status === 'CONFIRMED' ? <Dropdown>
+                                {eventData.status !== 'PENDING' || eventData.status !== 'PROCESSING' || eventData.status !== 'CANCELLED' ? <div>
+                                    <Dropdown>
                                         <MenuButton color='success' sx={{ width: '100%', display: 'flex', justifyContent: 'center', }}>
                                             <div>Mark Appointment as...</div>
                                         </MenuButton>
                                         <Menu disablePortal>
-                                            <MenuItem color='success'>Completed (Paid Cash)</MenuItem>
-                                            <MenuItem color='warning'>Incomplete (Didn't Pay)</MenuItem>
-                                            <MenuItem color='danger'>Didn't Show</MenuItem>
+                                            <MenuItem color='success' onClick={async () => {
+                                                const res = await markAppointmentAs('COMPLETED', eventData.amount_due, eventData.id)
+                                                const index = appointments.indexOf(appointments.filter((appointment) => appointment.id === res?.id)[0])
+                                                const clone = [...appointments]
+                                                console.log(res, appointments.filter((appointment) => appointment.id === res?.id)[0]);
+                                                clone[index].status = res?.status
+                                                clone[index].amount_due = res?.amount_due
+                                                setAppointments(clone)
+
+                                            }}>Completed (Paid Cash)</MenuItem>
+                                            <MenuItem color='warning' onClick={async () => {
+                                                let servicePlusAddonPrice = eventData.service_data.price;
+                                                let finalAmountOwned = 0
+                                                const addons = eventData.selected_addons;
+                                                for (let i = 0; i < addons.length; i++) {
+                                                    servicePlusAddonPrice += addons[i].price
+                                                }
+                                                if (eventData.require_deposit) {
+                                                    const appointmentPolicy = await getPolicyById(policyData.id)
+                                                    if (!(appointmentPolicy instanceof PostgrestError)) {
+                                                        if (appointmentPolicy.deposit.settings.subtraction) {
+                                                            finalAmountOwned = servicePlusAddonPrice - eventData.deposit_price
+                                                        } else {
+                                                            finalAmountOwned = servicePlusAddonPrice
+                                                        }
+                                                    }
+                                                } else {
+                                                    finalAmountOwned = servicePlusAddonPrice
+                                                }
+                                                const res = await markAppointmentAs('INCOMPLETE', finalAmountOwned, eventData.id)
+                                                const index = appointments.indexOf(appointments.filter((appointment) => appointment.id === res?.id)[0])
+                                                const clone = [...appointments]
+                                                console.log(res, appointments.filter((appointment) => appointment.id === res?.id)[0]);
+
+                                                clone[index].status = res?.status
+                                                clone[index].amount_due = res?.amount_due
+                                                setAppointments(clone)
+                                            }}>Incomplete (Didn't Pay)</MenuItem>
+
+                                            <MenuItem color='danger' onClick={async () => {
+                                                let servicePlusAddonPrice = eventData.service_data.price;
+                                                let finalAmountOwned = 0
+                                                const addons = eventData.selected_addons;
+                                                for (let i = 0; i < addons.length; i++) {
+                                                    servicePlusAddonPrice += addons[i].price
+                                                }
+                                                if (eventData.require_deposit) {
+                                                    const appointmentPolicy = await getPolicyById(policyData.id)
+                                                    if (!(appointmentPolicy instanceof PostgrestError)) {
+                                                        if (appointmentPolicy.deposit.settings.subtraction) {
+                                                            finalAmountOwned = servicePlusAddonPrice - eventData.deposit_price
+                                                        } else {
+                                                            finalAmountOwned = servicePlusAddonPrice
+                                                        }
+                                                    }
+                                                } else {
+                                                    finalAmountOwned = servicePlusAddonPrice
+                                                }
+                                                const res = await markAppointmentAs('NO_SHOW', finalAmountOwned, eventData.id)
+                                                const index = appointments.indexOf(appointments.filter((appointment) => appointment.id === res?.id)[0])
+                                                const clone = [...appointments]
+                                                clone[index].status = res?.status
+                                                clone[index].amount_due = res?.amount_due
+                                                setAppointments(clone)
+                                            }}>Didn't Show</MenuItem>
+
                                         </Menu>
-                                    </Dropdown> : <></>}
+                                    </Dropdown>
+
+                                </div> : <></>}
+                                {eventData.status === "CANCELLED" || eventData.status === 'COMPLETED' ? <>
+                                </> : <div className='w-full flex flex-col gap-2 mb-5'>
+                                    <Divider sx={{ marginY: 2 }} orientation='horizontal' />
                                     <MUIButton color='warning' variant='outlined' onClick={() => {
                                         const initialTimeState = { start: DateTime.fromJSDate(eventData.start), end: DateTime.fromJSDate(eventData.end) }
                                         setEditingSlotInfo(initialTimeState)

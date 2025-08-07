@@ -8,7 +8,7 @@ import PaymentLinkEmail from "../../emails/payment-link";
 
 configure({
   // this is the default and if the `TRIGGER_SECRET_KEY` environment variable is set, can omit calling configure
-  secretKey: process.env.NEXT_PUBLIC_TRIGGER_API_KEY,
+  secretKey: process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_TRIGGER_API_KEY : process.env.NEXT_PUBLIC_TRIGGER_PROD_KEY,
 });
 
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
@@ -241,10 +241,11 @@ const checkPaymentStatus = async (appointmentId: string) => {
   const { data } = await supabase.from('appointments').select().eq('id', appointmentId).single()
   if (data?.service_paid) {
     // IDK Something
+    return
   } else {
-    // await supabase.from('appointments').update({
-    //   status: 
-    // }) //TODO: Have to make status values in Supabase first. Goodnight Abijah
+    await supabase.from('appointments').update({
+      status: 'INCOMPLETE'
+    })
   }
 }
 
@@ -268,7 +269,7 @@ export const sendPaymentLink = task({
 export const checkAppointmentStatus = task({
   id: 'checkPaymentStatus',
   maxDuration: 300,
-  run: async (payload) => {
-
+  run: async (payload: { appointment_id: string }) => {
+    await checkPaymentStatus(payload.appointment_id)
   }
 })

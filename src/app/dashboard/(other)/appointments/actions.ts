@@ -2,13 +2,31 @@
 
 import { SupabaseClient } from "@supabase/supabase-js";
 import pool from "@utils/dbPool";
+import { createClient } from "@utils/supabase/server";
 import { checkSlots } from "app/[businessName]/actions";
 import { sendCancelledEmails } from "app/api/appointments/route";
 import { DateTime } from "luxon";
 import { OutputSlot } from "slot-calculator";
+import { Database, Enums } from "../../../../../lib/database.types";
 
-export const markAppointmentAs = async () => {
+export const getPolicyById = async (id: string) => {
+    const supabase = createClient<Database>();
+    const { data: appointmentPolicy, error } = await supabase.from('business_policies').select().eq('id', id).single()
+    if (error) {
+        return error
+    }
+    return appointmentPolicy as any
+}
 
+//TODO: Fix this to update when a user changes status from PAID WITH CASH to something else
+export const markAppointmentAs = async (status: Enums<'status'>, amount_due: number, id: string) => {
+    const supabase = createClient<Database>()
+    const { data, error } = await supabase.from('appointments').update({
+        status: status,
+        service_paid_type: status === 'COMPLETED' ? 'CASH' : null,
+        amount_due: status === 'COMPLETED' ? 0 : amount_due
+    }).eq('id', id).select("id, status, amount_due").single()
+    return data
 }
 
 export const assignAddons = async (supabase: SupabaseClient, services: Service[]) => {

@@ -49,7 +49,10 @@ const AppointmentCard = ({ appointment, businessData }: { appointment: any, busi
           setAppointmentDetailsOpen(false)
           setEmailSent(false)
         }}>
-          <ModalDialog size='lg'>
+          <ModalDialog sx={{
+            overflowY: 'scroll',
+
+          }} size='lg' >
             <ModalClose />
             <Typography level='h4' sx={{ display: 'flex', flexDirection: 'column' }}>Appointment Details <Caption>Below are the appointment details, including a link to payment</Caption></Typography>
 

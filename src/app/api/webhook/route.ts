@@ -2,7 +2,7 @@ import { stripe } from "../../../lib/utils";
 import pool from "@utils/dbPool";
 import { NextRequest, NextResponse } from "next/server";
 import mailchimp from '@mailchimp/mailchimp_transactional'
-import { reminderTask, sendPaymentLink } from "trigger/reminder";
+import { checkAppointmentStatus, reminderTask, sendPaymentLink } from "trigger/reminder";
 import { DateTime } from "luxon";
 import NewAppointment from "../../../../emails/new-appointment";
 import { Resend } from "resend";
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       if (paymentPurpose === 'EOA') {
         const res = (await client.query(`WITH updated AS (
           UPDATE appointments
-          SET service_paid = '$1', service_paid_type = 'PLATFORM', service_charge_id = $2, eoa_tax_transaction = $3
+          SET service_paid = '$1', service_paid_type = 'PLATFORM', service_charge_id = $2, eoa_tax_transaction = $3, status = 'COMPLETED'
           WHERE id = $4
           RETURNING *
         )
@@ -240,9 +240,13 @@ export async function POST(request: NextRequest) {
             serviceName: res.service_data.name,
             appointmentID: res.id
           }, { delay: linkDelay.toISO()! })
+          const paymentCheck = await checkAppointmentStatus.trigger({
+            appointment_id: res.id
+          }, { delay: new Date(DateTime.fromJSDate(res.end).plus({ minutes: 30 }).toISO()!) })
+
           // Save run id to appointment for later
           await client.query('BEGIN')
-          await client.query(`UPDATE appointments SET reminder_ids = $1, payment_link_id = $2 WHERE appointments.id = $3  RETURNING *`, [{ business: remindBusiness.id, client: remindClient.id }, timedPaymentLink.id, appointmentID])
+          await client.query(`UPDATE appointments SET reminder_ids = $1, payment_link_id = $2 WHERE appointments.id = $3  RETURNING *`, [{ business: remindBusiness.id, client: remindClient.id, paymentCheck: paymentCheck }, timedPaymentLink.id, appointmentID])
           await client.query('COMMIT')
 
         } catch (error) {

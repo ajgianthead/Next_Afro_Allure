@@ -7,7 +7,7 @@ import { data } from "@tailus-ui/visualizations/data";
 import { sendBusinessBookingNoti } from "../../../../lib/notifications";
 import { Resend } from "resend";
 import ConfirmAppointmentTemplate from "../../../../emails/confirm-appointment";
-import { reminderTask, sendPaymentLink } from "trigger/reminder";
+import { checkAppointmentStatus, reminderTask, sendPaymentLink } from "trigger/reminder";
 import { DateTime } from "luxon";
 import AppointmentConfirmed from "../../../../emails/appointment-confirmed";
 import NewAppointment from "../../../../emails/new-appointment";
@@ -219,7 +219,7 @@ const sendReminders = async (res: any) => {
             email: res.client_metadata.email,
             phoneNumber: res.client_metadata.phoneNumber,
         },
-    }, { delay: dayBefore.toISO()! })
+    }, { delay: new Date(dayBefore.toISO()!) })
     const remindBusiness = await reminderTask.trigger({
         serviceName: res.service_data.name,
         delay: dayBefore.toISO()!,
@@ -242,8 +242,8 @@ const sendReminders = async (res: any) => {
             email: res.client_metadata.email,
             phoneNumber: res.client_metadata.phoneNumber,
         },
-    }, { delay: dayBefore.toISO()! })
-    const linkDelay = DateTime.fromJSDate(res.end).minus({ minutes: 30 })
+    }, { delay: new Date(dayBefore.toISO()!) })
+    const linkDelay = DateTime.fromISO(res.end).minus({ minutes: 30 })
     const timedPaymentLink = await sendPaymentLink.trigger({
         businessData: {
             id: res.business,
@@ -258,12 +258,16 @@ const sendReminders = async (res: any) => {
         },
         serviceName: res.service_data.name,
         appointmentID: res.id
-    }, { delay: linkDelay.toISO()! })
+    }, { delay: new Date(linkDelay.toISO()!) })
+    const afterAppointmentPaymentCheck = await checkAppointmentStatus.trigger({ appointment_id: res.id }, {
+        delay: new Date(DateTime.fromISO(res.end).plus({ minutes: 30 }).toISO()!)
+    })
     // Save run id to appointment for later
     await supabase.from('appointments').update({
         reminder_ids: {
             business: remindBusiness.id,
-            client: remindClient.id
+            client: remindClient.id,
+            paymentCheck: afterAppointmentPaymentCheck.id
         },
         payment_link_id: timedPaymentLink.id
     }).eq('id', res.id)
@@ -313,8 +317,8 @@ export async function PUT(request: NextRequest) {
         // Edit scheduled reminders
         const dayBefore = DateTime.fromISO(data.start).minus({ day: 1 })
         const thirtyBefore = DateTime.fromISO(data.end).minus({ minutes: 30 })
-        await runs.reschedule(data.reminder_ids.business, { delay: dayBefore.toISO()! })
-        await runs.reschedule(data.reminder_ids.client, { delay: dayBefore.toISO()! })
+        await runs.reschedule(data.reminder_ids.business, { delay: new Date(dayBefore.toISO()!) })
+        await runs.reschedule(data.reminder_ids.client, { delay: new Date(dayBefore.toISO()!) })
         await trackAppointmentRescheduled({
             appointmentType: "",
             businessId: data.business,
@@ -322,7 +326,8 @@ export async function PUT(request: NextRequest) {
             serviceName: data.service_data.name,
             servicePrice: data.service_data.price
         })
-        await runs.reschedule(data.payment_link_id, { delay: thirtyBefore.toISO()! })
+        await runs.reschedule(data.payment_link_id, { delay: new Date(thirtyBefore.toISO()!) })
+        await runs.reschedule(data.reminder_ids.paymentCheck, { delay: new Date(DateTime.fromISO(data.end).plus({ minutes: 30 }).toISO()!) })
     } else if (data?.status === 'CANCELLED') { // Appointment was cancelled
         // Cancel reminders for business and client
         await sendCancelledEmails(data)
@@ -337,6 +342,7 @@ export async function PUT(request: NextRequest) {
         await runs.cancel(data.reminder_ids.business)
         await runs.cancel(data.reminder_ids.client)
         await runs.cancel(data.payment_link_id)
+        await runs.cancel(data.reminder_ids.paymentCheck)
         await trackAppointmentCancelled({
             appointmentType: "",
             businessId: data.business,
@@ -365,6 +371,7 @@ export async function PUT(request: NextRequest) {
             servicePrice: data.service_data.price,
             appointmentType: ""
         })
+
     }
 
     if (error) {
