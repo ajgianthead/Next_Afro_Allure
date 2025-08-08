@@ -156,28 +156,30 @@ export async function register(cred: { name: string; email: string; password: st
                         booking_policies: res.data?.id
                     }).eq('business_id', business?.business_id!)
                 })
-                return await supabase.from('services').insert([
+                return await supabase.from('availabilities').insert([
                     {
-                        name: "Box Braids",
-                        business: business?.business_id!,
-                        description: "This is an example service",
-                        length: 180,
-                        price: 8000,
-                        photo_url: "",
-                        imagePath: "",
-                        addons: [],
-                        categories: ["test", "default", "service"],
-
+                        id: defaultAvailability.id,
+                        business_id: res.data?.business_id,
+                        availability_data: defaultAvailability
                     }
                 ]).select(`*`).single().then(async (res) => {
-                    return await supabase.from('availabilities').insert([
+                    return await supabase.from('services').insert([
                         {
-                            id: defaultAvailability.id,
-                            business_id: res.data?.business,
-                            availability_data: defaultAvailability
+                            name: "Box Braids",
+                            business: business?.business_id!,
+                            description: "This is an example service",
+                            length: 180,
+                            price: 8000,
+                            photo_url: "",
+                            imagePath: "",
+                            addons: [],
+                            categories: ["test", "default", "service"],
+                            availability: res.data?.id
+
                         }
-                    ]).select(`business_users(*)`).single()
+                    ]).select(`*, business_users(*)`).single()
                 })
+
             })
 
         })
