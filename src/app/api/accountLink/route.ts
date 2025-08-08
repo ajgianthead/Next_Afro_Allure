@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
     try {
         const accountLink = await stripe.accountLinks.create({
             account: account,
-            refresh_url: `${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PROD_BASE_URL}/onboarding/${account}`,
-            return_url: `${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PROD_BASE_URL}/onboarding/${account}/return`,
+            refresh_url: `${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/onboarding/${account}`,
+            return_url: `${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/onboarding/${account}/return`,
             type: 'account_onboarding',
             collection_options: {
                 fields: "eventually_due"
