@@ -27,7 +27,7 @@ import Select from '@components/Select'
 import Checkbox from '@components/Checkbox'
 import { CheckedState } from '@radix-ui/react-checkbox'
 import { fetchUser } from '../actions'
-import { createImgSignedUrl, updateImg, uploadImg } from './actions'
+import { createPublicImgURL, updateImg, uploadImg } from './actions'
 
 interface PageProps {
     servicesData: Service[];
@@ -356,31 +356,27 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
     const uploadImage = async () => {
         console.log("session")
         const session = await fetchUser()
-
         if (!session) {
             console.error("User not authenticated");
             return;
         }
-
         if (!(image.imageBlob instanceof Blob)) {
             console.error("Invalid imageBlob", image.imageBlob);
             return;
         }
-
         const path = `private/images/${service.business}/services/${service.id}`;
-
         let url;
         try {
             console.log(path, image.imageBlob);
-            url = await uploadImg(path, image).then(async (e) => {
+            url = await uploadImg(path, image).then(async () => {
                 console.log("Upload finished");
-                return await createImgSignedUrl(path)
+                return (await createPublicImgURL(path)).url
             })
         } catch (err) {
             console.error("Upload threw error:", err);
         }
         console.log(service.id)
-        return url
+        return { url, path }
     };
     const [dataSending, setDataSending] = useState<boolean>(false)
     const handleSubmit = async () => {
@@ -389,7 +385,6 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         if (image.imageURL?.length) {
             console.log("hi");
             let res = await uploadImage()
-
             clone = { ...service }
             clone.photo_url = res?.url!;
             clone.price = clone.price * 100
@@ -684,11 +679,10 @@ const EditServiceDialog = ({ serviceAddons, availabilities, open, setIsOpen, ser
     const [checkedAddons, setCheckedAddons] = useState<any>(new Set<string>([...oldService.addons]))
     useEffect(() => {
         (async () => {
-            const url = await createImgSignedUrl(oldService.imagePath)
             setService(oldService)
             setImage({
                 ...image,
-                imageURL: url?.url!
+                imageURL: oldService.imageURL
             })
         })()
     }, [open]);
@@ -715,6 +709,7 @@ const EditServiceDialog = ({ serviceAddons, availabilities, open, setIsOpen, ser
             method: 'PUT',
             body: JSON.stringify(hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })
         })
+        console.log(service)
         // Update my component state
         let newServices = [...services];
         newServices.splice(index, 1, hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })
@@ -830,7 +825,12 @@ const EditServiceDialog = ({ serviceAddons, availabilities, open, setIsOpen, ser
                                 <div>
                                     <Label className='font-medium'>Availability</Label>
                                     <Caption className='mb-2'>Choose the availability you want use when clients book this service on your booking site</Caption>
-                                    <Select.Root defaultValue={service.availability}>
+                                    <Select.Root defaultValue={service.availability} onValueChange={(value) => {
+                                        setService({
+                                            ...service,
+                                            availability: value
+                                        })
+                                    }}>
                                         <Select.Trigger size="md" className="w-full flex justify-between">
                                             <Select.Value />
                                             <Select.Icon />
@@ -1007,7 +1007,7 @@ const ServiceCard = ({ service, index, setIsEditing, isEditing, setOpen, setServ
     return (
         <div className='w-[250px]' key={index}>
             <EditServiceDialog serviceAddons={serviceAddons} availabilities={availabilities} confimation={confirmation} setConfirmation={setConfirmation} setConfirmationData={setConfirmationData} setDeleteOpen={setOpen} services={services} setServices={setServices} open={open} setIsOpen={setIsOpen} oldService={service} index={index} />
-            <Card variant="outlined" className='py-4 flex flex-col gap-1 cursor-pointer' onClick={() => {
+            <Card variant="outlined" className='py-4 flex flex-col gap-1 min-h-[120px] justify-center cursor-pointer' onClick={() => {
                 setIsOpen(true)
             }}>
                 <div className='flex justify-between items-center'>

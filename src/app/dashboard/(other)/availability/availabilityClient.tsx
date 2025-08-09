@@ -24,6 +24,9 @@ import Tooltip from '@tailus-ui/Tooltip'
 import Toast from '@components/Toast'
 import { DateTime } from 'luxon'
 import { VisuallyHidden } from '@nextui-org/react'
+import { checkAvailabilityToServices } from './actions'
+import { PostgrestError } from '@supabase/supabase-js'
+import { Alert, Modal, ModalClose, ModalDialog, Snackbar, Typography } from '@mui/joy'
 
 
 const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -104,6 +107,8 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
     const [editingAvailability, setEditingAvailability] = useState<any>()
     const [dates, setDates] = useState<string[]>(Object.keys(defaultAvailability.specificDates))
     const onDateSelect = (focused: any, clicked: any) => {
+        console.log(dates, availability.specificDates);
+
         let date = clicked.toString();
         if (!dates.includes(date)) {
             let newObj = { ...availability }
@@ -181,31 +186,42 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
     const [defaultAvailable, setDefaultAvailable] = useState(defaultAvailabilityData)
     const handleEdit = (index: number, element: any) => {
         console.log(availabilities[index]);
+
         setCurrEditIndex(index)
         setisEditing(true)
         let clone = structuredClone(element.availability_data)
+        setDates([...Object.keys(clone.specificDates)])
         setAvailability(clone)
         setEditingAvailability(availabilities[index].availability_data)
         setOpenCreate(true)
     }
     const handleDelete = async (index: number) => {
-        const result = await fetch(`/api/${user.business_id}/availabilities/${availability.id}`,
-            {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json"
+        const hasAttachedServices = await checkAvailabilityToServices(availability.id)
+        if (hasAttachedServices instanceof PostgrestError) {
+            console.log(hasAttachedServices)
+        } else if (hasAttachedServices.attachedServices) {
+            // Set some error state
+            setDeletePromptOpen(true)
+        } else if (!hasAttachedServices.attachedServices) {
+            // Delete availability
+            const result = await fetch(`/api/${user.business_id}/availabilities/${availability.id}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
                 }
-            }
-        );
-        const res = await result.json()
-        let clone = [...availabilities]
-        clone.splice(index, 1)
-        setAvailabilities(clone)
-        setConfirmationData({
-            title: "Success",
-            description: "Availability Deleted"
-        })
-        setConfirmation(true)
+            );
+            const res = await result.json()
+            let clone = [...availabilities]
+            clone.splice(index, 1)
+            setAvailabilities(clone)
+            setConfirmationData({
+                title: "Success",
+                description: "Availability Deleted"
+            })
+            setConfirmation(true)
+        }
     }
     const [tooltip, setTooltip] = useState<boolean>(false)
     const [confirmation, setConfirmation] = useState<boolean>(false)
@@ -217,9 +233,31 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
         description: "",
     })
     const [isDefault, setisDefault] = useState(false);
+    const [deletePromptOpen, setDeletePromptOpen] = useState(false)
+    const handleClose = ({ event, reason }: any) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setDeletePromptOpen(false)
+    }
     return (
         <div className='px-6'>
-            <Dialog.Root open={openCreate} onOpenChange={setOpenCreate}>
+            <Snackbar
+                variant='soft'
+                color='danger'
+                anchorOrigin={{
+                    horizontal: 'right',
+                    vertical: 'bottom'
+                }}
+                open={deletePromptOpen}
+                onClose={handleClose}
+            >
+                Can't delete availability. Must remove from attached services
+            </Snackbar>
+            <Dialog.Root open={openCreate} onOpenChange={() => {
+                setOpenCreate(false)
+                setDates(Object.keys(availability.specificDates))
+            }}>
                 {/* TODO: onClose() handle getting rid of data during editing availability */}
                 <Dialog.Portal>
                     <Dialog.Overlay className='z-40' />
@@ -367,6 +405,8 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
                                                 <div key={index}>
                                                     <Caption className='mt-3'>{DateTime.fromFormat(date, 'y/mm/dd').toFormat('DDD')}</Caption>
                                                     {availability.specificDates[date].map((range: any, rangeIndex: any) => {
+                                                        const rangeStart = new Time(range.start.hour, range.start.minute)
+                                                        const rangeEnd = new Time(range.end.hour, range.end.minute)
                                                         return (
                                                             <div className='mt-2 flex gap-2 items-center' key={rangeIndex}>
                                                                 {range.start && range.end && rangeIndex === availability.specificDates[date].length - 1 && (range.end.hour !== 11 && range.end.minute < 58) ? <Button.Root className='justify-center' variant='ghost' size='sm' onClick={() => {
@@ -383,14 +423,14 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
                                                                 </Button.Root> : <></>}
 
                                                                 {/* Start */}
-                                                                <TimeInput minValue={rangeIndex === 0 ? new Time(0) : availability.specificDates[date][rangeIndex - 1].end?.add({ minutes: 1 })} maxValue={new Time(23, 58)} variant='bordered' aria-label="TimeInput" value={range.start} size='sm' className='w-[100px] rounded-sm' label={null} onChange={(timeValue) => {
+                                                                <TimeInput minValue={rangeIndex === 0 ? new Time(0) : new Time(availability.specificDates[date][rangeIndex - 1].end.hour, availability.specificDates[date][rangeIndex - 1].end.minute)?.add({ minutes: 1 })} maxValue={new Time(23, 58)} variant='bordered' aria-label="TimeInput" value={range.start} size='sm' className='w-[100px] rounded-sm' label={null} onChange={(timeValue) => {
                                                                     let clone = { ...availability }
                                                                     clone.specificDates[date][rangeIndex].start = timeValue
                                                                     setAvailability(clone)
                                                                 }} />
                                                                 <Text>-</Text>
                                                                 {/* End */}
-                                                                <TimeInput minValue={range.start?.add({ minutes: 1 })} maxValue={new Time(23, 59)} variant='bordered' aria-label="TimeInput" value={range.end} size='sm' className='w-[100px] rounded-sm' label={null} onChange={(timeValue) => {
+                                                                <TimeInput minValue={rangeStart?.add({ minutes: 1 })} maxValue={new Time(23, 59)} variant='bordered' aria-label="TimeInput" value={range.end} size='sm' className='w-[100px] rounded-sm' label={null} onChange={(timeValue) => {
                                                                     let clone = { ...availability }
                                                                     clone.specificDates[date][rangeIndex].end = timeValue
                                                                     setAvailability(clone)
@@ -456,9 +496,9 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
                     </Dialog.Content>
                 </Dialog.Portal>
             </Dialog.Root>
-            <Title>Availability</Title>
-            <div className='w-full mt-2 flex gap-6'>
-                <Input placeholder='Search availability by name' className='' />
+
+            <div className='w-full mt-5 flex justify-between gap-6'>
+                <Title>Availability</Title>
                 <Button.Root className='ml-30 min-w-36' onClick={() => {
                     setisEditing(false)
                     setOpenCreate(true)

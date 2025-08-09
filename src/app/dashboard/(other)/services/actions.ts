@@ -20,17 +20,14 @@ export const uploadImg = async (path: string, image: {
     }
     return data
 }
-export const createImgSignedUrl = async (path: string) => {
+export const createPublicImgURL = async (path: string) => {
     const supabase = createClient<Database>();
-    const url = await supabase.storage
+    const url = supabase.storage
         .from('service-photos')
-        .createSignedUrl(path, 60 * 60 * 24);
+        .getPublicUrl(path).data.publicUrl;
 
-    if (url.error) {
-        console.error("Signed URL error:", url.error);
-        return;
-    }
-    return { url: url!.data?.signedUrl, path };
+
+    return { url: url, path };
 }
 
 export const updateImg = async (path: string, image: {
@@ -38,14 +35,11 @@ export const updateImg = async (path: string, image: {
     imageBlob: Blob | null;
 }) => {
     const supabase = createClient<Database>();
-    const url = await supabase.storage
+    const img = await supabase.storage
         .from('service-photos')
         .update(path, image.imageBlob!, {
             contentType: image.imageBlob!.type || 'image/png',
-        }).then(async () => {
-            const url = await createImgSignedUrl(path)
-            return url?.url
-        });
+        })
 
-    return url
+    return img
 }

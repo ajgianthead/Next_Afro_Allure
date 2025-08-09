@@ -47,9 +47,7 @@ export async function POST(request: NextRequest) {
 // Update a service
 export async function PUT(request: NextRequest) {
     const supabase = createClient<Database>();
-    const { id, name, price, description, addons, length, photo_url, business, category } = await request.json();
-    console.log(id);
-
+    const { id, name, price, description, addons, length, photo_url, business, category, availability } = await request.json();
     let { data, error } = await supabase.from('services').update(
         {
             name: name,
@@ -59,6 +57,7 @@ export async function PUT(request: NextRequest) {
             length: length,
             photo_url: photo_url,
             categories: category,
+            availability: availability
         }
     ).eq('id', id).select().single();
     if (error) {
