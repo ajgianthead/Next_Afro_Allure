@@ -14,18 +14,18 @@ export default async function Page() {
     const user = await fetchUser()
     if (user) {
         const business_user = await fetchBusinessUser(user?.id!)
-
+        console.log(business_user)
         const endOfTheDayToday = DateTime.now().endOf('day').toISO()
         const pastNinetyDays = DateTime.now().minus({ month: 3 }).toISO()
 
         const pageViewData = await runPageViewReport({ dateRanges: [{ startDate: DateTime.now().startOf('month').toFormat('yyyy-LL-dd'), endDate: 'today' }], businessName: business_user.business_name })
 
         const supabase = createClient<Database>()
-        const { data, error } = await supabase.from('appointments').select("*").neq('status', 'PENDING')
+        const { data, error } = await supabase.from('appointments').select("*").eq('business', business_user.business_id).neq('status', 'PENDING')
             .neq('status', 'DENIED')
             .neq('status', 'PROCESSING').gt('created_at', pastNinetyDays).lt('created_at', endOfTheDayToday)
 
-        const { data: completedAppointments, error: completedAppointmentsError }: any = await supabase.from('appointments').select().eq('status', 'COMPLETED').gte('created_at', DateTime.now().startOf('month').toISO()).lte('created_at', endOfTheDayToday)
+        const { data: completedAppointments, error: completedAppointmentsError }: any = await supabase.from('appointments').select().eq('business', business_user.business_id).eq('status', 'COMPLETED').gte('created_at', DateTime.now().startOf('month').toISO()).lte('created_at', endOfTheDayToday)
         if (data?.length) {
             const countMap = new Map<string, any[]>()
             for (let i = 0; i < completedAppointments.length; i++) {

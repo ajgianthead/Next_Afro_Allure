@@ -68,14 +68,14 @@ export default function Login() {
                                     }} id="email" name="email" type="email" required variant="outlined" size="md" />
                                 </div>
                                 <div className="space-y-2.5">
-                                    <div className="flex items-center justify-between">
+                                    {/* <div className="flex items-center justify-between">
                                         <Label size="sm" htmlFor="password">
                                             Password
                                         </Label>
                                         <Link href="#" size="sm">
                                             Forgot your Password ?
                                         </Link>
-                                    </div>
+                                    </div> */}
                                     <Input value={cred.password} onChange={(e) => {
                                         setCred({
                                             ...cred,

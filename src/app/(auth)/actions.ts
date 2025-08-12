@@ -128,7 +128,8 @@ export async function register(cred: { name: string; email: string; password: st
                     user_id: data.data.user?.id,
                     email: data.data.user?.email!,
                     stripe_acc_id: account.id,
-                    default_availability: defaultAvailability.id
+                    default_availability: defaultAvailability.id,
+                    url_name: credentials.businessName.split(" ").join().toLowerCase()
                 }
             ]).select().single().then(async (res) => {
                 const business = res.data
@@ -137,7 +138,7 @@ export async function register(cred: { name: string; email: string; password: st
                     {
                         business: business?.business_id,
                         deposit: {
-                            enabled: true,
+                            enabled: false,
                             settings: {
                                 type: 'percent',
                                 value: 20
@@ -147,7 +148,7 @@ export async function register(cred: { name: string; email: string; password: st
                             enabled: false
                         },
                         no_show: {
-                            enabled: true,
+                            enabled: false,
                             level: "strict"
                         }
                     }
@@ -163,6 +164,10 @@ export async function register(cred: { name: string; email: string; password: st
                         availability_data: defaultAvailability
                     }
                 ]).select(`*`).single().then(async (res) => {
+                    await supabase.from('web_editors').insert([{
+                        business_id: res.data?.business_id,
+                        type: 'SECTIONS',
+                    }])
                     return await supabase.from('services').insert([
                         {
                             name: "Box Braids",

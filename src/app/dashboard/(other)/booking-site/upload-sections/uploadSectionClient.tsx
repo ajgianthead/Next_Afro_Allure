@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { deleteSectionImage, editSectionImage, uploadImgSectionChanges } from '../actions';
 import { ChevronLeftIcon, Pencil, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 
 const VisuallyHiddenInput = styled('input')`
@@ -21,7 +22,7 @@ const VisuallyHiddenInput = styled('input')`
   width: 1px;
 `;
 
-const UploadSectionClient = ({ businessId, editorId, imageObj }: { businessId: string, editorId: string, imageObj: ImageObject[] }) => {
+const UploadSectionClient = ({ businessId, editorId, imageObj, url_name }: { businessId: string, editorId: string, imageObj: ImageObject[], url_name: string }) => {
     const [imageObjects, setImageObjects] = useState<ImageObject[]>(imageObj)
 
     const handleImageUpload = async (file: File, isEdit?: boolean, id?: string, index?: number) => {
@@ -69,6 +70,9 @@ const UploadSectionClient = ({ businessId, editorId, imageObj }: { businessId: s
                 <div className='flex w-full justify-start flex-col mb-10 pl-6'>
                     <Title>Upload and Edit Sections</Title>
                     <Caption>Below, you are able to upload, edit, or delete sections of your site. Click the pencil icon to edit a section, or the trash can icon to delete. <strong>Updates to your booking site happen in realtime</strong></Caption>
+                    <div>
+                        <Caption>Booking Site URL: <Link href={`https://beta.afroallure.co/${url_name}/book`} target='_blank'>{`beta.afroallure.co/${url_name}/book`}</Link></Caption>
+                    </div>
                 </div>
                 <div className='w-full relative flex justify-center flex-col items-center'>
                     {loading ? <div className='w-full absolute h-full top-0 z-10 flex justify-center items-center bg-transparent'>

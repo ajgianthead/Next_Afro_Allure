@@ -19,7 +19,7 @@ const Page = async () => {
     console.log(business?.business_id)
     return (
         <div className='flex justify-center'>
-            <UploadSectionClient businessId={business?.business_id!} editorId={editor_id} imageObj={imageObjects!} />
+            <UploadSectionClient businessId={business?.business_id!} editorId={editor_id} imageObj={imageObjects!} url_name={business.url_name} />
         </div>
     );
 }
