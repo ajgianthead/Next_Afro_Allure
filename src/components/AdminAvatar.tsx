@@ -1,13 +1,13 @@
-import { MESCHAC_AVATAR } from './..//const';
+import MESCHAC_AVATAR from '../../public/images/logo.jpg';
 import Avatar from './tailus-ui/Avatar';
 import { type AvatarRootProps, type AvatarFallbackProps } from '@tailus/themer';
 
 const intents: AvatarFallbackProps['intent'][] = ['primary', 'success', 'warning', 'danger', 'warning', 'info', 'gray', 'accent', 'secondary'];
 
 export const AdminAvatar = ({
-  src = MESCHAC_AVATAR,
+  src = MESCHAC_AVATAR.src,
   size = 'xxs',
-  initial = 'MI',
+  initial = 'AA',
 }: {
   src?: string;
   size?: AvatarRootProps['size'];

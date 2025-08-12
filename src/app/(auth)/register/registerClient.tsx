@@ -14,7 +14,7 @@ import { createClient } from '@utils/supabase/client';
 import { Database } from '../../../../lib/database.types';
 import CircularProgress from '@mui/joy/CircularProgress';
 import { useRouter } from 'next/navigation';
-import { Alert } from '@mui/joy';
+import { Alert, Checkbox, Typography } from '@mui/joy';
 import { register } from '../actions';
 import { PostgrestError } from '@supabase/supabase-js';
 
@@ -61,6 +61,13 @@ export default function Register() {
     }
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<any>(null)
+    const [agreement, setAgreement] = useState<{
+        privacy: boolean
+        terms: boolean
+    }>({
+        privacy: false,
+        terms: false
+    })
     return (
         <main className="inset-0 z-10 m-auto h-fit max-w-xl px-6 py-12 lg:absolute">
             <Card className="relative h-fit p-1 mt-18 shadow-xl shadow-gray-950/10" variant="mixed">
@@ -120,7 +127,57 @@ export default function Register() {
                             </div>
                         </div>
 
-                        <Button.Root disabled={isLoading} onClick={createBusiness} className="w-full">
+                        <div className='flex flex-col gap-2'>
+                            <div className="flex items-start gap-2">
+                                <Checkbox id="agree" checked={agreement.terms} onChange={(e) => {
+                                    setAgreement({
+                                        ...agreement,
+                                        terms: e.target.checked
+                                    })
+                                }} />
+                                <Caption>
+                                    I have read and agree to the{' '}
+                                    <Link
+                                        href="/beta-user-agreement"
+                                        className="font-bold text-sm text-[#FC6161]"
+                                        target="_blank"
+                                    >
+                                        Beta Participation Agreement
+                                    </Link>{' '}
+                                    and{' '}
+                                    <Link
+                                        className="font-bold text-sm text-[#FC6161]"
+                                        target="_blank"
+                                        href="/terms-of-service"
+                                    >
+                                        Terms of Service
+                                    </Link>.
+                                </Caption>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <Checkbox id="privacy" onChange={(e) => {
+                                    setAgreement({
+                                        ...agreement,
+                                        privacy: e.target.checked
+                                    })
+                                }} checked={agreement.privacy} />
+                                <Caption>
+                                    I have read and understand the {' '}
+                                    <Link
+                                        href="/privacy-policy"
+                                        className="font-bold text-sm text-[#FC6161]"
+                                        target="_blank"
+                                    >
+                                        Privacy Policy
+                                    </Link>{', '}
+                                    including how my personal data will be collected, stored, and used.
+                                </Caption>
+                            </div>
+
+                        </div>
+
+
+                        <Button.Root disabled={isLoading || !(formData.name.length > 0 && formData.email.length > 0 && formData.password.length > 0 && agreement.privacy && agreement.terms)} onClick={createBusiness} className="w-full">
                             <Button.Label className='flex items-center'>{isLoading ? <CircularProgress size='sm' /> : "Create an Account"}</Button.Label>
                         </Button.Root>
                     </div>

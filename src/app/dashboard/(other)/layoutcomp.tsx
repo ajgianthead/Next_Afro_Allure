@@ -5,7 +5,7 @@ import * as Link from '@components/Link';
 import Separator from '@tailus-ui/Separator';
 import { Notifications } from '@components/Notifications';
 import { useEffect, useState } from 'react';
-import { Menu, Settings, HelpCircle, LayoutDashboard, Calendar, CalendarCog, Database, UsersRound, Shield, Percent, Tag, PanelsTopLeft, ChartNoAxesCombined, Scale, CircleAlert, CircleDollarSign } from 'lucide-react';
+import { Menu, Settings, HelpCircle, LayoutDashboard, Calendar, CalendarCog, Database, UsersRound, Shield, Percent, Tag, PanelsTopLeft, ChartNoAxesCombined, Scale, CircleAlert, CircleDollarSign, MessageCircleQuestion } from 'lucide-react';
 import { Caption, Text, Title } from '@tailus-ui/typography';
 import { UserDropdown } from '@components/UserDropdown';
 import ScrollArea from '@components/ScrollArea';
@@ -91,7 +91,7 @@ export default function LayoutComp({
                                         </Link.Icon>
                                         <Link.Label>Services</Link.Label>
                                     </Link.Root>
-                                    <Link.Root link="/dashboard/booking-policies" isActive={pathname === "/dashboard/booking-settings"}>
+                                    <Link.Root link="/dashboard/booking-settings" isActive={pathname === "/dashboard/booking-settings"}>
                                         <Link.Icon>
                                             <Scale />
                                         </Link.Icon>
@@ -121,15 +121,15 @@ export default function LayoutComp({
                         <div className="space-y-1">
                             <Link.Root link="#">
                                 <Link.Icon>
+                                    <MessageCircleQuestion />
+                                </Link.Icon>
+                                <Link.Label>Send Feedback</Link.Label>
+                            </Link.Root>
+                            <Link.Root link="#">
+                                <Link.Icon>
                                     <HelpCircle />
                                 </Link.Icon>
                                 <Link.Label>Help</Link.Label>
-                            </Link.Root>
-                            <Link.Root link="/dashboard/settings">
-                                <Link.Icon>
-                                    <Settings />
-                                </Link.Icon>
-                                <Link.Label>Settings</Link.Label>
                             </Link.Root>
                         </div>
                     </div>
