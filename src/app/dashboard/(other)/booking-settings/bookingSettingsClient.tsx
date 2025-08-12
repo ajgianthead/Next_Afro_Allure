@@ -8,6 +8,7 @@ import { CircularProgress, Input as JoyInput, Checkbox as JoyCheckbox } from '@m
 import Button from '@tailus-ui/Button'
 import { Caption, Text, Title } from '@tailus-ui/typography'
 import { useUserContext } from '@utils/context/UserContext'
+import { Info } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 
 enum Level {
@@ -46,7 +47,11 @@ type Policy = {
 
 }
 
-export default function BookingSettingsClient() {
+interface PageProps {
+    businessUser: Business
+}
+
+export default function BookingSettingsClient({ businessUser }: PageProps) {
     const { user } = useUserContext()
     const [businessID, setBusinessID] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(true);
@@ -132,35 +137,20 @@ export default function BookingSettingsClient() {
                 {/* Policy Options */}
                 <Text className='font-semibold mt-5 mb-2 text-gray-300'>General</Text>
                 <div className='flex flex-col gap-2'>
-                    <div className="flex gap-2 items-center">
-                        <Checkbox.Root checked={bookingPolicy.deposit.enabled} onClick={() => {
-                            if (bookingPolicy.deposit.enabled && bookingPolicy.noShowPolicy.enabled) {
-                                setBookingPolicy({
-                                    ...bookingPolicy,
-                                    noShowPolicy: {
-                                        enabled: !bookingPolicy.noShowPolicy.enabled,
-                                        level: undefined
-                                    },
-                                    deposit: {
-                                        enabled: !bookingPolicy.deposit.enabled,
-                                        settings: bookingPolicy.deposit.settings
-                                    }
-                                })
-                            } else {
-                                setBookingPolicy({
-                                    ...bookingPolicy,
-                                    deposit: {
-                                        enabled: !bookingPolicy.deposit.enabled,
-                                        settings: bookingPolicy.deposit.settings
-                                    }
-                                })
-                            }
-                        }}>
-                            <Checkbox.Indicator />
-                        </Checkbox.Root>
-                        <Label>Require a deposit during booking</Label>
+                    <div className="flex flex-col gap-2 items-start">
+                        {!businessUser.completed_stripe_onboarding ? <Caption className='flex gap-1 items-center font-semibold'><Info size={16} />Finish monetization onboarding to enable deposits</Caption> : <></>}
+                        <JoyCheckbox disabled={!businessUser.completed_stripe_onboarding} onChange={(e) => {
+                            setBookingPolicy({
+                                ...bookingPolicy,
+                                deposit: {
+                                    enabled: e.target.checked,
+                                    settings: bookingPolicy.deposit.settings
+                                }
+                            })
+                        }} label="Require a deposit during booking" />
+
                     </div>
-                    {bookingPolicy.deposit.enabled && <div className='ml-5 flex flex-col gap-2 font-medium'>
+                    {bookingPolicy.deposit.enabled && <div className='ml-5 mt-3 flex flex-col gap-2 font-medium'>
                         <div className="flex gap-2 items-center">
                             <div>
                                 <div className='flex gap-2 items-center mb-2'>
@@ -173,9 +163,9 @@ export default function BookingSettingsClient() {
                                         }
                                         setBookingPolicy(clone)
                                     }} />
-                                    <Caption>Percentage Price</Caption>
+                                    <Caption>Percent Rate</Caption>
                                 </div>
-                                <JoyInput onChange={(e) => {
+                                <JoyInput className='w-1/2' onChange={(e) => {
                                     setBookingPolicy({
                                         ...bookingPolicy,
                                         deposit: {
@@ -202,107 +192,14 @@ export default function BookingSettingsClient() {
                                         }
                                         setBookingPolicy(clone)
                                     }} />
-                                    <Caption>Flat Price</Caption>
+                                    <Caption>Flat Rate</Caption>
                                 </div>
-                                <JoyInput disabled={bookingPolicy.deposit.settings?.type !== Type.FLAT} startDecorator={'$'} />
+                                <JoyInput className='w-1/2' disabled={bookingPolicy.deposit.settings?.type !== Type.FLAT} startDecorator={'$'} />
                             </div>
                         </div>
 
                     </div>}
-                    <div className="flex gap-2 items-center">
-                        <Checkbox.Root checked={bookingPolicy.lateFee.enabled} onClick={() => {
-                            setBookingPolicy({
-                                ...bookingPolicy,
-                                lateFee: {
-                                    enabled: !bookingPolicy.lateFee.enabled
-                                }
-                            })
-                        }}>
-                            <Checkbox.Indicator />
-                        </Checkbox.Root>
-                        <Label>Late fee</Label>
-                    </div>
-                    <div className="flex gap-2 flex-col">
-                        <div className="flex gap-2 items-center">
-                            <Checkbox.Root disabled={!bookingPolicy.deposit.enabled} checked={bookingPolicy.noShowPolicy.enabled} onClick={() => {
-                                if (bookingPolicy.noShowPolicy.enabled) {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        noShowPolicy: {
-                                            enabled: !bookingPolicy.noShowPolicy.enabled,
-                                            level: undefined
-                                        }
-                                    })
-                                } else {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        noShowPolicy: {
-                                            enabled: !bookingPolicy.noShowPolicy.enabled,
-                                        }
-                                    })
-                                }
-                            }}>
-                                <Checkbox.Indicator />
-                            </Checkbox.Root>
-                            <div>
-                                <Label>Enable a no-show policy</Label>
-                                <Caption>Enabling this protects decreases the likelihood of no-shows</Caption>
-                            </div>
-                        </div>
-                        {bookingPolicy.noShowPolicy.enabled && <div className='ml-5 flex flex-col gap-2 font-medium'>
-                            <div className="flex gap-2 items-center">
-                                <Checkbox.Root checked={bookingPolicy.noShowPolicy.level === "light"} onClick={() => {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        noShowPolicy: {
-                                            enabled: true,
-                                            level: Level.LIGHT
-                                        }
-                                    })
-                                }}>
-                                    <Checkbox.Indicator />
-                                </Checkbox.Root>
-                                <div>
-                                    <Label className='text-green-500'>Light</Label>
-                                    <Caption>Keep deposit </Caption>
-                                </div>
-                            </div>
-                            <div className="flex gap-2 items-center">
-                                <Checkbox.Root checked={bookingPolicy.noShowPolicy.level === "moderate"} onClick={() => {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        noShowPolicy: {
-                                            enabled: true,
-                                            level: Level.MODERATE
-                                        }
-                                    })
-                                }}>
-                                    <Checkbox.Indicator />
-                                </Checkbox.Root>
-                                <div>
-                                    <Label className='text-orange-500'>Moderate</Label>
-                                    <Caption>Charge full price of the appointment</Caption>
-                                </div>
-                            </div>
-                            <div className="flex gap-2 items-center">
-                                <Checkbox.Root checked={bookingPolicy.noShowPolicy.level === "strict"} onClick={() => {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        noShowPolicy: {
-                                            enabled: true,
-                                            level: Level.STRICT
-                                        }
-                                    })
-                                }}>
-                                    <Checkbox.Indicator />
-                                </Checkbox.Root>
-                                <div>
-                                    <Label className='text-red-500'>Strict</Label>
-                                    <Caption>Charge full price, and ban their account from booking</Caption>
-                                </div>
-                            </div>
-                        </div>}
-                    </div>
+
                     <div>
                         <Text className='font-semibold mt-5 mb-2 text-gray-300'>Appointments</Text>
                         <div className='flex items-center gap-5'>

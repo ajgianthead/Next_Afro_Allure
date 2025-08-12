@@ -13,7 +13,7 @@ type Params = {
 }
 
 const analyticsDataClient = new BetaAnalyticsDataClient({
-    keyFilename: './config/analytics-key.json', // ← this is the keyFilename
+    credentials: JSON.parse(process.env.GOOGLE_ANALYTICS_KEY!.split(String.raw`\\n`).join('\\n'))
 })
 
 const MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
