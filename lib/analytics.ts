@@ -20,7 +20,7 @@ const MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 const API_SECRET = process.env.NEXT_PUBLIC_ANALYTICS_API_SECRET
 const GA_ENDPOINT = `https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}`
 
-const propertyId = process.env.NEXT_PUBLIC_ANALYTICS_PROPERTY_ID;
+const propertyId = process.env.ANALYTICS_PROPERTY_ID;
 
 export type ReportFilters = {
     businessId?: string;
