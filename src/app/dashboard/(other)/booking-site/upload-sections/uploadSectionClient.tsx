@@ -68,7 +68,11 @@ const UploadSectionClient = ({ businessId, editorId, imageObj, url_name }: { bus
             <div className='w-full flex flex-col items-center justify-center'>
 
                 <div className='flex w-full justify-start flex-col mb-10 pl-6'>
-                    <Title>Upload and Edit Sections</Title>
+                    <Title className='flex items-center mb-2 gap-2'>
+                        <IconButton component='a' onClick={() => {
+                            router.back()
+                        }}>
+                            <ChevronLeftIcon /></IconButton>Upload and Edit Sections</Title>
                     <Caption>Below, you are able to upload, edit, or delete sections of your site. Click the pencil icon to edit a section, or the trash can icon to delete. <strong>Updates to your booking site happen in realtime</strong></Caption>
                     <div>
                         <Caption>Booking Site URL: <Link href={`https://beta.afroallure.co/${url_name}/book`} target='_blank'>{`beta.afroallure.co/${url_name}/book`}</Link></Caption>

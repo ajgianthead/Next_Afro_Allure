@@ -2,6 +2,8 @@ import { createClient } from "@utils/supabase/server";
 import RootLayout from "./layoutcomp";
 import { Database } from "../../lib/database.types";
 import { Analytics } from "@vercel/analytics/next"
+import { CssVarsProvider } from "@mui/joy";
+import { theme } from "./landingPage";
 
 
 export const metadata = {
@@ -12,7 +14,10 @@ export const metadata = {
 }
 export default async function Layout({ children }: any) {
   return <>
-    <Analytics />
-    <RootLayout children={children} />
+    <CssVarsProvider theme={theme}>
+      <Analytics />
+      <RootLayout children={children} />
+    </CssVarsProvider>
+
   </>
 }

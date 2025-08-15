@@ -169,7 +169,7 @@ export default function LayoutComp({
                         </div>
                     </div>
 
-                    {businessData && !businessData?.completed_stripe_onboarding ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
+                    {/* {businessData && !businessData?.completed_stripe_onboarding ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
                         <Banner.Content>
                             <CircleAlert className="size-5 text-[--body-text-color]" />
                             <div className="space-y-2">
@@ -179,7 +179,7 @@ export default function LayoutComp({
 
                             </div>
                         </Banner.Content>
-                    </Banner.Root> : <></>}
+                    </Banner.Root> : <></>} */}
                 </div>
 
                 <div className='w-full flex-1 max-h-min'>

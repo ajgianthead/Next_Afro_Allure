@@ -14,7 +14,7 @@ import LandingPageNavDrawer from "./landingPageNavDrawer";
 import { motion } from "motion/react"
 import { Caption } from "@tailus-ui/typography";
 
-const theme = extendTheme({
+export const theme = extendTheme({
     "colorSchemes": {
         "light": {
             "palette": {
