@@ -1,6 +1,9 @@
+@import '../components/tailus-ui/styles/_variables.scss';
+@import '../components/tailus-ui/styles/_keyframe-animations.scss';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 :root {
   --foreground-rgb: theme(colors.primary.600);
@@ -24,6 +27,7 @@ body {
   color: var(--foreground-rgb);
   overflow-x: hidden;
 }
+
 
 @layer utilities {
   .text-balance {

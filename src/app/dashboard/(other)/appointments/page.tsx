@@ -23,5 +23,7 @@ export default async function Page() {
     const user = await fetchUser()
     const business = await fetchBusinessUser(user?.id!)
     const appointments = await fetchAppointments(business?.business_id!)
+    console.log(appointments.appointments);
+
     return <AppointmentsClient business_id={business?.business_id!} appointmentData={appointments.appointments!} policyData={appointments.policy!} servicesData={appointments.services!} />;
 }

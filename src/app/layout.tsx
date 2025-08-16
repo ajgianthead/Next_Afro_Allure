@@ -14,10 +14,9 @@ export const metadata = {
 }
 export default async function Layout({ children }: any) {
   return <>
-    <CssVarsProvider theme={theme}>
-      <Analytics />
-      <RootLayout children={children} />
-    </CssVarsProvider>
+
+    <Analytics />
+    <RootLayout children={children} />
 
   </>
 }

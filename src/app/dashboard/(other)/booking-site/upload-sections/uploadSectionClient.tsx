@@ -1,13 +1,17 @@
 'use client'
 
-import { Button, CircularProgress, IconButton, styled } from '@mui/joy';
+import { AspectRatio, Button, CircularProgress, IconButton, Input, styled } from '@mui/joy';
 import { Caption, Text, Title } from '@tailus-ui/typography';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import { deleteSectionImage, editSectionImage, uploadImgSectionChanges } from '../actions';
-import { ChevronLeftIcon, Pencil, Trash } from 'lucide-react';
+import { ChevronLeftIcon, Pencil, Trash, Type, Image as ImageIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { SimpleEditor } from '@tailus-ui/components/tiptap-templates/simple/simple-editor';
+// import '../styles/_variables.scss';
+// import '../styles/_keyframe-animations.scss';
+
 
 
 const VisuallyHiddenInput = styled('input')`
@@ -73,9 +77,34 @@ const UploadSectionClient = ({ businessId, editorId, imageObj, url_name }: { bus
                             router.back()
                         }}>
                             <ChevronLeftIcon /></IconButton>Upload and Edit Sections</Title>
-                    <Caption>Below, you are able to upload, edit, or delete sections of your site. Click the pencil icon to edit a section, or the trash can icon to delete. <strong>Updates to your booking site happen in realtime</strong></Caption>
-                    <div>
-                        <Caption>Booking Site URL: <Link href={`https://beta.afroallure.co/${url_name}/book`} target='_blank'>{`beta.afroallure.co/${url_name}/book`}</Link></Caption>
+                    <Caption className='pr-6'>Below, you are able to upload, edit, or delete sections of your site. Click the pencil icon to edit a section, or the trash can icon to delete. <strong>Updates to your booking site happen in realtime</strong></Caption>
+                    <div >
+                        <Text className='mt-5 font-medium underline'>Booking Site URL: </Text>
+                        <div className=' flex items-center gap-1'>
+                            <Text className='text-slate-500'><Link href={`https://beta.afroallure.co/${url_name}/book`} target='_blank'>{`beta.afroallure.co/`}</Link></Text>
+                            <Input color='neutral' sx={{
+                                padding: 0,
+                                '--Input-radius': '0px',
+                                borderBottom: '2px solid',
+                                borderColor: 'neutral.outlinedBorder',
+                                '&:hover': {
+                                    borderColor: 'neutral.outlinedHoverBorder',
+                                },
+                                '&::before': {
+                                    border: '1px solid var(--Input-focusedHighlight)',
+                                    transform: 'scaleX(0)',
+                                    left: 0,
+                                    right: 0,
+                                    bottom: '-2px',
+                                    top: 'unset',
+                                    transition: 'transform .15s cubic-bezier(0.1,0.9,0.2,1)',
+                                    borderRadius: 0,
+                                },
+                                '&:focus-within::before': {
+                                    transform: 'scaleX(1)',
+                                },
+                            }} defaultValue={url_name} variant='plain' />
+                        </div>
                     </div>
                 </div>
                 <div className='w-full relative flex justify-center flex-col items-center'>
@@ -102,24 +131,58 @@ const UploadSectionClient = ({ businessId, editorId, imageObj, url_name }: { bus
 
                         )
                     })}
+                    <div className='tiptap-editor max-w-[900px] max-h-[350px] overflow-y-hidden flex mb-10'>
+                        <SimpleEditor />
+                    </div>
                 </div>
-                <Button component="label"
-                    role={undefined}
-                    sx={{
-                        paddingY: 5,
-                        borderStyle: 'dashed',
-                        borderWidth: 2,
-                        marginTop: 2,
-                        marginBottom: 5
-                    }}
-                    tabIndex={-1}
-                    variant="outlined"
-                    color="neutral" className='w-5/6 p-20'>
-                    <Caption>
-                        + Add Section
-                    </Caption>
-                    <VisuallyHiddenInput type="file" onChange={(e) => handleImageUpload(e.target.files![0])} />
-                </Button>
+                <div className='flex w-full gap-2 px-10 h-1/4'>
+                    <AspectRatio sx={{
+                        width: '50%'
+                    }}>
+                        <Button component="label"
+                            role={undefined}
+                            sx={{
+                                paddingY: 5,
+                                borderStyle: 'dashed',
+                                borderWidth: 2,
+                                marginTop: 2,
+                                marginBottom: 5,
+                                width: '50%'
+                            }}
+                            tabIndex={-1}
+                            variant="outlined"
+                            color="neutral" className='w-5/6 p-20'>
+                            <Caption className='flex flex-col items-center gap-2 text-center'>
+                                <Type size={50} />
+                                + Add Text Section
+                            </Caption>
+                            <VisuallyHiddenInput type="file" onChange={(e) => handleImageUpload(e.target.files![0])} />
+                        </Button>
+                    </AspectRatio>
+                    <AspectRatio sx={{
+                        width: '50%'
+                    }}>
+                        <Button component="label"
+                            role={undefined}
+                            sx={{
+                                paddingY: 5,
+                                borderStyle: 'dashed',
+                                borderWidth: 2,
+                                marginTop: 2,
+                                marginBottom: 5,
+                                width: '50%'
+                            }}
+                            tabIndex={-1}
+                            variant="outlined"
+                            color="neutral" className='w-5/6 p-20'>
+                            <Caption className='flex flex-col items-center gap-2 text-center'>
+                                <ImageIcon size={50} />
+                                + Add Image Section
+                            </Caption>
+                            <VisuallyHiddenInput type="file" onChange={(e) => handleImageUpload(e.target.files![0])} />
+                        </Button>
+                    </AspectRatio>
+                </div>
 
             </div>
         </div>

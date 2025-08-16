@@ -13,7 +13,7 @@ import Label from '@components/Label';
 import { useUserContext } from '@utils/context/UserContext';
 import "./calendar.css"
 import Input from '@components/Input';
-import CircularProgress from '@mui/joy/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
