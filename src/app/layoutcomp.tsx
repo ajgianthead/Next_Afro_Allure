@@ -1,6 +1,6 @@
 "use client";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import "./globals.scss";
 import { UserWrapper } from "@utils/context/UserContext";
 import { NextUIProvider } from "@nextui-org/react";
 import '@fontsource/inter';
