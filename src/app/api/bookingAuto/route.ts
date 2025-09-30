@@ -77,7 +77,7 @@ export const getAvailability = async (startDate: string, endDate: string, availa
             }
         }
     } catch (error: any) {
-        console.log(error)
+
     }
     return slotResult
 
@@ -101,7 +101,7 @@ export const getUnavailability = async (startDate: string, endDate: string, appo
             curr = curr.plus({ days: 1 })
         }
     } catch (error: any) {
-        console.log(error)
+
         throw new Error(error.message)
     }
     return slotResult

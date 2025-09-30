@@ -46,7 +46,7 @@ export default function AppointmentCancelled({ socials, serviceName, clientData,
                 <Container className="w-full">
                     <Text>🔄 Ready to book a new appointment?</Text>
                     <ul className="mt-0 list-none">
-                        <li><Link href={`https://${process.env.NEXT_PUBLIC_BASE_URL}/${businessData.name.toLowerCase()}/book`}>Schedule a new appointment</Link></li>
+                        <li><Link href={`${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/${businessData.name.toLowerCase()}/book`}>Schedule a new appointment</Link></li>
                     </ul>
                 </Container>
 

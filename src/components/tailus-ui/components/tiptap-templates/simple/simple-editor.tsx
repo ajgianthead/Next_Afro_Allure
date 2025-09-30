@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
+import { Content, EditorContent, EditorContext, useEditor } from "@tiptap/react"
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
@@ -73,7 +73,6 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@tailus-ui/lib/tiptap-utils"
 // --- Styles ---
 import "@tailus-ui/components/tiptap-templates/simple/simple-editor.scss"
 
-import content from "@tailus-ui/components/tiptap-templates/simple/data/content.json"
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -183,7 +182,7 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function SimpleEditor() {
+export function SimpleEditor({ initialContent, ref }: { initialContent?: Content, ref: any }) {
   const isMobile = useIsMobile()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = React.useState<
@@ -229,8 +228,15 @@ export function SimpleEditor() {
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
-    content,
+    content: initialContent,
   })
+
+  React.useImperativeHandle(ref, () => ({
+    getJSON: () => editor?.getJSON(),
+    getHTML: () => editor?.getHTML(),
+    setContent: (content: Content) => editor?.commands.setContent(content),
+    editor, // expose full editor if needed
+  }), [editor])
 
   const rect = useCursorVisibility({
     editor,
@@ -244,7 +250,7 @@ export function SimpleEditor() {
   }, [isMobile, mobileView])
 
   return (
-    <div className="simple-editor-wrapper">
+    <div className="simple-editor-wrapper border">
       <EditorContext.Provider value={{ editor }}>
         <Toolbar
           ref={toolbarRef}
@@ -270,11 +276,13 @@ export function SimpleEditor() {
           )}
         </Toolbar>
 
-        <EditorContent
-          editor={editor}
-          role="presentation"
-          className="simple-editor-content"
-        />
+        <div className="border-y">
+          <EditorContent
+            editor={editor}
+            role="presentation"
+            className="simple-editor-content"
+          />
+        </div>
       </EditorContext.Provider>
     </div>
   )

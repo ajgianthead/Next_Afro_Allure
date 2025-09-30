@@ -50,8 +50,8 @@ We’re thrilled to let you know that your appointment with ${businessData.name}
                 <Container className="w-full">
                     <Text>🔄 Need to Make Changes?</Text>
                     <ul className="mt-0 list-none">
-                        <li><Link href={`https://${process.env.NEXT_PUBLIC_BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/reschedule`}>Reschedule your appointment</Link></li>
-                        <li><Link href={`https://${process.env.NEXT_PUBLIC_BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/cancel`}>Cancel your appointment</Link></li>
+                        <li><Link href={`${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/reschedule`}>Reschedule your appointment</Link></li>
+                        <li><Link href={`${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/cancel`}>Cancel your appointment</Link></li>
                     </ul>
                 </Container>
 

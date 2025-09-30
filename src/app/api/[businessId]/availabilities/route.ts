@@ -19,7 +19,7 @@ export async function PUT(request: NextRequest, { params }: { params: { business
         }
 
         if (error) {
-            console.log(error, data);
+
             return new NextResponse(JSON.stringify({ error: error }), {
                 headers: { 'Content-Type': 'application/json' },
                 status: 500

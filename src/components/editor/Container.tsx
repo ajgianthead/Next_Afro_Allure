@@ -39,7 +39,7 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
 
     const nodeRef = useRef<HTMLDivElement>(null);
     const { isResizing, setIsResizing } = useEditorContext();
-    console.log(parentNodeWidth);
+
     useEffect(() => {
         if (width === '100%') {
             actions.setProp(id, (props) => {
@@ -114,7 +114,7 @@ export const Container: UserComponent = ({ gap = 0, background = '#ffffff', flex
                     setIsResizing(false)
                     // const currentWidth = typeof width === 'string' ? parseFloat(width) : width;
                     // const newWidth = currentWidth + delta.width;
-                    console.log(delta);
+
 
                     actions.setProp(id, (props) => {
                         props.width += delta.width;
@@ -216,7 +216,7 @@ export const ContainerSettings = () => {
     const [color, setColor] = useState<string>("#000000");
     const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const margin = parseInt(e.target.value)
-        console.log(parentNodeWidth, props.width + margin)
+
         if (props.width + margin * 2 > parentNodeWidth) {
             setProp((props: Record<string, any>) => props.width = props.width - (props.width + (margin * 2) - parentNodeWidth))
         }

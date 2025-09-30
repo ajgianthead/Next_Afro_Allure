@@ -107,7 +107,7 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
     const [editingAvailability, setEditingAvailability] = useState<any>()
     const [dates, setDates] = useState<string[]>(Object.keys(defaultAvailability.specificDates))
     const onDateSelect = (focused: any, clicked: any) => {
-        console.log(dates, availability.specificDates);
+
 
         let date = clicked.toString();
         if (!dates.includes(date)) {
@@ -166,7 +166,7 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
                     }
                 );
                 const res = await result.json()
-                console.log(res.result);
+
 
                 let clone = [...availabilities]
                 clone[index] = res.result
@@ -185,7 +185,7 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
     const [currEditIndex, setCurrEditIndex] = useState<number>();
     const [defaultAvailable, setDefaultAvailable] = useState(defaultAvailabilityData)
     const handleEdit = (index: number, element: any) => {
-        console.log(availabilities[index]);
+
 
         setCurrEditIndex(index)
         setisEditing(true)
@@ -198,7 +198,7 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
     const handleDelete = async (index: number) => {
         const hasAttachedServices = await checkAvailabilityToServices(availability.id)
         if (hasAttachedServices instanceof PostgrestError) {
-            console.log(hasAttachedServices)
+
         } else if (hasAttachedServices.attachedServices) {
             // Set some error state
             setDeletePromptOpen(true)
@@ -323,7 +323,7 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
                                                                 start: new Time(9),
                                                                 end: new Time(17)
                                                             }]
-                                                            console.log(availability);
+
 
                                                             setAvailability(clone)
                                                         } else {
@@ -363,7 +363,7 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
                                                                 let clone = { ...availability }
                                                                 clone.week[index].timeRanges[rangeIndex].start = timeValue
                                                                 setAvailability(clone)
-                                                                console.log(clone);
+
 
                                                             }} />
                                                             <Text>-</Text>
@@ -372,7 +372,7 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
                                                                 let clone = { ...availability }
                                                                 clone.week[index].timeRanges[rangeIndex].end = timeValue
                                                                 setAvailability(clone)
-                                                                console.log(clone);
+
 
                                                             }} />
                                                             {availability.week[index].timeRanges.length > 1 && <Button.Root variant='ghost' onClick={() => {
@@ -514,7 +514,7 @@ export default function AvailabilityClient({ availabilitiesData, defaultAvailabi
                 {availabilities.length ? availabilities.map((element: any, index: number) => {
                     return (
                         <div key={index} className='' onClick={() => {
-                            console.log(element)
+
                             handleEdit(index, element)
                             setisDefault(false)
                         }}>

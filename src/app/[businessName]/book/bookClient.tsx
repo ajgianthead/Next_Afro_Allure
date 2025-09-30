@@ -20,13 +20,13 @@ import Skeleton from '@mui/joy/Skeleton';
 import { DateTime } from 'luxon'
 import { bookAppointment, getAvailability, getUnavailability } from '../actions'
 import { getSlots } from "slot-calculator"
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import CircularProgress from '@mui/joy/CircularProgress'
 import Dialog from '@components/Dialog';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { BookingData, BookingWrapper, useBooking } from '@utils/context/BookingDataContext';
-import { Card as MUICard, Checkbox } from '@mui/joy';
+import { Card as MUICard, Button as MUIButton, Checkbox, Snackbar, Modal, DialogContent, DialogTitle, ModalClose, Typography, ModalDialog } from '@mui/joy';
 
 export default function BookClient({ businessData }: {
     businessData: any
@@ -41,61 +41,111 @@ export default function BookClient({ businessData }: {
         }
     }, []);
     return <BookingWrapper businessData={businessData}>
-        <Book />
+        <Book businessName={businessData.url_name} />
     </BookingWrapper>
 }
 
 
-const Book = () => {
+const Book = ({ businessName }: { businessName: string }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [activeStep, setActiveStep] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [components, setComponents] = useState<any[]>([])
     const [steps, setSteps] = useState<string[]>([])
+    const [agreedAfroAllure, setAgreedAfroAllure] = useState<boolean>(true)
+    const [agreedBusiness, setAgreedBusiness] = useState<boolean>(true)
     useEffect(() => {
         // Get businessID
         if (data.booking_policy) {
-            if (data.booking_policy.deposit.enabled) {
+            if (!data.booking_policy.deposit.enabled) {
                 setSteps(["Select a service", "Pick a date and a time", "Contact Information", "Pay Booking Deposit"])
-                setComponents([<ServiceSelection />, <DateTimePicker />, <ClientInfo />, <DepositPayment />])
+                setComponents([<ServiceSelection />, <DateTimePicker />, <ClientInfo setAgreedAfroAllure={setAgreedAfroAllure} setAgreedBusiness={setAgreedBusiness} agreedAfroAllure={agreedAfroAllure} agreedBusiness={agreedBusiness} />, <DepositPayment setRbbOpen={setRbbOpen} setAgreedAfroAllure={setAgreedAfroAllure} setAgreedBusiness={setAgreedBusiness} agreedAfroAllure={agreedAfroAllure} agreedBusiness={agreedBusiness} setError={setError} setOpenErrorDialog={setOpenErrorDialog} />])
             } else {
                 setSteps(["Select a service", "Pick a date and a time", "Contact Information"])
-                setComponents([<ServiceSelection />, <DateTimePicker />, <ClientInfo />])
+                setComponents([<ServiceSelection />, <DateTimePicker />, <ClientInfo setRbbOpen={setRbbOpen} setAgreedAfroAllure={setAgreedAfroAllure} setAgreedBusiness={setAgreedBusiness} agreedAfroAllure={agreedAfroAllure} agreedBusiness={agreedBusiness} />])
             }
             setIsLoading(false)
         }
-    }, [data]);
-
+    }, [data, agreedAfroAllure, agreedBusiness]);
+    const [submitting, setSubmitting] = useState<boolean>(false)
+    const router = useRouter()
     const handleSubmit = async () => {
-        const response = await fetch(`/api/appointments`, {
-            method: "POST",
-            body: JSON.stringify({
-                business: data.business_id,
-                start: data.selectedDateTime.start,
-                end: data.selectedDateTime.end,
-                status: "CONFIRMED",
-                client_metadata: data.clientInfo,
-                service_data: data.services.filter((service) => service.id === data.selectedService)[0],
-                policy_id: data.booking_policy.id,
-                require_deposit: false,
-                paid_deposit: false,
-                deposit_charge_id: null,
-                reschedules: data.booking_policy.reschedule_limit,
-                deposit_price: null,
-                selected_addons: data.selectedAddons
-            })
-        });
-        if (!response.ok) {
-            // Handle errors on the client side here
-            const { error } = await response.json();
-            throw new Error("An error occurred: ", error);
+        const clientInfo = { ...data.clientInfo }
+        if (clientInfo.firstName.length > 0) {
+            if (clientInfo.lastName.length > 0) {
+                if (clientInfo.email.length > 0) {
+                    if (clientInfo.phoneNumber.length > 0) {
+                        const body = {
+                            business: data.business_id,
+                            start: data.selectedDateTime.start,
+                            end: data.selectedDateTime.end,
+                            status: "CONFIRMED",
+                            client_metadata: data.clientInfo,
+                            service_data: data.services.filter((service) => service.id === data.selectedService)[0],
+                            policy_id: data.booking_policy.id,
+                            require_deposit: false,
+                            paid_deposit: false,
+                            deposit_charge_id: null,
+                            reschedules: data.booking_policy.reschedule_limit,
+                            deposit_price: null,
+                            selected_addons: data.selectedAddons
+                        }
+                        const response = await fetch(`/api/appointments`, {
+                            method: "POST",
+                            body: JSON.stringify(body)
+                        });
+                        if (!response.ok) {
+                            // Handle errors on the client side here
+                            const { error } = await response.json();
+                            return false
+                        } else {
+                            return true
+                        }
+                    }
+                }
+            }
         } else {
-            console.log(await response.json());
+            // setError state and make toast appear
+            setError("Enter client information")
+            setOpenErrorDialog(true)
         }
+
     }
+    const [error, setError] = useState<string>("")
+    const [openErrorDialog, setOpenErrorDialog] = useState<boolean>(false)
+    const [rbbOpen, setRbbOpen] = useState(data.booking_policy.read_before_booking.length > 0)
 
     return (
-        <div >
+        <div>
+            <Modal open={rbbOpen} onClose={() => {
+                setRbbOpen(false)
+            }}>
+                <ModalDialog sx={{
+                    padding: 4
+                }}>
+                    <ModalClose size='sm' />
+                    <DialogTitle>
+                        Please Read Before Booking
+                    </DialogTitle>
+                    <Typography>
+                        {data.booking_policy.read_before_booking}
+                    </Typography>
+                </ModalDialog>
+
+            </Modal>
+            <Snackbar
+                color='danger'
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right'
+                }}
+                open={openErrorDialog}
+                onClose={() => {
+                    setOpenErrorDialog(false)
+                }}
+            >
+                {error}
+            </Snackbar>
             {!isLoading ? <div className='w-full pt-10 px-20  flex flex-col overflow-hidden'>
                 <Stepper sx={{ width: '100%', marginBottom: 5 }}>
                     {steps.map((step: string, index: number) => (
@@ -132,15 +182,20 @@ const Book = () => {
                     }}>
                         <Button.Label>Back</Button.Label>
                     </Button.Root>
-                    {activeStep < steps.length - 1 ? <Button.Root disabled={(activeStep === 0 && data.selectedService.length === 0) || (activeStep === 1 && Object.values(data.selectedDateTime).length === 0) || (activeStep === 2 && Object.values(data.clientInfo).length !== 4)} onClick={() => {
+                    {activeStep < steps.length - 1 ? <Button.Root disabled={(activeStep === 0 && data.selectedService.length === 0) || (activeStep === 1 && Object.values(data.selectedDateTime).length === 0) || activeStep === 2 && (data.clientInfo.firstName.length === 0 || data.clientInfo.lastName.length === 0 || data.clientInfo.email.length === 0 || data.clientInfo.phoneNumber.length === 0)} onClick={() => {
                         setActiveStep(activeStep + 1)
                     }}>
                         <Button.Label>Next</Button.Label>
-                    </Button.Root> : <Button.Root onClick={async () => {
-                        await handleSubmit()
+                    </Button.Root> : (!data.booking_policy.deposit.enabled ? <Button.Root disabled={!(agreedAfroAllure && agreedBusiness) || submitting} onClick={async () => {
+                        setSubmitting(true)
+                        const res = await handleSubmit()
+                        if (res) {
+                            router.push(`/${businessName}/book/complete`)
+                        }
+                        setSubmitting(false)
                     }}>
-                        <Button.Label>Book Appointment</Button.Label>
-                    </Button.Root>}
+                        <Button.Label>{submitting ? <CircularProgress size='sm' /> : "Book Appointment"}</Button.Label>
+                    </Button.Root> : <></>)}
                 </div>
             </div> : <div className='w-full h-screen flex justify-center items-center'>
                 <CircularProgress /></div>}
@@ -149,7 +204,7 @@ const Book = () => {
     )
 }
 
-const DepositPayment = () => {
+const DepositPayment = ({ setError, setOpenErrorDialog, setRbbOpen, agreedAfroAllure, agreedBusiness, setAgreedAfroAllure, setAgreedBusiness }: { setError: any, setRbbOpen?: any, agreedBusiness: boolean, setAgreedBusiness: any, agreedAfroAllure: boolean, setAgreedAfroAllure: any, setOpenErrorDialog: any }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [id, setID] = useState<string>("")
@@ -171,7 +226,7 @@ const DepositPayment = () => {
                 throw new Error("An error occurred: ", error);
             } else {
                 const val = await response.json();
-                console.log(val.clientSecret);
+
                 const clientSecret = val.clientSecret;
                 const paymentIntentId = val.id;
                 setID(paymentIntentId)
@@ -198,14 +253,14 @@ const DepositPayment = () => {
                     options={data.options}
 
                 >
-                    <CheckoutForm service={selectedServiceData[0]} paymentIntentID={id} />
+                    <CheckoutForm setRbbOpen={setRbbOpen} setAgreedAfroAllure={setAgreedAfroAllure} setAgreedBusiness={setAgreedBusiness} agreedAfroAllure={agreedAfroAllure} agreedBusiness={agreedBusiness} setError={setError} setOpenErrorDialog={setOpenErrorDialog} service={selectedServiceData[0]} paymentIntentID={id} />
                 </Elements> : <div> Something went wrong</div>
             }
         </div>
     )
 }
 
-const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentIntentID: string }) => {
+const CheckoutForm = ({ service, paymentIntentID, setError, setOpenErrorDialog, setRbbOpen, agreedAfroAllure, agreedBusiness, setAgreedAfroAllure, setAgreedBusiness }: { setRbbOpen?: any, agreedBusiness: boolean, setAgreedBusiness: any, agreedAfroAllure: boolean, setAgreedAfroAllure: any, service: any, paymentIntentID: string, setError: any, setOpenErrorDialog: any }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const elements = useElements();
     const stripe = useStripe();
@@ -245,21 +300,34 @@ const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentInten
         //     })
         // })
         // const result = await res.json();
-        // console.log(result.appointment);
+        // 
 
         await bookAppointment(data.selectedAddons, paymentIntentID, data.business_id, data.booking_policy.id, service, data.clientInfo, { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length }).then(async (appointment: any) => {
-            console.log(appointment)
-            const { error } = await stripe?.confirmPayment({
-                //`Elements` instance that was used to create the Payment Element
-                elements,
-                confirmParams: {
-                    return_url: `/appointment/${appointment.id}/${data.stripe_id}/complete`,
+            const clientInfo = { ...data.clientInfo }
+            if (clientInfo.firstName.length > 0) {
+                if (clientInfo.lastName.length > 0) {
+                    if (clientInfo.email.length > 0) {
+                        if (clientInfo.phoneNumber.length > 0) {
+                            const { error } = await stripe?.confirmPayment({
+                                //`Elements` instance that was used to create the Payment Element
+                                elements,
+                                confirmParams: {
+                                    return_url: `/appointment/${appointment.id}/${data.stripe_id}/complete`,
 
-                },
-            })!;
-            if (error) {
-                throw Error(error.message)
+                                },
+                            })!;
+                            if (error) {
+                                throw Error(error.message)
+                            }
+                        }
+                    }
+                }
+            } else {
+                // setError state and make toast appear
+                setError("Enter client information")
+                setOpenErrorDialog(true)
             }
+
         })
     }
     return (
@@ -331,7 +399,58 @@ const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentInten
                     <Caption><i>*You are required to pay a deposit to confirm this appointment</i></Caption>
                     <form onSubmit={handleSubmit}>
                         <PaymentElement className='w-full' />
-                        <Button.Root disabled={!stripe}>
+                        <div className="space-y-2 mt-2">
+                            <div className="flex items-start space-x-2">
+                                <Checkbox
+                                    id="afroallure"
+                                    checked={agreedAfroAllure}
+                                    onChange={(val) => setAgreedAfroAllure(val.target.checked)}
+                                />
+                                <label htmlFor="afroallure" className="text-sm leading-tight">
+                                    I agree to AfroAllure’s{" "}
+                                    <a
+                                        href="/terms-of-service"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="underline text-[#FC6161] font-semibold"
+                                    >
+                                        Terms & Conditions
+                                    </a>{" "}
+                                    and{" "}
+                                    <a
+                                        href="/privacy-policy"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="underline text-[#FC6161] font-semibold"
+                                    >
+                                        Privacy Policy
+                                    </a>
+                                </label>
+                            </div>
+
+                            <div className="flex items-start space-x-2">
+                                <Checkbox
+                                    id="business"
+                                    checked={agreedBusiness}
+                                    onChange={(val) => setAgreedBusiness(val.target.checked)}
+                                />
+                                <label htmlFor="business" className="text-sm leading-tight">
+                                    I agree to this business’s policies as outlined in the{" "}
+                                    <button
+                                        type="button"
+                                        className="underline text-[#FC6161] font-semibold"
+                                        onClick={() => {
+                                            // open your "read before booking" modal here
+                                            setRbbOpen(true)
+                                        }}
+                                    >
+                                        Read Before Booking
+                                    </button>{" "}
+                                    section, including refund & cancellation policies.
+                                </label>
+                            </div>
+                        </div>
+                        <Button.Root disabled={!(agreedAfroAllure && agreedBusiness)}>
                             <Button.Label>Book Appointment</Button.Label>
                         </Button.Root>
                     </form>
@@ -342,7 +461,7 @@ const CheckoutForm = ({ service, paymentIntentID }: { service: any, paymentInten
     )
 }
 
-const ClientInfo = () => {
+const ClientInfo = ({ setRbbOpen, agreedAfroAllure, agreedBusiness, setAgreedAfroAllure, setAgreedBusiness }: { setRbbOpen?: any, agreedBusiness: boolean, setAgreedBusiness: any, agreedAfroAllure: boolean, setAgreedAfroAllure: any }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     return (
         <div className='flex w-full flex-col items-center justify-center'>
@@ -389,18 +508,60 @@ const ClientInfo = () => {
                         }
                     })
                 }} />
-                <div className='flex gap-3 items-center'>
-                    <Separator orientation='horizontal' />
-                    <Caption>or</Caption>
-                    <Separator orientation='horizontal' />
-                </div>
-                <Button.Root variant='soft'>
-                    <Button.Label>Login to Afro Allure</Button.Label>
-                </Button.Root>
-                <div className='w-full flex justify-center'>
-                    <Caption>Don't have an account? <Link className='underline' href={"#register"}>Register</Link></Caption>
-                </div>
+                {data.booking_policy.deposit.enabled ? <></> : <div className="space-y-2 mt-2">
+                    <div className="flex items-start space-x-2">
+                        <Checkbox
+                            id="afroallure"
+                            checked={agreedAfroAllure}
+                            onChange={(val) => setAgreedAfroAllure(val.target.checked)}
+                        />
+                        <label htmlFor="afroallure" className="text-sm leading-tight">
+                            I agree to AfroAllure’s{" "}
+                            <a
+                                href="/terms-of-service"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline text-[#FC6161] font-semibold"
+                            >
+                                Terms & Conditions
+                            </a>{" "}
+                            and{" "}
+                            <a
+                                href="/privacy-policy"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline text-[#FC6161] font-semibold"
+                            >
+                                Privacy Policy
+                            </a>
+                        </label>
+                    </div>
+
+                    <div className="flex items-start space-x-2">
+                        <Checkbox
+                            id="business"
+                            checked={agreedBusiness}
+                            onChange={(val) => setAgreedBusiness(val.target.checked)}
+                        />
+                        <label htmlFor="business" className="text-sm leading-tight">
+                            I agree to this business’s policies as outlined in the{" "}
+                            <button
+                                type="button"
+                                className="underline text-[#FC6161] font-semibold"
+                                onClick={() => {
+                                    // open your "read before booking" modal here
+                                    setRbbOpen(true)
+                                }}
+                            >
+                                Read Before Booking
+                            </button>{" "}
+                            section, including refund & cancellation policies.
+                        </label>
+                    </div>
+                </div>}
+
             </Card>
+
         </div>
     )
 }
@@ -575,10 +736,7 @@ const TimeSlot = ({ startTime }: {
                 }
 
             })
-            console.log({
-                start: startTime.toISO(),
-                end: endTime
-            });
+
 
         }} style={{ borderWidth: startTime.toISO() !== data.selectedDateTime.start && endTime !== data.selectedDateTime.end ? 1 : 3 }} className='text-sm font-medium border-primary-500 bg-primary-100 px-3 cursor-pointer py-2 rounded-md'>
             {start}
@@ -591,15 +749,12 @@ const ServiceSelection = () => {
     const [loading, setLoading] = useState<boolean>(true)
     useEffect(() => {
         if (data.services.length > 0) {
-            console.log(data.services);
-
             setLoading(false)
         }
     }, [data.services]);
     return (
         <div className=''>
             <Title className='mb-5'>Select a Service</Title>
-            <Input variant='outlined' placeholder='Search for a service' />
             <div className='mt-8 overflow-y-scroll'>
                 <div className='flex flex-wrap gap-2 mr-5 h-[350px]'>
                     {data.services.map((service: any, index: number) => {
@@ -631,7 +786,7 @@ const ServiceCard = ({ service }: any) => {
         }}>
             <Dialog.Trigger asChild>
                 <div onClick={() => {
-                    console.log(service);
+
 
                 }} className='rounded-md border w-[400px] flex h-[150px] cursor-pointer' style={{
                     borderWidth: 2,

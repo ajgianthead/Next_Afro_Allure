@@ -14,7 +14,7 @@ export default async function Page() {
     const user = await fetchUser()
     if (user) {
         const business_user = await fetchBusinessUser(user?.id!)
-        console.log(business_user)
+
         const endOfTheDayToday = DateTime.now().endOf('day').toISO()
         const pastNinetyDays = DateTime.now().minus({ month: 3 }).toISO()
 

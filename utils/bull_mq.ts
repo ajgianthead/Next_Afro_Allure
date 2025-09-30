@@ -91,5 +91,5 @@ const sendReminders = new Worker('sendReminder', async (job: Job) => {
 })
 
 sendReminders.on('error', err => {
-    console.log(err)
+
 })

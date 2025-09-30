@@ -85,7 +85,7 @@ export function BookingWrapper({ children, businessData }: any) {
 
     //         } else {
     //             // Return something like 404 business
-    //             console.log("error");
+    //             
     //         }
 
     //     })

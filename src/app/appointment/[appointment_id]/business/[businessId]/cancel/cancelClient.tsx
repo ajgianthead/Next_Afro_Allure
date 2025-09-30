@@ -44,7 +44,7 @@ export default function CancelClient() {
             clone.delete(e.target.value)
         }
         setReasons(clone)
-        console.log(clone)
+
     }
     const [sendingData, setSendingData] = useState<boolean>(false)
     const [cancelled, setCancelled] = useState<boolean | null>(null)

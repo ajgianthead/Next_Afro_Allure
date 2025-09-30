@@ -32,7 +32,9 @@ export const UserDropdown = ({ businessData }: any) => {
               <Caption>{businessData.email}</Caption>
 
               <div className="mt-4 grid grid-cols-2 gap-3" data-rounded="large">
-                <Button.Root className="bg-gray-50" variant="outlined" size="xs" intent="gray">
+                <Button.Root onClick={() => {
+                  redirect('/dashboard/settings')
+                }} className="bg-gray-50" variant="outlined" size="xs" intent="gray">
                   <Button.Icon size="xs" type="leading">
                     <Settings />
                   </Button.Icon>
@@ -43,7 +45,7 @@ export const UserDropdown = ({ businessData }: any) => {
                     method: 'POST'
                   })
                   const res = await signOut.json();
-                  console.log(res.message);
+
                   redirect('/login')
 
                 }} className="bg-gray-50" variant="outlined" size="xs" intent="gray">

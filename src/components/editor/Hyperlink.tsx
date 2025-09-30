@@ -62,7 +62,7 @@ const HyperlinkSettings = () => {
         props: node.data.props,
     }));
     const handleTextDecoration = (value: string[]) => {
-        console.log(value);
+
         setProp((props: any) => props.textArray = value)
         if (value.includes('bold')) {
             setProp((props: any) => props.fontWeight = 'bold')

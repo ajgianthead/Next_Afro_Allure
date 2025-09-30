@@ -9,7 +9,7 @@ import { Menu, Settings, HelpCircle, LayoutDashboard, Calendar, CalendarCog, Dat
 import { Caption, Text, Title } from '@tailus-ui/typography';
 import { UserDropdown } from '@components/UserDropdown';
 import ScrollArea from '@components/ScrollArea';
-import { fetchUser } from './actions';
+import { fetchUser, sendFeedback } from './actions';
 import { SiteWrapper } from '@utils/context/BookingSiteContext';
 import Banner from "@components/Banner";
 import { useUserContext } from '@utils/context/UserContext';
@@ -19,7 +19,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation';
 import { getUser } from './getUser';
-import { Badge, Chip } from '@mui/joy';
+import { Badge, Chip, Input, Modal, ModalClose, ModalDialog, Textarea, Typography, Button as MUIButton, CircularProgress } from '@mui/joy';
+import { PostgrestError } from '@supabase/supabase-js';
 
 interface BusinessNoti extends Business {
     notifications: BusinessNotification[],
@@ -29,11 +30,14 @@ export default function LayoutComp({
     children, businessData
 }: Readonly<{
     children: React.ReactNode;
-    businessData: BusinessNoti
+    businessData: any
 }>) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname()
     const router = useRouter()
+    const [feedbackModalOpen, setFeedbackModalOpen] = useState<boolean>(false)
+    const [feedback, setFeedback] = useState<string>("")
+    const [sendingFeedback, setSendingFeedback] = useState<boolean>(false)
 
     return (
         <div lang="en">
@@ -115,22 +119,69 @@ export default function LayoutComp({
                         <ScrollArea.Scrollbar orientation="vertical" />
 
                     </ScrollArea.Root>
+                    <Modal open={feedbackModalOpen} onClose={() => {
+                        setFeedbackModalOpen(!feedbackModalOpen)
+                        setFeedback("")
 
+                    }}>
+                        <ModalDialog sx={{
+                            padding: 5,
+                            width: '50%'
+                        }} size='lg'>
+                            <ModalClose />
+                            <Typography level='h3'>Send Feedback</Typography>
+                            <div className='flex flex-col gap-3'>
+
+                                <div className=' space-y-2'>
+                                    <Textarea value={feedback} onChange={(e) => {
+                                        setFeedback(e.target.value)
+                                    }} minRows={4} placeholder="Tell us what we're doing wrong and/or what we can do better" />
+                                </div>
+                            </div>
+                            <div className='w-full justify-end flex'>
+                                <MUIButton disabled={sendingFeedback} onClick={async () => {
+                                    setSendingFeedback(true)
+                                    const result = await sendFeedback({
+                                        businessId: businessData.business_id,
+                                        businessName: businessData.business_name,
+                                        email: businessData.email,
+                                        feedback: feedback
+                                    })
+                                    if (result instanceof PostgrestError) {
+                                        console.error(result.message)
+                                    } else {
+
+                                    }
+                                    setFeedbackModalOpen(false)
+                                    setFeedback("")
+                                    setSendingFeedback(false)
+                                }}>
+                                    {sendingFeedback ? <CircularProgress size='sm' /> : "Send Feedback"}
+                                </MUIButton>
+                            </div>
+                        </ModalDialog>
+                    </Modal>
                     <div className="mt-auto h-fit">
                         <Separator className="my-4" />
                         <div className="space-y-1">
-                            <Link.Root link="#">
-                                <Link.Icon>
-                                    <MessageCircleQuestion />
-                                </Link.Icon>
-                                <Link.Label>Send Feedback</Link.Label>
-                            </Link.Root>
-                            <Link.Root link="#">
-                                <Link.Icon>
-                                    <HelpCircle />
-                                </Link.Icon>
-                                <Link.Label>Help</Link.Label>
-                            </Link.Root>
+                            <div onClick={() => {
+                                setFeedbackModalOpen(true)
+                            }}>
+                                <Link.Root link="#" >
+                                    <Link.Icon>
+                                        <MessageCircleQuestion />
+                                    </Link.Icon>
+                                    <Link.Label>Send Feedback</Link.Label>
+                                </Link.Root>
+                            </div>
+                            <div>
+                                <Link.Root link="#">
+                                    <Link.Icon>
+                                        <HelpCircle />
+                                    </Link.Icon>
+                                    <Link.Label>Help</Link.Label>
+                                </Link.Root>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -160,8 +211,8 @@ export default function LayoutComp({
                             </Button.Root>
                         </div>
                         <div className="flex items-center gap-4 pr-6">
-                            {businessData.notifications.filter((noti) => noti.read === false).length ? <div >
-                                <Badge badgeContent={businessData.notifications.filter((noti) => noti.read === false).length} badgeInset={8} color='danger' size='sm'>
+                            {businessData.notifications.filter((noti: any) => noti.read === false).length ? <div >
+                                <Badge badgeContent={businessData.notifications.filter((noti: any) => noti.read === false).length} badgeInset={8} color='danger' size='sm'>
                                     <Notifications />
                                 </Badge>
                             </div> : <Notifications />}
@@ -169,17 +220,17 @@ export default function LayoutComp({
                         </div>
                     </div>
 
-                    {/* {businessData && !businessData?.completed_stripe_onboarding ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
+                    {!businessData?.account_settings?.business_address.line_1.length && !businessData?.account_settings?.business_address.no_address ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
                         <Banner.Content>
                             <CircleAlert className="size-5 text-[--body-text-color]" />
                             <div className="space-y-2">
                                 <Text size="sm" className="my-0 text-warning-800 dark:text-warning-300">
-                                    To launch your booking site, you need to finish  <a target='_blank' href={`${businessData.current_onboarding_link}`}><strong>onboarding with Stripe</strong></a> to start accepting payments
+                                    To start scheduling appointments, you need to first  <a target='_blank' href={`${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/dashboard/settings`}><strong>add your business address</strong></a>
                                 </Text>
 
                             </div>
                         </Banner.Content>
-                    </Banner.Root> : <></>} */}
+                    </Banner.Root> : <></>}
                 </div>
 
                 <div className='w-full flex-1 max-h-min'>

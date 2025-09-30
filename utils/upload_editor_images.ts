@@ -12,12 +12,12 @@ export const uploadImage = async (files: FileList, user: string) => {
             contentType: 'image/*'
         })
         if (error) {
-            console.log(error)
+
         }
         return { url: supabase.storage.from("editor-media-pool").getPublicUrl(path).data.publicUrl, path: path }
     } catch (error) {
-        console.log(error);
+
     }
-    console.log(files);
-    
+
+
 }

@@ -64,7 +64,7 @@ export default function ConfirmAppointmentTemplate({ socials, serviceName, clien
                 </Container>
                 <Container className="font-sans mt-5">
                     <div className="text-center">
-                        <Button href={`http://${process.env.NEXT_PUBLIC_BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/confirm`} className="bg-black text-white p-5 font-bold rounded">Confirm Appointment</Button>
+                        <Button href={`${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/confirm`} className="bg-black text-white p-5 font-bold rounded">Confirm Appointment</Button>
                     </div>
                 </Container>
                 <Container className="w-full text-center">

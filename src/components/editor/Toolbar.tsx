@@ -20,7 +20,7 @@ export const Toolbar = ({ editorId, setEditorData, setLoadingEditorData }: any) 
     const handleEditorState = async (state: string) => {
         // Send to database
         const res = await sendEditorData(state, editorId)
-        console.log(res);
+
     }
     const [screenSize, setScreenSize] = useState<string>("1280")
     const [confirmation, setConfirmation] = useState<boolean>(false)

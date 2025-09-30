@@ -41,7 +41,7 @@ export const ImageContainer: UserComponent = ({ margin = 0, width = 500, height 
                     });
                 }}
                 onResizeStart={() => {
-                    console.log("start");
+
                     actions.selectNode(id)
                     setIsResizing(true);
                 }}

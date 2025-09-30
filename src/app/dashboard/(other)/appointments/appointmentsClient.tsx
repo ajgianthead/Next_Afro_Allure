@@ -8,7 +8,7 @@ import Dialog from '@components/Dialog';
 import { Caption, Text, Title } from '@tailus-ui/typography';
 import Select from '@components/Select';
 import { parseAbsoluteToLocal, Time, ZonedDateTime } from "@internationalized/date";
-import { ArrowLeft, CheckCircle2, CheckIcon, ChevronDown, ChevronsDown, ChevronsUpDown, EllipsisVertical, Info, Pencil, Trash, X, XCircle } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, CheckCircle2, CheckIcon, ChevronDown, ChevronsDown, ChevronsUpDown, EllipsisVertical, Grid3x3, Info, Pencil, Trash, X, XCircle } from 'lucide-react';
 import Label from '@components/Label';
 import { useUserContext } from '@utils/context/UserContext';
 import "./calendar.css"
@@ -20,7 +20,7 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { TimeInput, DateInput, DateInputValue, TimeInputValue } from '@nextui-org/date-input';
 import Chip from '@mui/joy/Chip';
 import Checkbox from '@components/Checkbox';
-import { Divider, Dropdown, IconButton, Menu, MenuButton, MenuItem, Checkbox as MUICheckBox, Skeleton, Snackbar, Typography } from '@mui/joy';
+import { Divider, Dropdown, IconButton, Menu, MenuButton, MenuItem, Checkbox as MUICheckBox, Skeleton, Snackbar, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import Aligner from '@components/Aligner';
 import { businessRescheduling, getPolicyById, manuallyCancel, markAppointmentAs } from './actions';
 import { Drawer, ModalClose, Button as MUIButton } from '@mui/joy';
@@ -30,6 +30,7 @@ import { CheckedState } from '@radix-ui/react-checkbox';
 import { keyframes } from '@mui/system';
 import randomColor from 'randomcolor'
 import { PostgrestError } from '@supabase/supabase-js';
+import AppointmentTable from './appointmentTable';
 const color: any = {
     "PENDING": "warning",
     "CONFIRMED": "success",
@@ -44,10 +45,11 @@ interface PageProps {
     appointmentData: Appointment[]
     policyData: Policy,
     servicesData: Service[],
-    business_id: string
+    business_id: string,
+    stripeOnboardingCompleted: boolean
 }
 
-const AppointmentsClient = ({ business_id, appointmentData, policyData, servicesData }: PageProps) => {
+const AppointmentsClient = ({ business_id, appointmentData, policyData, servicesData, stripeOnboardingCompleted }: PageProps) => {
     // Get all appointments and convert from ISO => DateTimes
     const [loadingData, setLoadingData] = useState<boolean>(true);
     const [appointments, setAppointments] = useState<any[]>(appointmentData);
@@ -64,7 +66,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                 if (appointments.length) {
                     let temp = []
                     for (let i = 0; i < appointments.length; i++) {
-                        console.log(appointments[i]);
+
 
                         temp.push({
                             id: appointments[i].id,
@@ -93,7 +95,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
         }
         if (cancelledAppointmentsChecked) {
             let temp = []
-            console.log(appointments)
+
             for (let i = 0; i < appointments.length; i++) {
                 if (appointments[i].status !== "CANCELLED") {
                     temp.push({
@@ -230,7 +232,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                 method: 'POST',
                 body: JSON.stringify(appointment)
             })
-            console.log(await res.json());
+
 
             setAppointments([
                 ...appointments,
@@ -347,8 +349,13 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
     opacity: 0;
   }
 `;
+    const [hidePastAppointments, setHidePastAppointments] = useState<boolean>(true)
     return (
-        <div className=' max-h-min  w-full'>
+        <div className=' max-h-min px-6  w-full'>
+            <div className='mb-5'>
+                <Title>Appointments</Title>
+                <Caption>Click on a slot in the calendar view to create an appointment</Caption>
+            </div>
             <Snackbar
                 size='lg'
                 anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
@@ -549,17 +556,17 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                 </div>
                             </div>
                             <div>
-                                <Aligner className='gap-x-2 mt-2'>
-                                    <Checkbox.Root checked={depositRequired} onClick={() => {
+                                <Aligner className='gap-x-2 mt-3'>
+                                    <Checkbox.Root disabled={!stripeOnboardingCompleted} checked={depositRequired} onClick={() => {
                                         setDepositRequired(!depositRequired)
                                     }}>
                                         <Checkbox.Indicator asChild>
                                             <CheckIcon className="size-3.5" color='purple' strokeWidth={3} />
                                         </Checkbox.Indicator>
                                     </Checkbox.Root>
-                                    <Label>Require deposit</Label>
+                                    <Label>Require deposit{!stripeOnboardingCompleted ? <Caption>Onboard with Stripe to start collecting deposits</Caption> : <div></div>}
+                                    </Label>
                                 </Aligner>
-
                             </div>
                         </Dialog.Description>
 
@@ -589,9 +596,14 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                 </Dialog.Portal>
             </Dialog.Root>
             <div className='w-full h-screen gap-2  flex flex-col justify-between'>
-                <MUICheckBox label="Hide Cancelled Appointments" checked={cancelledAppointmentsChecked} onChange={(e) => {
-                    setCancelledAppointmentsChecked(e.target.checked)
-                }} />
+                <div className='flex gap-5 pb-4'>
+                    <MUICheckBox label="Hide Cancelled Appointments" checked={cancelledAppointmentsChecked} onChange={(e) => {
+                        setCancelledAppointmentsChecked(e.target.checked)
+                    }} />
+                    <MUICheckBox label="Hide Past Appointments" checked={hidePastAppointments} onChange={(e) => {
+                        setHidePastAppointments(e.target.checked)
+                    }} />
+                </div>
                 <div className='flex h-screen'>
 
                     <div className='flex-1 '>
@@ -613,7 +625,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                     <div onClick={() => {
                                         setEventData(event)
                                         setOpenAppointmentDrawer(true)
-                                        console.log(event);
+
                                     }}>
                                         {children}
                                     </div>
@@ -670,7 +682,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                 </div>
                             </div>
                             <div className='p-5'>
-                                {eventData.status !== 'PENDING' || eventData.status !== 'PROCESSING' || eventData.status !== 'CANCELLED' ? <div>
+                                {eventData.status !== 'PENDING' && eventData.status !== 'PROCESSING' && eventData.status !== 'CANCELLED' ? <div>
                                     <Dropdown>
                                         <MenuButton color='success' sx={{ width: '100%', display: 'flex', justifyContent: 'center', }}>
                                             <div>Mark Appointment as...</div>
@@ -680,7 +692,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                                 const res = await markAppointmentAs('COMPLETED', eventData.amount_due, eventData.id)
                                                 const index = appointments.indexOf(appointments.filter((appointment) => appointment.id === res?.id)[0])
                                                 const clone = [...appointments]
-                                                console.log(res, appointments.filter((appointment) => appointment.id === res?.id)[0]);
+
                                                 clone[index].status = res?.status
                                                 clone[index].amount_due = res?.amount_due
                                                 setAppointments(clone)
@@ -708,7 +720,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                                 const res = await markAppointmentAs('INCOMPLETE', finalAmountOwned, eventData.id)
                                                 const index = appointments.indexOf(appointments.filter((appointment) => appointment.id === res?.id)[0])
                                                 const clone = [...appointments]
-                                                console.log(res, appointments.filter((appointment) => appointment.id === res?.id)[0]);
+
 
                                                 clone[index].status = res?.status
                                                 clone[index].amount_due = res?.amount_due
@@ -746,8 +758,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                     </Dropdown>
 
                                 </div> : <></>}
-                                {eventData.status === "CANCELLED" || eventData.status === 'COMPLETED' ? <>
-                                </> : <div className='w-full flex flex-col gap-2 mb-5'>
+                                {eventData.status === "CANCELLED" || eventData.status === 'COMPLETED' ? <div className='w-full flex flex-col gap-2 mb-5'>
                                     <Divider sx={{ marginY: 2 }} orientation='horizontal' />
                                     <MUIButton color='warning' variant='outlined' onClick={() => {
                                         const initialTimeState = { start: DateTime.fromJSDate(eventData.start), end: DateTime.fromJSDate(eventData.end) }
@@ -755,6 +766,18 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                                         setIsEditing(true)
                                     }}>Reschedule Appointment</MUIButton>
                                     <MUIButton color='danger' onClick={async () => {
+                                        setIsSending(true)
+                                        await handleDelete(eventData.id).then(async () => {
+                                            setIsSending(false)
+                                            setConfirmation({
+                                                title: "Appointment Cancelled!",
+                                                description: ""
+                                            })
+                                            setConfirmationOpen(true)
+                                        })
+                                    }}>Cancel Appointment</MUIButton>
+                                </div> : <div className='w-full'>
+                                    <MUIButton className='w-full' color='danger' onClick={async () => {
                                         setIsSending(true)
                                         await handleDelete(eventData.id).then(async () => {
                                             setIsSending(false)
@@ -825,6 +848,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
 
 
             </div>
+
 
         </div>
 

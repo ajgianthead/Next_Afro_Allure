@@ -17,12 +17,15 @@ import AppointmentCancelled from "../../../../emails/appointment-cancelled";
 import CancelledAppointment from "../../../../emails/cancelled-appointment";
 import { runs } from "@trigger.dev/sdk/v3";
 import { trackAppointmentBooked, trackAppointmentCancelled, trackAppointmentRescheduled } from "../../../../lib/analytics";
+import { addCreateNewClient } from "app/dashboard/(other)/clients/actions";
 
 
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
 
 
 const sendRescheduledEmails = async (data: any) => {
+    const businessAddress = { ...data.business_users.account_settings.business_address }
+
     const res = data
     await resend.emails.send({
         from: 'notifications <noreply@reminder.afroallure.co>',
@@ -41,46 +44,49 @@ const sendRescheduledEmails = async (data: any) => {
             businessData: {
                 id: res.business,
                 name: res.business_users.business_name,
-                businessAddress: "2800 SW 35th Place, Gainesville, FL"
+                businessAddress: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
             },
             appointmentData: {
                 id: res.id,
-                start: DateTime.fromJSDate(res.start).toISO()!,
-                end: DateTime.fromJSDate(res.end).toISO()!
+                start: DateTime.fromISO(res.start).toISO()!,
+                end: DateTime.fromISO(res.end).toISO()!
             },
             serviceName: res.service_data.name
         }),
     })
-    await resend.emails.send({
-        from: 'Booking Alert <noreply@reminder.afroallure.co>',
-        to: res?.business_users.email!,
-        subject: "Booking Alert",
-        react: RescheduledAppointment({
-            socials: {
-                facebook: "",
-                instagram: "",
-                twitter: ""
-            },
-            clientData: {
-                firstName: res.client_metadata.firstName,
-                lastName: res.client_metadata.lastName,
-            },
-            businessData: {
-                id: res.business,
-                name: res.business_users.business_name,
-                businessAddress: "2800 SW 35th Place, Gainesville, FL"
-            },
-            appointmentData: {
-                id: res.id,
-                start: DateTime.fromJSDate(res.start).toISO()!,
-                end: DateTime.fromJSDate(res.end).toISO()!
-            },
-            serviceName: res.service_data.name
-        }),
-    });
+    if (res.business_users.account_settings.notifications.email) {
+        await resend.emails.send({
+            from: 'Booking Alert <noreply@reminder.afroallure.co>',
+            to: res?.business_users.email!,
+            subject: "Booking Alert",
+            react: RescheduledAppointment({
+                socials: {
+                    facebook: "",
+                    instagram: "",
+                    twitter: ""
+                },
+                clientData: {
+                    firstName: res.client_metadata.firstName,
+                    lastName: res.client_metadata.lastName,
+                },
+                businessData: {
+                    id: res.business,
+                    name: res.business_users.business_name,
+                    businessAddress: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+                },
+                appointmentData: {
+                    id: res.id,
+                    start: DateTime.fromISO(res.start).toISO()!,
+                    end: DateTime.fromISO(res.end).toISO()!
+                },
+                serviceName: res.service_data.name
+            }),
+        });
+    }
 }
 export const sendConfirmationEmail = async (data: any) => {
     const res = data
+    const businessAddress = { ...res.business_users.account_settings.business_address }
     await resend.emails.send({
         from: 'notifications <noreply@reminder.afroallure.co>',
         to: res.client_metadata?.email,
@@ -98,7 +104,7 @@ export const sendConfirmationEmail = async (data: any) => {
             businessData: {
                 id: res.business,
                 name: res.business_users.business_name,
-                businessAddress: "2800 SW 35th Place, Gainesville, FL"
+                businessAddress: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
             },
             appointmentData: {
                 id: res.id,
@@ -108,37 +114,42 @@ export const sendConfirmationEmail = async (data: any) => {
             serviceName: res.service_data.name
         }),
     })
-    await resend.emails.send({
-        from: 'Booking Alert <noreply@reminder.afroallure.co>',
-        to: res?.business_users.email!,
-        subject: "Booking Alert",
-        react: NewAppointment({
-            socials: {
-                facebook: "",
-                instagram: "",
-                twitter: ""
-            },
-            clientData: {
-                firstName: res.client_metadata.firstName,
-                lastName: res.client_metadata.lastName,
-            },
-            businessData: {
-                id: res.business,
-                name: res.business_users.business_name,
-                businessAddress: "2800 SW 35th Place, Gainesville, FL"
-            },
-            appointmentData: {
-                id: res.id,
-                start: DateTime.fromISO(res.start).toISO()!,
-                end: DateTime.fromISO(res.end).toISO()!
-            },
-            serviceName: res.service_data.name
-        }),
-    });
+    if (res.business_users.account_settings.notifications.email) {
+        await resend.emails.send({
+            from: 'Booking Alert <noreply@reminder.afroallure.co>',
+            to: res?.business_users.email!,
+            subject: "Booking Alert",
+            react: NewAppointment({
+                socials: {
+                    facebook: "",
+                    instagram: "",
+                    twitter: ""
+                },
+                clientData: {
+                    firstName: res.client_metadata.firstName,
+                    lastName: res.client_metadata.lastName,
+                },
+                businessData: {
+                    id: res.business,
+                    name: res.business_users.business_name,
+                    businessAddress: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+                },
+                appointmentData: {
+                    id: res.id,
+                    start: DateTime.fromISO(res.start).toISO()!,
+                    end: DateTime.fromISO(res.end).toISO()!
+                },
+                serviceName: res.service_data.name
+            }),
+        });
+    }
+
 }
 
 export const sendCancelledEmails = async (data: any) => {
     const res = data
+    const businessAddress = { ...res.business_users.account_settings.business_address }
+
     await resend.emails.send({
         from: 'notifications <noreply@reminder.afroallure.co>',
         to: res.client_metadata?.email,
@@ -156,93 +167,166 @@ export const sendCancelledEmails = async (data: any) => {
             businessData: {
                 id: res.business,
                 name: res.business_users.business_name,
-                businessAddress: "2800 SW 35th Place, Gainesville, FL"
+                businessAddress: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
             },
             appointmentData: {
                 id: res.id,
-                start: DateTime.fromJSDate(res.start).toISO()!,
-                end: DateTime.fromJSDate(res.end).toISO()!
+                start: DateTime.fromISO(res.start).toISO()!,
+                end: DateTime.fromISO(res.end).toISO()!
             },
             serviceName: res.service_data.name
         }),
     })
-    await resend.emails.send({
-        from: 'Booking Alert <noreply@reminder.afroallure.co>',
-        to: res?.business_users.email!,
-        subject: "Booking Alert",
-        react: CancelledAppointment({
-            socials: {
-                facebook: "",
-                instagram: "",
-                twitter: ""
+    if (res.business_users.account_settings.notifications.email) {
+        await resend.emails.send({
+            from: 'Booking Alert <noreply@reminder.afroallure.co>',
+            to: res?.business_users.email!,
+            subject: "Booking Alert",
+            react: CancelledAppointment({
+                socials: {
+                    facebook: "",
+                    instagram: "",
+                    twitter: ""
+                },
+                clientData: {
+                    firstName: res.client_metadata.firstName,
+                    lastName: res.client_metadata.lastName,
+                },
+                businessData: {
+                    id: res.business,
+                    name: res.business_users.business_name,
+                    businessAddress: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+                },
+                appointmentData: {
+                    id: res.id,
+                    start: DateTime.fromISO(res.start).toISO()!,
+                    end: DateTime.fromISO(res.end).toISO()!
+                },
+                serviceName: res.service_data.name
+            }),
+        });
+    }
+
+}
+
+// Only for confirmed appointments
+const sendReminders = async (res: any) => {
+
+    const supabase = createClient<Database>();
+    const dayBefore = DateTime.fromISO(res.start).minus({ day: 1 })
+    const hourBefore = DateTime.fromISO(res.start).minus({ hour: 1 })
+    let remindClient_1 = null;
+    let remindClient_24 = null;
+
+    const businessAddress = { ...res.business_users.account_settings.business_address }
+
+    if (res.business_users.account_settings.app_reminders.email_1) {
+        remindClient_1 = await reminderTask.trigger({
+            serviceName: res.service_data.name,
+            delay: dayBefore.toISO()!,
+            sendToType: 'client',
+            sendBy: 'email',
+            appointmentData: {
+                id: res.id,
+                start: DateTime.fromISO(res.start).toISO()!,
+                end: DateTime.fromISO(res.end).toISO()!,
+            },
+            businessData: {
+                id: res.business,
+                name: res.business_name,
+                email: res.email,
+                address: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`,
             },
             clientData: {
                 firstName: res.client_metadata.firstName,
                 lastName: res.client_metadata.lastName,
+                email: res.client_metadata.email,
+                phoneNumber: res.client_metadata.phoneNumber,
+            },
+        }, { delay: new Date(hourBefore.toISO()!) })
+    }
+    if (res.business_users.account_settings.app_reminders.email_24) {
+        remindClient_24 = await reminderTask.trigger({
+            serviceName: res.service_data.name,
+            delay: dayBefore.toISO()!,
+            sendToType: 'client',
+            sendBy: 'email',
+            appointmentData: {
+                id: res.id,
+                start: DateTime.fromISO(res.start).toISO()!,
+                end: DateTime.fromISO(res.end).toISO()!,
             },
             businessData: {
                 id: res.business,
-                name: res.business_users.business_name,
-                businessAddress: "2800 SW 35th Place, Gainesville, FL"
+                name: res.business_name,
+                email: res.email,
+                address: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`,
             },
-            appointmentData: {
-                id: res.id,
-                start: DateTime.fromJSDate(res.start).toISO()!,
-                end: DateTime.fromJSDate(res.end).toISO()!
+            clientData: {
+                firstName: res.client_metadata.firstName,
+                lastName: res.client_metadata.lastName,
+                email: res.client_metadata.email,
+                phoneNumber: res.client_metadata.phoneNumber,
             },
-            serviceName: res.service_data.name
-        }),
-    });
-}
-const sendReminders = async (res: any) => {
-    const supabase = createClient<Database>();
-    const dayBefore = DateTime.fromJSDate(res.start).minus({ day: 1 })
-    const remindClient = await reminderTask.trigger({
-        serviceName: res.service_data.name,
-        delay: dayBefore.toISO()!,
-        sendToType: 'client',
-        sendBy: 'email',
-        appointmentData: {
-            id: res.id,
-            start: DateTime.fromJSDate(res.start).toISO()!,
-            end: DateTime.fromJSDate(res.end).toISO()!,
-        },
-        businessData: {
-            id: res.business,
-            name: res.business_name,
-            email: res.email,
-            address: "2800 SW 35th Place, Gainesville, FL",
-        },
-        clientData: {
-            firstName: res.client_metadata.firstName,
-            lastName: res.client_metadata.lastName,
-            email: res.client_metadata.email,
-            phoneNumber: res.client_metadata.phoneNumber,
-        },
-    }, { delay: new Date(dayBefore.toISO()!) })
-    const remindBusiness = await reminderTask.trigger({
-        serviceName: res.service_data.name,
-        delay: dayBefore.toISO()!,
-        sendToType: 'business',
-        sendBy: 'email',
-        appointmentData: {
-            id: res.id,
-            start: DateTime.fromJSDate(res.start).toISO()!,
-            end: DateTime.fromJSDate(res.end).toISO()!,
-        },
-        businessData: {
-            id: res.business,
-            name: res.business_name,
-            email: res.email,
-            address: "2800 SW 35th Place, Gainesville, FL",
-        },
-        clientData: {
-            firstName: res.client_metadata.firstName,
-            lastName: res.client_metadata.lastName,
-            email: res.client_metadata.email,
-            phoneNumber: res.client_metadata.phoneNumber,
-        },
-    }, { delay: new Date(dayBefore.toISO()!) })
+        }, { delay: new Date(dayBefore.toISO()!) })
+    }
+
+    let remindBusiness_1 = null;
+    let remindBusiness_24 = null;
+    if (res.business_users.account_settings.notifications.email) {
+        if (res.business_users.account_settings.notifications.email_1) {
+            remindBusiness_1 = await reminderTask.trigger({
+                serviceName: res.service_data.name,
+                delay: dayBefore.toISO()!,
+                sendToType: 'business',
+                sendBy: 'email',
+                appointmentData: {
+                    id: res.id,
+                    start: DateTime.fromISO(res.start).toISO()!,
+                    end: DateTime.fromISO(res.end).toISO()!,
+                },
+                businessData: {
+                    id: res.business,
+                    name: res.business_name,
+                    email: res.email,
+                    address: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`,
+                },
+                clientData: {
+                    firstName: res.client_metadata.firstName,
+                    lastName: res.client_metadata.lastName,
+                    email: res.client_metadata.email,
+                    phoneNumber: res.client_metadata.phoneNumber,
+                },
+            }, { delay: new Date(hourBefore.toISO()!) })
+        }
+        if (res.business_users.account_settings.notifications.email_24) {
+            remindBusiness_24 = await reminderTask.trigger({
+                serviceName: res.service_data.name,
+                delay: dayBefore.toISO()!,
+                sendToType: 'business',
+                sendBy: 'email',
+                appointmentData: {
+                    id: res.id,
+                    start: DateTime.fromISO(res.start).toISO()!,
+                    end: DateTime.fromISO(res.end).toISO()!,
+                },
+                businessData: {
+                    id: res.business,
+                    name: res.business_name,
+                    email: res.email,
+                    address: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`,
+                },
+                clientData: {
+                    firstName: res.client_metadata.firstName,
+                    lastName: res.client_metadata.lastName,
+                    email: res.client_metadata.email,
+                    phoneNumber: res.client_metadata.phoneNumber,
+                },
+            }, { delay: new Date(dayBefore.toISO()!) })
+        }
+
+    }
+
     const linkDelay = DateTime.fromISO(res.end).minus({ minutes: 30 })
     const timedPaymentLink = await sendPaymentLink.trigger({
         businessData: {
@@ -265,8 +349,14 @@ const sendReminders = async (res: any) => {
     // Save run id to appointment for later
     await supabase.from('appointments').update({
         reminder_ids: {
-            business: remindBusiness.id,
-            client: remindClient.id,
+            business: {
+                hour: remindBusiness_1 ? remindBusiness_1.id : remindBusiness_1,
+                day: remindBusiness_24 ? remindBusiness_24.id : remindBusiness_24,
+            },
+            client: {
+                hour: remindClient_1 ? remindClient_1.id : remindClient_1,
+                day: remindClient_24 ? remindClient_24.id : remindClient_24,
+            },
             paymentCheck: afterAppointmentPaymentCheck.id
         },
         payment_link_id: timedPaymentLink.id
@@ -296,11 +386,13 @@ export async function PUT(request: NextRequest) {
         {
             start: start,
             end: end,
-            updated_at: new Date().toISOString(),
             status: status,
             cancellation_reason: status === "CANCELLED" ? reason : null
         }
-    ).eq('id', id).select("*, business_users(business_name, email)").single();
+    ).eq('id', id).select("*, business_users(*)").single();
+    if (error) {
+
+    }
 
     // Send email based on editting action
     if (res.data?.status === 'CONFIRMED' && data?.status === 'CONFIRMED') { // Client changed their appointment time and/or date
@@ -315,10 +407,28 @@ export async function PUT(request: NextRequest) {
         })
 
         // Edit scheduled reminders
+
         const dayBefore = DateTime.fromISO(data.start).minus({ day: 1 })
+        const hourBefore = DateTime.fromISO(data.start).minus({ hour: 1 })
         const thirtyBefore = DateTime.fromISO(data.end).minus({ minutes: 30 })
-        await runs.reschedule(data.reminder_ids.business, { delay: new Date(dayBefore.toISO()!) })
-        await runs.reschedule(data.reminder_ids.client, { delay: new Date(dayBefore.toISO()!) })
+
+        // Checks if reminder id is not NULL and then reschedules the reminder
+        if (data.reminder_ids.business.hour)
+            await runs.reschedule(data.reminder_ids.business.hour, { delay: new Date(hourBefore.toISO()!) })
+
+        if (data.reminder_ids.business.day)
+            await runs.reschedule(data.reminder_ids.business.day, { delay: new Date(dayBefore.toISO()!) })
+
+        if (data.reminder_ids.client.hour)
+            await runs.reschedule(data.reminder_ids.client.hour, { delay: new Date(hourBefore.toISO()!) })
+
+        if (data.reminder_ids.client.day)
+            await runs.reschedule(data.reminder_ids.client.day, { delay: new Date(dayBefore.toISO()!) })
+
+        // Reschedule the payment link and paymentCheck
+        await runs.reschedule(data.payment_link_id, { delay: new Date(thirtyBefore.toISO()!) })
+        await runs.reschedule(data.reminder_ids.paymentCheck, { delay: new Date(DateTime.fromISO(data.end).plus({ minutes: 30 }).toISO()!) })
+
         await trackAppointmentRescheduled({
             appointmentType: "",
             businessId: data.business,
@@ -326,8 +436,7 @@ export async function PUT(request: NextRequest) {
             serviceName: data.service_data.name,
             servicePrice: data.service_data.price
         })
-        await runs.reschedule(data.payment_link_id, { delay: new Date(thirtyBefore.toISO()!) })
-        await runs.reschedule(data.reminder_ids.paymentCheck, { delay: new Date(DateTime.fromISO(data.end).plus({ minutes: 30 }).toISO()!) })
+
     } else if (data?.status === 'CANCELLED') { // Appointment was cancelled
         // Cancel reminders for business and client
         await sendCancelledEmails(data)
@@ -339,10 +448,24 @@ export async function PUT(request: NextRequest) {
             type: 'cancelled-booking',
             appointment_id: data.id
         })
-        await runs.cancel(data.reminder_ids.business)
-        await runs.cancel(data.reminder_ids.client)
+
+        // Cancels reminders if there are any
+        if (data.reminder_ids.business.hour)
+            await runs.cancel(data.reminder_ids.business.hour)
+
+        if (data.reminder_ids.business.day)
+            await runs.cancel(data.reminder_ids.business.day)
+
+        if (data.reminder_ids.client.hour)
+            await runs.cancel(data.reminder_ids.client.hour)
+
+        if (data.reminder_ids.client.day)
+            await runs.cancel(data.reminder_ids.client.day)
+
+        // Cancels payment link and paymentCheck
         await runs.cancel(data.payment_link_id)
         await runs.cancel(data.reminder_ids.paymentCheck)
+
         await trackAppointmentCancelled({
             appointmentType: "",
             businessId: data.business,
@@ -361,6 +484,15 @@ export async function PUT(request: NextRequest) {
             type: 'new-booking',
             appointment_id: data.id
         })
+        // TODO: Add client to client_users
+        await addCreateNewClient({
+            first_name: data.client_metadata.firstName,
+            last_name: data.client_metadata.lastName,
+            email: data.client_metadata.email,
+            phone_number: data.client_metadata.phoneNumber,
+            business_id: data.business
+        })
+
         // Set reminders
         await sendReminders(data)
         // Track Appointment Data
@@ -387,8 +519,7 @@ export async function PUT(request: NextRequest) {
 // Create an appointment
 export async function POST(request: NextRequest) {
     const supabase = createClient<Database>();
-
-    const { business, client_metadata, start, end, service_data, status, require_deposit, policy_id, paid_deposit, deposit_charge_id, reschedules, deposit_price, addons } = await request.json();
+    const { business, client_metadata, start, end, service_data, status, require_deposit, policy_id, paid_deposit, deposit_charge_id, reschedules, deposit_price, selected_addons } = await request.json();
     const { data, error } = await supabase.from('appointments').insert([
         {
             business: business,
@@ -404,12 +535,15 @@ export async function POST(request: NextRequest) {
             deposit_charge_id: deposit_charge_id,
             reschedules: reschedules,
             deposit_price: deposit_price,
-            selected_addons: addons,
+            selected_addons: selected_addons,
             amount_due: service_data.price
         }
-    ]).select("*,business_users(business_name, email)")
+    ]).select("*,business_users(*)")
+
     if (data?.length) {
         const res: any = data[0]
+        const businessAddress = { ...res.business_users.account_settings.business_address }
+
         try {
             if (res.status === 'PENDING') {
                 await resend.emails.send({
@@ -429,7 +563,7 @@ export async function POST(request: NextRequest) {
                         businessData: {
                             id: res.business,
                             name: res.business_users.business_name,
-                            businessAddress: "2800 SW 35th Place, Gainesville, FL"
+                            businessAddress: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
                         },
                         appointmentData: {
                             id: res.id,

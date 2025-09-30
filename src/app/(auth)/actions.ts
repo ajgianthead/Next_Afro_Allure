@@ -129,7 +129,26 @@ export async function register(cred: { name: string; email: string; password: st
                     email: data.data.user?.email!,
                     stripe_acc_id: account.id,
                     default_availability: defaultAvailability.id,
-                    url_name: credentials.businessName.split(" ").join().toLowerCase()
+                    url_name: credentials.businessName.split(" ").join().toLowerCase(),
+                    account_settings: {
+                        "app_reminders": {
+                            "email_1": false,
+                            "email_24": true
+                        },
+                        "notifications": {
+                            "email": true,
+                            "email_1": false,
+                            "email_24": true
+                        },
+                        "business_address": {
+                            "city": "",
+                            "state": "",
+                            "line_1": "",
+                            "line_2": "",
+                            "zip_code": "",
+                            "no_address": false
+                        }
+                    }
                 }
             ]).select().single().then(async (res) => {
                 const business = res.data
@@ -167,6 +186,29 @@ export async function register(cred: { name: string; email: string; password: st
                     await supabase.from('web_editors').insert([{
                         business_id: res.data?.business_id,
                         type: 'SECTIONS',
+                        section_data: [
+                            {
+                                "id": crypto.randomUUID(),
+                                "html": `<h2>Book with ${business?.business_name} now</h2>`,
+                                "type": "text",
+                                "content": {
+                                    "type": "doc",
+                                    "content": [
+                                        {
+                                            "type": "heading",
+                                            "content": [
+                                                {
+                                                    "text": `Book with ${business?.business_name} now`,
+                                                    "type": "text"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "editing": false
+                            },
+                        ]
+
                     }])
                     return await supabase.from('services').insert([
                         {

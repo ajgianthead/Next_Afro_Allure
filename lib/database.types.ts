@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -141,6 +141,38 @@ export type Database = {
           },
         ]
       }
+      banned_clients: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          email: string | null
+          id: string
+          phone_number: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone_number?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banned_clients_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       business_clients: {
         Row: {
           business: string
@@ -235,6 +267,7 @@ export type Database = {
       }
       business_users: {
         Row: {
+          account_settings: Json | null
           booking_policies: string
           business_id: string
           business_name: string
@@ -251,6 +284,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_settings?: Json | null
           booking_policies?: string
           business_id?: string
           business_name: string
@@ -267,6 +301,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          account_settings?: Json | null
           booking_policies?: string
           business_id?: string
           business_name?: string
@@ -286,36 +321,44 @@ export type Database = {
       }
       client_users: {
         Row: {
-          appointments: string[] | null
+          business_id: string
           client_id: string
           created_at: string
           email: string
+          first_name: string
+          last_name: string
           phone_number: string
-          stripe_acc_id: string | null
           updated_at: string | null
-          user_id: string
         }
         Insert: {
-          appointments?: string[] | null
+          business_id?: string
           client_id?: string
           created_at?: string
           email: string
+          first_name?: string
+          last_name?: string
           phone_number: string
-          stripe_acc_id?: string | null
           updated_at?: string | null
-          user_id: string
         }
         Update: {
-          appointments?: string[] | null
+          business_id?: string
           client_id?: string
           created_at?: string
           email?: string
+          first_name?: string
+          last_name?: string
           phone_number?: string
-          stripe_acc_id?: string | null
           updated_at?: string | null
-          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "client_users_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
       }
       image_section: {
         Row: {
@@ -504,6 +547,41 @@ export type Database = {
           },
         ]
       }
+      user_feedback: {
+        Row: {
+          business_id: string | null
+          business_name: string | null
+          created_at: string
+          email: string | null
+          feedback: string | null
+          id: string
+        }
+        Insert: {
+          business_id?: string | null
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          feedback?: string | null
+          id?: string
+        }
+        Update: {
+          business_id?: string | null
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          feedback?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedback_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       web_editors: {
         Row: {
           business_id: string | null
@@ -511,6 +589,7 @@ export type Database = {
           editor_data: string | null
           id: string
           image_objects: Json[] | null
+          section_data: Json[] | null
           type: Database["public"]["Enums"]["web_editor"] | null
           updated_at: string | null
         }
@@ -520,6 +599,7 @@ export type Database = {
           editor_data?: string | null
           id?: string
           image_objects?: Json[] | null
+          section_data?: Json[] | null
           type?: Database["public"]["Enums"]["web_editor"] | null
           updated_at?: string | null
         }
@@ -529,6 +609,7 @@ export type Database = {
           editor_data?: string | null
           id?: string
           image_objects?: Json[] | null
+          section_data?: Json[] | null
           type?: Database["public"]["Enums"]["web_editor"] | null
           updated_at?: string | null
         }

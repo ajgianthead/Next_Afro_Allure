@@ -53,12 +53,12 @@ const PaymentStatus = ({ stripeID }: { stripeID: any }) => {
 
                         default:
                             setMessage('Something went wrong.');
-                            console.log(paymentIntent);
+
 
                             break;
                     }
                 }).catch((error) => {
-                    console.log(error);
+
 
                 });
         }
@@ -74,7 +74,7 @@ const PaymentStatus = ({ stripeID }: { stripeID: any }) => {
 
 export default function CompleteClient() {
     const params = useParams();
-    console.log(params)
+
     const id = params.stripeID
     return (
         <div>

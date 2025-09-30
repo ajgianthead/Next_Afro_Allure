@@ -77,7 +77,7 @@ export default function EOAClient() {
                 throw new Error("An error occurred: ", error);
             } else {
                 const val = await response.json();
-                console.log(val.clientSecret);
+
                 const clientSecret = val.clientSecret;
                 const opt = { clientSecret }
                 setOptions({

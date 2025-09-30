@@ -13,7 +13,7 @@ export default async function Page() {
         const res = await supabase.from('business_users').select('booking_policies').eq('business_id', business_id).single();
         const policy = (await supabase.from('business_policies').select("*").eq('id', res.data?.booking_policies!).single()).data
         const services = (await supabase.from('services').select('*').eq('business', business_id)).data
-        const appointments = (await supabase.from('appointments').select().eq('business', business_id).gte('end', currentTimestamp)).data
+        const appointments = (await supabase.from('appointments').select().eq('business', business_id)).data
         return {
             policy: policy,
             services: services?.length ? await assignAddons(supabase, services!) : [],
@@ -23,7 +23,7 @@ export default async function Page() {
     const user = await fetchUser()
     const business = await fetchBusinessUser(user?.id!)
     const appointments = await fetchAppointments(business?.business_id!)
-    console.log(appointments.appointments);
 
-    return <AppointmentsClient business_id={business?.business_id!} appointmentData={appointments.appointments!} policyData={appointments.policy!} servicesData={appointments.services!} />;
+
+    return <AppointmentsClient business_id={business?.business_id!} stripeOnboardingCompleted={business.completed_stripe_onboarding} appointmentData={appointments.appointments!} policyData={appointments.policy!} servicesData={appointments.services!} />;
 }

@@ -24,7 +24,7 @@ export default function RootLayout({
     useEffect(() => {
         if (previousPathname.current !== pathname) {
             // Path changed — track pageview here
-            console.log("Pageview tracked for:", pathname);
+
 
             // e.g., call your GA pageview function
             // gtag.pageview(pathname);

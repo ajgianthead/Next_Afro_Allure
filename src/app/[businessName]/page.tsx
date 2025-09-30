@@ -63,12 +63,11 @@ export default async function Page({ params }: PageProps) {
         return result
     }
     if (result.result.web_editors[0].type === 'SECTIONS') {
-        const imageObjs = await getSectionImages(result.result.web_editors[0].id)
         return (
             <div className='flex items-center flex-col p-10'>
-                {imageObjs?.map((imageObject, index) => {
+                {result.result.web_editors[0].section_data?.map((sectionData: any, index) => {
                     return (
-                        <Image src={imageObject.url!} alt='image-section' width={1366 / 2} height={768 / 2} />
+                        <div>{sectionData.type === 'image' ? <Image src={sectionData.url!} alt='image-section' width={1366 / 2} height={768 / 2} /> : <div className="w-full" dangerouslySetInnerHTML={{ __html: sectionData.html }} />}</div>
                     )
                 })}
                 <a href={`${result.result.url_name}/book`}><Button className='my-10' >Book Now</Button></a>
@@ -76,7 +75,7 @@ export default async function Page({ params }: PageProps) {
         )
     } else {
         const json = lz.decompress(lz.decodeBase64(result.result.web_editors[0].editor_data!));
-        console.log("json");
+
 
         const parsedData = JSON.parse(json);
 

@@ -94,46 +94,47 @@ const AppointmentCard = ({ appointment, businessData }: { appointment: any, busi
 
               </div>
             </div>
-            <Divider sx={{
-              marginX: 0.2
-            }} />
-            <div className='text-center'>
-              <Caption className='mb-5'>QR Code to pay for appointment</Caption>
-              <div style={{ height: 200, margin: "0 auto", width: "100%" }}>
-                <QRCode
-                  size={256}
-                  style={{ height: "100%", maxWidth: "100%", width: "100%" }}
-                  value={`/appointments/${appointment.id}/business/${appointment.business}/eoa-payment`}
-                  viewBox={`0 0 256 256`}
-                />
 
-              </div>
-              <div className='mt-5'>
-                <Button disabled={sendingEmail} onClick={async () => {
-                  setSendingEmail(true)
-                  await sendPaymentLink({
-                    clientData: {
-                      firstName: appointment.client_metadata.firstName,
-                      lastName: appointment.client_metadata.lastName,
-                      email: appointment.client_metadata.email,
-                      phoneNumber: appointment.client_metadata.phoneNumber
-                    },
-                    businessData: {
-                      id: appointment.business,
-                      name: businessData.business_name,
-                      email: businessData.email
-                    },
-                    appointmentID: appointment.id,
-                    serviceName: appointment.service_data.name
-                  })
-                  setSendingEmail(false)
-                  setEmailSent(true)
-                }}>Send link to client email</Button>
-                {emailSent ? <div>
-                  <Typography>Payment Link Sent!</Typography>
-                </div> : <></>}
-              </div>
-            </div>
+            {businessData.completed_stripe_onboarding ? <div><Divider sx={{
+              marginX: 0.2
+            }} /><div className='text-center'>
+
+                <Caption className='mb-5'>QR Code to pay for appointment</Caption>
+                <div style={{ height: 200, margin: "0 auto", width: "100%" }}>
+                  <QRCode
+                    size={256}
+                    style={{ height: "100%", maxWidth: "100%", width: "100%" }}
+                    value={`/appointments/${appointment.id}/business/${appointment.business}/eoa-payment`}
+                    viewBox={`0 0 256 256`}
+                  />
+
+                </div>
+                <div className='mt-5'>
+                  <Button disabled={sendingEmail} onClick={async () => {
+                    setSendingEmail(true)
+                    await sendPaymentLink({
+                      clientData: {
+                        firstName: appointment.client_metadata.firstName,
+                        lastName: appointment.client_metadata.lastName,
+                        email: appointment.client_metadata.email,
+                        phoneNumber: appointment.client_metadata.phoneNumber
+                      },
+                      businessData: {
+                        id: appointment.business,
+                        name: businessData.business_name,
+                        email: businessData.email
+                      },
+                      appointmentID: appointment.id,
+                      serviceName: appointment.service_data.name
+                    })
+                    setSendingEmail(false)
+                    setEmailSent(true)
+                  }}>Send link to client email</Button>
+                  {emailSent ? <div>
+                    <Typography>Payment Link Sent!</Typography>
+                  </div> : <></>}
+                </div>
+              </div></div> : <></>}
           </ModalDialog>
         </Modal>
         <Card className='w-max' variant='outlined'>

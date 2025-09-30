@@ -40,7 +40,7 @@ export const Video: UserComponent = ({ margin = 0, width = 500, height = 500, ur
                     });
                 }}
                 onResizeStart={() => {
-                    console.log("start");
+
                     actions.selectNode(id)
                     setIsResizing(true);
                 }}

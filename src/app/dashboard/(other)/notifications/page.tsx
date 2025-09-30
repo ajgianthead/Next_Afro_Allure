@@ -13,7 +13,9 @@ export default async function Page() {
     if (user) {
         const business = await fetchBusinessUser(user!.id)
         const supabase = createClient<Database>()
-        const { data: notifications, error } = await supabase.from('notifications').select('*, appointments(*, business_users(*))').eq('business_id', business?.business_id!)
+        const { data: notifications, error } = await supabase.from('notifications').select('*, appointments(*, business_users(*))').eq('business_id', business?.business_id!).order('created_at', {
+            ascending: false
+        })
         return (
             <NotificationsClient notifications={notifications!} />
         )

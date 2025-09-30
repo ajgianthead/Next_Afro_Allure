@@ -259,7 +259,7 @@ export const trackAppointmentBooked = async (data: Params) => {
     if (!res.ok) {
         console.error('Failed to send GA event', await res.text())
     }
-    console.log(res);
+
 
     return res
 }

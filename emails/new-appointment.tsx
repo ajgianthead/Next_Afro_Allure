@@ -62,7 +62,7 @@ export default function NewAppointment({ socials, serviceName, clientData, busin
                 <Hr />
                 <Container className="font-sans mt-5">
                     <div className="text-center">
-                        <Button href={`https://google.com`} className="bg-black text-white p-5 font-bold rounded">View Appointment Details</Button>
+                        <Button href={`${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/dashboard/appointments`} className="bg-black text-white p-5 font-bold rounded">View Appointment Details</Button>
                     </div>
                 </Container>
                 <Container className=" flex flex-col">

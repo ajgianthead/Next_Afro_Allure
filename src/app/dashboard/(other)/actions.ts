@@ -19,6 +19,25 @@ export const sendPaymentLink = async (props: PaymentLinkProps) => {
     return res
 }
 
+export const sendFeedback = async ({ businessId, businessName, email, feedback }: {
+    businessId: string;
+    businessName: string;
+    email: string;
+    feedback: string;
+}) => {
+    const supabase = createClient<Database>()
+    const { data, error } = await supabase.from('user_feedback').insert({
+        business_id: businessId,
+        business_name: businessName,
+        email: email,
+        feedback: feedback
+    }).select().single()
+    if (error) {
+        return error
+    }
+    return data
+}
+
 export const fetchBusinessUser = async (user_id: string) => {
     const supabase = createClient<Database>()
     const { data: business, error } = await supabase.from('business_users').select().eq('user_id', user_id).single()

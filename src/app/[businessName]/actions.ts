@@ -81,7 +81,7 @@ export const checkSlots = async (timeSlot: {
             }
         }
     }
-    console.log(res);
+
 
     return res
 
@@ -212,7 +212,7 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
 
         return appointment
     } catch (error: any) {
-        console.log(error);
+
         await client.query('ROLLBACK')
     } finally {
         client.release();
@@ -236,7 +236,7 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
         const availability = availabilities.filter((availability: any, index: number) => availability.availability_data.id === serviceData.availability)[0].availability_data
 
         let available: boolean = false
-        console.log(availabilities, availability)
+
         const availableSlots = await checkSlots(timeSlot, availability, appointments)
 
         availableSlots.forEach((slot: string | null, index: number) => {
@@ -333,7 +333,7 @@ export const getAvailability = async (startDate: string, endDate: string, availa
             }
         }
     } catch (error: any) {
-        console.log(error)
+
     }
     return slotResult
 
@@ -358,7 +358,7 @@ export const getUnavailability = async (startDate: string, endDate: string, appo
         curr = curr.plus({ days: 1 })
 
     } catch (error: any) {
-        console.log(error)
+
         throw new Error(error.message)
     }
     return slotResult

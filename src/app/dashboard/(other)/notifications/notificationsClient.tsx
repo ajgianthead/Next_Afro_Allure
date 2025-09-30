@@ -44,7 +44,7 @@ const NotificationsClient = ({ notifications }: PageProps) => {
             })
         }
         setNotificationState(notiClone)
-        console.log(notiClone);
+
 
     }
     const [loading, setLoading] = React.useState<boolean>(false)
@@ -60,6 +60,7 @@ const NotificationsClient = ({ notifications }: PageProps) => {
                         setLoading(true)
                         const res = await deleteNotification(selectedNotis)
                         setNotificationState(res)
+                        setLoading(false)
                     }} disabled={selectedNotis.size === 0}
                         startDecorator={<Trash2 size={20} />} variant='outlined' color='danger'>Delete</Button>
                 </div> : <></>}
@@ -67,7 +68,7 @@ const NotificationsClient = ({ notifications }: PageProps) => {
                 <div className='mt-2'>
                     <List>
                         {notificationState.length ? notificationState.map((noti, index) => {
-                            console.log(noti);
+
 
                             return (
                                 <div key={index} className='overflow-x-hidden'>
@@ -86,13 +87,13 @@ const NotificationsClient = ({ notifications }: PageProps) => {
                                         }} className='mr-2' />
                                         <ListItemButton onClick={async () => {
                                             const res = await updateNotificationState(noti.id)
-                                            console.log(res)
+
                                             if (res instanceof PostgrestError) {
-                                                console.log(res.message);
+
                                             } else {
                                                 let clone = [...notificationState]
                                                 clone.splice(index, 1, res!)
-                                                console.log(clone);
+
 
                                                 setNotificationState(clone)
                                                 setNoti(noti)
@@ -139,7 +140,7 @@ const IndividualNoti = ({ notiData, notiClicked, setNotiClicked }: { notiData: A
         })()
     }, []);
     const res = notiData.appointments as any;
-    console.log(notiData)
+
     const commonProps = {
         socials: { facebook: "", instagram: "", twitter: "" },
         clientData: {

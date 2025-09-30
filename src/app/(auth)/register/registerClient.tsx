@@ -53,7 +53,7 @@ export default function Register() {
             setIsLoading(false)
 
         } else {
-            console.log(result);
+
 
             router.replace(`/onboarding/${result.business_users?.stripe_acc_id}`)
         }

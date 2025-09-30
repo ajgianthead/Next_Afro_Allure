@@ -7,7 +7,7 @@ import { Database } from "../../../../../lib/database.types"
 export const checkAvailabilityToServices = async (availabilityId: string) => {
     const supabase = createClient<Database>();
     const { data, error } = await supabase.from('services').select().eq('availability', availabilityId)
-    console.log(data)
+
     if (error) {
         return error
     }

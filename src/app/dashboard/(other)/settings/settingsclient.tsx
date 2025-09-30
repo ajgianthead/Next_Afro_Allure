@@ -12,12 +12,55 @@ import Button from '@tailus-ui/Button';
 import { usePathname } from 'next/navigation';
 import { ConnectAccountOnboarding, ConnectComponentsProvider } from "@stripe/react-connect-js";
 import useStripeConnect from '@utils/hooks/useStripeConnect';
+import { Checkbox, CircularProgress, Button as MUIButton } from '@mui/joy';
+import { Json } from '../../../../../lib/database.types';
+import { saveAccountSettings } from './actions';
+import { PostgrestError } from '@supabase/supabase-js';
 
+export interface AccountSettings {
+    business_address: {
+        no_address: boolean
+        line_1: string
+        line_2: string
+        city: string
+        state: string
+        zip_code: string
+    },
+    notifications: {
+        email: boolean
+        email_24: boolean
+        email_1: boolean
+    },
+    app_reminders: {
+        email_24: boolean,
+        email_1: boolean
+    }
+}
 
-
-export default function SettingsClient() {
+export default function SettingsClient({ business }: {
+    business: {
+        booking_policies: string;
+        business_id: string;
+        business_name: string;
+        clients: string[] | null;
+        completed_stripe_onboarding: boolean;
+        created_at: string;
+        current_onboarding_link: string | null;
+        default_availability: string;
+        email: string;
+        is_onboarded: boolean;
+        stripe_acc_id: string | null;
+        updated_at: string;
+        url_name: string;
+        user_id: string;
+        account_settings: any
+    }
+}) {
     const path = usePathname();
     const [active, setActive] = useState<number>(0)
+    const [accountSettings, setAccountSettings] = useState<AccountSettings>(business.account_settings)
+    const [currentEmail, setCurrentEmail] = useState<string>(business.email)
+    const [savingChanges, setSavingChanges] = useState<boolean>(false)
     return (
         <div className=''>
             <Card className='mx-6'>
@@ -34,7 +77,7 @@ export default function SettingsClient() {
                                 setActive(0)
                             }}>
                                 <Link.Root link="/settings" isActive={active === 0}>
-                                    <Link.Label>Profile</Link.Label>
+                                    <Link.Label>Account</Link.Label>
                                 </Link.Root>
                             </div>
                             <div onClick={(e) => {
@@ -42,37 +85,36 @@ export default function SettingsClient() {
                                 setActive(1)
                             }}>
                                 <Link.Root link="/settings" isActive={active === 1}>
-                                    <Link.Label>Manage Account</Link.Label>
+                                    <Link.Label>Preferences</Link.Label>
                                 </Link.Root>
                             </div>
-                            <div onClick={(e) => {
-                                e.preventDefault();
-                                setActive(2)
-                            }}>
-                                <Link.Root link="/settings" isActive={active === 2}>
-                                    <Link.Label>Stripe</Link.Label>
-                                </Link.Root>
-                            </div>
-                            <div onClick={(e) => {
-                                e.preventDefault()
-                                setActive(3)
-                            }}>
-                                <Link.Root link="/settings" isActive={active === 3}>
-                                    <Link.Label>Manage Subscription</Link.Label>
-                                </Link.Root>
-                            </div>
+
                         </div>
                     </div>
                     <Separator orientation='vertical' className='mx-2' />
                     {
                         active === 0 ? (
-                            <Profile />
+                            <Account setAccountSettings={setAccountSettings} account_settings={accountSettings} businessName={business.business_name} email={currentEmail} setCurrentEmail={setCurrentEmail} />
                         ) : (
-                            <ManageStripe />
+                            <Preferences setAccountSettings={setAccountSettings} account_settings={accountSettings} businessName={business.business_name} />
                         )
                     }
 
 
+                </div>
+                <div className='flex justify-end mt-5'>
+                    <MUIButton disabled={savingChanges} onClick={async () => {
+                        setSavingChanges(true)
+                        const settings = await saveAccountSettings(accountSettings, business.business_id, business.email)
+                        if (settings instanceof PostgrestError) {
+                            console.error(settings.message)
+                        } else {
+                            setAccountSettings(settings.account_settings as unknown as AccountSettings)
+                        }
+                        setSavingChanges(false)
+                    }} color='neutral'>
+                        {savingChanges ? <CircularProgress size='sm' /> : "Save Changes"}
+                    </MUIButton>
                 </div>
             </Card>
         </div>
@@ -94,7 +136,70 @@ const ManageStripe = () => {
     )
 }
 
-const ManageAccount = () => {
+const Preferences = ({ businessName, account_settings, setAccountSettings }: { businessName: string, account_settings: AccountSettings, setAccountSettings: React.Dispatch<React.SetStateAction<AccountSettings>> }) => {
+    return (
+        <div className='w-full overflow-y-auto'>
+            <Title className='text-md'>Preferences</Title>
+            <Caption>Manage your account and booking preferences</Caption>
+            <Separator className='my-4' />
+            <div className='flex flex-col gap-2'>
+                <Label htmlFor='businessName' size='sm' className=' font-medium'>Booking Notifications</Label>
+                <Checkbox label="Send email notifications" size='sm' checked={account_settings.notifications.email} onChange={(e) => {
+                    setAccountSettings({
+                        ...account_settings,
+                        notifications: {
+                            ...account_settings.notifications,
+                            email: e.target.checked
+                        }
+                    })
+                }} />
+                <Checkbox label="Send email reminders to 24hrs before appointment" checked={account_settings.notifications.email_24} size='sm' onChange={(e) => {
+                    setAccountSettings({
+                        ...account_settings,
+                        notifications: {
+                            ...account_settings.notifications,
+                            email_24: e.target.checked
+                        }
+                    })
+                }} />
+                <Checkbox label="Send email reminders to 1hr before appointment" size='sm' checked={account_settings.notifications.email_1} onChange={(e) => {
+                    setAccountSettings({
+                        ...account_settings,
+                        notifications: {
+                            ...account_settings.notifications,
+                            email_1: e.target.checked
+                        }
+                    })
+                }} />
+
+            </div>
+            <div className='flex flex-col gap-2 mt-6'>
+                <Label htmlFor='email' size='sm' className=' font-medium'>Appointment Reminders</Label>
+                <Checkbox label="Send email reminders to client 24hrs before appointment" checked={account_settings.app_reminders.email_24} size='sm' onChange={(e) => {
+                    setAccountSettings({
+                        ...account_settings,
+                        app_reminders: {
+                            ...account_settings.app_reminders,
+                            email_24: e.target.checked
+                        }
+                    })
+                }} />
+                <Checkbox label="Send email reminders to client 1hr before appointment" checked={account_settings.app_reminders.email_1} size='sm' onChange={(e) => {
+                    setAccountSettings({
+                        ...account_settings,
+                        app_reminders: {
+                            ...account_settings.app_reminders,
+                            email_1: e.target.checked
+                        }
+                    })
+                }} />
+            </div>
+
+        </div>
+    )
+}
+
+const Account = ({ businessName, email, account_settings, setAccountSettings, setCurrentEmail }: { businessName: string, email: string, account_settings: AccountSettings, setAccountSettings: React.Dispatch<React.SetStateAction<AccountSettings>>, setCurrentEmail: any }) => {
     return (
         <div className='w-2/4 overflow-y-auto'>
             <Title className='text-md'>Manage Account</Title>
@@ -102,59 +207,41 @@ const ManageAccount = () => {
             <Separator className='my-4' />
             <div className='flex flex-col gap-2'>
                 <Label htmlFor='businessName' size='sm' className=' font-medium'>Business Name</Label>
-                <Input id='businessName' value={"LadyPlutoLooks"} disabled />
-                <Caption className='text-xs'>This is your public display name. It can be your real name or a pseudonym. You can only change this once every 30 days.</Caption>
+                <Caption className='text-xs'>This is your public display name. It can be your real name or a pseudonym. This name has to be <strong>UNIQUE</strong> across the entire platform</Caption>
+                <Input disabled id='businessName' value={businessName} />
             </div>
             <div className='flex flex-col gap-2 mt-6'>
                 <Label htmlFor='email' size='sm' className=' font-medium'>Email</Label>
-                <Input id='email' value={"abijah.nez@gmail.com"} />
                 <Caption className='text-xs'>You can manage verified email addresses in your email settings.</Caption>
+                <Input id='email' value={email} onChange={(e) => {
+                    setCurrentEmail(e.target.value)
+                }} />
             </div>
             <div className='flex flex-col gap-2 mt-6'>
-                <Label htmlFor='email' size='sm' className=' font-medium'>URLs</Label>
-                <Caption className='text-xs'>Add links to your website, blog, or social media profiles.</Caption>
-                <Input value={"https://www.afroallure.com/ladyplutolooks"} />
-                <Input value={"https://www.google.com"} />
-                <div className='mb-1 ml-1'>
-                    <Button.Root variant="outlined" size='xs' className='rounded'
-                        intent="gray">
-                        <Button.Label className='text-xs font-medium'>Add URL</Button.Label>
-                    </Button.Root>
+                <Label size='sm' className=' font-medium'>Business Address</Label>
+                <Caption className='text-xs'>The location of your business. This is given to clients once they confirm their appointment with you. Check the box below if you are a travel stylists and don't have an address for clients to meet with you</Caption>
+                <div className='my-1'>
+                    <Checkbox checked={account_settings.business_address.no_address} onChange={(e) => {
+                        setAccountSettings({
+                            ...account_settings,
+                            business_address: {
+                                ...account_settings.business_address,
+                                no_address: e.target.checked
+                            }
+                        })
+                    }} label="Do not have a location" size='sm' />
+
                 </div>
+                <div className='flex flex-col gap-2'>
+                    <Input disabled={account_settings.business_address.no_address} id='street-address' className='w-full' value={account_settings.business_address.line_1} placeholder='Line 1' />
+                    <Input disabled={account_settings.business_address.no_address} id='street-address' value={account_settings.business_address.line_2} className='w-full' placeholder='Line 2' />
+                    <div className='w-full flex justify-between gap-2'>
+                        <Input disabled={account_settings.business_address.no_address} className='w-1/3' id='city' value={account_settings.business_address.city} placeholder='City' />
+                        <Input disabled={account_settings.business_address.no_address} className='w-1/3' id='state' value={account_settings.business_address.state} placeholder='State' />
+                        <Input disabled={account_settings.business_address.no_address} id='zip-code' className='w-1/3' value={account_settings.business_address.zip_code} />
 
-            </div>
-        </div>
-    )
-}
-
-const Profile = () => {
-    return (
-        <div className='w-2/4 overflow-y-auto'>
-            <Title className='text-md'>Profile</Title>
-            <Caption>This is how client will see you when they book with you.</Caption>
-            <Separator className='my-4' />
-            <div className='flex flex-col gap-2'>
-                <Label htmlFor='businessName' size='sm' className=' font-medium'>Business Name</Label>
-                <Input id='businessName' value={"LadyPlutoLooks"} disabled />
-                <Caption className='text-xs'>This is your public display name. It can be your real name or a pseudonym. You can only change this once every 30 days.</Caption>
-            </div>
-            <div className='flex flex-col gap-2 mt-6'>
-                <Label htmlFor='email' size='sm' className=' font-medium'>Email</Label>
-                <Input id='email' value={"abijah.nez@gmail.com"} />
-                <Caption className='text-xs'>You can manage verified email addresses in your email settings.</Caption>
-            </div>
-            <div className='flex flex-col gap-2 mt-6'>
-                <Label htmlFor='email' size='sm' className=' font-medium'>URLs</Label>
-                <Caption className='text-xs'>Add links to your website, blog, or social media profiles.</Caption>
-                <Input value={"https://www.afroallure.com/ladyplutolooks"} />
-                <Input value={"https://www.google.com"} />
-                <div className='mb-1 ml-1'>
-                    <Button.Root variant="outlined" size='xs' className='rounded'
-                        intent="gray">
-                        <Button.Label className='text-xs font-medium'>Add URL</Button.Label>
-                    </Button.Root>
+                    </div>
                 </div>
-
             </div>
         </div>
     )

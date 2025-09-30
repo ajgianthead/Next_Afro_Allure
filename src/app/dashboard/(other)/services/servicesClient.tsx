@@ -111,7 +111,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
             })
         }
         else { // If error
-            console.log(result);
+
         }
     }
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
@@ -138,7 +138,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
             setCurrAddon({})
         }
         else { // If error
-            console.log(result);
+
         }
     }
     const deleteAddon = async () => {
@@ -160,7 +160,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
             setCurrAddon({})
         }
         else { // If error
-            console.log(result);
+
         }
     }
     return (
@@ -285,7 +285,7 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
                                                     setIsEditingAddon(true)
                                                     setCurrAddon({ ...addon })
                                                     setAddonIndex(index)
-                                                    console.log(index)
+
                                                     setDropdownOpen(false)
                                                     setOpenAddon(true)
                                                 }} className='py-5 px-5 cursor-pointer'>
@@ -354,7 +354,7 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         availability: defaultAvailability
     });
     const uploadImage = async () => {
-        console.log("session")
+
         const session = await fetchUser()
         if (!session) {
             console.error("User not authenticated");
@@ -367,15 +367,15 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         const path = `private/images/${service.business}/services/${service.id}`;
         let url;
         try {
-            console.log(path, image.imageBlob);
+
             url = await uploadImg(path, image).then(async () => {
-                console.log("Upload finished");
+
                 return (await createPublicImgURL(path)).url
             })
         } catch (err) {
             console.error("Upload threw error:", err);
         }
-        console.log(service.id)
+
         return { url, path }
     };
     const [dataSending, setDataSending] = useState<boolean>(false)
@@ -383,7 +383,7 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         setDataSending(true)
         let clone;
         if (image.imageURL?.length) {
-            console.log("hi");
+
             let res = await uploadImage()
             clone = { ...service }
             clone.photo_url = res?.url!;
@@ -391,14 +391,14 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
             clone.imagePath = res?.path!;
             clone.addons = [...Array.from(checkedAddons)]
         }
-        console.log(service)
+
 
         const res = await fetch(`/api/${user}/services`, {
             method: 'POST',
             body: JSON.stringify(image.imageBlob ? clone : { ...service, price: service.price * 100 })
         })
         const dataBack = await res.json();
-        console.log(dataBack);
+
 
         setServices([
             ...services,
@@ -709,7 +709,7 @@ const EditServiceDialog = ({ serviceAddons, availabilities, open, setIsOpen, ser
             method: 'PUT',
             body: JSON.stringify(hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })
         })
-        console.log(service)
+
         // Update my component state
         let newServices = [...services];
         newServices.splice(index, 1, hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
         const supabase = createClient<Database>()
         const account = await stripe.accounts.retrieve(connectedAccountId);
 
-        console.log(price);
+
 
         const taxCalc = await stripe.tax.calculations.create({
             currency: 'usd',
@@ -39,9 +39,6 @@ export async function POST(request: NextRequest) {
                 address_source: 'billing'
             }
         }, { stripeAccount: connectedAccountId })
-        console.log(taxCalc
-
-        );
 
 
         const paymentIntent = await stripe.paymentIntents.create({
@@ -68,7 +65,7 @@ export async function POST(request: NextRequest) {
             status: 200
         })
     } catch (error: any) {
-        console.log(error);
+
 
         return new NextResponse(JSON.stringify({ error: error.message }), {
             headers: { 'Content-Type': 'application/json' },

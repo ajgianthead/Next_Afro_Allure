@@ -39,10 +39,10 @@ export default function Toolbox() {
             }
             if (data && data.length) {
                 if (data[0].name !== ".emptyFolderPlaceholder") {
-                    console.log(data);
+
                     const fileUrls = data?.map((images) => (supabase.storage.from("editor-media-pool").getPublicUrl(`editor/${editor_id}/image/${images.name}`).data.publicUrl))
                     setImageUrls(fileUrls!)
-                    console.log(fileUrls);
+
                 }
             }
         }
@@ -51,7 +51,7 @@ export default function Toolbox() {
         }
     }, [imageUrls]);
     const handleUpload = async (files: FileList) => {
-        console.log('start');
+
         const id = crypto.randomUUID();
         const path = `editor/${editor_id}/image/${id}`
 
@@ -59,7 +59,7 @@ export default function Toolbox() {
         const { data, error } = await supabase.storage.from('editor-media-pool').upload(path, files[0], {
             contentType: 'image/*'
         })
-        console.log(data);
+
 
         // Get files and generate urls
         const url = supabase.storage.from('editor-media-pool').getPublicUrl(path).data.publicUrl
@@ -70,7 +70,7 @@ export default function Toolbox() {
             ...imageUrls,
             url
         ])
-        console.log('done');
+
 
 
 
