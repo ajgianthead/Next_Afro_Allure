@@ -1,5 +1,5 @@
-@import '../components/tailus-ui/styles/_variables.scss';
-@import '../components/tailus-ui/styles/_keyframe-animations.scss';
+@import '../components/tailus-ui/styles/variables.scss';
+@import '../components/tailus-ui/styles/keyframe-animations.scss';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
