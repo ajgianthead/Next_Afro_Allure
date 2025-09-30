@@ -117,7 +117,6 @@
     "react-zoom-pan-pinch": "^3.7.0",
     "recharts": "^2.15.3",
     "resend": "^4.5.2",
-    "sass": "^1.90.0",
     "slot-calculator": "^2.2.1",
     "stripe": "^18.3.0",
     "supabase": "^1.219.2",
