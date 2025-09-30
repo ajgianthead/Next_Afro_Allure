@@ -85,7 +85,7 @@ const Book = ({ businessName }: { businessName: string }) => {
                             policy_id: data.booking_policy.id,
                             require_deposit: false,
                             paid_deposit: false,
-                            deposit_charge_id: null,
+                            deposit_charge_id: "",
                             reschedules: data.booking_policy.reschedule_limit,
                             deposit_price: null,
                             selected_addons: data.selectedAddons

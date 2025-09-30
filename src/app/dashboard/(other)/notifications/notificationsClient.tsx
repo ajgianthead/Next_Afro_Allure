@@ -59,7 +59,13 @@ const NotificationsClient = ({ notifications }: PageProps) => {
                     <Button loading={loading} onClick={async () => {
                         setLoading(true)
                         const res = await deleteNotification(selectedNotis)
-                        setNotificationState(res)
+                        let clone = [...notificationState]
+                        const notiArray = Array.from(selectedNotis)
+                        for (let i = 0; i < notiArray.length; i++) {
+                            const index = clone.findIndex((noti) => notiArray[i] === noti.id)
+                            clone.splice(index, 1)
+                        }
+                        setNotificationState(clone)
                         setLoading(false)
                     }} disabled={selectedNotis.size === 0}
                         startDecorator={<Trash2 size={20} />} variant='outlined' color='danger'>Delete</Button>
@@ -68,8 +74,6 @@ const NotificationsClient = ({ notifications }: PageProps) => {
                 <div className='mt-2'>
                     <List>
                         {notificationState.length ? notificationState.map((noti, index) => {
-
-
                             return (
                                 <div key={index} className='overflow-x-hidden'>
                                     <ListItem>
