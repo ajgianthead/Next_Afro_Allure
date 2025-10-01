@@ -57,7 +57,7 @@ const Book = ({ businessName }: { businessName: string }) => {
     useEffect(() => {
         // Get businessID
         if (data.booking_policy) {
-            if (!data.booking_policy.deposit.enabled) {
+            if (data.booking_policy.deposit.enabled) {
                 setSteps(["Select a service", "Pick a date and a time", "Contact Information", "Pay Booking Deposit"])
                 setComponents([<ServiceSelection />, <DateTimePicker />, <ClientInfo setAgreedAfroAllure={setAgreedAfroAllure} setAgreedBusiness={setAgreedBusiness} agreedAfroAllure={agreedAfroAllure} agreedBusiness={agreedBusiness} />, <DepositPayment setRbbOpen={setRbbOpen} setAgreedAfroAllure={setAgreedAfroAllure} setAgreedBusiness={setAgreedBusiness} agreedAfroAllure={agreedAfroAllure} agreedBusiness={agreedBusiness} setError={setError} setOpenErrorDialog={setOpenErrorDialog} />])
             } else {
@@ -579,7 +579,7 @@ const DateTimePicker = () => {
         let currAvailability = data.availabilities?.filter((el: any) => el.id === availability)[0]
         const formattedAvailability = await getAvailability(startDate, endDate, currAvailability?.availability_data)
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!)
-
+        console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
         const { availableSlotsByDay } = getSlots({
             from: startDate,
             to: endDate,
