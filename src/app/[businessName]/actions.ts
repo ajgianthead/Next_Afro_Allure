@@ -283,6 +283,7 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
 export const getAvailability = async (startDate: string, endDate: string, availability: any, zone: string = Intl.DateTimeFormat().resolvedOptions().timeZone
 ) => {
     let start = DateTime.fromISO(startDate).setZone(zone);
+    console.log(start)
     let end = DateTime.fromISO(endDate).setZone(zone);
     let slotResult = []
     try {
@@ -306,6 +307,7 @@ export const getAvailability = async (startDate: string, endDate: string, availa
                     { year: curr.year, month: curr.month, day: curr.day, hour: startHour, minute: startMin },
                     { zone }
                 );
+                console.log(startDateTimeRef)
 
                 let endDateTimeRef = DateTime.fromObject(
                     { year: curr.year, month: curr.month, day: curr.day, hour: endHour, minute: endMin },
