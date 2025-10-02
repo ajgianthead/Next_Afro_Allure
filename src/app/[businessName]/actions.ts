@@ -282,6 +282,7 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
 
 export const getAvailability = async (startDate: string, endDate: string, availability: any, zone: string = Intl.DateTimeFormat().resolvedOptions().timeZone
 ) => {
+    console.log(zone)
     let start = DateTime.fromISO(startDate).setZone(zone);
     console.log(start)
     let end = DateTime.fromISO(endDate).setZone(zone);
