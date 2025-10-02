@@ -584,7 +584,7 @@ const DateTimePicker = () => {
         let availability = data.services.filter((service) => service.id === data.selectedService)[0].availability
         let currAvailability = data.availabilities?.filter((el: any) => el.id === availability)[0]
         const formattedAvailability = await getAvailability(startDate, endDate, currAvailability?.availability_data)
-        console.log(formattedAvailability);
+        console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!)
         const { availableSlotsByDay } = getSlots({
