@@ -573,7 +573,9 @@ const DateTimePicker = () => {
         Object.values(data.selectedDateTime).length
             ? DateTime.fromISO(data.selectedDateTime.start!).setZone(userZone).startOf('day')
             : undefined
-    ); const [isLoading, setIsLoading] = useState<boolean>(true)
+    );
+    console.log(date)
+    const [isLoading, setIsLoading] = useState<boolean>(true)
     const [slots, setSlots] = useState<any>({})
     const [currSlots, setCurrSlots] = useState<any[]>([]);
 
@@ -582,6 +584,8 @@ const DateTimePicker = () => {
         let availability = data.services.filter((service) => service.id === data.selectedService)[0].availability
         let currAvailability = data.availabilities?.filter((el: any) => el.id === availability)[0]
         const formattedAvailability = await getAvailability(startDate, endDate, currAvailability?.availability_data)
+        console.log(formattedAvailability);
+
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!)
         const { availableSlotsByDay } = getSlots({
             from: startDate,
@@ -647,6 +651,7 @@ const DateTimePicker = () => {
                         }
                     }
                     setCurrSlots(res)
+                    console.log(res)
                 }
 
             }
