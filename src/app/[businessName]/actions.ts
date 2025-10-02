@@ -280,9 +280,10 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
     }
 }
 
-export const getAvailability = async (startDate: string, endDate: string, availability: any) => {
-    let start = DateTime.fromISO(startDate);
-    let end = DateTime.fromISO(endDate);
+export const getAvailability = async (startDate: string, endDate: string, availability: any, zone: string = Intl.DateTimeFormat().resolvedOptions().timeZone
+) => {
+    let start = DateTime.fromISO(startDate).setZone(zone);
+    let end = DateTime.fromISO(endDate).setZone(zone);
     let slotResult = []
     try {
         let curr = start;
@@ -301,8 +302,16 @@ export const getAvailability = async (startDate: string, endDate: string, availa
                 const endHour = ranges[i].end.hour
                 const endMin = ranges[i].end.minute
 
-                let startDateTimeRef = DateTime.local(curr.get('year'), curr.get('month'), curr.get('day'), startHour, startMin)
-                let endDateTimeRef = DateTime.local(curr.get('year'), curr.get('month'), curr.get('day'), endHour, endMin)
+                let startDateTimeRef = DateTime.fromObject(
+                    { year: curr.year, month: curr.month, day: curr.day, hour: startHour, minute: startMin },
+                    { zone }
+                );
+
+                let endDateTimeRef = DateTime.fromObject(
+                    { year: curr.year, month: curr.month, day: curr.day, hour: endHour, minute: endMin },
+                    { zone }
+                );
+
                 let newAvailabilityDay = {
                     from: startDateTimeRef.toISO() as any,
                     to: endDateTimeRef.toISO() as any,
@@ -323,8 +332,18 @@ export const getAvailability = async (startDate: string, endDate: string, availa
                 const endHour = ranges[j].end.hour
                 const endMin = ranges[j].end.minute
 
-                let startDateTimeRef = DateTime.local(currDate.get('year'), currDate.get('month'), currDate.get('day'), startHour, startMin)
-                let endDateTimeRef = DateTime.local(currDate.get('year'), currDate.get('month'), currDate.get('day'), endHour, endMin)
+                const currDate = DateTime.fromISO(dates[i]).setZone(zone);
+
+                let startDateTimeRef = DateTime.fromObject(
+                    { year: currDate.year, month: currDate.month, day: currDate.day, hour: startHour, minute: startMin },
+                    { zone }
+                );
+
+                let endDateTimeRef = DateTime.fromObject(
+                    { year: currDate.year, month: currDate.month, day: currDate.day, hour: endHour, minute: endMin },
+                    { zone }
+                );
+
                 const specificDayObj = {
                     from: startDateTimeRef.toISO(),
                     to: endDateTimeRef.toISO(),
@@ -339,27 +358,21 @@ export const getAvailability = async (startDate: string, endDate: string, availa
 
 }
 
-export const getUnavailability = async (startDate: string, endDate: string, appointments: Array<any>) => {
-    let slotResult = []
+export const getUnavailability = async (startDate: string, endDate: string, appointments: Array<any>, zone: string = Intl.DateTimeFormat().resolvedOptions().timeZone
+) => {
+    let slotResult: { from: string; to: string }[] = [];
+
     try {
-        let start = DateTime.fromISO(startDate);
-        let end = DateTime.fromISO(endDate);
-
-        let curr = start;
         for (let i = 0; i < appointments.length; i++) {
-
-
-            const unavailableDay = {
-                from: DateTime.fromISO(appointments[i].start).toISO()!,
-                to: DateTime.fromISO(appointments[i].end).toISO()!
-            }
-            slotResult.push(unavailableDay)
+            slotResult.push({
+                from: DateTime.fromISO(appointments[i].start).setZone(zone).toISO()!,
+                to: DateTime.fromISO(appointments[i].end).setZone(zone).toISO()!,
+            });
         }
-        curr = curr.plus({ days: 1 })
-
     } catch (error: any) {
-
-        throw new Error(error.message)
+        console.error(error);
+        throw new Error(error.message);
     }
-    return slotResult
+
+    return slotResult;
 }

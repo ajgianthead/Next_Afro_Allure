@@ -567,9 +567,13 @@ const ClientInfo = ({ setRbbOpen, agreedAfroAllure, agreedBusiness, setAgreedAfr
 }
 
 const DateTimePicker = () => {
+    const userZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
-    const [date, setDate] = useState<any>(Object.values(data.selectedDateTime).length ? DateTime.fromISO(data.selectedDateTime.start!).startOf('day') : undefined);
-    const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [date, setDate] = useState<any>(
+        Object.values(data.selectedDateTime).length
+            ? DateTime.fromISO(data.selectedDateTime.start!).setZone(userZone).startOf('day')
+            : undefined
+    ); const [isLoading, setIsLoading] = useState<boolean>(true)
     const [slots, setSlots] = useState<any>({})
     const [currSlots, setCurrSlots] = useState<any[]>([]);
 
@@ -579,7 +583,6 @@ const DateTimePicker = () => {
         let currAvailability = data.availabilities?.filter((el: any) => el.id === availability)[0]
         const formattedAvailability = await getAvailability(startDate, endDate, currAvailability?.availability_data)
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!)
-        console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
         const { availableSlotsByDay } = getSlots({
             from: startDate,
             to: endDate,
@@ -620,16 +623,17 @@ const DateTimePicker = () => {
     useEffect(() => {
         const initialize = async () => {
             if (Object.keys(data.availabilities!).length && data.appointments?.length) {
-                const startDate = DateTime.now().startOf("day").toISO()
-                const endDate = DateTime.now().endOf("month").toISO()
-                const result = await getData(startDate, endDate)
+                const startDate = DateTime.now().setZone(userZone).startOf("day").toISO();
+                const endDate = DateTime.now().setZone(userZone).endOf("month").toISO();
+                const result = await getData(startDate!, endDate!)
                 if (Object.values(data.selectedDateTime).length) {
-                    const fetchedSlots = result[DateTime.fromISO(data.selectedDateTime.start!).toISODate()!]
-                    let res = []
+                    const fetchedSlots = result[
+                        DateTime.fromISO(data.selectedDateTime.start!).setZone(userZone).toISODate()!
+                    ]; let res = []
                     for (let i = 0; i < fetchedSlots.length; i++) {
-                        let timeStart = DateTime.fromISO(fetchedSlots[i][0])
-                        let movingTime = DateTime.fromISO(fetchedSlots[i][0])
-                        let timeEnd = DateTime.fromISO(fetchedSlots[i][fetchedSlots[i].length - 1])
+                        let timeStart = DateTime.fromISO(fetchedSlots[i][0]).setZone(userZone);
+                        let movingTime = DateTime.fromISO(fetchedSlots[i][0]).setZone(userZone);
+                        let timeEnd = DateTime.fromISO(fetchedSlots[i][fetchedSlots[i].length - 1]).setZone(userZone);
                         const appointmentLength = data.services.filter((service: Service, index: number) => data.selectedService === service.id)[0].length
                         while (movingTime < timeEnd) {
                             movingTime = timeStart
@@ -658,12 +662,12 @@ const DateTimePicker = () => {
         // Set new start and end dates
         let startDate = ""
         let endDate = ""
-        if (month.month === DateTime.now().month) {
-            startDate = DateTime.now().startOf("day").toISO()!
+        if (month.month === DateTime.now().setZone(userZone).month) {
+            startDate = DateTime.now().setZone(userZone).startOf("day").toISO()!;
         } else {
-            startDate = month.toISO()!
+            startDate = month.setZone(userZone).toISO()!;
         }
-        endDate = month.endOf("month").toISO()!
+        endDate = month.setZone(userZone).endOf("month").toISO()!;
         await getData(startDate, endDate)
         setIsLoading(false)
     }
@@ -674,9 +678,9 @@ const DateTimePicker = () => {
             // Get slot array based on date
             let res = []
             for (let i = 0; i < fetchedSlots.length; i++) {
-                let timeStart = DateTime.fromISO(fetchedSlots[i][0])
-                let movingTime = DateTime.fromISO(fetchedSlots[i][0])
-                let timeEnd = DateTime.fromISO(fetchedSlots[i][fetchedSlots[i].length - 1])
+                let timeStart = DateTime.fromISO(fetchedSlots[i][0]).setZone(userZone);
+                let movingTime = DateTime.fromISO(fetchedSlots[i][0]).setZone(userZone);
+                let timeEnd = DateTime.fromISO(fetchedSlots[i][fetchedSlots[i].length - 1]).setZone(userZone);
                 const appointmentLength = data.services.filter((service: Service, index: number) => data.selectedService === service.id)[0].length
                 while (movingTime < timeEnd) {
                     movingTime = timeStart
@@ -707,7 +711,7 @@ const DateTimePicker = () => {
                         currSlots.map((time: DateTime, index: number) => {
                             return (
                                 <div key={index}>
-                                    <TimeSlot startTime={time} />
+                                    <TimeSlot startTime={time} userZone={userZone} />
                                 </div>
                             )
                         })
@@ -719,12 +723,14 @@ const DateTimePicker = () => {
     )
 }
 
-const TimeSlot = ({ startTime }: {
-    startTime: DateTime
+const TimeSlot = ({ startTime, userZone }: {
+    startTime: DateTime,
+    userZone: string
 }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
-    const start = startTime.toLocaleString(DateTime.TIME_SIMPLE)
-    const endTime = startTime.plus({ minutes: data.services.filter((service) => service.id === data.selectedService)[0].length }).toISO()!
+    const start = startTime.setZone(userZone).toLocaleString(DateTime.TIME_SIMPLE)
+    const endTime = startTime.setZone(userZone).plus({ minutes: data.services.filter((service) => service.id === data.selectedService)[0].length }).toISO()!
+
 
     return (
         <div onClick={() => {
