@@ -40,8 +40,8 @@ export default function RescheduleClient() {
             start: DateTime.fromJSDate(new Date(appointment.start)).toISO()!,
             end: DateTime.fromJSDate(new Date(appointment.end)).toISO()!
         })
-        const formattedAvailability = await getAvailability(startDate, endDate, availability.availability_data)
-        const formattedUnavailability = await getUnavailability(startDate, endDate, appointments!)
+        const formattedAvailability = await getAvailability(startDate, endDate, availability.availability_data, Intl.DateTimeFormat().resolvedOptions().timeZone)
+        const formattedUnavailability = await getUnavailability(startDate, endDate, appointments!, Intl.DateTimeFormat().resolvedOptions().timeZone)
         const { availableSlotsByDay } = getSlots({
             from: startDate,
             to: endDate,
@@ -216,7 +216,7 @@ export default function RescheduleClient() {
                                 start: selectedDateTime.start,
                                 end: selectedDateTime.end,
                                 appointmentLength: appointment.service_data.length
-                            }, businessId, availability.id).then((res) => {
+                            }, businessId, availability.id, Intl.DateTimeFormat().resolvedOptions().timeZone).then((res) => {
                                 if (res) {
                                     setConfirmed(true)
                                 }

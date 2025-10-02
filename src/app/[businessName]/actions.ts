@@ -36,12 +36,12 @@ export const checkSlots = async (timeSlot: {
     start?: string;
     end?: string;
     appointmentLength?: number;
-}, availability: any, appointments: any) => {
+}, availability: any, appointments: any, zone: string) => {
     const beginDay = DateTime.fromISO(timeSlot.start!).startOf('day').toISO()!
     const endDay = DateTime.fromISO(timeSlot.end!).endOf('day').toISO()!
 
-    const formattedAv = await getAvailability(beginDay, endDay, availability)
-    const formattedUnav = await getUnavailability(beginDay, endDay, appointments)
+    const formattedAv = await getAvailability(beginDay, endDay, availability, zone)
+    const formattedUnav = await getUnavailability(beginDay, endDay, appointments, zone)
 
     const { availableSlots } = getSlots({
         from: beginDay,
@@ -123,7 +123,7 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
     start: string;
     end: string;
     appointmentLength: number;
-}, businessId: string, availability_id: string) => {
+}, businessId: string, availability_id: string, zone: string) => {
     const client = await pool.connect()
     try {
         await client.query('BEGIN');
@@ -132,7 +132,7 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
         const availability = (await client.query(`SELECT availability_data FROM availabilities av WHERE av.id = $1`, [availability_id])).rows[0].availability_data
         const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows
         let available: boolean = false
-        const availableSlots = await checkSlots(timeSlot, availability, appointments)
+        const availableSlots = await checkSlots(timeSlot, availability, appointments, zone)
         availableSlots.forEach((slot: string | null, index: number) => {
             if (slot === timeSlot.start!) {
                 available = true
@@ -223,7 +223,8 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
     start?: string;
     end?: string;
     appointmentLength: number;
-}
+
+}, zone: string
 
 ) => {
     const client = await pool.connect()
@@ -237,7 +238,7 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
 
         let available: boolean = false
 
-        const availableSlots = await checkSlots(timeSlot, availability, appointments)
+        const availableSlots = await checkSlots(timeSlot, availability, appointments, zone)
 
         availableSlots.forEach((slot: string | null, index: number) => {
             if (slot === timeSlot.start!) {
@@ -280,7 +281,7 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
     }
 }
 
-export const getAvailability = async (startDate: string, endDate: string, availability: any, zone: string = Intl.DateTimeFormat().resolvedOptions().timeZone
+export const getAvailability = async (startDate: string, endDate: string, availability: any, zone: string
 ) => {
     console.log(zone)
     let start = DateTime.fromISO(startDate).setZone(zone);
@@ -361,7 +362,7 @@ export const getAvailability = async (startDate: string, endDate: string, availa
 
 }
 
-export const getUnavailability = async (startDate: string, endDate: string, appointments: Array<any>, zone: string = Intl.DateTimeFormat().resolvedOptions().timeZone
+export const getUnavailability = async (startDate: string, endDate: string, appointments: Array<any>, zone: string
 ) => {
     let slotResult: { from: string; to: string }[] = [];
 

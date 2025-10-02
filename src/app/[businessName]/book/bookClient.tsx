@@ -302,7 +302,7 @@ const CheckoutForm = ({ service, paymentIntentID, setError, setOpenErrorDialog, 
         // const result = await res.json();
         // 
 
-        await bookAppointment(data.selectedAddons, paymentIntentID, data.business_id, data.booking_policy.id, service, data.clientInfo, { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length }).then(async (appointment: any) => {
+        await bookAppointment(data.selectedAddons, paymentIntentID, data.business_id, data.booking_policy.id, service, data.clientInfo, { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length }, Intl.DateTimeFormat().resolvedOptions().timeZone).then(async (appointment: any) => {
             const clientInfo = { ...data.clientInfo }
             if (clientInfo.firstName.length > 0) {
                 if (clientInfo.lastName.length > 0) {
@@ -583,10 +583,8 @@ const DateTimePicker = () => {
         // Get availability id for server actions
         let availability = data.services.filter((service) => service.id === data.selectedService)[0].availability
         let currAvailability = data.availabilities?.filter((el: any) => el.id === availability)[0]
-        const formattedAvailability = await getAvailability(startDate, endDate, currAvailability?.availability_data)
-        console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
-
-        const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!)
+        const formattedAvailability = await getAvailability(startDate, endDate, currAvailability?.availability_data, userZone)
+        const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!, userZone)
         const { availableSlotsByDay } = getSlots({
             from: startDate,
             to: endDate,
