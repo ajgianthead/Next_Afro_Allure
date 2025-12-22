@@ -1,9 +1,14 @@
+import '@mantine/core/styles.css';
+
 import { createClient } from "@utils/supabase/server";
 import RootLayout from "./layoutcomp";
 import { Database } from "../../lib/database.types";
 import { Analytics } from "@vercel/analytics/next"
 import { CssVarsProvider } from "@mui/joy";
 import { theme } from "./landingPage";
+
+import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
+
 
 
 export const metadata = {
@@ -14,9 +19,18 @@ export const metadata = {
 }
 export default async function Layout({ children }: any) {
   return <>
+    <html lang="en" {...mantineHtmlProps}>
+      <head>
+        <ColorSchemeScript />
+      </head>
+      <body>
+        <MantineProvider>
+          <Analytics />
+          <RootLayout children={children} />
+        </MantineProvider>
+      </body>
+    </html>
 
-    <Analytics />
-    <RootLayout children={children} />
 
   </>
 }

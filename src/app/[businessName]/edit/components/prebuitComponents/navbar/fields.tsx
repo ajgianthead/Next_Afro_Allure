@@ -1,0 +1,105 @@
+import { ButtonTypeMap, Checkbox as MUICheckbox, CircularProgress, DialogActions, DialogContent, Divider, Drawer, ExtendButton, IconButton, Input as MUIInput, Modal, ModalClose, ModalDialog, Button as MUIButton, ToggleButtonGroup, TypographySystem } from "@mui/joy";
+
+export const ButtonLinkDefaultProps = {
+    fontSize: 1,
+    fontWeight: 400,
+    letterSpacing: 1.2,
+    lineHeight: 1.5,
+    color: '#000000',
+    style: [],
+    fontFamily: 'Inter',
+    align: 'start',
+    gapX: 0,
+    variant: 'solid',
+    gapY: 0,
+    padding: 0,
+    borderRadiusExpanded: 'false',
+    borderRadiusTopLeft: 0,
+    borderRadiusTopRight: 0,
+    borderRadiusBottomLeft: 0,
+    borderRadiusBottomRight: 0,
+    paddingExpanded: "false",
+    marginExpanded: "false",
+    marginBottom: 0,
+    marginLeft: 0,
+    marginRight: 0,
+    marginTop: 0,
+    margin: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+    paddingRight: 0,
+    paddingTop: 0,
+    backgroundColor: '#fff',
+    borderColor: '#000000',
+    borderRadius: 0,
+    borderWidth: 0,
+    borderBottom: 0,
+    borderExpanded: 'false',
+    borderLeft: 0,
+    borderRight: 0,
+    borderTop: 0,
+    numOfCols: 3,
+    numOfRows: 3,
+    borderType: 'solid',
+    positionType: 'relative',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    responsive: true,
+    flexDirection: 'flex-row',
+    mainAxisLayout: 'start',
+    altAxisLayout: 'center',
+}
+
+export const navbarFields = {
+    content: {
+        type: 'slot'
+    },
+    logo: {
+        type: 'slot'
+    },
+    menu: {
+        label: 'Navigation Menu',
+        type: "array",
+        arrayFields: {
+            item: {
+                type: 'slot'
+            }
+        },
+        getItemSummary(item: any, index: number) {
+            if (item.item) {
+                return item.item[0].props.text
+            }
+        },
+        defaultItemProps: {
+            item: [{
+                type: 'Button',
+                props: {
+                    action: 'REDIRECT',
+                    text: 'Link',
+                    link: "https://afroallure.co/",
+                    ...ButtonLinkDefaultProps
+                },
+            }],
+        },
+    },
+    variants: {
+        type: 'custom',
+        render: (({ value, onChange }: any) => {
+            return (
+                <div className="grid w-full grid-cols-2 gap-2 ">
+                    <MUIButton variant="outlined" sx={{
+                        width: '100%',
+                        paddingY: 8,
+                        border: value === 'default' ? 'black 1px solid' : 'none'
+                    }}></MUIButton>
+
+                    <MUIButton variant="outlined" sx={{
+                        width: '100%'
+                    }}></MUIButton>
+                </div>
+            )
+        })
+    }
+}
