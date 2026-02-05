@@ -1,93 +1,61 @@
-import { Container } from "../../constants"
-import { containerResolvedFields } from "./fields"
+'use client'
 
-const containerDefaultProps: Container = {
-    gapX: 0,
-    gapY: 0,
-    draggable: true,
-    padding: 2,
-    borderRadiusExpanded: 'false',
-    borderRadiusTopLeft: 0,
-    borderRadiusTopRight: 0,
-    borderRadiusBottomLeft: 0,
-    borderRadiusBottomRight: 0,
-    paddingExpanded: "false",
-    marginExpanded: "false",
-    marginBottom: 0,
-    marginLeft: 0,
-    marginRight: 0,
-    marginTop: 0,
-    margin: 0,
-    paddingBottom: 2,
-    paddingLeft: 2,
-    paddingRight: 2,
-    paddingTop: 2,
-    backgroundColor: '#d2d2d2',
-    content: [],
-    borderColor: '#000000',
-    borderRadius: 0,
-    borderWidth: 0,
-    borderBottom: 0,
-    borderExpanded: 'false',
-    borderLeft: 0,
-    borderRight: 0,
-    borderTop: 0,
-    numOfCols: 3,
-    numOfRows: 3,
-    borderType: 'solid',
-    positionType: 'relative',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    responsive: true,
-    flexDirection: 'flex-row',
-    mainAxisLayout: 'start',
-    altAxisLayout: 'start'
-}
+import { containerDefaultProps } from "../defaultStyles"
+import { Container } from "../types"
+import { containerResolvedFields, defaultFields } from "./fields"
+
+
+
+
 
 export const ContainerComponent: any = {
+    root: true,
     resolveFields: containerResolvedFields,
     defaultProps: containerDefaultProps,
-    render: ({ content: Content, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, responsive, numOfCols, numOfRows, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, draggable }: any) => {
-        return <div draggable={draggable}>
-            <Content className={flexDirection !== 'grid' ? `flex ${responsive ? `lg:${flexDirection} flex-col` : flexDirection}` : `grid`} style={{
-                padding: `${padding}rem`,
-                paddingTop: paddingExpanded === 'true' ? `${paddingTop}rem` : `${padding}rem`,
-                paddingBottom: paddingExpanded === 'true' ? `${paddingBottom}rem` : `${padding}rem`,
-                paddingRight: paddingExpanded === 'true' ? `${paddingRight}rem` : `${padding}rem`,
-                paddingLeft: paddingExpanded === 'true' ? `${paddingLeft}rem` : `${padding}rem`,
-                margin: `${margin}rem`,
-                marginTop: marginExpanded === 'true' ? `${marginTop}rem` : `${margin}rem`,
-                marginBottom: marginExpanded === 'true' ? `${marginBottom}rem` : `${margin}rem`,
-                marginRight: marginExpanded === 'true' ? `${marginRight}rem` : `${margin}rem`,
-                marginLeft: marginExpanded === 'true' ? `${marginLeft}rem` : `${margin}rem`,
-                backgroundColor,
-                position: positionType,
-                top,
-                bottom,
-                left,
-                right,
-                justifyContent: mainAxisLayout,
-                alignItems: altAxisLayout,
-                borderRadius,
-                borderTopLeftRadius: borderRadiusExpanded === 'true' ? borderRadiusTopLeft : borderRadius,
-                borderTopRightRadius: borderRadiusExpanded === 'true' ? borderRadiusTopRight : borderRadius,
-                borderBottomLeftRadius: borderRadiusExpanded === 'true' ? borderRadiusBottomLeft : borderRadius,
-                borderBottomRightRadius: borderRadiusExpanded === 'true' ? borderRadiusBottomRight : borderRadius,
-                borderStyle: borderType,
-                borderColor,
-                borderWidth,
-                borderTop: borderExpanded === 'true' ? `${borderTop}` : `${borderWidth}`,
-                borderBottom: borderExpanded === 'true' ? `${borderBottom}` : `${borderWidth}`,
-                borderRight: borderExpanded === 'true' ? `${borderRight}` : `${borderWidth}`,
-                borderLeft: borderExpanded === 'true' ? `${borderLeft}` : `${borderWidth}`,
-                columnGap: gapX,
-                rowGap: gapY,
-                display: flexDirection === 'grid' ? 'grid' : 'flex',
-                gridTemplateColumns: `repeat(${numOfCols}, max-content)`,
-                gridTemplateRows: `repeat(${numOfRows}, minmax(0, 1fr))`,
-            }} />
-        </div>
-    },
+    fields: defaultFields,
+    inline: true,
+    render: ({ puck, content: Content, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, responsive, numOfCols, numOfRows, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, draggable, rotation, grow }: any) => {
+        return (
+            <div className={`${grow ? 'flex w-full' : 'max-w-max'}`} ref={puck.dragRef}>
+                <Content className={`${flexDirection} ${grow ? 'flex' : 'max-w-max'}`} style={{
+                    transform: `rotate(${rotation}deg)`,
+                    padding: `${padding}rem`,
+                    flexShrink: !grow ? 1 : 0,
+                    paddingTop: paddingExpanded === 'true' ? `${paddingTop}rem` : `${padding}rem`,
+                    paddingBottom: paddingExpanded === 'true' ? `${paddingBottom}rem` : `${padding}rem`,
+                    paddingRight: paddingExpanded === 'true' ? `${paddingRight}rem` : `${padding}rem`,
+                    paddingLeft: paddingExpanded === 'true' ? `${paddingLeft}rem` : `${padding}rem`,
+                    margin: `${margin}rem`,
+                    marginTop: marginExpanded === 'true' ? `${marginTop}rem` : `${margin}rem`,
+                    marginBottom: marginExpanded === 'true' ? `${marginBottom}rem` : `${margin}rem`,
+                    marginRight: marginExpanded === 'true' ? `${marginRight}rem` : `${margin}rem`,
+                    marginLeft: marginExpanded === 'true' ? `${marginLeft}rem` : `${margin}rem`,
+                    backgroundColor,
+                    position: positionType,
+                    top,
+                    bottom,
+                    left,
+                    right,
+                    justifyContent: mainAxisLayout,
+                    alignItems: altAxisLayout,
+                    borderRadius,
+                    borderTopLeftRadius: borderRadiusExpanded === 'true' ? borderRadiusTopLeft : borderRadius,
+                    borderTopRightRadius: borderRadiusExpanded === 'true' ? borderRadiusTopRight : borderRadius,
+                    borderBottomLeftRadius: borderRadiusExpanded === 'true' ? borderRadiusBottomLeft : borderRadius,
+                    borderBottomRightRadius: borderRadiusExpanded === 'true' ? borderRadiusBottomRight : borderRadius,
+                    borderStyle: borderType,
+                    borderColor,
+                    borderWidth,
+                    borderTop: borderExpanded === 'true' ? `${borderTop}` : `${borderWidth}`,
+                    borderBottom: borderExpanded === 'true' ? `${borderBottom}` : `${borderWidth}`,
+                    borderRight: borderExpanded === 'true' ? `${borderRight}` : `${borderWidth}`,
+                    borderLeft: borderExpanded === 'true' ? `${borderLeft}` : `${borderWidth}`,
+                    columnGap: gapX,
+                    rowGap: gapY,
+
+                    flex: grow ? '1 1 0%' : 'none',
+                }} />
+            </div>
+        )
+    }
 }

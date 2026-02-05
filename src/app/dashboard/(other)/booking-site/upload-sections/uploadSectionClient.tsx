@@ -30,7 +30,7 @@ const VisuallyHiddenInput = styled('input')`
 `;
 
 
-const UploadSectionClient = ({ businessId, editorId, url_name, section_data, uploadedImageUrls }: {
+const UploadSectionClient = ({ businessId, editorId, url_name, section_data, uploadedImageUrls, isPublished }: {
     businessId: string, editorId: string, url_name: string, section_data: {
         business_id: string | null;
         created_at: string;
@@ -45,6 +45,7 @@ const UploadSectionClient = ({ businessId, editorId, url_name, section_data, upl
         url: string;
         id: string;
     }[]
+    isPublished: boolean
 }) => {
     const [imageURLS, setImageURLS] = useState<{ url: string, id: string }[]>(uploadedImageUrls)
     const [loading, setLoading] = useState<boolean>(false)
@@ -278,13 +279,13 @@ const UploadSectionClient = ({ businessId, editorId, url_name, section_data, upl
                         }
                     }
                     return (JSON.stringify(cloneEditorState) === JSON.stringify(cloneInitialState))
-                })()} onClick={async () => {
+                })()} loading={savingData} onClick={async () => {
                     setSavingData(true)
-                    const res = await saveSectionData(editorState, businessId)
+                    const res = await saveSectionData(editorState, businessId, isPublished)
                     setEditorState(res?.section_data!)
                     setInitialData(res?.section_data!)
                     setSavingData(false)
-                }}>{savingData ? <CircularProgress size='sm' /> : "Save Changes"}</Button>
+                }}>{isPublished ? "Save Changes" : 'Publish Site'}</Button>
             </div>
         </div >
 

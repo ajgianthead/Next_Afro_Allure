@@ -1,4 +1,7 @@
-import { SlotComponent } from "@measured/puck"
+'use client'
+
+
+import { SlotComponent } from "@puckeditor/core"
 import { aboutSectionFields } from "./fields"
 
 export const AboutBusinessComponent: any = {

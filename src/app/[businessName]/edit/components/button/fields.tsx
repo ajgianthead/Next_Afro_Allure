@@ -1,9 +1,10 @@
-import { Checkbox, ColorInput, Input, NumberInput, SegmentedControl, Select } from "@mantine/core";
-import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, BorderAllIcon, BorderBottomIcon, BorderLeftIcon, BorderRightIcon, BorderTopIcon, ColumnsIcon, ColumnSpacingIcon, CornerBottomLeftIcon, CornerBottomRightIcon, CornersIcon, CornerTopLeftIcon, CornerTopRightIcon, FontBoldIcon, FontFamilyIcon, FontItalicIcon, FontSizeIcon, GridIcon, LetterSpacingIcon, LineHeightIcon, PaddingIcon, RowsIcon, RowSpacingIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
-import { ButtonContainer } from "../../constants";
-import { FieldLabel, Fields } from "@measured/puck";
+import { Checkbox, ColorInput, Input, NumberInput, SegmentedControl, Select, Switch } from "@mantine/core";
+import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, BorderAllIcon, BorderBottomIcon, BorderLeftIcon, BorderRightIcon, BorderTopIcon, ColumnsIcon, ColumnSpacingIcon, CornerBottomLeftIcon, CornerBottomRightIcon, CornersIcon, CornerTopLeftIcon, CornerTopRightIcon, DotIcon, FontBoldIcon, FontFamilyIcon, FontItalicIcon, FontSizeIcon, GridIcon, LetterSpacingIcon, LineHeightIcon, PaddingIcon, RowsIcon, RowSpacingIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
+import { ButtonContainer } from "../types";
+import { FieldLabel, Fields, useGetPuck } from "@puckeditor/core";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowRightLeft, ArrowUp, ArrowUpDown, LocateFixed, PaintBucket, Signpost, Square, SquareDashedBottom, Type } from "lucide-react";
 import { IconButton, ToggleButtonGroup } from "@mui/joy";
+import { useEditorContext } from "@utils/context/EditorContext";
 
 export const buttonResolvedFields: (data: any) => {} = (data: any) => {
     let fields: Fields<ButtonContainer, {}> = {
@@ -70,7 +71,7 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
         flexDirection: {
             type: 'custom',
             visible: true,
-            label: 'Direction',
+            label: 'Layout Direction',
             labelIcon: <Signpost size={16} className="mr-1" />,
             render: ({ onChange, value, field }) => (
                 <div className="grid grid-cols-4 items-center gap-2">
@@ -83,46 +84,12 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
                             label: <div className="flex justify-center"><ViewVerticalIcon className="my-1 mr-1" /></div>,
                             value: 'flex-row'
                         },
-                        {
-                            label: <div className="flex justify-center"><GridIcon className="my-1 mr-1" /></div>,
-                            value: 'grid'
-                        },
+
                         ]} />
                 </div>
 
 
             )
-        },
-        numOfCols: {
-            label: 'Columns',
-            visible: false,
-            type: 'custom',
-            render: (({ field, value, onChange }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <NumberInput step={1} leftSection={<ColumnsIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-                    </div>
-
-
-                )
-            })
-        },
-        numOfRows: {
-            label: 'Rows',
-            visible: false,
-            type: 'custom',
-            render: (({ field, value, onChange }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <NumberInput step={1} leftSection={<RowsIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-                    </div>
-
-                )
-            })
         },
 
         gapX: {
@@ -144,6 +111,19 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
                 return (
                     <NumberInput step={1} leftSection={<RowSpacingIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
 
+                )
+            })
+        },
+        grow: {
+            type: 'custom',
+            label: 'Grow',
+            render: (({ value, onChange, field }) => {
+                return (
+                    <div className="grid grid-cols-4 items-center gap-2">
+                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
+                        <Switch className="col-span-3"
+                            size="xs" checked={value} onChange={(event) => onChange(event.currentTarget.checked)} />
+                    </div>
                 )
             })
         },
@@ -535,20 +515,62 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
             })
         },
         top: {
-            type: 'number',
-            visible: false
+            type: 'custom',
+            label: 'Top',
+            labelIcon: <ArrowUp size={16} className="mr-1" />,
+            visible: true,
+            render: ({ onChange, value, field }: any) => (
+                <NumberInput leftSection={<ArrowUpIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
+            )
         },
         bottom: {
-            type: 'number',
-            visible: false
+            type: 'custom',
+            label: 'Bottom',
+            labelIcon: <ArrowUp size={16} className="mr-1" />,
+            visible: true,
+            render: ({ onChange, value, field }: any) => (
+                <NumberInput leftSection={<ArrowDownIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
+            )
         },
         left: {
-            type: 'number',
-            visible: false,
+            type: 'custom',
+            label: 'Left',
+            labelIcon: <ArrowUp size={16} className="mr-1" />,
+            visible: true,
+            render: ({ onChange, value, field }: any) => (
+                <NumberInput leftSection={<ArrowLeftIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
+            )
         },
         right: {
-            type: 'number',
-            visible: false,
+            type: 'custom',
+            label: 'Right',
+            labelIcon: <ArrowUp size={16} className="mr-1" />,
+            visible: true,
+            render: ({ onChange, value, field }: any) => (
+                <NumberInput leftSection={<ArrowRightIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
+            )
+        },
+        rotation: {
+            type: 'custom',
+            label: 'Rotation',
+            render: (({ value, onChange, field }) => {
+                return (
+                    <div className="grid grid-cols-4 items-center gap-2">
+                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
+                        <NumberInput
+                            size="xs"
+                            radius={'md'}
+                            className="col-span-3"
+                            value={value}
+                            onChange={(e) => onChange(Number(e))}
+                            rightSection={<DotIcon />}
+                        />
+                    </div>
+                )
+            })
+        },
+        draggable: {
+            type: 'number'
         },
         text: {
             type: 'custom',
@@ -690,44 +712,11 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
                 </div>
             )
         },
-        draggable: {
-            type: 'number'
-        }
+
     }
-    if (data.props.flexDirection === 'grid') {
-
-        fields.numOfCols = {
-            label: 'Columns',
-            visible: true,
-            type: 'custom',
-            render: (({ field, value, onChange }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <NumberInput step={1} leftSection={<ColumnsIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-                    </div>
 
 
-                )
-            })
-        }
-        fields.numOfRows = {
-            label: 'Rows',
-            visible: true,
-            type: 'custom',
-            render: (({ field, value, onChange }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <NumberInput step={1} leftSection={<RowsIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
 
-                    </div>
-
-                )
-            })
-        }
-    }
     if (data.props.borderExpanded === 'true') {
         fields.borderWidth = {
             visible: false,

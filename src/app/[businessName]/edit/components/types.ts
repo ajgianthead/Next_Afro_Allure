@@ -1,9 +1,17 @@
-import { Slot } from "@measured/puck"
+import { Slot, SlotComponent } from "@puckeditor/core"
 
 export interface Text {
     text: string
-    fontFamily?: string,
+    fontFamily: string,
     color: string,
+    lineHeight: number
+    letterSpacing: number
+    style?: string[]
+    align: string,
+    isLink: boolean
+    linkType: string
+    url: string
+    sections: string
 }
 
 export interface PreBuiltComponents {
@@ -29,7 +37,13 @@ export interface Gallery {
     gallery: Slot
 }
 export interface Card {
-    card: Slot
+    variant: string
+    cardCover: string
+    cardContent: Slot
+    imageSource: string | null
+    videoSource: string
+    linkToService: boolean,
+    service: string
 }
 export interface Footer {
     footer: Slot
@@ -37,17 +51,48 @@ export interface Footer {
 export interface CTA { }
 
 export interface RegularText extends Text {
-    color: string
     fontSize: number
     fontWeight: number
-    lineHeight: number
-    letterSpacing: number
-    style?: string[]
-    align: 'start' | 'center' | 'end' | 'justify'
 
 }
 
+export interface ColumnLayout {
+    columns: {
+        column: Slot
+    }[]
+    alignItems: string
+    numberOfColumns: number
+    gap: number
+}
+export interface RowLayout {
+    rows: {
+        row: Slot
+    }[]
+    justifyItems: string
+    numberOfRows: number
+    gap: number
+}
+export interface GridLayout {
+    alignItems: string // Aligns along the column
+    justifyItems: string // Aligns along the row
+
+    cells: {
+        cell: Slot
+    }[]
+
+    numberOfRows: number
+    numberOfColumns: number
+    gapX: number
+    gapY: number
+}
+
+export interface Section {
+    section: Slot
+    sectionName: string | null
+}
 export interface Container {
+    rotation: number
+    grow: boolean
     gapX: number
     gapY: number
     draggable: boolean
@@ -86,8 +131,6 @@ export interface Container {
     top: number
     bottom: number,
     flexDirection: 'flex-col' | 'flex-row' | 'grid'
-    numOfCols: number
-    numOfRows: number
     mainAxisLayout: 'start' | 'end' | 'center' | 'space-between' | 'space-around' | 'space-evenly'
     altAxisLayout: 'start' | 'end' | 'center' | 'baseline' | 'stretch'
 }
@@ -121,6 +164,7 @@ export interface VideoComponent extends ImageComponent {
     autoPlay: boolean
     speed: number
     loop: boolean
+    height: number
 }
 
 export interface HyperLink extends RegularText {
@@ -128,21 +172,23 @@ export interface HyperLink extends RegularText {
     newTab: boolean
 }
 
-export interface ButtonContainer extends Omit<Container, 'content'>, RegularText {
+export interface ButtonContainer extends Omit<Container, 'content'>, Omit<RegularText, 'isLink' | 'sections' | 'url' | 'linkType'> {
     action: string
     link: string
     variant: string
 }
 
 export interface Components {
+    Column: ColumnLayout
+    Row: RowLayout
+    Grid: GridLayout
     Container: Container
+    Section: Section
     Navbar: Navbar
     HeroSection: HeroSection
     AboutBusiness: About
     Card: Card
-    // Gallery: Gallery
-    // CTA: CTA
-    // Footer: Footer
+    Footer: Footer
     CustomizableText: RegularText
     HeadingOne: Text
     HeadingTwo: Text

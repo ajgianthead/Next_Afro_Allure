@@ -1,4 +1,7 @@
-import { SlotComponent } from "@measured/puck"
+'use client'
+
+
+import { SlotComponent } from "@puckeditor/core"
 import { heroSectionFields } from "./fields"
 
 export const HeroSectionComponent: any = {

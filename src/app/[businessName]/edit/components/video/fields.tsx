@@ -1,8 +1,8 @@
-import { Fields } from "@measured/puck"
-import { VideoComponent } from "../../constants"
+import { Fields } from "@puckeditor/core"
 import { Checkbox, ColorInput, Input, NumberInput, SegmentedControl, Select } from "@mantine/core"
 import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUp, ArrowUpIcon, LocateFixed, Square } from "lucide-react"
 import { BorderAllIcon, BorderBottomIcon, BorderLeftIcon, BorderRightIcon, BorderTopIcon, CornerBottomLeftIcon, CornerBottomRightIcon, CornersIcon, CornerTopLeftIcon, CornerTopRightIcon } from "@radix-ui/react-icons"
+import { VideoComponent } from "../types"
 
 export const videoResolvedFields: (data: any, params: any) => {} = (data, params) => {
     let fields: Fields<VideoComponent, {}> = {
@@ -60,6 +60,18 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
         width: {
             type: 'custom',
             label: 'Width',
+            render: ({ value, onChange, field }) => {
+                return (
+                    <div className="grid grid-cols-4 items-center gap-2">
+                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
+                        <NumberInput size="xs" value={value!} radius={'md'} onChange={(e) => onChange(Number(e))} className='w-full col-span-3' />
+                    </div>
+                )
+            }
+        },
+        height: {
+            type: 'custom',
+            label: 'Height',
             render: ({ value, onChange, field }) => {
                 return (
                     <div className="grid grid-cols-4 items-center gap-2">

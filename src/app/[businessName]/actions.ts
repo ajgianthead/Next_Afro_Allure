@@ -32,60 +32,61 @@ export const fetchBusinessPolicies = async (policyId: string) => {
 
 
 // Helper function that checks to see if a certain timeslot if available for booking or rescheduling
-export const checkSlots = async (timeSlot: {
-    start?: string;
-    end?: string;
-    appointmentLength?: number;
-}, availability: any, appointments: any, zone: string) => {
-    const beginDay = DateTime.fromISO(timeSlot.start!).startOf('day').toISO()!
-    const endDay = DateTime.fromISO(timeSlot.end!).endOf('day').toISO()!
+export const
+    checkSlots = async (timeSlot: {
+        start?: string;
+        end?: string;
+        appointmentLength?: number;
+    }, availability: any, appointments: any, zone: string) => {
+        const beginDay = DateTime.fromISO(timeSlot.start!).startOf('day').toISO()!
+        const endDay = DateTime.fromISO(timeSlot.end!).endOf('day').toISO()!
 
-    const formattedAv = await getAvailability(beginDay, endDay, availability, zone)
-    const formattedUnav = await getUnavailability(beginDay, endDay, appointments, zone)
+        const formattedAv = await getAvailability(beginDay, endDay, availability, zone)
+        const formattedUnav = await getUnavailability(beginDay, endDay, appointments, zone)
 
-    const { availableSlots } = getSlots({
-        from: beginDay,
-        to: endDay,
-        duration: timeSlot.appointmentLength!,
-        availability: formattedAv,
-        unavailability: formattedUnav,
-        outputTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    })
-    // Format the slots right
-    let result: string[][] = [[availableSlots[0].from]]; // [[9, 12], [3, 6], [7, 9]]
-    for (let j = 0; j < availableSlots.length; j++) {
-        if (j === availableSlots.length - 1) {
-            result[result.length - 1].push(availableSlots[j].to)
-            continue
+        const { availableSlots } = getSlots({
+            from: beginDay,
+            to: endDay,
+            duration: timeSlot.appointmentLength!,
+            availability: formattedAv,
+            unavailability: formattedUnav,
+            outputTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        })
+        // Format the slots right
+        let result: string[][] = [[availableSlots[0].from]]; // [[9, 12], [3, 6], [7, 9]]
+        for (let j = 0; j < availableSlots.length; j++) {
+            if (j === availableSlots.length - 1) {
+                result[result.length - 1].push(availableSlots[j].to)
+                continue
+            }
+            if (availableSlots[j].to !== availableSlots[j + 1].from) {
+                result[result.length - 1].push(availableSlots[j].to)
+                result.push([availableSlots[j + 1].from])
+            }
+            continue;
         }
-        if (availableSlots[j].to !== availableSlots[j + 1].from) {
-            result[result.length - 1].push(availableSlots[j].to)
-            result.push([availableSlots[j + 1].from])
-        }
-        continue;
-    }
-    // Generate timeslots
-    let res = []
-    for (let i = 0; i < result.length; i++) {
-        let timeStart = DateTime.fromISO(result[i][0])
-        let movingTime = DateTime.fromISO(result[i][0])
-        let timeEnd = DateTime.fromISO(result[i][result[i].length - 1])
-        while (movingTime < timeEnd) {
-            movingTime = timeStart
-            movingTime = movingTime.plus({ minutes: timeSlot.appointmentLength })
-            if (movingTime <= timeEnd) { // length
-                res.push(timeStart.toISO())
-                timeStart = timeStart.plus({ minutes: 10 }) // increment
-            } else {
-                break;
+        // Generate timeslots
+        let res = []
+        for (let i = 0; i < result.length; i++) {
+            let timeStart = DateTime.fromISO(result[i][0])
+            let movingTime = DateTime.fromISO(result[i][0])
+            let timeEnd = DateTime.fromISO(result[i][result[i].length - 1])
+            while (movingTime < timeEnd) {
+                movingTime = timeStart
+                movingTime = movingTime.plus({ minutes: timeSlot.appointmentLength })
+                if (movingTime <= timeEnd) { // length
+                    res.push(timeStart.toISO())
+                    timeStart = timeStart.plus({ minutes: 10 }) // increment
+                } else {
+                    break;
+                }
             }
         }
+
+
+        return res
+
     }
-
-
-    return res
-
-}
 
 export const cancelAppointment = async (appointmentID: string) => {
     // Check if appointment still exists

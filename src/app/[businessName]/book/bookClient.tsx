@@ -9,7 +9,7 @@ import Stepper from '@mui/joy/Stepper';
 import Step from '@mui/joy/Step';
 import StepButton from '@mui/joy/StepButton';
 import StepIndicator from '@mui/joy/StepIndicator';
-import { Check } from 'lucide-react'
+import { ArrowLeftCircleIcon, Check } from 'lucide-react'
 import Card from '@tailus-ui/Card'
 import Separator from "@tailus-ui/Separator"
 import Link from 'next/link'
@@ -26,7 +26,7 @@ import Dialog from '@components/Dialog';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { BookingData, BookingWrapper, useBooking } from '@utils/context/BookingDataContext';
-import { Card as MUICard, Button as MUIButton, Checkbox, Snackbar, Modal, DialogContent, DialogTitle, ModalClose, Typography, ModalDialog } from '@mui/joy';
+import { Card as MUICard, Button as MUIButton, Checkbox, Snackbar, Modal, DialogContent, DialogTitle, ModalClose, Typography, ModalDialog, Divider } from '@mui/joy';
 
 export default function BookClient({ businessData }: {
     businessData: any
@@ -52,8 +52,8 @@ const Book = ({ businessName }: { businessName: string }) => {
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [components, setComponents] = useState<any[]>([])
     const [steps, setSteps] = useState<string[]>([])
-    const [agreedAfroAllure, setAgreedAfroAllure] = useState<boolean>(true)
-    const [agreedBusiness, setAgreedBusiness] = useState<boolean>(true)
+    const [agreedAfroAllure, setAgreedAfroAllure] = useState<boolean>(false)
+    const [agreedBusiness, setAgreedBusiness] = useState<boolean>(false)
     useEffect(() => {
         // Get businessID
         if (data.booking_policy) {
@@ -116,7 +116,7 @@ const Book = ({ businessName }: { businessName: string }) => {
     const [rbbOpen, setRbbOpen] = useState(data.booking_policy.read_before_booking.length > 0)
 
     return (
-        <div>
+        <div className='flex justify-center items-center flex-col'>
             <Modal open={rbbOpen} onClose={() => {
                 setRbbOpen(false)
             }}>
@@ -146,8 +146,20 @@ const Book = ({ businessName }: { businessName: string }) => {
             >
                 {error}
             </Snackbar>
-            {!isLoading ? <div className='w-full pt-10 px-20  flex flex-col overflow-hidden'>
-                <Stepper sx={{ width: '100%', marginBottom: 5 }}>
+            <div className='w-full grid grid-cols-3 p-5'>
+                <a href="/afroallure" className='items-center flex max-w-min'>
+                    <Caption className='flex text-md items-center gap-2 cursor-pointer'>
+                        <ArrowLeftCircleIcon size={18} />
+                        Back
+                    </Caption>
+                </a>
+                <div className='flex justify-center'>
+                    <Typography level='h1'>LOGO</Typography>
+                </div>
+            </div>
+            <Divider orientation='horizontal' className="px-10" />
+            {!isLoading ? <div className='md:w-3/4 w-full justify-center items-center mt-5  flex flex-col overflow-hidden'>
+                {/* <Stepper sx={{ width: '100%', marginBottom: 5 }}>
                     {steps.map((step: string, index: number) => (
                         <Step
                             key={step}
@@ -172,8 +184,15 @@ const Book = ({ businessName }: { businessName: string }) => {
                             </StepButton>
                         </Step>
                     ))}
-                </Stepper>
+                </Stepper> */}
+
                 <div className='w-full h-full flex-col p-5'>
+                    <div className='mb-5'>
+                        <CircularProgress size="md" determinate value={((activeStep + 1) / steps.length) * 100}>
+                            {`${activeStep + 1} / ${steps.length}`}
+                        </CircularProgress>
+                    </div>
+
                     {components[activeStep]}
                 </div>
                 <div className='w-full flex justify-between pb-2'>
@@ -569,12 +588,11 @@ const ClientInfo = ({ setRbbOpen, agreedAfroAllure, agreedBusiness, setAgreedAfr
 const DateTimePicker = () => {
     const userZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
-    const [date, setDate] = useState<any>(
+    const [date, setDate] = useState<DateTime<true> | DateTime<false> | undefined>(
         Object.values(data.selectedDateTime).length
             ? DateTime.fromISO(data.selectedDateTime.start!).setZone(userZone).startOf('day')
             : undefined
     );
-    console.log(date)
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [slots, setSlots] = useState<any>({})
     const [currSlots, setCurrSlots] = useState<any[]>([]);
@@ -676,6 +694,7 @@ const DateTimePicker = () => {
     }
 
     const handleDateChange = async (value: DateTime) => {
+        setDate(value)
         if (Object.keys(slots).length) { // If slots exist
             const fetchedSlots = slots[value.toISODate()!]
             // Get slot array based on date
@@ -701,27 +720,63 @@ const DateTimePicker = () => {
     }
 
     return (
-        <Card className='flex'>
-            <div className='w-1/2'>
-                <LocalizationProvider dateAdapter={AdapterLuxon}>
-                    <DateCalendar onMonthChange={handleMonthChange} disablePast value={date} loading={isLoading} onChange={handleDateChange} />
-                </LocalizationProvider>
+        <div>
+            <div className='mb-5'>
+                <Title>Select Date & Time</Title>
+                <Caption>Pick a date and time from the available time slots</Caption>
             </div>
-            <div>
-                <Title>Available Time Slots</Title>
-                <div className='flex gap-2 w-full flex-wrap mt-5'>
-                    {
-                        currSlots.map((time: DateTime, index: number) => {
-                            return (
-                                <div key={index}>
-                                    <TimeSlot startTime={time} userZone={userZone} />
-                                </div>
-                            )
-                        })
-                    }
+            <Card className='grid grid-cols-1 md:grid-cols-2 justify-items-stretch h-auto md:h-[400px]'>
+                <div className='md:border-r-1 overflow-hidden w-full'>
+                    <LocalizationProvider dateAdapter={AdapterLuxon}>
+                        <DateCalendar sx={{
+                            width: '100%',
+
+                            '&.MuiDateCalendar-root': {
+                                margin: '5px',
+                                height: '400px',
+                                width: '100%',
+                                maxHeight: 'none',
+                                '& .MuiPickersCalendarHeader-root': {
+                                    // borderBottom: '1px solid #c3c3c3',
+                                    // marginRight: 2
+                                },
+                                '& .MuiDayCalendar-weekDayLabel': {
+                                    fontSize: '12px',
+                                },
+                                '& div[role="row"]': {
+                                    justifyContent: 'space-around',
+                                },
+                                '& .MuiDayCalendar-slideTransition': {
+                                    minHeight: '500px',
+                                },
+                                '& .MuiPickersDay-root': {
+                                    height: '50px',
+                                    width: '50px',
+                                    fontSize: '14px',
+                                },
+                            },
+                        }} onMonthChange={handleMonthChange} disablePast value={date} loading={isLoading} onChange={handleDateChange} />
+                    </LocalizationProvider>
                 </div>
-            </div>
-        </Card>
+                {date ? <div className='pl-5'>
+                    <Title>{`${date?.toFormat('cccc')}, ${date?.toFormat('LLLL dd')}`}</Title>
+                    <div className='my-2'>
+                        <Divider />
+                    </div>
+                    <div className='grid grid-cols-2 gap-2 w-full mt-5 overflow-y-scroll h-[250px]'>
+                        {
+                            currSlots.map((time: DateTime, index: number) => {
+                                return (
+                                    <div key={index}>
+                                        <TimeSlot startTime={time} userZone={userZone} />
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                </div> : <></>}
+            </Card>
+        </div>
 
     )
 }
@@ -734,7 +789,7 @@ const TimeSlot = ({ startTime, userZone }: {
     const start = startTime.setZone(userZone).toLocaleString(DateTime.TIME_SIMPLE)
     const endTime = startTime.setZone(userZone).plus({ minutes: data.services.filter((service) => service.id === data.selectedService)[0].length }).toISO()!
 
-
+    const selected = startTime.toISO() !== data.selectedDateTime.start && endTime !== data.selectedDateTime.end
     return (
         <div onClick={() => {
             setData({
@@ -747,7 +802,7 @@ const TimeSlot = ({ startTime, userZone }: {
             })
 
 
-        }} style={{ borderWidth: startTime.toISO() !== data.selectedDateTime.start && endTime !== data.selectedDateTime.end ? 1 : 3 }} className='text-sm font-medium border-primary-500 bg-primary-100 px-3 cursor-pointer py-2 rounded-md'>
+        }} style={{ borderWidth: selected ? 1 : 3 }} className='text-md font-medium text-center border-[#ECECEC] bg-white px-3 cursor-pointer py-3 rounded-md'>
             {start}
         </div>
     )
@@ -763,7 +818,10 @@ const ServiceSelection = () => {
     }, [data.services]);
     return (
         <div className=''>
-            <Title className='mb-5'>Select a Service</Title>
+            <div className='mb-5'>
+                <Title>Select Service</Title>
+                <Caption>Pick a service to start the booking process</Caption>
+            </div>
             <div className='mt-8 overflow-y-scroll'>
                 <div className='flex flex-wrap gap-2 mr-5 h-[350px]'>
                     {data.services.map((service: any, index: number) => {

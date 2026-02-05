@@ -1,25 +1,75 @@
-import { SlotComponent } from "@measured/puck"
-import { cardFields } from "./fields"
+'use client'
 
 
-export const CardComponent: any = {
-    fields: cardFields,
-    render: (({ card: Card }: { card: SlotComponent }) => {
+import { ComponentConfig, SlotComponent } from "@puckeditor/core"
+import { resolveCardFields, defaultCardfields } from "./fields"
+import { Card as MUICard, CardContent, CardCover } from "@mui/joy"
+import { Card } from "../../types"
+import { useRouter } from "next/navigation"
+import { useEditorContext } from "@utils/context/EditorContext"
+import CryptoJS from "crypto-js";
+
+
+export const CardComponent: ComponentConfig<Card> = {
+    resolveFields: resolveCardFields,
+    fields: defaultCardfields,
+    render: (({ cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service }) => {
+        const router = useRouter()
+        const { editorState } = useEditorContext()
         return (
-            <div>
-                <Card />
+            <div onClick={() => {
+                if (linkToService) {
+                    router.push(`/${editorState.businessName}/book?service=${CryptoJS.AES.encrypt(service, process.env.NEXT_PUBLIC_SECRET!).toString()}`)
+                }
+            }}>
+                {variant === 'basic' ? <MUICard sx={{ minWidth: 300, flexGrow: 1 }}>
+                    <CardContent>
+                        <Content />
+                    </CardContent>
+                </MUICard> : <MUICard sx={{ minWidth: 300, flexGrow: 1 }}>
+                    {cardCover === 'image' ? <CardCover >
+                        <img
+                            src={imageSource!}
+                            srcSet={`${imageSource} 2x`}
+                            loading="lazy"
+                            alt=""
+                        />
+                    </CardCover> : <CardCover>
+                        <video
+                            autoPlay
+                            loop
+                            muted
+                            poster="https://assets.codepen.io/6093409/river.jpg"
+                        >
+                            <source
+                                src={videoSource}
+                                type="video/mp4"
+                            />
+                        </video>
+                    </CardCover>}
+
+                    <CardCover
+                        sx={{
+                            background:
+                                'linear-gradient(to top, rgba(0, 0, 0, 0.705), rgba(0,0,0,0) 200px), linear-gradient(to top, rgba(0, 0, 0, 0.459), rgba(0,0,0,0) 300px)',
+                        }}
+                    />
+                    <CardContent>
+                        <Content />
+                    </CardContent>
+                </MUICard>}
             </div>
 
         )
     }),
     defaultProps: {
-        card: [{
+        cardContent: [{
             type: 'Container',
             props: {
                 gapX: 0,
                 gapY: 3,
                 draggable: true,
-                padding: 1,
+                padding: 0,
                 borderRadiusExpanded: 'false',
                 borderRadiusTopLeft: 0,
                 borderRadiusTopRight: 0,
@@ -32,14 +82,14 @@ export const CardComponent: any = {
                 marginRight: 0,
                 marginTop: 0,
                 margin: 0,
-                paddingBottom: 2,
-                paddingLeft: 2,
-                paddingRight: 2,
-                paddingTop: 2,
-                backgroundColor: '#fff',
+                paddingBottom: 0,
+                paddingLeft: 0,
+                paddingRight: 0,
+                paddingTop: 0,
+                backgroundColor: '#f0000006b',
                 borderColor: '#eee',
                 borderRadius: 8,
-                borderWidth: 1,
+                borderWidth: 0,
                 borderBottom: 0,
                 borderExpanded: 'false',
                 borderLeft: 0,
@@ -61,26 +111,47 @@ export const CardComponent: any = {
                     {
                         type: 'HeadingOne',
                         props: {
-
-                            text: 'Title'
+                            color: '#fff',
+                            fontFamily: 'Roboto',
+                            letterSpacing: 1.2,
+                            lineHeight: 1.5,
+                            align: 'start',
+                            style: [],
+                            text: 'Heading'
                         }
                     },
                     {
                         type: 'TitleLarge',
                         props: {
-
-                            text: 'Subtitle'
+                            color: '#fff',
+                            fontFamily: 'Roboto',
+                            letterSpacing: 1.2,
+                            lineHeight: 1.5,
+                            align: 'start',
+                            style: [],
+                            text: 'Title'
                         }
                     },
                     {
                         type: 'BodyMedium',
                         props: {
-
-                            text: 'Description'
+                            color: '#fff',
+                            fontFamily: 'Roboto',
+                            letterSpacing: 1.2,
+                            lineHeight: 1.5,
+                            align: 'start',
+                            style: [],
+                            text: 'Body'
                         }
                     },
                 ]
             }
-        }]
+        }],
+        variant: 'basic',
+        cardCover: 'image',
+        imageSource: "https://jappbqntqogmnoluifzx.supabase.co/storage/v1/object/public/editor-media-pool/placeholder_photo.jpg",
+        videoSource: "https://assets.codepen.io/6093409/river.mp4",
+        linkToService: false,
+        service: ""
     }
 }

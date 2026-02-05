@@ -1,4 +1,4 @@
-import { Fields } from "@measured/puck"
+import { Fields } from "@puckeditor/core"
 import { ImageComponent } from "../types"
 import { useEffect, useRef, useState } from "react"
 import { fetchBusinessUser, fetchUser } from "app/dashboard/(other)/actions"
@@ -13,7 +13,7 @@ import { BorderAllIcon, BorderBottomIcon, BorderLeftIcon, BorderRightIcon, Borde
 import { Caption } from "@tailus-ui/typography"
 
 
-const imageModal = (open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>, onChange: (value: string | null) => void, value: string | null) => {
+export const imageModal = (open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>, onChange: (value: string | null) => void, value: string | null) => {
     const fileInput = useRef<any>(null)
     const [images, setImages] = useState<{
         path: string

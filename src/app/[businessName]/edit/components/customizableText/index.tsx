@@ -1,21 +1,20 @@
-import { customizableTextFields } from "./fields"
+'use client'
 
-export const CustomizableTextComponent: any = {
+
+import { ComponentConfig } from "@puckeditor/core"
+import { RegularText } from "../types"
+import { customizableTextFields, resolveCustomizableTextFields } from "./fields"
+import { useEditorContext } from "@utils/context/EditorContext"
+import { customTextProps } from "../defaultStyles"
+
+export const CustomizableTextComponent: ComponentConfig<RegularText> = {
     label: 'Regular Text',
-    fields: customizableTextFields,
-    defaultProps: {
-        text: 'Customizable Text',
-        fontSize: 1,
-        fontWeight: 400,
-        letterSpacing: 1.2,
-        lineHeight: 1.5,
-        color: '#000000',
-        style: [],
-        fontFamily: 'Inter',
-        align: 'start'
-    },
-    render: ({ text, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align }: any) => {
-        return <p style={{
+    // fields: customizableTextFields,
+    resolveFields: resolveCustomizableTextFields,
+    defaultProps: customTextProps,
+    render: ({ text, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, sections, url, isLink, linkType }) => {
+        const { editorState } = useEditorContext()
+        return isLink ? <a href={linkType === 'external' ? url : `${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/${editorState.businessName}/#${sections.toLowerCase().replace(/\s+/g, "")}`} style={{
             textWrap: 'wrap',
             fontSize: `${fontSize}rem`,
             fontFamily,
@@ -23,7 +22,19 @@ export const CustomizableTextComponent: any = {
             color,
             letterSpacing,
             lineHeight,
-            textAlign: align,
+            textAlign: align as any,
+            textDecoration: style?.includes('underline') ? 'underline' : "none",
+            fontStyle: style?.includes('italic') ? 'italic' : 'normal'
+
+        }} className={`apply-font-${id.split('-')[1]}`}>{text}</a> : <p style={{
+            textWrap: 'wrap',
+            fontSize: `${fontSize}rem`,
+            fontFamily,
+            fontWeight: style?.includes('bold') ? 'bold' : fontWeight,
+            color,
+            letterSpacing,
+            lineHeight,
+            textAlign: align as any,
             textDecoration: style?.includes('underline') ? 'underline' : "none",
             fontStyle: style?.includes('italic') ? 'italic' : 'normal'
 

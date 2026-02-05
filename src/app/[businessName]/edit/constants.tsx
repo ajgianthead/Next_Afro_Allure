@@ -1,7 +1,7 @@
 import { TypographySystem } from "@mui/joy";
-import { Box, ImageIcon, Layers, MousePointerClick, Type, Video } from "lucide-react";
-import type { Config, Slot } from "@measured/puck";
-import "@measured/puck/puck.css";
+import { Box, Columns, Grid2X2, Heading, ImageIcon, Layers, MousePointerClick, Rows, Type, Video } from "lucide-react";
+import type { Config, Slot } from "@puckeditor/core";
+import "@puckeditor/core/puck.css";
 import { CardComponent } from "./components/prebuitComponents/card";
 import { HeroSectionComponent } from "./components/prebuitComponents/heroSection";
 import { AboutBusinessComponent } from "./components/prebuitComponents/aboutBusiness/index";
@@ -13,6 +13,12 @@ import { CustomizableTextComponent } from "./components/customizableText";
 import { ContainerComponent } from "./components/container";
 import { textPresetsComponents } from "./components/textPresets";
 import { Components } from "./components/types";
+import { GalleryComponent } from "./components/prebuitComponents/gallery";
+import { ColumnLayoutComponent } from "./components/column";
+import { RowLayoutComponent } from "./components/row";
+import { GridLayoutComponent } from "./components/grid";
+import { FooterComponent } from "./components/prebuitComponents/footer";
+import { SectionComponent } from "./components/section";
 
 
 
@@ -21,14 +27,13 @@ export const config: Config<Components> = {
     categories: {
         layout: {
             defaultExpanded: false,
-            components: ['Container'],
+            components: ['Container', 'Column', 'Row', 'Grid', 'Section'],
         },
         prebuilt: {
             title: 'Pre-built Components',
             components: ['Navbar', 'HeroSection', 'AboutBusiness',
                 'Card',
-                // 'Gallery',
-                // 'CTA', 'Footer'
+                'Footer'
             ]
         },
         media: {
@@ -47,9 +52,14 @@ export const config: Config<Components> = {
     },
     components: {
         Card: CardComponent,
+        Column: ColumnLayoutComponent,
+        Row: RowLayoutComponent,
+        Grid: GridLayoutComponent,
+        Section: SectionComponent,
         HeroSection: HeroSectionComponent,
         AboutBusiness: AboutBusinessComponent,
         Navbar: NavbarComponent,
+        Footer: FooterComponent,
         Button: ButtonComponent,
         Video: VideoComponent,
         Image: ImageComponent,
@@ -103,11 +113,11 @@ export const drawerItemStyleProps = new Map<
         },
     ],
     [
-        "Gallery",
+        "Footer",
         {
             icon: <Layers className="text-slate-300" />,
             fontLevel: "body-md",
-            label: 'Gallery'
+            label: 'Footer'
         },
     ],
     [
@@ -144,6 +154,38 @@ export const drawerItemStyleProps = new Map<
         },
     ],
     [
+        "Column",
+        {
+            icon: <Columns className="text-slate-300" />,
+            fontLevel: "body-md",
+            label: 'Column'
+        },
+    ],
+    [
+        "Row",
+        {
+            icon: <Rows className="text-slate-300" />,
+            fontLevel: "body-md",
+            label: 'Row'
+        },
+    ],
+    [
+        "Grid",
+        {
+            icon: <Grid2X2 className="text-slate-300" />,
+            fontLevel: "body-md",
+            label: 'Grid'
+        },
+    ],
+    [
+        "Section",
+        {
+            icon: <Grid2X2 className="text-slate-300" />,
+            fontLevel: "body-md",
+            label: 'Section'
+        },
+    ],
+    [
         'Image',
         {
             icon: <ImageIcon className="text-slate-300" />,
@@ -162,32 +204,32 @@ export const drawerItemStyleProps = new Map<
     [
         "HeadingOne",
         {
-            icon: <Type className="text-slate-300" />,
-            fontLevel: "h1",
+            icon: <Heading className="text-slate-300" />,
+            fontLevel: "body-md",
             label: 'Heading 1'
         },
     ],
     [
         "HeadingTwo",
         {
-            icon: <Type className="text-slate-300" />,
-            fontLevel: "h2",
+            icon: <Heading className="text-slate-300" />,
+            fontLevel: "body-md",
             label: 'Heading 2'
         },
     ],
     [
         "HeadingThree",
         {
-            icon: <Type className="text-slate-300" />,
-            fontLevel: "h3",
+            icon: <Heading className="text-slate-300" />,
+            fontLevel: "body-md",
             label: 'Heading 3'
         },
     ],
     [
         "HeadingFour",
         {
-            icon: <Type className="text-slate-300" />,
-            fontLevel: "h4",
+            icon: <Heading className="text-slate-300" />,
+            fontLevel: "body-md",
             label: 'Heading 4'
         },
     ],
@@ -195,7 +237,7 @@ export const drawerItemStyleProps = new Map<
         "TitleLarge",
         {
             icon: <Type className="text-slate-300" />,
-            fontLevel: "title-lg",
+            fontLevel: "body-md",
             label: 'Title Large'
         },
     ],
@@ -203,7 +245,7 @@ export const drawerItemStyleProps = new Map<
         "TitleMedium",
         {
             icon: <Type className="text-slate-300" />,
-            fontLevel: "title-md",
+            fontLevel: "body-md",
             label: 'Title Medium'
         },
     ],
@@ -211,7 +253,7 @@ export const drawerItemStyleProps = new Map<
         "TitleSmall",
         {
             icon: <Type className="text-slate-300" />,
-            fontLevel: "title-sm",
+            fontLevel: "body-md",
             label: 'Title Small'
         },
     ],
@@ -219,7 +261,7 @@ export const drawerItemStyleProps = new Map<
         "BodyLarge",
         {
             icon: <Type className="text-slate-300" />,
-            fontLevel: "body-lg",
+            fontLevel: "body-md",
             label: 'Body Large'
         },
     ],
@@ -235,7 +277,7 @@ export const drawerItemStyleProps = new Map<
         "BodySmall",
         {
             icon: <Type className="text-slate-300" />,
-            fontLevel: "body-sm",
+            fontLevel: "body-md",
             label: 'Body Small'
         },
     ],
@@ -243,7 +285,7 @@ export const drawerItemStyleProps = new Map<
         "BodyExtraSmall",
         {
             icon: <Type className="text-slate-300" />,
-            fontLevel: "body-xs",
+            fontLevel: "body-md",
             label: 'Body Extra Small'
         },
     ],

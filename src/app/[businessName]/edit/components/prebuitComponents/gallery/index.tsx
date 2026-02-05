@@ -1,4 +1,7 @@
-import { SlotComponent } from "@measured/puck";
+'use client'
+
+
+import { SlotComponent } from "@puckeditor/core";
 import { galleryFields } from "./fields";
 import { galleryDefaultProps } from "./defaultProps";
 
@@ -6,7 +9,7 @@ export const GalleryComponent: any = {
     fields: galleryFields,
     render: (({ gallery: Gallery }: { gallery: SlotComponent }) => {
         return (
-            <div>
+            <div className="w-full">
                 <Gallery />
             </div>
         )
@@ -57,7 +60,7 @@ export const GalleryComponent: any = {
                     flexDirection: 'grid',
                     mainAxisLayout: 'start',
                     altAxisLayout: 'start',
-                    content: galleryDefaultProps
+                    content: [...galleryDefaultProps]
                 }
             }
         ]

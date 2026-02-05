@@ -129,7 +129,7 @@ export async function register(cred: { name: string; email: string; password: st
                     email: data.data.user?.email!,
                     stripe_acc_id: account.id,
                     default_availability: defaultAvailability.id,
-                    url_name: credentials.businessName.split(" ").join().toLowerCase(),
+                    url_name: credentials.businessName.split(" ").join("").toLowerCase(),
                     account_settings: {
                         "app_reminders": {
                             "email_1": false,
@@ -183,33 +183,6 @@ export async function register(cred: { name: string; email: string; password: st
                         availability_data: defaultAvailability
                     }
                 ]).select(`*`).single().then(async (res) => {
-                    await supabase.from('web_editors').insert([{
-                        business_id: res.data?.business_id,
-                        type: 'SECTIONS',
-                        section_data: [
-                            {
-                                "id": crypto.randomUUID(),
-                                "html": `<h2>Book with ${business?.business_name} now</h2>`,
-                                "type": "text",
-                                "content": {
-                                    "type": "doc",
-                                    "content": [
-                                        {
-                                            "type": "heading",
-                                            "content": [
-                                                {
-                                                    "text": `Book with ${business?.business_name} now`,
-                                                    "type": "text"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                "editing": false
-                            },
-                        ]
-
-                    }])
                     return await supabase.from('services').insert([
                         {
                             name: "Box Braids",
@@ -225,6 +198,7 @@ export async function register(cred: { name: string; email: string; password: st
 
                         }
                     ]).select(`*, business_users(*)`).single()
+
                 })
 
             })

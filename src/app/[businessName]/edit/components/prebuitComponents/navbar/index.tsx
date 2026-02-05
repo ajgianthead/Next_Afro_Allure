@@ -1,130 +1,19 @@
-import { registerOverlayPortal, SlotComponent } from "@measured/puck";
+'use client'
+
+
+import { registerOverlayPortal, SlotComponent } from "@puckeditor/core";
 import { MenuIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ButtonTypeMap, Checkbox as MUICheckbox, CircularProgress, DialogActions, DialogContent, Divider, Drawer, ExtendButton, IconButton, Input as MUIInput, Modal, ModalClose, ModalDialog, Button as MUIButton, ToggleButtonGroup, TypographySystem } from "@mui/joy";
 import { ButtonLinkDefaultProps, navbarFields } from "./fields";
+import { navbarProps } from "../../defaultStyles";
 
 
 
 
 export const NavbarComponent: any = {
     fields: navbarFields,
-    defaultProps: {
-        variants: 'default',
-        logo: [{
-            type: 'Container',
-            props: {
-                borderWidth: 0,
-                backgroundColor: '#fff',
-                padding: 0,
-                content: [
-                    {
-                        type: 'HeadingOne',
-                        props: {
-                            text: 'LOGO'
-                        }
-                    }
-                ]
-            }
-        }],
-        menu: [
-            {
-                item: [{
-                    type: 'Button',
-                    props: {
-                        action: 'REDIRECT',
-                        text: 'About Business',
-                        link: "https://afroallure.co/",
-                        ...ButtonLinkDefaultProps
-                    },
-                }]
-            },
-            {
-                item: [{
-
-                    type: 'Button',
-                    props: {
-                        action: 'REDIRECT',
-                        text: 'Gallery',
-                        link: "https://afroallure.co/",
-                        ...ButtonLinkDefaultProps
-                    },
-                }]
-            },
-            {
-                item: [{
-
-                    type: 'Button',
-                    props: {
-                        action: 'REDIRECT',
-                        text: 'Services',
-                        link: "https://afroallure.co/",
-                        ...ButtonLinkDefaultProps
-                    },
-                }]
-            },
-            {
-                item: [{
-
-                    type: 'Button',
-                    props: {
-                        action: 'REDIRECT',
-                        text: 'Policies and Conditions',
-                        link: "https://afroallure.co/",
-                        ...ButtonLinkDefaultProps
-                    },
-                }]
-            },
-            {
-                item: [{
-                    type: 'Button',
-                    props: {
-                        action: 'REDIRECT',
-                        text: 'Contact',
-                        link: "https://afroallure.co/",
-                        ...ButtonLinkDefaultProps
-                    },
-
-                }
-                ]
-            },
-
-        ],
-
-        content: [
-            {
-                type: 'Container',
-                props: {
-                    padding: 0,
-                    margin: 0,
-                    marginExpanded: false,
-                    marginTop: 0,
-                    marginBottom: 0,
-                    marginLeft: 0,
-                    marginRight: 0,
-                    paddingExpanded: true,
-                    paddingRight: 2,
-                    paddingLeft: 2,
-                    paddingTop: 1.5,
-                    paddingBottom: 1.5,
-                    mainAxisLayout: 'space-between',
-                    altAxisLayout: 'center',
-                    borderWidth: 0,
-                    backgroundColor: '#fff',
-                    content: [
-
-                        {
-                            type: 'Container',
-                            props: {
-
-                                content: []
-                            }
-                        }
-                    ]
-                }
-            }
-        ]
-    },
+    defaultProps: navbarProps,
     render: ({ content: Navbar, logo: Logo, menu, puck }: any) => {
         const [open, setOpen] = useState<boolean>(false)
         const ref = useRef<HTMLDivElement>(null);
