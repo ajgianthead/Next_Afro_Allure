@@ -1,21 +1,21 @@
-import { stripe } from "../../../lib/utils";
+import { stripe } from "../../../../lib/utils";
 import pool from "@utils/dbPool";
 import { NextRequest, NextResponse } from "next/server";
 import mailchimp from '@mailchimp/mailchimp_transactional'
 import { checkAppointmentStatus, reminderTask, sendPaymentLink } from "trigger/reminder";
 import { DateTime } from "luxon";
-import NewAppointment from "../../../../emails/new-appointment";
+import NewAppointment from "../../../../../emails/new-appointment";
 import { Resend } from "resend";
-import AppointmentConfirmed from "../../../../emails/appointment-confirmed";
+import AppointmentConfirmed from "../../../../../emails/appointment-confirmed";
 import Stripe from "stripe";
 import { createClient } from "@utils/supabase/server";
-import { Database } from "../../../../lib/database.types";
-import { trackAppointmentBooked } from "../../../../lib/analytics";
+import { Database } from "../../../../../lib/database.types";
+import { trackAppointmentBooked } from "../../../../../lib/analytics";
 import { addCreateNewClient } from "app/dashboard/(other)/clients/actions";
 
 
 export async function POST(request: NextRequest) {
-  const endpointSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
+  const endpointSecret = process.env.NEXT_PUBLIC_CONNECTED_ACCOUNT_WEBHOOK_SECRET!;
   const rawBody = await request.arrayBuffer(); // ⬅️ equivalent to express.raw()
   const bodyBuffer = Buffer.from(rawBody);
   const sig = request.headers.get('stripe-signature');
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     })
   }
   const paymentIntent = event.data.object as Stripe.PaymentIntent;
-  const { purpose: paymentPurpose, appointment_id: appointmentID } = paymentIntent.metadata
+  const { purpose: paymentPurpose, appointment_id: appointmentID, appointmentType } = paymentIntent.metadata
 
   const client = await pool.connect()
   // const businessID = await (await client.query(`SELECT business FROM business_users bu WHERE bu.stripe_acc_id = $1`, [event.account])).rows[0].business
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
 
   // Handle the event
   switch (event.type) {
+    // Refund Cases
     case 'refund.created':
       try {
         const supabase = createClient<Database>()
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
       // Delete appointment
       try {
         await client.query('BEGIN')
-        const appointment = await client.query(`DELETE FROM appointments app WHERE app.id = $1  RETURNING *`, [appointmentID])
+        const appointment = await client.query(`DELETE FROM appointments app WHERE app.deposit_charge_id = $1  RETURNING *`, [paymentIntent.id])
         await client.query('COMMIT')
         // Send email and/or SMS confirming appointment
       } catch (error: any) {
@@ -82,10 +83,36 @@ export async function POST(request: NextRequest) {
       }
 
       break;
-    case 'payment_intent.processing':
-      // Then define and call a function to handle the event payment_intent.processing
-      break;
+    case 'payment_intent.payment_failed':
+      const { purpose } = paymentIntent.metadata
 
+      if (appointmentType === 'automated' && purpose !== 'EOA') {
+        try {
+          await client.query('BEGIN')
+
+          const appointment = await client.query(
+            `DELETE FROM appointments
+         WHERE deposit_charge_id = $1
+         AND status = 'processing'
+         RETURNING *`,
+            [paymentIntent.id]
+          )
+
+          if (appointment.rowCount === 0) {
+            console.log(
+              `No processing appointment found for PaymentIntent ${paymentIntent.id}`
+            )
+          }
+
+          await client.query('COMMIT')
+
+        } catch (error: any) {
+          console.error(error.message)
+          await client.query('ROLLBACK')
+        }
+      }
+
+      break
     // Payment Intent has been processed
     case 'payment_intent.succeeded':
       const transaction = await stripe.tax.transactions.createFromCalculation({
@@ -96,8 +123,8 @@ export async function POST(request: NextRequest) {
       if (paymentPurpose === 'EOA') {
         const res = (await client.query(`WITH updated AS (
           UPDATE appointments
-          SET service_paid = '$1', service_paid_type = 'PLATFORM', service_charge_id = $2, eoa_tax_transaction = $3, status = 'COMPLETED'
-          WHERE id = $4
+          SET service_paid = $1, service_paid_type = 'PLATFORM', service_charge_id = $2, eoa_tax_transaction = $3, status = 'COMPLETED', paid_amount = coalesce(paid_amount, 0) + $4 
+          WHERE id = $5
           RETURNING *
         )
         SELECT 
@@ -106,13 +133,13 @@ export async function POST(request: NextRequest) {
           business_users.email
         FROM updated
         JOIN business_users
-          ON updated.business = business_users.business_id`, [true, paymentIntent.id, transaction.id, appointmentID])).rows[0]
+          ON updated.business = business_users.business_id`, [true, paymentIntent.id, transaction.id, paymentIntent.amount, appointmentID])).rows[0]
         // Send reciept to email
       } else {
         const res = (await client.query(`WITH updated AS (
           UPDATE appointments
-          SET status = 'CONFIRMED', paid_deposit = $1, deposit_tax_transaction = $2
-          WHERE id = $3
+          SET status = 'CONFIRMED', paid_deposit = $1, deposit_tax_transaction = $2, paid_amount = coalesce(paid_amount, 0) + $3, amount_due = amount_due - $3
+          WHERE deposit_charge_id = $4
           RETURNING *
         )
         SELECT 
@@ -122,7 +149,7 @@ export async function POST(request: NextRequest) {
           business_user.account_settings
         FROM updated
         JOIN business_users
-          ON updated.business = business_users.business_id`, [true, transaction.id, appointmentID])).rows[0]
+          ON updated.business = business_users.business_id`, [true, transaction.id, paymentIntent.amount, paymentIntent.id])).rows[0]
         await client.query('COMMIT')
         const businessAddress = res.account_settings.business_address
         try {

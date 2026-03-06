@@ -449,6 +449,9 @@ const SectionSettings = ({ fields }: SettingsProps) => {
 
 const Settings = ({ fields, componentName }: { fields: SettingsProps['fields'], componentName: string }) => {
     if (componentName) {
+        if (componentName === 'Navbar') {
+            return fields
+        }
         if (componentName === 'CustomizableText') {
             return <TextSettings fields={fields} />
         }

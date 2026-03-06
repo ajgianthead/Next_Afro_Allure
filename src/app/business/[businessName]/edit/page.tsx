@@ -7,7 +7,7 @@ import { PostgrestError } from '@supabase/supabase-js';
 import { fetchGoogleFonts } from 'useGoogleFonts';
 import { EditorWrapper } from '@utils/context/EditorContext';
 import { createClient } from '@utils/supabase/server';
-import { Database } from '../../../../lib/database.types';
+import { Database } from '../../../../../lib/database.types';
 
 const Page = async ({ params }: { params: { businessName: string } }) => {
     const user = await fetchUser();

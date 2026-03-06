@@ -12,7 +12,7 @@ import Settings from "./settings";
 import { GoogleFont, loadAllFontsProgressively, loadGoogleFont, preloadFonts } from "useGoogleFonts";
 import { EditorConxtextProps, useEditorContext } from "@utils/context/EditorContext";
 import { Components } from "./components/types";
-import { Json } from "../../../../lib/database.types";
+import { Json } from "../../../../../lib/database.types";
 import { Accordion, Button } from "@mantine/core";
 
 

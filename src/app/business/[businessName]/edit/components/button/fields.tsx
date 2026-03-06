@@ -4,7 +4,8 @@ import { ButtonContainer } from "../types";
 import { FieldLabel, Fields, useGetPuck } from "@puckeditor/core";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowRightLeft, ArrowUp, ArrowUpDown, LocateFixed, PaintBucket, Signpost, Square, SquareDashedBottom, Type } from "lucide-react";
 import { IconButton, ToggleButtonGroup } from "@mui/joy";
-import { useEditorContext } from "@utils/context/EditorContext";
+import { EditorConxtextProps, useEditorContext } from "@utils/context/EditorContext";
+import { GoogleFont, loadGoogleFont } from "useGoogleFonts";
 
 export const buttonResolvedFields: (data: any) => {} = (data: any) => {
     let fields: Fields<ButtonContainer, {}> = {
@@ -58,7 +59,7 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
                     <div className="grid grid-cols-4 items-center gap-2">
                         <p className=" text-sm font-medium text-slate-400">{field.label}</p>
                         <Input
-                            onChange={(e: any) => { onChange(e) }}
+                            onChange={(e: any) => { onChange(e.target.value) }}
                             className="col-span-3 col-start-2"
                             size="xs"
                             value={value}
@@ -596,6 +597,8 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
             label: 'Font Family',
             labelIcon: <Type size={16} className="mr-1" />,
             render: ({ onChange, value, field, id }) => {
+                const { editorState }: { editorState: EditorConxtextProps } = useEditorContext()
+                loadGoogleFont(value!)
                 return (
                     <div className="grid grid-cols-4 items-center gap-2">
                         <p className="text-sm font-medium text-slate-400">{"Font"}</p>
@@ -604,9 +607,46 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
                             className="col-span-3"
                             size="xs"
                             radius={'md'}
+                            searchable
+                            value={value}
+                            onChange={(value) => {
+                                if (!value) return;
+                                loadGoogleFont(value);
+                                onChange(value);
+                            }}
+                            renderOption={({ option }) => {
+                                let hoveredEl: HTMLElement | null = null;
 
-                            placeholder="Roboto"
-                            data={['React', 'Angular', 'Vue', 'Svelte']}
+                                return <div
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                    }}
+                                    onMouseEnter={async (e) => {
+                                        const el = e.currentTarget;
+
+                                        // apply a temporary “loading” style
+                                        el.style.opacity = "0.5";  // slightly faded while font loads
+                                        el.style.transition = "opacity 0.15s ease";
+
+                                        await loadGoogleFont(option.value); // wait for font to start loading
+                                        el.style.fontFamily = option.value;
+
+                                        // remove the temporary style
+                                        el.style.opacity = "1";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.opacity = "1";
+                                        e.currentTarget.style.fontFamily = ""; // reset font if you want
+                                    }}
+                                >
+                                    {option.label}
+                                </div>
+                            }}
+
+                            data={editorState.fonts?.map((font: GoogleFont, index: number) => {
+                                return font.family
+                            })}
                         />
                     </div>
 

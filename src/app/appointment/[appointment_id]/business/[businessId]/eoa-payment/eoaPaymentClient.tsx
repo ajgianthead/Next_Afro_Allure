@@ -64,7 +64,6 @@ export default function EOAClient() {
                 body: JSON.stringify({
                     connectedAccountId: stripeID,
                     price: appointment.amount_due,
-                    app_fee: 200, // Change Stripe Account ID to be dynamic to business
                     purpose: "EOA",
                     client_email: appointment.client_metadata.email,
                     paymentIntent: appointment.service_charge_id,

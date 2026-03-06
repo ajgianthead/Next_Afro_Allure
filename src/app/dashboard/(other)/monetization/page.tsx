@@ -24,7 +24,7 @@ export default async function Page() {
             <div className="w-full md:w-1/2 mx-10">
                 <Card>
                     <div className="flex flex-col gap-2">
-                        <Text className="font-medium mb-0">Complete Stripe Onboarding</Text>
+                        <Text className="font-medium mb-0">Complete Monetization Onboarding</Text>
                         <Caption>Connect your account with Stripe to enable secure online payments, deposits, and payouts. Onboarding takes just a few minutes. Once complete, you’ll be able to start earning through AfroAllure.</Caption>
                         <Button target="_blank" component='a' href={business?.current_onboarding_link!} className="max-w-max flex justify-center items-center gap-1">Connect with Stripe <ExternalLinkIcon size={16} /></Button>
                     </div>

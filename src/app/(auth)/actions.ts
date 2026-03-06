@@ -7,6 +7,8 @@ import { createClient } from '../../../utils/supabase/server'
 import { Database } from '../../../lib/database.types'
 import { Time } from '@internationalized/date'
 import { stripe } from '../../lib/utils'
+import { createSubscriptionCheckout } from 'app/for-businesses/actions'
+import Stripe from 'stripe'
 
 
 const defaultAvailability: any = {
@@ -83,7 +85,7 @@ export async function login(cred: { email: string; password: string }) {
     return user
 }
 
-export async function register(cred: { name: string; email: string; password: string; }) {
+export async function register(cred: { name: string; email: string; password: string; }, subscription: boolean) {
     const supabase = createClient<Database>()
     const credentials = {
         businessName: cred.name,
@@ -97,6 +99,8 @@ export async function register(cred: { name: string; email: string; password: st
     if (data && data.email === credentials.email) {
         return "Email is already in use"
     }
+    let sessionUrl = "";
+
     const { data: user, error } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -108,6 +112,7 @@ export async function register(cred: { name: string; email: string; password: st
     })
         .then(async (data) => {
             // Create stripe account
+
             const account = await stripe.accounts.create({
                 controller: {
                     stripe_dashboard: {
@@ -121,14 +126,21 @@ export async function register(cred: { name: string; email: string; password: st
                     },
                 },
             })
+            const customer = await stripe.customers.create({
+                email: data.data.user?.email
+            })
 
-            return await supabase.from('business_users').insert([
+            if (subscription) {
+                sessionUrl = (await createSubscriptionCheckout(true, undefined, customer.id)).url!
+            }
+            return await supabase.from('business_users').insert(
                 {
                     business_name: credentials.businessName,
                     user_id: data.data.user?.id,
                     email: data.data.user?.email!,
                     stripe_acc_id: account.id,
                     default_availability: defaultAvailability.id,
+                    stripe_customer_id: customer.id,
                     url_name: credentials.businessName.split(" ").join("").toLowerCase(),
                     account_settings: {
                         "app_reminders": {
@@ -150,8 +162,10 @@ export async function register(cred: { name: string; email: string; password: st
                         }
                     }
                 }
-            ]).select().single().then(async (res) => {
+            ).select().single().then(async (res) => {
                 const business = res.data
+                // Create
+
                 // Create policy
                 await supabase.from('business_policies').insert([
                     {
@@ -208,7 +222,7 @@ export async function register(cred: { name: string; email: string; password: st
     if (error) {
         return error
     }
-    return user
+    return { user, sessionUrl }
 
 }
 

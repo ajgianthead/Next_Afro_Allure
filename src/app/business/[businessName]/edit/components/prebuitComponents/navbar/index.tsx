@@ -41,11 +41,10 @@ export const NavbarComponent: any = {
             <div>
                 <nav className="w-full flex justify-between items-center px-8 py-5">
                     <div> <Logo /></div>
-                    <div className={`text-center hidden lg:flex lg:gap-10`}>
+                    <div className={`text-center hidden lg:flex lg:gap-10 items-center`}>
                         {
                             menu.map(({ item: Item }: { item: SlotComponent }, index: number) => {
-                                console.log(Logo, Item)
-                                return <div key={index}>
+                                return <div key={index} className=" align-middle">
                                     <Item className="max-w-max" />
                                 </div>
                             })

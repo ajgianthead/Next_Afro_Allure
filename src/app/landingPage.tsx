@@ -1,10 +1,10 @@
-// Assume you're using Tailwind CSS or similar
 'use client'
+// import { IconBrandInstagram } from '@tabler/icons-react';
 
-import { Button, Card, IconButton, Link, Tooltip, Typography } from "@mui/joy";
+import { Button, Card, CardContent, IconButton, Link, Tooltip, Typography } from "@mui/joy";
 import Image from "next/image";
 import LOGO from '../../public/images/logo_transparent_background.png'
-import { BadgeDollarSign, Calendar, Globe, Lightbulb, Menu, MessageCircleMore, TrendingUp } from "lucide-react";
+import { BadgeDollarSign, Calendar, Globe, Lightbulb, Mail, Menu, MessageCircleMore, TrendingUp } from "lucide-react";
 import { CssVarsProvider, extendTheme } from '@mui/joy/styles';
 import HERO_BACKGROUND from '../../public/images/magicpattern-grid-pattern-1753632850729.png'
 import HERO_IMAGE from '../../public/images/localhost_3000_dashboard_appointments.png'
@@ -13,6 +13,12 @@ import MONEY_IMG from '../../public/images/localhost_3000_dashboard_monetization
 import LandingPageNavDrawer from "./landingPageNavDrawer";
 import { motion } from "motion/react"
 import { Caption } from "@tailus-ui/typography";
+import { fa } from "@faker-js/faker";
+import { ActionIcon, Anchor, Container, Group, Text } from "@mantine/core";
+import classes from './footer.module.css';
+import { IoLogoInstagram } from "react-icons/io5";
+
+
 
 export const theme = extendTheme({
     "colorSchemes": {
@@ -50,22 +56,22 @@ export default function LandingPage() {
                         </div>
                         <div className="flex gap-20">
                             <div className="flex gap-10">
-                                <Tooltip title='Feature Coming Soon' arrow size="sm">
-                                    <Link disabled color="neutral" fontSize={12}>Marketplace</Link>
-                                </Tooltip>
+                                <Link color="neutral" href="/for-businesses" fontSize={12}>For Businesses</Link>
+
                                 <Link href="#features" color="neutral" fontSize={12}>Features</Link>
                                 <Link color="neutral" href='#about' fontSize={12}>About</Link>
                             </div>
                             <div className="flex items-center gap-5">
-                                <Button component='a' role="link" href="/register">Register your Business</Button>
-                                <Button component='a' role="link" href="/login" variant="outlined">Login</Button>
+                                <Button component='a' role="link" href="/for-businesses" variant="outlined">For Businesses</Button>
+
+                                <Button component='a' role="link" href="/">Find a Professional</Button>
                             </div>
                         </div>
 
                     </div>
                 </nav>
                 <div className="md:hidden sticky top-0 z-50">
-                    <LandingPageNavDrawer />
+                    <LandingPageNavDrawer forBusinesses={false} />
                 </div>
                 <header className="relative bg-white flex flex-col px-10 z-10 items-center text-center w-full gap-5 pt-24 mb-10">
                     <Image className="absolute z-[-1] w-full h-[730px] blur-lg bg-cover top-0" src={HERO_BACKGROUND} alt="background" />
@@ -109,7 +115,6 @@ export default function LandingPage() {
                     <h2 className="text-3xl font-bold mb-8 text-center">Everything You Need to Run Your Business</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                         <Feature
-
                             title="Smart Booking Calendar"
                             desc="Automated, conflict-free scheduling that lets clients book only when you're available"
                             icon={<Calendar color="purple" />}
@@ -183,9 +188,7 @@ export default function LandingPage() {
                     </div>
                 </section>
 
-                <footer className="py-8 px-6 md:px-16 text-center text-gray-600">
-                    &copy; {new Date().getFullYear()} AfroAllure. All rights reserved.
-                </footer>
+                <FooterCentered />
             </div >
         </CssVarsProvider>
 
@@ -199,8 +202,86 @@ function Feature({ title, desc, icon }: { title: string, desc: string, icon: any
         <Card variant="outlined" sx={{
             boxShadow: 10,
         }}>
-            <h3 className="text-xl flex gap-2 font-semibold">{icon}{title}</h3>
-            <p>{desc}</p>
+            <CardContent>
+                <h3 className="text-xl flex gap-2 font-semibold">{icon}{title}</h3>
+                <p>{desc}</p>
+            </CardContent>
+
         </Card>
     );
 }
+
+
+const data = [
+
+    {
+        title: 'Platform',
+        links: [
+            { label: 'Home', link: '/' },
+            { label: 'Find a Professional', link: '#' },
+        ],
+    },
+    {
+        title: 'For Businesses',
+        links: [
+            { label: 'Dashboard', link: '/dashboard' },
+            { label: 'Features', link: '/for-businesses#features' },
+            { label: 'Pricing', link: '/for-businesses#pricing' },
+        ],
+    },
+
+];
+
+export function FooterCentered() {
+    const groups = data.map((group) => {
+        const links = group.links.map((link, index) => (
+            <Text<'a'>
+                key={index}
+                className={classes.link}
+                component="a"
+                href={link.link}
+                onClick={(event) => event.preventDefault()}
+            >
+                {link.label}
+            </Text>
+        ));
+
+        return (
+            <div className={classes.wrapper} key={group.title}>
+                <Text className={classes.title}>{group.title}</Text>
+                {links}
+            </div>
+        );
+    });
+
+    return (
+        <footer className={classes.footer}>
+            <Container className={classes.inner}>
+                <div className={classes.logo}>
+                    <Image alt='image-footer' src={LOGO} width={150} />
+                    <Text size="xs" c="dimmed" className={classes.description}>
+                        Empowering black-owned beauty businesses
+                    </Text>
+                </div>
+                <div className={classes.groups}>{groups}</div>
+            </Container>
+            <Container className={classes.afterFooter}>
+                <Text c="dimmed" size="sm">
+                    © 2026 AfroAllure. All rights reserved.
+                </Text>
+
+                <Group gap={0} className={classes.social} justify="flex-end" wrap="nowrap">
+
+
+                    <ActionIcon component="a" href="https://instagram.com/afroallure_" target="_blank" size="lg" color="gray" variant="subtle" aria-label="Instagram">
+                        <IoLogoInstagram size={18} />
+                    </ActionIcon>
+                    <ActionIcon component="a" href="mailto:abijahnesbitt@afroallure.co" target="_blank" size="lg" color="gray" variant="subtle" aria-label="Instagram">
+                        <Mail size={18} />
+                    </ActionIcon>
+                </Group>
+            </Container>
+        </footer>
+    );
+}
+

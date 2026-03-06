@@ -1,16 +1,16 @@
 'use server'
 
-import { stripe as SP } from "../../lib/utils";
+import { stripe as SP } from "../../../lib/utils";
 import pool from "@utils/dbPool";
 import { DateTime } from "luxon";
 import { Resend } from "resend";
 import { getSlots, OutputSlot } from "slot-calculator";
-import AppointmentRescheduled from "../../../emails/appointment-rescheduled";
-import RescheduledAppointment from "../../../emails/rescheduled-appointment";
+import AppointmentRescheduled from "../../../../emails/appointment-rescheduled";
+import RescheduledAppointment from "../../../../emails/rescheduled-appointment";
 import { createClient } from "@utils/supabase/server";
-import { Database } from "../../../lib/database.types";
+import { Database } from "../../../../lib/database.types";
 import { assignAddons } from "app/api/util/transformServices";
-import { trackAppointmentRescheduled } from "../../../lib/analytics";
+import { trackAppointmentRescheduled } from "../../../../lib/analytics";
 
 const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
 

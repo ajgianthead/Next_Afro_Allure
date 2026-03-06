@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { createClient } from '@utils/supabase/client';
 import { Database } from '../../../../lib/database.types';
 import CircularProgress from '@mui/joy/CircularProgress';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Alert, Checkbox, Typography } from '@mui/joy';
 import { register } from '../actions';
 import { PostgrestError } from '@supabase/supabase-js';
@@ -28,6 +28,8 @@ interface RegisterForm {
 
 export default function Register() {
     const [asBusiness, setAsBusiness] = useState(false);
+    const searchParams = useSearchParams();
+    const subscription = searchParams.get('subscription')
     const [formData, setFormData] = useState<RegisterForm>({
         name: "",
         email: "",
@@ -39,7 +41,7 @@ export default function Register() {
         setIsLoading(true)
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
-        const result = await register({ name: formData.name, email: formData.email, password: formData.password })
+        const result = await register({ name: formData.name, email: formData.email, password: formData.password }, subscription === 'true')
         if (result === "Business name is already taken") {
             setError(result)
             setIsLoading(false)
@@ -54,8 +56,12 @@ export default function Register() {
 
         } else {
 
+            if (subscription) {
+                router.replace(result.sessionUrl)
+            } else {
+                router.replace(`/onboarding/${result.user.business_users?.stripe_acc_id}`)
+            }
 
-            router.replace(`/onboarding/${result.business_users?.stripe_acc_id}`)
         }
 
     }

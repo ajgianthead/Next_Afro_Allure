@@ -236,7 +236,8 @@ const DepositPayment = ({ setError, setOpenErrorDialog, setRbbOpen, agreedAfroAl
                     connectedAccountId: data.stripe_id,
                     app_fee: 123,
                     price: selectedServiceData[0].price,
-                    appointmentID: ""
+                    appointmentID: "",
+                    appointmentType: 'automated'
                 }),
             });
             if (!response.ok) {
@@ -304,23 +305,6 @@ const CheckoutForm = ({ service, paymentIntentID, setError, setOpenErrorDialog, 
         if (!stripe || !elements) {
             return;
         }
-
-        // const res = await fetch('/api/bookingAuto', {
-        //     method: 'POST',
-        //     body: JSON.stringify({
-        //         paymentIntentID: paymentIntentID,
-        //         businessId: data.business_id,
-        //         policyId: data.booking_policy.id,
-        //         serviceId: data.selectedService,
-        //         client_metadata: data.clientInfo,
-        //         timeSlot: { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length },
-        //         elements: elements,
-        //         stripe: stripe
-        //     })
-        // })
-        // const result = await res.json();
-        // 
-
         await bookAppointment(data.selectedAddons, paymentIntentID, data.business_id, data.booking_policy.id, service, data.clientInfo, { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length }, Intl.DateTimeFormat().resolvedOptions().timeZone).then(async (appointment: any) => {
             const clientInfo = { ...data.clientInfo }
             if (clientInfo.firstName.length > 0) {
@@ -330,6 +314,7 @@ const CheckoutForm = ({ service, paymentIntentID, setError, setOpenErrorDialog, 
                             const { error } = await stripe?.confirmPayment({
                                 //`Elements` instance that was used to create the Payment Element
                                 elements,
+                                redirect: 'if_required',
                                 confirmParams: {
                                     return_url: `/appointment/${appointment.id}/${data.stripe_id}/complete`,
 

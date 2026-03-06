@@ -225,7 +225,7 @@ const AppointmentsClient = ({ business_id, appointmentData, policyData, services
                 deposit_charge_id: "",
                 reschedules: policy.reschedule_limit,
                 deposit_price: depositRequired ? depositPrice : null,
-                addons: addonResult,
+                selected_addons: addonResult,
             }
 
             const res = await fetch(`/api/appointments`, {

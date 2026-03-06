@@ -4,8 +4,10 @@ import { Box, Divider, Drawer, IconButton, List, ListItem, ListItemButton } from
 import { Menu } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState } from 'react';
+import LOGO from '../../public/images/logo_transparent_background.png'
 
-const LandingPageNavDrawer = () => {
+
+const LandingPageNavDrawer = ({ forBusinesses }: { forBusinesses: boolean }) => {
     const [open, setOpen] = useState(false);
 
     const toggleDrawer =
@@ -23,10 +25,13 @@ const LandingPageNavDrawer = () => {
     return (
         <div className='sticky top-0 z-50'>
             <nav className="w-full py-2 z-50 flex justify-center bg-white ">
-                <div className="w-[1280px] px-5 flex justify-start">
+                <div className="w-[1280px] px-5 grid grid-cols-3 justify-items-start">
                     <IconButton onClick={toggleDrawer(true)}>
                         <Menu />
                     </IconButton>
+                    <div className='justify-self-center'>
+                        <Image src={LOGO} alt="logo-img" width={150} />
+                    </div>
                     <Drawer anchor='top' size='sm' open={open} onClose={toggleDrawer(false)}>
                         <div
                             className='flex flex-col items-center mt-10 text-center'
@@ -35,7 +40,17 @@ const LandingPageNavDrawer = () => {
                             onKeyDown={toggleDrawer(false)}
                         >
 
-                            <List>
+                            {forBusinesses ? <List>
+                                <ListItem>
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemButton component='a' href='#features' className='flex justify-center'>Features</ListItemButton>
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemButton component='a' href='#about' className='flex justify-center'>Pricing</ListItemButton>
+                                </ListItem>
+
+                            </List> : <List>
                                 <ListItem>
                                     <ListItemButton disabled className='flex justify-center'>Marketplace</ListItemButton>
                                 </ListItem>
@@ -46,7 +61,7 @@ const LandingPageNavDrawer = () => {
                                     <ListItemButton component='a' href='#about' className='flex justify-center'>About</ListItemButton>
                                 </ListItem>
 
-                            </List>
+                            </List>}
                             <Divider sx={{
                                 marginX: 10
                             }} />

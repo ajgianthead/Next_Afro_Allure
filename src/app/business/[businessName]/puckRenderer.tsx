@@ -3,7 +3,7 @@
 import React from "react";
 import { Render } from "@puckeditor/core";
 import { config } from "./edit/constants";
-import { buildGoogleFontsUrl, extractFontsFromPuckData, normalizeFont } from "../../lib/extractFonts";
+import { buildGoogleFontsUrl, extractFontsFromPuckData, normalizeFont } from "../../../lib/extractFonts";
 
 interface PuckRendererProps {
     editorData: any;

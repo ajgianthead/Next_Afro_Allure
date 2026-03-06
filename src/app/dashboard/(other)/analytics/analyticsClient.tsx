@@ -186,10 +186,10 @@ export default function AnalyticsClient({ pageViews, webTrafficData, serviceCoun
                                                 outerRadius={80}
                                                 fill="#8884d8"
                                             >
-                                                {webTrafficData!.map((entry, index) => (
+                                                {webTrafficData ? webTrafficData!.map((entry, index) => (
                                                     <Cell fill={entry.color} />
 
-                                                ))}
+                                                )) : <></>}
                                             </Pie>
                                             <Tooltip />
                                         </PieChart> :
