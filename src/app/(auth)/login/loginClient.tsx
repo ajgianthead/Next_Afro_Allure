@@ -7,13 +7,13 @@ import Input from '@components/Input';
 import Label from '@components/Label';
 import Separator from '@tailus-ui/Separator';
 import { FcGoogle } from "react-icons/fc";
-import { login } from '../actions';
 import Aligner from '@components/Aligner';
 import Switch from '@components/Switch';
 import { useState } from 'react';
 import { AuthError } from '@supabase/supabase-js';
 import { Alert, CircularProgress } from '@mui/joy';
 import { useRouter } from 'next/navigation';
+import { loginBusinessUser } from '../actions';
 
 
 export default function Login() {
@@ -27,7 +27,7 @@ export default function Login() {
     })
     const handleSubmit = async () => {
         setLoading(true)
-        const res = await login(cred)
+        const res = await loginBusinessUser(cred.email, cred.password)
         if (res instanceof AuthError) {
             setError(res.message)
         }
