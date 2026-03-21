@@ -22,5 +22,18 @@ export const createBusinessUser = async (email: string, name: string, password: 
     }
 
 }
+export const loginBusinessUser = async (email: string, password: string) => {
+    try {
+        const supabase = createClient<Database>()
+        const businessUser = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        })
+        if (businessUser.error) throw Error(businessUser.error.message)
+        return businessUser
+    } catch (error: any) {
+        return Error(error.message)
+    }
+}
 
 
