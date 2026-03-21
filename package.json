@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "test": "vitest",
     "email": "email dev",
     "build": "next build",
     "start": "next start",
@@ -88,7 +89,6 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
     "dropzone": "^6.0.0-beta.2",
-    "font-picker-react": "^3.5.2",
     "framer-motion": "^11.11.8",
     "ioredis": "^5.4.2",
     "lodash.throttle": "^4.1.1",
@@ -137,6 +137,10 @@
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
     "@playwright/test": "^1.51.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@trigger.dev/build": "^3.3.17",
     "@types/crypto-js": "^4.2.2",
     "@types/lodash.throttle": "^4.1.9",
@@ -150,14 +154,18 @@
     "@types/react-dom": "^18",
     "@types/react-resizable": "^3.0.8",
     "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^6.0.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
+    "jsdom": "^28.1.0",
     "postcss": "^8.5.6",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
     "react-email": "4.0.16",
     "sass": "^1.90.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.0"
   }
 }

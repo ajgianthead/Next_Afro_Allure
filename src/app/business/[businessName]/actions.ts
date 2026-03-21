@@ -37,7 +37,7 @@ export const
         start?: string;
         end?: string;
         appointmentLength?: number;
-    }, availability: any, appointments: any, zone: string) => {
+    }, availability: any, appointments: any, zone: string = Intl.DateTimeFormat().resolvedOptions().timeZone) => {
         const beginDay = DateTime.fromISO(timeSlot.start!).startOf('day').toISO()!
         const endDay = DateTime.fromISO(timeSlot.end!).endOf('day').toISO()!
 

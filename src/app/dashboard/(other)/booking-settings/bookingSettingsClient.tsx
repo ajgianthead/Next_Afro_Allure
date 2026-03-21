@@ -3,7 +3,7 @@
 import Input from '@components/Input'
 import Label from '@components/Label'
 import Textarea from '@components/TextArea'
-import { CircularProgress, Input as JoyInput, Checkbox as JoyCheckbox, Button, Switch, CssVarsProvider, Sheet, Modal, ModalDialog, DialogTitle, DialogActions } from '@mui/joy'
+import { CircularProgress, Input as JoyInput, Checkbox as JoyCheckbox, Button, Switch, CssVarsProvider, Sheet, Modal, ModalDialog, DialogTitle, DialogActions, Divider, Select, Option, FormControl, FormHelperText } from '@mui/joy'
 import { Caption, Text, Title } from '@tailus-ui/typography'
 import { useUserContext } from '@utils/context/UserContext'
 import { Info } from 'lucide-react'
@@ -45,12 +45,27 @@ export interface BookingSettings {
     importantInfo: string;
     readBeforeBooking: string;
     refundPolicy: string;
+    bookAheadValue: string
 
 }
 
 interface PageProps {
     businessUser: Business,
-    policyData: any,
+    policyData: {
+        book_ahead_value: string;
+        business: string;
+        cancel_day_limit: number | null;
+        created_at: string;
+        deposit: any;
+        id: string;
+        important_info: string | null;
+        late_fee: any;
+        no_show: any;
+        read_before_booking: string | null;
+        reschedule_day_limit: number | null;
+        reschedule_limit: number | null;
+        updated_at: string;
+    },
     paymentConfigId?: string,
     paymentConfig?: any
 }
@@ -89,12 +104,13 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
         deposit: policyData.deposit,
         lateFee: policyData.late_fee,
         noShowPolicy: policyData.no_show,
-        rescheduleLimit: policyData.reschedule_limit.toString(),
-        rescheduleDayLimit: policyData.reschedule_day_limit.toString(),
-        cancelDayLimit: policyData.cancel_day_limit.toString(),
-        importantInfo: policyData.important_info,
-        readBeforeBooking: policyData.read_before_booking,
-        refundPolicy: ""
+        rescheduleLimit: policyData.reschedule_limit!.toString(),
+        rescheduleDayLimit: policyData.reschedule_day_limit!.toString(),
+        cancelDayLimit: policyData.cancel_day_limit!.toString(),
+        importantInfo: policyData.important_info!,
+        readBeforeBooking: policyData.read_before_booking!,
+        refundPolicy: "",
+        bookAheadValue: policyData.book_ahead_value
     });
     enum PaymentValue {
         GooglePay = "GOOGLE_PAY",
@@ -173,7 +189,11 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
 
     }
     const [open, setOpen] = useState<boolean>(false)
-    console.log(paymentConfig)
+    console.log(bookingPolicy)
+
+    const [unitOfTime, setUnitOfTime] = useState<string>(policyData.book_ahead_value.split(' ')[1])
+    const [bookingAdvanceValue, setBookingAdvanceValue] = useState<number>(Number(policyData.book_ahead_value.split(' ')[0]))
+    const [bookingAdvanceError, setBookingAdvanceError] = useState<boolean>(false)
     return (
         <CssVarsProvider theme={theme}>
             <Modal open={open} onClose={() => setOpen(false)}>
@@ -427,17 +447,74 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         </div>
                         <div>
                             <Text className='font-semibold mt-5 mb-2 text-gray-300'>Booking Site</Text>
-                            {/* <div>
-                            <Label htmlFor='important'>Important Information</Label>
-                            <Caption>This will be the first section that'll appear on your booking site. Make sure to outline any rules, conditions, and/or expections you expect clients to follow</Caption>
-                            <Textarea className="lg:w-1/2 w-full mt-2" required id='important' value={bookingPolicy.importantInfo} onChange={(e) => {
-                                setBookingPolicy({
-                                    ...bookingPolicy,
-                                    importantInfo: e.target.value
-                                })
-                            }} />
-                        </div> */}
-                            <div>
+                            <div className='mb-5'>
+                                <Label>Booking Ahead</Label>
+                                <Caption>Determine how far out clients can book from the beginning of the month</Caption>
+                                <FormControl error={bookingAdvanceError}>
+                                    <JoyInput
+                                        value={bookingAdvanceValue}
+                                        type='number'
+                                        onChange={(e) => {
+                                            if (unitOfTime === 'month') {
+                                                if (Number(e.target.value) < 1) {
+                                                    setBookingAdvanceError(true)
+                                                } else {
+                                                    setBookingAdvanceError(false)
+                                                }
+                                            } else if (unitOfTime === 'week') {
+                                                if (Number(e.target.value) < 4) {
+                                                    setBookingAdvanceError(true)
+                                                } else {
+                                                    setBookingAdvanceError(false)
+                                                }
+                                            } else {
+                                                if (Number(e.target.value) < 28) {
+                                                    setBookingAdvanceError(true)
+                                                } else {
+                                                    setBookingAdvanceError(false)
+                                                }
+                                            }
+                                            setBookingAdvanceValue(Number(e.target.value))
+                                        }}
+                                        endDecorator={
+                                            <React.Fragment>
+                                                <Divider orientation="vertical" />
+                                                <Select
+                                                    variant="plain"
+                                                    value={unitOfTime}
+                                                    onChange={(_, value) => {
+                                                        setUnitOfTime(value!)
+                                                        if (value === 'month') {
+                                                            setBookingAdvanceValue(1)
+                                                        } else if (value === 'day') {
+                                                            setBookingAdvanceValue(28)
+                                                        } else {
+                                                            setBookingAdvanceValue(4)
+                                                        }
+                                                        setBookingAdvanceError(false)
+                                                    }}
+                                                    slotProps={{
+                                                        listbox: {
+                                                            variant: 'outlined',
+                                                        },
+                                                    }}
+                                                    sx={{ mr: -1.5, '&:hover': { bgcolor: 'transparent' } }}
+                                                >
+                                                    <Option value="month">month(s)</Option>
+                                                    <Option value="day">days</Option>
+                                                    <Option value="week">weeks</Option>
+                                                </Select>
+                                            </React.Fragment>
+                                        }
+                                        sx={{ width: 300 }}
+                                    />
+                                    {bookingAdvanceError ? <FormHelperText>
+                                        <Info size={16} />
+                                        You <b>MUST</b> allow clients to book at least one month, four weeks, or 28 days in advance
+                                    </FormHelperText> : <></>}
+                                </FormControl>
+                            </div>
+                            <div className='mb-5'>
                                 <Label>Read before booking</Label>
                                 <Caption>Let clients know anything else they need to know before beginning to book with you</Caption>
                                 <Textarea className="lg:w-1/2 w-full mt-2" value={bookingPolicy.readBeforeBooking} onChange={(e) => {
@@ -448,7 +525,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                                 }} />
                             </div>
 
-                            <div>
+                            <div className='mb-5'>
                                 <Label>Refund/Cancellation Policy</Label>
                                 <Caption>Business's refund and cancellation policy, if any</Caption>
                                 <Textarea className="lg:w-1/2 w-full mt-2" value={bookingPolicy.refundPolicy} onChange={(e) => {
@@ -462,9 +539,13 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         </div>
 
                     </div>
-                    <Button loading={isLoading} className='my-5' onClick={async () => {
+                    <Button loading={isLoading} sx={{
+                        marginBottom: 5
+                    }} onClick={async () => {
                         setIsLoading(true)
-                        const res = await handleBookingSettings(bookingPolicy, businessUser.business_id, paymentConfigId!, paymentMethodConfig!, { ...paymentConfig })
+                        let clone = { ...bookingPolicy }
+                        clone.bookAheadValue = bookingAdvanceValue.toString() + " " + unitOfTime
+                        const res = await handleBookingSettings(clone, businessUser.business_id, paymentConfigId!, paymentMethodConfig!, { ...paymentConfig })
                         if (res === false) {
                             console.log('Error: Stripe onboarding must be completed before enabling deposits');
                         }

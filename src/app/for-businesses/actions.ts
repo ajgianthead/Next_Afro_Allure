@@ -120,12 +120,6 @@ export const createSubscriptionCheckout = async (had_trial: boolean, businessID?
                 cancel_url: "https://beta.afroallure.co/dashboard",
                 customer: customerID
             })
-            if (customerID === undefined) {
-                const supabase = createClient<Database>()
-                await supabase.from('business_users').update({
-                    stripe_customer_id: checkoutSession.customer as string
-                }).eq('business_id', businessID!)
-            }
         }
 
         return checkoutSession

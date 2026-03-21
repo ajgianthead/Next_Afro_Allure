@@ -4,7 +4,7 @@ import { Caption, Text, Title } from "@tailus-ui/typography"
 import Tabs from '@mui/joy/Tabs';
 import TabList from '@mui/joy/TabList';
 import Tab, { tabClasses } from '@mui/joy/Tab';
-import { Divider, Option, Select, Table, TabPanel, Typography } from "@mui/joy";
+import { DialogTitle, Divider, Option, Select, Table, TabPanel, Typography, Card as MUICard, Button } from "@mui/joy";
 import Card from "@tailus-ui/Card";
 import { Info, TrendingDown, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -30,10 +30,11 @@ interface PageProps {
         value: number | string;
         color?: string;
     }[]
+    isGrowth: boolean
 }
 
 
-export default function AnalyticsClient({ pageViews, webTrafficData, serviceCountMap, appointments, monthlyBookings, business_user, defaultMonthlyAppointmentsData, appointmentCompletionRate }: PageProps) {
+export default function AnalyticsClient({ pageViews, isGrowth, webTrafficData, serviceCountMap, appointments, monthlyBookings, business_user, defaultMonthlyAppointmentsData, appointmentCompletionRate }: PageProps) {
     const [monthlyBookingsChart, setMonthlyBookingsChart] = useState<number>(0)
 
     const RADIAN = Math.PI / 180;
@@ -48,11 +49,12 @@ export default function AnalyticsClient({ pageViews, webTrafficData, serviceCoun
     return (
         <div className="w-full p-5 ">
             <div className="mb-5">
-                <Title>Analytics</Title>
+                <Title>Booking & Financial
+                    Analytics</Title>
                 <Caption>View insightful analytics about your booking site, appointments, and services</Caption>
             </div>
-            <div>
-                <div className=" flex flex-col lg:gap-2 gap-1">
+            <div className="relative w-full" >
+                <div className={!isGrowth ? "blur-sm opacity-70 pointer-events-none flex flex-col lg:gap-2 gap-1" : "flex flex-col lg:gap-2 gap-1"}>
                     <Card className="w-full flex lg:flex-row flex-col items-center gap-8">
                         <div className="w-1/3 flex flex-col items-center lg:items-start lg:gap-2 gap-1">
                             <div className="flex justify-between w-full items-center">
@@ -264,6 +266,45 @@ export default function AnalyticsClient({ pageViews, webTrafficData, serviceCoun
                     </Card>
                 </div>
             </div>
+            {!isGrowth && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <MUICard sx={{ padding: 4, maxWidth: 420 }}>
+                        <Title style={{ fontWeight: 700, fontSize: '1.3rem', width: '100%' }}>
+                            Unlock Advanced Analytics
+                        </Title>
+
+                        <p style={{ lineHeight: 1.6 }}>
+                            See how many people visit your booking page, where your traffic
+                            comes from, and how your bookings grow over time.
+                        </p>
+                        <div style={{
+                            background: '#f6f6f6',
+                            padding: '12px 16px',
+                            borderRadius: 8,
+                            marginTop: 16,
+                            fontSize: 14
+                        }}>
+                            ✨ Included with <strong>AfroAllure Growth</strong>:
+                            <ul style={{ marginTop: 8, paddingLeft: 18, listStyleType: 'disc' }}>
+                                <li>Unlimited bookings</li>
+                                <li>Express Pay (Apple Pay, Google Pay, Cash App Pay, etc.)</li>
+                                <li>Advanced analytics</li>
+                                <li>Automated appointment reminders</li>
+                                <li>Drag & drop website builder</li>
+                            </ul>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="solid"
+                                color="primary"
+                                sx={{ fontWeight: 600 }}
+                            >
+                                Upgrade to Growth
+                            </Button>
+                        </div>
+                    </MUICard>
+                </div>
+            )}
         </div>
     )
 }

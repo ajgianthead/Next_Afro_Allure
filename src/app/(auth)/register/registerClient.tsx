@@ -15,8 +15,10 @@ import { Database } from '../../../../lib/database.types';
 import CircularProgress from '@mui/joy/CircularProgress';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Alert, Checkbox, Typography } from '@mui/joy';
-import { register } from '../actions';
+import { createBusinessUser } from '../actions';
 import { PostgrestError } from '@supabase/supabase-js';
+import { createSubscriptionCheckout } from 'app/for-businesses/actions';
+import { BusinessUser } from '@lib/businessUser/BusinessUser';
 
 
 interface RegisterForm {
@@ -37,34 +39,21 @@ export default function Register() {
         phone: ""
     })
     const router = useRouter()
+
     const createBusiness = async () => {
         setIsLoading(true)
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        const result = await register({ name: formData.name, email: formData.email, password: formData.password }, subscription === 'true')
-        if (result === "Business name is already taken") {
-            setError(result)
-            setIsLoading(false)
-        }
-        else if (result === "Email is already in use") {
-            setError(result)
-            setIsLoading(false)
-        }
-        else if (result instanceof PostgrestError) {
-            setError(result.message)
-            setIsLoading(false)
-
-        } else {
-
+        const businessUser = await createBusinessUser(formData.email, formData.name, formData.password)
+        if (businessUser instanceof BusinessUser) {
             if (subscription) {
-                router.replace(result.sessionUrl)
-            } else {
-                router.replace(`/onboarding/${result.user.business_users?.stripe_acc_id}`)
+                const sessionUrl = (await createSubscriptionCheckout(businessUser.hadTrial, businessUser.id, businessUser.stripeCustomerId)).url!
+                router.replace(sessionUrl)
             }
-
+            router.replace(`/onboarding/${businessUser.stripeAccountId}`)
+        } else {
+            setError(businessUser.message)
         }
-
     }
+
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<any>(null)
     const [agreement, setAgreement] = useState<{

@@ -664,18 +664,32 @@ const DateTimePicker = () => {
     }, [data.availabilities, data.appointments]);
 
     const handleMonthChange = async (month: DateTime<boolean>) => {
+        const bookAheadValue: string = data.booking_policy.book_ahead_value
         setIsLoading(true)
         // Set new start and end dates
         let startDate = ""
         let endDate = ""
         if (month.month === DateTime.now().setZone(userZone).month) {
             startDate = DateTime.now().setZone(userZone).startOf("day").toISO()!;
+            endDate = month.setZone(userZone).endOf("month").toISO()!;
+            await getData(startDate, endDate)
+            setIsLoading(false)
         } else {
-            startDate = month.setZone(userZone).toISO()!;
+            console.log(bookAheadValue);
+            if (bookAheadValue !== '1 month' && bookAheadValue !== '28 day' && bookAheadValue !== '4 week') {
+                startDate = month.setZone(userZone).toISO()!;
+                endDate = month.setZone(userZone).endOf("month").toISO()!;
+                await getData(startDate, endDate)
+            } else {
+                const splitValue = bookAheadValue.split(' ')
+                const plusData = splitValue[1] === 'month' ? { month: Number(splitValue[0]) } : (splitValue[1] === 'week' ? { weeks: Number(splitValue[0]) } : { days: Number(splitValue[0]) })
+                startDate = DateTime.now().setZone(userZone).startOf("day").toISO()!;
+                endDate = DateTime.fromISO(startDate).setZone(userZone).plus(plusData).toISO()!;
+                await getData(startDate, endDate)
+            }
+            setIsLoading(false)
+
         }
-        endDate = month.setZone(userZone).endOf("month").toISO()!;
-        await getData(startDate, endDate)
-        setIsLoading(false)
     }
 
     const handleDateChange = async (value: DateTime) => {
@@ -702,6 +716,22 @@ const DateTimePicker = () => {
             }
             setCurrSlots(res)
         }
+    }
+    const handleDisabledDays = (day: DateTime<true> | DateTime<false>) => {
+        const bookAheadValue: string = data.booking_policy.book_ahead_value;
+        const startDate = DateTime.now().setZone(userZone).startOf('month')
+        let endDate;
+        if (bookAheadValue === '1 month' || bookAheadValue === '28 day' || bookAheadValue === '4 week') {
+            endDate = DateTime.now().setZone(userZone).endOf('month')
+        } else {
+            const splitValue = bookAheadValue.split(' ')
+            const plusData = splitValue[1] === 'month' ? { month: Number(splitValue[0]) } : (splitValue[1] === 'week' ? { weeks: Number(splitValue[0]) } : { days: Number(splitValue[0]) })
+            endDate = DateTime.now().setZone(userZone).startOf('month').plus(plusData);
+        }
+        if (day >= startDate && day <= endDate) {
+            return false
+        }
+        return true
     }
 
     return (
@@ -740,7 +770,7 @@ const DateTimePicker = () => {
                                     fontSize: '14px',
                                 },
                             },
-                        }} onMonthChange={handleMonthChange} disablePast value={date} loading={isLoading} onChange={handleDateChange} />
+                        }} onMonthChange={handleMonthChange} shouldDisableDate={handleDisabledDays} disablePast value={date} loading={isLoading} onChange={handleDateChange} />
                     </LocalizationProvider>
                 </div>
                 {date ? <div className='pl-5'>

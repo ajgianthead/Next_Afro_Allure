@@ -76,6 +76,7 @@ export const handleBookingSettings = async (bookingSettings: any, businessId: st
             read_before_booking: bookingSettings.readBeforeBooking,
             reschedule_day_limit: bookingSettings.rescheduleDayLimit,
             reschedule_limit: bookingSettings.rescheduleLimit,
+            book_ahead_value: bookingSettings.bookAheadValue
         }
     ).select("id").then(async (result: PostgrestSingleResponse<{
         id: string;
