@@ -21,38 +21,22 @@ import Head from 'next/head';
 import { DateTime } from 'luxon';
 
 
+interface PageProps {
+    appointment: any,
+}
 
-
-export default function ConfirmAppClient() {
+export default function ConfirmAppClient({ appointment }: PageProps) {
     const [options, setOptions] = useState<{
         clientSecret: any,
         onComplete?: any
     }>();
-    const { appointment_id, businessId } = useParams<{ appointment_id: string, businessId: string }>()
-    const [policies, setPolicies] = useState<any>();
-    const [appointmentData, setAppointmentData] = useState<any>({})
+    const [appointmentData, setAppointmentData] = useState<any>({ ...appointment })
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [stripeID, setStripeID] = useState<string | null>(null)
-    const [businessData, setBusinessData] = useState<any>({})
+    const [businessData, setBusinessData] = useState<any>({ ...appointment.business_users })
     const [amountDue, setAmountDue] = useState<number>()
     useEffect(() => {
-        // Fetch appointment data with appointmentID, when use businessID
-        // that's attached to the appointment to fetch the business's policies
-        const fetchAppointment = async () => {
-            const response = await fetch(`/api/appointments/${appointment_id}`, {
-                method: "GET",
-            });
-            if (!response.ok) {
-                // Handle errors on the client side here
-                const { error } = await response.json();
-                throw new Error("An error occurred: ", error);
-            } else {
-                const res = await response.json();
-                setAppointmentData(res.appointment)
-                return res.appointment
-            }
-        }
-        const fetchSession = async (stripeID: string, appointment: Appointment, policy: Policy) => {
+        const fetchSession = async (stripeID: string, appointment: Appointment) => {
             const stripePromise = loadStripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!, {
                 stripeAccount: stripeID,
             });
@@ -62,16 +46,17 @@ export default function ConfirmAppClient() {
                 body: JSON.stringify({
                     connectedAccountId: stripeID,
                     price: appointment.deposit_price,
-                    app_fee: 200,// Change Stripe Account ID to be dynamic to business
-                    appointmentID: appointment_id,
-                    paymentIntent: appointment.deposit_charge_id
+                    appointmentID: appointment.id,
+                    client_email: appointment.client_metadata.email,
+                    paymentIntent: appointment.deposit_charge_id,
+                    purpose: 'DEPOSIT',
+                    appointmentType: 'manual'
                 }),
             });
-
             if (!response.ok) {
                 // Handle errors on the client side here
                 const { error } = await response.json();
-                throw new Error("An error occurred: ", error);
+                throw new Error("An error occurred: ", error.message);
             } else {
                 const val = await response.json();
                 setAmountDue(val.amountDue)
@@ -85,49 +70,17 @@ export default function ConfirmAppClient() {
                 setCompleted(false)
             }
         }
-        const getPolicies = async (data: any) => {
-            const response = await fetch(`/api/policies/policy/${data.policy_id}`, {
-                method: "GET",
-            });
-            if (!response.ok) {
-                // Handle errors on the client side here
-                const { error } = await response.json();
-                throw new Error("An error occurred: ", error);
+        if (appointment.status === "CONFIRMED") {
+            setCompleted(true)
+        } else {
+            if (appointment.require_deposit) {
+                fetchSession(businessData.stripe_acc_id, appointment);
             } else {
-                const result = await response.json();
-                // setPolicies(result.booking_policies)
-                return result.policy
+                setCompleted(false)
+                // Updates the appointment status and change the completed state
+                // handleCompleted()
             }
         }
-
-        const getBusinessData = async (businessID: string) => {
-            const res = await fetch(`/api/${businessID}`, {
-                method: 'GET'
-            })
-            const result = await res.json();
-            setStripeID(result.data.stripe_acc_id)
-            setBusinessData(result.data)
-            return result.data
-        }
-        fetchAppointment().then(async (appointment) => {
-            if (appointment.status === "CONFIRMED") {
-                await getBusinessData(businessId)
-                setCompleted(true)
-            } else {
-                getPolicies(appointment).then((policy) => {
-                    getBusinessData(appointment.business).then((businessData) => {
-                        if (appointment.require_deposit) {
-                            fetchSession(businessData.stripe_acc_id, appointment, policy);
-                        } else {
-                            setCompleted(false)
-                            // Updates the appointment status and change the completed state
-                            // handleCompleted()
-                        }
-                    })
-
-                });
-            }
-        })
     }, []);
     const [completed, setCompleted] = useState<boolean | null>(null);
     const handleCompleted = async () => {
@@ -135,7 +88,7 @@ export default function ConfirmAppClient() {
         const response = await fetch(`/api/appointments`, {
             method: "PUT",
             body: JSON.stringify({
-                id: appointment_id,
+                id: appointment.id,
                 start: appointmentData.start,
                 end: appointmentData.end,
                 status: "CONFIRMED",
@@ -228,7 +181,7 @@ export default function ConfirmAppClient() {
                                     padding: 3
                                 }}>
                                     <Caption><i>*You are required to pay a deposit to confirm this appointment</i></Caption>
-                                    <PaymentForm promise={promise} appointmentID={appointment_id} stripeID={stripeID!} />
+                                    <PaymentForm promise={promise} appointmentID={appointment.id} stripeID={stripeID!} />
                                 </Card>
                             </div>
                         </div>

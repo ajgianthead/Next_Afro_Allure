@@ -580,6 +580,7 @@ export async function POST(request: NextRequest) {
                 await sendReminders(res)
             }
         } catch (error) {
+
             return new NextResponse(JSON.stringify({ error: error }), {
                 headers: { 'Content-Type': 'application/json' },
                 status: 400
@@ -588,6 +589,8 @@ export async function POST(request: NextRequest) {
 
     }
     if (error) {
+        console.log(error);
+
         return new NextResponse(JSON.stringify({ error: error }), {
             headers: { 'Content-Type': 'application/json' },
             status: 400

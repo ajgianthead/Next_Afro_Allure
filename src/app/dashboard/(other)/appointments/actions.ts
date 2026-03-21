@@ -3,7 +3,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import pool from "@utils/dbPool";
 import { createClient } from "@utils/supabase/server";
-import { checkSlots } from "app/[businessName]/actions";
+import { checkSlots } from "app/business/[businessName]/actions";
 import { sendCancelledEmails } from "app/api/appointments/route";
 import { DateTime } from "luxon";
 import { OutputSlot } from "slot-calculator";

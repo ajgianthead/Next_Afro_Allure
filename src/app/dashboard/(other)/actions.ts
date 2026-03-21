@@ -43,3 +43,29 @@ export const fetchBusinessUser = async (user_id: string) => {
     const { data: business, error } = await supabase.from('business_users').select().eq('user_id', user_id).single()
     return business!
 }
+
+export const fetchDashboardAnalytics = async (businessId: string) => {
+    const supabase = createClient<Database>();
+    const [
+        revenue,
+        bookings,
+        newClients,
+        returningRate
+    ] = await Promise.all([
+        supabase.rpc('dashboard_revenue_this_month', { business: businessId }),
+        supabase.rpc('dashboard_bookings_this_month', { business: businessId }),
+        supabase.rpc('dashboard_new_clients_this_month', { business: businessId }),
+        supabase.rpc('dashboard_returning_rate', { business: businessId })
+    ]);
+    return { revenue, bookings, newClients, returningRate }
+}
+
+export const getDashboardGrowth = async (businessId: string) => {
+    const supabase = createClient<Database>();
+    const { data, error } = await supabase.rpc(
+        'get_dashboard_growth',
+        { p_stylist_id: businessId }
+
+    );
+    return { data }
+}

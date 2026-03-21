@@ -13,10 +13,12 @@ import { useState } from 'react';
 import { createClient } from '@utils/supabase/client';
 import { Database } from '../../../../lib/database.types';
 import CircularProgress from '@mui/joy/CircularProgress';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Alert, Checkbox, Typography } from '@mui/joy';
-import { register } from '../actions';
+import { createBusinessUser } from '../actions';
 import { PostgrestError } from '@supabase/supabase-js';
+import { createSubscriptionCheckout } from 'app/for-businesses/actions';
+import { BusinessUser } from '@lib/businessUser/BusinessUser';
 
 
 interface RegisterForm {
@@ -28,6 +30,8 @@ interface RegisterForm {
 
 export default function Register() {
     const [asBusiness, setAsBusiness] = useState(false);
+    const searchParams = useSearchParams();
+    const subscription = searchParams.get('subscription')
     const [formData, setFormData] = useState<RegisterForm>({
         name: "",
         email: "",
@@ -35,30 +39,21 @@ export default function Register() {
         phone: ""
     })
     const router = useRouter()
+
     const createBusiness = async () => {
         setIsLoading(true)
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        const result = await register({ name: formData.name, email: formData.email, password: formData.password })
-        if (result === "Business name is already taken") {
-            setError(result)
-            setIsLoading(false)
-        }
-        else if (result === "Email is already in use") {
-            setError(result)
-            setIsLoading(false)
-        }
-        else if (result instanceof PostgrestError) {
-            setError(result.message)
-            setIsLoading(false)
-
+        const businessUser = await createBusinessUser(formData.email, formData.name, formData.password)
+        if (businessUser instanceof BusinessUser) {
+            if (subscription) {
+                const sessionUrl = (await createSubscriptionCheckout(businessUser.hadTrial, businessUser.id, businessUser.stripeCustomerId)).url!
+                router.replace(sessionUrl)
+            }
+            router.replace(`/onboarding/${businessUser.stripeAccountId}`)
         } else {
-
-
-            router.replace(`/onboarding/${result.business_users?.stripe_acc_id}`)
+            setError(businessUser.message)
         }
-
     }
+
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [error, setError] = useState<any>(null)
     const [agreement, setAgreement] = useState<{

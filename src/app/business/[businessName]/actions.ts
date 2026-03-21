@@ -1,0 +1,383 @@
+'use server'
+
+import { stripe as SP } from "../../../lib/utils";
+import pool from "@utils/dbPool";
+import { DateTime } from "luxon";
+import { Resend } from "resend";
+import { getSlots, OutputSlot } from "slot-calculator";
+import AppointmentRescheduled from "../../../../emails/appointment-rescheduled";
+import RescheduledAppointment from "../../../../emails/rescheduled-appointment";
+import { createClient } from "@utils/supabase/server";
+import { Database } from "../../../../lib/database.types";
+import { assignAddons } from "app/api/util/transformServices";
+import { trackAppointmentRescheduled } from "../../../../lib/analytics";
+
+const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+
+export const fetchBusinessData = async (businessName: string) => {
+    const supabase = createClient<Database>();
+    const { data, error } = await supabase.from("business_users").select("*, availabilities(*), services(*), appointments(*), web_editors(*)").eq("url_name", `${businessName}`).single();
+    const services = data?.services
+    if (error) {
+        return error
+    }
+    return { result: { ...data, services: await assignAddons(supabase, services!) } }
+}
+
+export const fetchBusinessPolicies = async (policyId: string) => {
+    const supabase = createClient<Database>();
+    const { data: policy, error } = await supabase.from('business_policies').select('*').eq('id', policyId).single()
+    return policy
+}
+
+
+// Helper function that checks to see if a certain timeslot if available for booking or rescheduling
+export const
+    checkSlots = async (timeSlot: {
+        start?: string;
+        end?: string;
+        appointmentLength?: number;
+    }, availability: any, appointments: any, zone: string = Intl.DateTimeFormat().resolvedOptions().timeZone) => {
+        const beginDay = DateTime.fromISO(timeSlot.start!).startOf('day').toISO()!
+        const endDay = DateTime.fromISO(timeSlot.end!).endOf('day').toISO()!
+
+        const formattedAv = await getAvailability(beginDay, endDay, availability, zone)
+        const formattedUnav = await getUnavailability(beginDay, endDay, appointments, zone)
+
+        const { availableSlots } = getSlots({
+            from: beginDay,
+            to: endDay,
+            duration: timeSlot.appointmentLength!,
+            availability: formattedAv,
+            unavailability: formattedUnav,
+            outputTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        })
+        // Format the slots right
+        let result: string[][] = [[availableSlots[0].from]]; // [[9, 12], [3, 6], [7, 9]]
+        for (let j = 0; j < availableSlots.length; j++) {
+            if (j === availableSlots.length - 1) {
+                result[result.length - 1].push(availableSlots[j].to)
+                continue
+            }
+            if (availableSlots[j].to !== availableSlots[j + 1].from) {
+                result[result.length - 1].push(availableSlots[j].to)
+                result.push([availableSlots[j + 1].from])
+            }
+            continue;
+        }
+        // Generate timeslots
+        let res = []
+        for (let i = 0; i < result.length; i++) {
+            let timeStart = DateTime.fromISO(result[i][0])
+            let movingTime = DateTime.fromISO(result[i][0])
+            let timeEnd = DateTime.fromISO(result[i][result[i].length - 1])
+            while (movingTime < timeEnd) {
+                movingTime = timeStart
+                movingTime = movingTime.plus({ minutes: timeSlot.appointmentLength })
+                if (movingTime <= timeEnd) { // length
+                    res.push(timeStart.toISO())
+                    timeStart = timeStart.plus({ minutes: 10 }) // increment
+                } else {
+                    break;
+                }
+            }
+        }
+
+
+        return res
+
+    }
+
+export const cancelAppointment = async (appointmentID: string) => {
+    // Check if appointment still exists
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await client.query(`SELECT * FROM appointments app WHERE app.id = $1`, [appointmentID])
+        if (result.rowCount === 0) {
+            throw Error("Appointment doesn't exist")
+        }
+        const appointment = result.rows[0]
+        if (appointment.status === "CANCELLED") {
+            throw Error("Already cancelled")
+        }
+        await client.query(`UPDATE appointments SET status = 'CANCELLED' WHERE id = $1 RETURNING *`, [appointmentID])
+        // Handle deposit refund
+        await client.query('END')
+    } catch (error: any) {
+        if (error.message === "Appointment doesn't exist") {
+            await client.query("ROLLBACK")
+            return -1
+        }
+        if (error.message === "Already cancelled") {
+            await client.query("ROLLBACK")
+            return 0
+        }
+
+    } finally {
+        client.release();
+    }
+
+}
+
+export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
+    start: string;
+    end: string;
+    appointmentLength: number;
+}, businessId: string, availability_id: string, zone: string) => {
+    const client = await pool.connect()
+    try {
+        await client.query('BEGIN');
+        // Check if timeslot is still available
+        // 1. Get availability and appointments
+        const availability = (await client.query(`SELECT availability_data FROM availabilities av WHERE av.id = $1`, [availability_id])).rows[0].availability_data
+        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows
+        let available: boolean = false
+        const availableSlots = await checkSlots(timeSlot, availability, appointments, zone)
+        availableSlots.forEach((slot: string | null, index: number) => {
+            if (slot === timeSlot.start!) {
+                available = true
+            }
+        })
+        if (!available) {
+            throw Error("Timeslot is no longer available")
+        }
+        const ogAppointment = appointments.filter((appointment: Appointment, index: number) => appointment.id === appointmentID)[0]
+
+        // UPDATE appointment timeslot
+        // FIXME: Update "updated_at" timestamp
+        const appointment = (await client.query(`UPDATE appointments SET start = $1, "end" = $2, reschedules = $3 WHERE id = $4 RETURNING *`, [timeSlot.start, timeSlot.end, parseInt(ogAppointment.reschedules) - 1, appointmentID])).rows[0]
+        const business = (await client.query(`SELECT * FROM business_users WHERE business_id = $1`, [appointment.business])).rows[0]
+        await client.query('COMMIT')
+        await resend.emails.send({
+            from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
+            to: appointment.client_metadata?.email,
+            subject: "Appointment Rescheduled",
+            react: AppointmentRescheduled({
+                socials: {
+                    facebook: "",
+                    instagram: "",
+                    twitter: ""
+                },
+                clientData: {
+                    firstName: appointment.client_metadata.firstName,
+                    lastName: appointment.client_metadata.lastName,
+                },
+                businessData: {
+                    id: business.business_id,
+                    name: business.business_name,
+                    businessAddress: "2800 SW 35th Place, Gainesville, FL"
+                },
+                appointmentData: {
+                    id: appointment.id,
+                    start: DateTime.fromJSDate(appointment.start).toISO()!,
+                    end: DateTime.fromJSDate(appointment.end).toISO()!
+                },
+                serviceName: appointment.service_data.name
+            }),
+        })
+        await resend.emails.send({
+            from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
+            to: business?.email!,
+            subject: "Booking Alert",
+            react: RescheduledAppointment({
+                socials: {
+                    facebook: "",
+                    instagram: "",
+                    twitter: ""
+                },
+                clientData: {
+                    firstName: appointment.client_metadata.firstName,
+                    lastName: appointment.client_metadata.lastName,
+                },
+                businessData: {
+                    id: business.business_id,
+                    name: business.business_name,
+                    businessAddress: "2800 SW 35th Place, Gainesville, FL"
+                },
+                appointmentData: {
+                    id: appointment.id,
+                    start: DateTime.fromJSDate(appointment.start).toISO()!,
+                    end: DateTime.fromJSDate(appointment.end).toISO()!
+                },
+                serviceName: appointment.service_data.name
+            }),
+        });
+        await trackAppointmentRescheduled({
+            businessId: appointment.business,
+            serviceId: appointment.service_data.id,
+            serviceName: appointment.service_data.name,
+            servicePrice: appointment.service_data.price,
+            appointmentType: ""
+        })
+
+        return appointment
+    } catch (error: any) {
+
+        await client.query('ROLLBACK')
+    } finally {
+        client.release();
+    }
+}
+
+export const bookAppointment = async (addons: any, paymentIntentID: string, businessId: string, policyId: string, serviceData: Service, client_metadata: any, timeSlot: {
+    start?: string;
+    end?: string;
+    appointmentLength: number;
+
+}, zone: string
+
+) => {
+    const client = await pool.connect()
+    try {
+        await client.query('BEGIN');
+        // Check if timeslot is still available
+        // 1. Get availability and appointments
+        const availabilities = (await client.query(`SELECT availability_data FROM availabilities av WHERE av.business_id = $1`, [businessId])).rows
+        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows
+        const availability = availabilities.filter((availability: any, index: number) => availability.availability_data.id === serviceData.availability)[0].availability_data
+
+        let available: boolean = false
+
+        const availableSlots = await checkSlots(timeSlot, availability, appointments, zone)
+
+        availableSlots.forEach((slot: string | null, index: number) => {
+            if (slot === timeSlot.start!) {
+                available = true
+            }
+        })
+        if (!available) {
+            throw Error("Timeslot is no longer available")
+        }
+
+        // 2. 
+        // Check if policy and service has changed since the user first loaded the page
+        const policy = await client.query(`SELECT booking_policies FROM business_users bu WHERE bu.business_id = $1`, [businessId])
+        if (policy.rows[0].booking_policies !== policyId) {
+            throw Error("Business data has changed")
+        }
+        // Charge account if policy requires deposit
+        const businessPolicy = await client.query(`SELECT * FROM business_policies bp WHERE bp.id = $1`, [policy.rows[0].booking_policies])
+
+        let appointment;
+        if (paymentIntentID.length) {
+            appointment = await client.query(`INSERT INTO appointments (start, "end", business, client_metadata, status, service_data, deposit_charge_id) VALUES ($1, $2, $3, $4, 'PROCESSING', $5, $6) RETURNING *`, [timeSlot.start, timeSlot.end, businessId, client_metadata, serviceData, paymentIntentID])
+            //TODO: Create charge with Stripe -> LATER!!
+
+        } else {
+            // Make different INSERT
+            appointment = await client.query(`INSERT INTO appointments (start, "end", business, client_metadata, status, service_data) VALUES ($1, $2, $3, $4, 'CONFIRMED', $5) RETURNING *`, [timeSlot.start, timeSlot.end, businessId, client_metadata, serviceData])
+
+        }
+        await client.query('COMMIT');
+        // Send query to supabase confirming the appointment
+        return appointment.rows[0]
+
+    } catch (error) {
+        console.error(error)
+        await client.query('ROLLBACK')
+
+    } finally {
+        client.release();
+    }
+}
+
+export const getAvailability = async (startDate: string, endDate: string, availability: any, zone: string
+) => {
+    console.log(zone)
+    let start = DateTime.fromISO(startDate).setZone(zone);
+    console.log(start)
+    let end = DateTime.fromISO(endDate).setZone(zone);
+    let slotResult = []
+    try {
+        let curr = start;
+        while (curr <= end) {
+            let weekDay = curr.weekday - 1
+            if (!availability.week[weekDay].isChecked) {
+                curr = curr.plus({ days: 1 })
+                continue
+            }
+            const ranges = availability.week[weekDay].timeRanges;
+            // Loop through week availability
+            for (let i = 0; i < ranges.length; i++) {
+                // Get time
+                const startHour = ranges[i].start.hour
+                const startMin = ranges[i].start.minute
+                const endHour = ranges[i].end.hour
+                const endMin = ranges[i].end.minute
+
+                let startDateTimeRef = DateTime.fromObject(
+                    { year: curr.year, month: curr.month, day: curr.day, hour: startHour, minute: startMin },
+                    { zone }
+                );
+                console.log(startDateTimeRef)
+
+                let endDateTimeRef = DateTime.fromObject(
+                    { year: curr.year, month: curr.month, day: curr.day, hour: endHour, minute: endMin },
+                    { zone }
+                );
+
+                let newAvailabilityDay = {
+                    from: startDateTimeRef.toISO() as any,
+                    to: endDateTimeRef.toISO() as any,
+                }
+                slotResult.push(newAvailabilityDay)
+            }
+            curr = curr.plus({ days: 1 })
+        }
+        // Loop through specific dates
+        const specificDates = availability.specificDates;
+        const dates = Object.keys(specificDates)
+        for (let i = 0; i < dates.length; i++) {
+            const ranges = specificDates[dates[i]]
+            const currDate = DateTime.fromISO(dates[i])
+            for (let j = 0; j < ranges.length; j++) {
+                const startHour = ranges[j].start.hour
+                const startMin = ranges[j].start.minute
+                const endHour = ranges[j].end.hour
+                const endMin = ranges[j].end.minute
+
+                const currDate = DateTime.fromISO(dates[i]).setZone(zone);
+
+                let startDateTimeRef = DateTime.fromObject(
+                    { year: currDate.year, month: currDate.month, day: currDate.day, hour: startHour, minute: startMin },
+                    { zone }
+                );
+
+                let endDateTimeRef = DateTime.fromObject(
+                    { year: currDate.year, month: currDate.month, day: currDate.day, hour: endHour, minute: endMin },
+                    { zone }
+                );
+
+                const specificDayObj = {
+                    from: startDateTimeRef.toISO(),
+                    to: endDateTimeRef.toISO(),
+                }
+                slotResult.push(specificDayObj)
+            }
+        }
+    } catch (error: any) {
+
+    }
+    return slotResult
+
+}
+
+export const getUnavailability = async (startDate: string, endDate: string, appointments: Array<any>, zone: string
+) => {
+    let slotResult: { from: string; to: string }[] = [];
+
+    try {
+        for (let i = 0; i < appointments.length; i++) {
+            slotResult.push({
+                from: DateTime.fromISO(appointments[i].start).setZone(zone).toISO()!,
+                to: DateTime.fromISO(appointments[i].end).setZone(zone).toISO()!,
+            });
+        }
+    } catch (error: any) {
+        console.error(error);
+        throw new Error(error.message);
+    }
+
+    return slotResult;
+}

@@ -6,7 +6,7 @@ import { Traffic } from '@components/dashboard/Traffic';
 import { StackedAreaChart } from '@components/dashboard/StackedAreas';
 import { createClient } from '@utils/supabase/server';
 import { Database } from '../../../../lib/database.types';
-import { fetchUser } from './actions';
+import { fetchDashboardAnalytics, fetchUser, getDashboardGrowth } from './actions';
 import { PostgrestError } from '@supabase/supabase-js';
 import { DateTime } from 'luxon';
 
@@ -25,13 +25,16 @@ export default async function Dashboard() {
         return { appointments: data, businessData: businessData }
     }
     const res = await fetchData()
+
     if (!(res instanceof PostgrestError)) {
+        const dashboardAnalytics = await fetchDashboardAnalytics(res.businessData?.business_id!)
+        const growth = await getDashboardGrowth(res.businessData?.business_id!)
         return (
             <>
                 <div className="h-screen overflow-y-visible lg:flex">
                     <main>
                         <div className=" p-6 lg:p-0 space-y-6">
-                            <StackedCards businessData={res.businessData!} appointments={res.appointments!} />
+                            <StackedCards growth={growth.data![0]} dashboardAnalytics={dashboardAnalytics} businessData={res.businessData!} appointments={res.appointments!} />
                             {/* <div className="mt-6 lg:w-[calc(100vw-20rem)] grid gap-6 lg:grid-cols-2">
                             <TwoAreasChart />
                             <SimpleBarChart />

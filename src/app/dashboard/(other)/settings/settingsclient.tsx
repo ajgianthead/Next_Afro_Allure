@@ -37,30 +37,16 @@ export interface AccountSettings {
     }
 }
 
-export default function SettingsClient({ business }: {
-    business: {
-        booking_policies: string;
-        business_id: string;
-        business_name: string;
-        clients: string[] | null;
-        completed_stripe_onboarding: boolean;
-        created_at: string;
-        current_onboarding_link: string | null;
-        default_availability: string;
-        email: string;
-        is_onboarded: boolean;
-        stripe_acc_id: string | null;
-        updated_at: string;
-        url_name: string;
-        user_id: string;
-        account_settings: any
-    }
+export default function SettingsClient({ business, subscriptionLink }: {
+    business: Business
+    subscriptionLink?: string
 }) {
     const path = usePathname();
     const [active, setActive] = useState<number>(0)
-    const [accountSettings, setAccountSettings] = useState<AccountSettings>(business.account_settings)
+    const [accountSettings, setAccountSettings] = useState<any>(business.account_settings)
     const [currentEmail, setCurrentEmail] = useState<string>(business.email)
     const [savingChanges, setSavingChanges] = useState<boolean>(false)
+    const PLAN_TYPE = business.plan_type
     return (
         <div className=''>
             <Card className='mx-6'>
@@ -96,7 +82,7 @@ export default function SettingsClient({ business }: {
                         active === 0 ? (
                             <Account setAccountSettings={setAccountSettings} account_settings={accountSettings} businessName={business.business_name} email={currentEmail} setCurrentEmail={setCurrentEmail} />
                         ) : (
-                            <Preferences setAccountSettings={setAccountSettings} account_settings={accountSettings} businessName={business.business_name} />
+                            <Preferences link={subscriptionLink} planType={PLAN_TYPE} setAccountSettings={setAccountSettings} account_settings={accountSettings} businessName={business.business_name} />
                         )
                     }
 
@@ -136,7 +122,8 @@ const ManageStripe = () => {
     )
 }
 
-const Preferences = ({ businessName, account_settings, setAccountSettings }: { businessName: string, account_settings: AccountSettings, setAccountSettings: React.Dispatch<React.SetStateAction<AccountSettings>> }) => {
+const Preferences = ({ businessName, account_settings, setAccountSettings, planType, link }: { planType: "STARTER" | "GROWTH", businessName: string, link?: string, account_settings: AccountSettings, setAccountSettings: React.Dispatch<React.SetStateAction<AccountSettings>> }) => {
+    const STARTER: boolean = planType === 'STARTER'
     return (
         <div className='w-full overflow-y-auto'>
             <Title className='text-md'>Preferences</Title>
@@ -153,7 +140,9 @@ const Preferences = ({ businessName, account_settings, setAccountSettings }: { b
                         }
                     })
                 }} />
-                <Checkbox label="Send email reminders to 24hrs before appointment" checked={account_settings.notifications.email_24} size='sm' onChange={(e) => {
+                {STARTER ? <Caption className='text-xs'>To enable reminders for either you or your clients, you must <a href={link} target='_blank' className='underline  text-[#FC6161] font-medium'>Upgrade Plan</a></Caption> : <></>}
+
+                <Checkbox label="Send email reminders to 24hrs before appointment" disabled={STARTER} checked={STARTER ? false : account_settings.notifications.email_24} size='sm' onChange={(e) => {
                     setAccountSettings({
                         ...account_settings,
                         notifications: {
@@ -162,7 +151,7 @@ const Preferences = ({ businessName, account_settings, setAccountSettings }: { b
                         }
                     })
                 }} />
-                <Checkbox label="Send email reminders to 1hr before appointment" size='sm' checked={account_settings.notifications.email_1} onChange={(e) => {
+                <Checkbox label="Send email reminders to 1hr before appointment" size='sm' disabled={STARTER} checked={STARTER ? false : account_settings.notifications.email_1} onChange={(e) => {
                     setAccountSettings({
                         ...account_settings,
                         notifications: {
@@ -175,7 +164,9 @@ const Preferences = ({ businessName, account_settings, setAccountSettings }: { b
             </div>
             <div className='flex flex-col gap-2 mt-6'>
                 <Label htmlFor='email' size='sm' className=' font-medium'>Appointment Reminders</Label>
-                <Checkbox label="Send email reminders to client 24hrs before appointment" checked={account_settings.app_reminders.email_24} size='sm' onChange={(e) => {
+                {STARTER ? <Caption className='text-xs'>To enable reminders for either you or your clients, you must <a href={link} target='_blank' className='underline  text-[#FC6161] font-medium'>Upgrade Plan</a></Caption> : <></>}
+
+                <Checkbox label="Send email reminders to client 24hrs before appointment" disabled={STARTER} checked={STARTER ? false : account_settings.app_reminders.email_24} size='sm' onChange={(e) => {
                     setAccountSettings({
                         ...account_settings,
                         app_reminders: {
@@ -184,7 +175,7 @@ const Preferences = ({ businessName, account_settings, setAccountSettings }: { b
                         }
                     })
                 }} />
-                <Checkbox label="Send email reminders to client 1hr before appointment" checked={account_settings.app_reminders.email_1} size='sm' onChange={(e) => {
+                <Checkbox label="Send email reminders to client 1hr before appointment" disabled={STARTER} checked={STARTER ? false : account_settings.app_reminders.email_1} size='sm' onChange={(e) => {
                     setAccountSettings({
                         ...account_settings,
                         app_reminders: {
