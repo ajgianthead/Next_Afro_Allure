@@ -33,9 +33,7 @@ const sendRescheduledEmails = async (data: any) => {
         subject: "Appointment Rescheduled",
         react: AppointmentRescheduled({
             socials: {
-                facebook: "",
-                instagram: "",
-                twitter: ""
+                instagram: "https://instagram.com/afroallure_",
             },
             clientData: {
                 firstName: res.client_metadata.firstName,
@@ -61,9 +59,7 @@ const sendRescheduledEmails = async (data: any) => {
             subject: "Booking Alert",
             react: RescheduledAppointment({
                 socials: {
-                    facebook: "",
-                    instagram: "",
-                    twitter: ""
+                    instagram: "https://instagram.com/afroallure_",
                 },
                 clientData: {
                     firstName: res.client_metadata.firstName,
@@ -93,9 +89,7 @@ export const sendConfirmationEmail = async (data: any) => {
         subject: "Appointment Confirmed",
         react: AppointmentConfirmed({
             socials: {
-                facebook: "",
-                instagram: "",
-                twitter: ""
+                instagram: "https://instagram.com/afroallure_",
             },
             clientData: {
                 firstName: res.client_metadata.firstName,
@@ -121,9 +115,7 @@ export const sendConfirmationEmail = async (data: any) => {
             subject: "Booking Alert",
             react: NewAppointment({
                 socials: {
-                    facebook: "",
-                    instagram: "",
-                    twitter: ""
+                    instagram: "https://instagram.com/afroallure_",
                 },
                 clientData: {
                     firstName: res.client_metadata.firstName,
@@ -156,9 +148,7 @@ export const sendCancelledEmails = async (data: any) => {
         subject: "Appointment Cancelled",
         react: AppointmentCancelled({
             socials: {
-                facebook: "",
-                instagram: "",
-                twitter: ""
+                instagram: "https://instagram.com/afroallure_",
             },
             clientData: {
                 firstName: res.client_metadata.firstName,
@@ -184,9 +174,7 @@ export const sendCancelledEmails = async (data: any) => {
             subject: "Booking Alert",
             react: CancelledAppointment({
                 socials: {
-                    facebook: "",
-                    instagram: "",
-                    twitter: ""
+                    instagram: "https://instagram.com/afroallure_",
                 },
                 clientData: {
                     firstName: res.client_metadata.firstName,

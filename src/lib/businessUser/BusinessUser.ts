@@ -12,6 +12,7 @@ import { BusinessPolicy } from "@lib/businessPolicy/BusinessPolicy";
 import { createStripeOnboardingLink } from "@lib/stripe/createStripeOnboardingLink";
 import { Client } from "@lib/clients/Client";
 import { Appointment } from "@lib/appointments/Appointment";
+import { Notification } from "@lib/notifications/Notification";
 
 
 
@@ -63,18 +64,18 @@ export class BusinessUser {
         return data !== null
     }
 
-    private static fromRow(row: any) {
+    private static fromRow(row: Database['public']['Tables']['business_users']['Row']) {
         return new BusinessUser(
             row.business_id,
             row.business_name,
             row.email,
-            row.stripe_acc_id,
-            row.stripe_customer_id,
+            row.stripe_acc_id!,
+            row.stripe_customer_id!,
             row.completed_stripe_onboarding,
             row.is_onboarded,
             row.url_name,
-            row.current_onboarding_link,
-            row.account_settings,
+            row.current_onboarding_link!,
+            row.account_settings as unknown as AccountSettings,
             row.plan_type,
             row.had_trial,
             row.published_site,
@@ -141,6 +142,15 @@ export class BusinessUser {
 
 
     }
+    static async fetch(supabase: SupabaseClient<Database>, businessId: string) {
+        try {
+            const { data: row, error } = await supabase.from('business_users').select().eq('business_id', businessId).single()
+            if (error) throw Error(error.message)
+            return BusinessUser.fromRow(row)
+        } catch (error: any) {
+            throw Error(error.message)
+        }
+    }
     async getServices(supabase: SupabaseClient<Database>) {
         return await Service.fetch(supabase, this.id)
     }
@@ -170,5 +180,8 @@ export class BusinessUser {
     }
     async getCompletedAppointments(supabase: SupabaseClient<Database>) {
         return await Appointment.fetchByStatus(supabase, this.id, 'COMPLETED')
+    }
+    async getNotifications(supabase: SupabaseClient<Database>) {
+        return await Notification.fetch(supabase, this.id)
     }
 }

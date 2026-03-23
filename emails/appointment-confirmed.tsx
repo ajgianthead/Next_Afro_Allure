@@ -59,9 +59,7 @@ We’re thrilled to let you know that your appointment with ${businessData.name}
                     <Text className="">Stay connected with us!</Text>
                     <Container className="flex flex-col">
                         <ul className="list-none mt-0">
-                            <li><Link href={socials.facebook}>🌐 Facebook</Link></li>
                             <li><Link href={socials.instagram}>📸 Instagram</Link></li>
-                            <li><Link href={socials.twitter}>🐦 Twitter</Link></li>
                         </ul>
                     </Container>
                 </Container>

@@ -45,9 +45,7 @@ const sendBusinessEmail = async (data: AppointmentReminderData) => {
           start: data.start,
           end: data.end
         }, socials: {
-          facebook: 'https://facebooks.com',
           instagram: 'https://instagram.com',
-          twitter: 'https://x.com'
         }, serviceName: data.serviceName, clientData: {
           firstName: data.clientData.firstName,
           lastName: data.clientData.lastName,
@@ -76,9 +74,7 @@ const sendClientEmail = async (data: AppointmentReminderData) => {
           start: data.start,
           end: data.end
         }, socials: {
-          facebook: 'https://facebooks.com',
           instagram: 'https://instagram.com',
-          twitter: 'https://x.com'
         }, serviceName: data.serviceName, clientData: {
           firstName: data.clientData.firstName,
           lastName: data.clientData.lastName,
@@ -251,8 +247,7 @@ const checkPaymentStatus = async (appointmentId: string) => {
 
 export const reminderTask = task({
   id: `remind-appointment`,
-  // Set an optional maxDuration to prevent tasks from running indefinitely
-  maxDuration: 300, // Stop executing after 300 secs (5 mins) of compute
+  maxDuration: 300,
   run: async (payload: ReminderProps) => {
     await configureReminder(payload)
   },

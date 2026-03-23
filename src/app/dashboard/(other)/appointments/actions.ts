@@ -81,7 +81,7 @@ export const bookingManual = async (businessId: string, client_metadata: any, se
         const availability = availabilities.filter((availability: any, index: number) => availability.id === "4fe7f32b-246e-4214-bccf-8fd898317363")[0]
 
         let available: boolean = false
-        const availableSlots = await checkSlots(timeSlot, availability, appointments)
+        const availableSlots = await checkSlots(timeSlot, availability, appointments,)
         availableSlots.forEach((slot: string | null, index: number) => {
             if (slot === timeSlot.start!) {
                 available = true

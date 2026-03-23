@@ -2,6 +2,16 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "../../../lib/database.types";
 import { Service } from "@lib/service/Service";
 import { AddOn } from "@utils/types/service";
+import { Resend } from "resend";
+import NewAppointment from "../../../emails/new-appointment";
+import { BusinessUser } from "@lib/businessUser/BusinessUser";
+import RescheduledAppointment from "../../../emails/rescheduled-appointment";
+import CancelledAppointment from "../../../emails/cancelled-appointment";
+import ConfirmAppointmentTemplate from "../../../emails/confirm-appointment";
+import AppointmentConfirmed from "../../../emails/appointment-confirmed";
+import AppointmentRescheduled from "../../../emails/appointment-rescheduled";
+import AppointmentCancelled from "../../../emails/appointment-cancelled";
+import { Email } from "@lib/appointmentEmails/AppointmentEmails";
 
 export class Appointment {
     constructor(
@@ -239,5 +249,188 @@ export class Appointment {
             throw Error(error.message)
         }
     }
+    async sendBusinessConfirmationEmail(resend: Resend, supabase: SupabaseClient<Database>) {
+        const business = await BusinessUser.fetch(supabase, this.businessId)
+        const businessAddress = business.accountSettings.business_address
+        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+        return Email.send(resend, NewAppointment({
+            socials: {
+                instagram: "https://instagram.com/afroallure_",
+            },
+            serviceName: this.serviceData.name,
+            clientData: {
+                firstName: this.clientMetadata.firstName,
+                lastName: this.clientMetadata.lastName,
+            },
+            businessData: {
+                id: this.businessId,
+                name: business.name,
+                businessAddress: addressString
+            },
+            appointmentData: {
+                id: this.id,
+                start: this.start,
+                end: this.end
+            }
 
+        }), 'New Booking Alert', business.email)
+    }
+    async sendBusinessRescheduleEmail(resend: Resend, supabase: SupabaseClient<Database>) {
+        const business = await BusinessUser.fetch(supabase, this.businessId)
+        const businessAddress = business.accountSettings.business_address
+        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+        return Email.send(resend, RescheduledAppointment({
+            socials: {
+                instagram: "https://instagram.com/afroallure_",
+            },
+            serviceName: this.serviceData.name,
+            clientData: {
+                firstName: this.clientMetadata.firstName,
+                lastName: this.clientMetadata.lastName,
+            },
+            businessData: {
+                id: this.businessId,
+                name: business.name,
+                businessAddress: addressString
+            },
+            appointmentData: {
+                id: this.id,
+                start: this.start,
+                end: this.end
+            }
+
+        }), 'Appointment Rescheduled', business.email)
+    }
+    async sendBusinessCancellationEmail(resend: Resend, supabase: SupabaseClient<Database>) {
+        const business = await BusinessUser.fetch(supabase, this.businessId)
+        const businessAddress = business.accountSettings.business_address
+        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+        return Email.send(resend, CancelledAppointment({
+            socials: {
+                instagram: "https://instagram.com/afroallure_",
+            },
+            serviceName: this.serviceData.name,
+            clientData: {
+                firstName: this.clientMetadata.firstName,
+                lastName: this.clientMetadata.lastName,
+            },
+            businessData: {
+                id: this.businessId,
+                name: business.name,
+                businessAddress: addressString
+            },
+            appointmentData: {
+                id: this.id,
+                start: this.start,
+                end: this.end
+            }
+
+        }), 'Appointment Cancelled', business.email)
+    }
+
+    async sendConfirmAppointmentEmail(resend: Resend, supabase: SupabaseClient<Database>) {
+        const business = await BusinessUser.fetch(supabase, this.businessId)
+        const businessAddress = business.accountSettings.business_address
+        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+        return Email.send(resend, ConfirmAppointmentTemplate({
+            socials: {
+                instagram: "https://instagram.com/afroallure_",
+            },
+            serviceName: this.serviceData.name,
+            clientData: {
+                firstName: this.clientMetadata.firstName,
+                lastName: this.clientMetadata.lastName,
+            },
+            businessData: {
+                id: this.businessId,
+                name: business.name,
+                businessAddress: addressString
+            },
+            appointmentData: {
+                id: this.id,
+                start: this.start,
+                end: this.end
+            }
+
+        }), 'Confirm Appointment', this.clientMetadata.email)
+    }
+    async sendClientConfirmationEmail(resend: Resend, supabase: SupabaseClient<Database>) {
+        const business = await BusinessUser.fetch(supabase, this.businessId)
+        const businessAddress = business.accountSettings.business_address
+        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+        return Email.send(resend, AppointmentConfirmed({
+            socials: {
+                instagram: "https://instagram.com/afroallure_",
+            },
+            serviceName: this.serviceData.name,
+            clientData: {
+                firstName: this.clientMetadata.firstName,
+                lastName: this.clientMetadata.lastName,
+            },
+            businessData: {
+                id: this.businessId,
+                name: business.name,
+                businessAddress: addressString
+            },
+            appointmentData: {
+                id: this.id,
+                start: this.start,
+                end: this.end
+            }
+
+        }), 'Appointment Confirmed', this.clientMetadata.email)
+    }
+    async sendClientRescheduleEmail(resend: Resend, supabase: SupabaseClient<Database>) {
+        const business = await BusinessUser.fetch(supabase, this.businessId)
+        const businessAddress = business.accountSettings.business_address
+        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+        return Email.send(resend, AppointmentRescheduled({
+            socials: {
+                instagram: "https://instagram.com/afroallure_",
+            },
+            serviceName: this.serviceData.name,
+            clientData: {
+                firstName: this.clientMetadata.firstName,
+                lastName: this.clientMetadata.lastName,
+            },
+            businessData: {
+                id: this.businessId,
+                name: business.name,
+                businessAddress: addressString
+            },
+            appointmentData: {
+                id: this.id,
+                start: this.start,
+                end: this.end
+            }
+
+        }), 'Appointment Rescheduled', this.clientMetadata.email)
+    }
+    async sendClientCancellationEmail(resend: Resend, supabase: SupabaseClient<Database>) {
+        const business = await BusinessUser.fetch(supabase, this.businessId)
+        const businessAddress = business.accountSettings.business_address
+        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
+        return Email.send(resend, AppointmentCancelled({
+            socials: {
+                instagram: "https://instagram.com/afroallure_",
+            },
+            serviceName: this.serviceData.name,
+            clientData: {
+                firstName: this.clientMetadata.firstName,
+                lastName: this.clientMetadata.lastName,
+            },
+            businessData: {
+                id: this.businessId,
+                name: business.name,
+                businessAddress: addressString
+            },
+            appointmentData: {
+                id: this.id,
+                start: this.start,
+                end: this.end
+            }
+
+        }), 'Appointment Cancelled', this.clientMetadata.email)
+    }
 }
+

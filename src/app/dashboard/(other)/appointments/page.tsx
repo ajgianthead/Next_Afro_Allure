@@ -10,7 +10,6 @@ export const dynamic = 'force-dynamic';
 export default async function Page() {
     const fetchAppointments = async (business_id: string) => {
         const supabase = createClient<Database>()
-        const currentTimestamp = new Date().toISOString();
         const res = await supabase.from('business_users').select('booking_policies').eq('business_id', business_id).single();
         const policy = (await supabase.from('business_policies').select("*").eq('id', res.data?.booking_policies!).single()).data
         const services = (await supabase.from('services').select('*').eq('business', business_id)).data
