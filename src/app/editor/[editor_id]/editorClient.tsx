@@ -14,7 +14,7 @@ import { EditableButton } from '@components/editor/Button';
 import { EditableText } from '@components/editor/Text';
 import Toolbox from '@components/editor/Toolbox';
 import Settings from '@components/editor/Settings';
-import { EditorWrapper } from '@utils/context/EditorContext';
+import { EditorWrapper } from '@/app/utils/context/EditorContext';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { ImageContainer } from '@components/editor/Image';
 import { Video } from '@components/editor/Video';
@@ -22,7 +22,7 @@ import { Hyperlink } from '@components/editor/Hyperlink';
 import { Button, CircularProgress, IconButton } from '@mui/joy';
 import { Toolbar } from '@components/editor/Toolbar';
 import { useParams } from 'next/navigation';
-import { getEditorData } from '@utils/editor_actions';
+import { getEditorData } from '@/app/utils/editor_actions';
 import lz from "lzutf8";
 import ContextMenu from '@components/editor/ContextMenu';
 

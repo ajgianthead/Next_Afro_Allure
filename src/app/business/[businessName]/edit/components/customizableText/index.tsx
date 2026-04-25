@@ -4,7 +4,7 @@
 import { ComponentConfig } from "@puckeditor/core"
 import { RegularText } from "../types"
 import { customizableTextFields, resolveCustomizableTextFields } from "./fields"
-import { useEditorContext } from "@utils/context/EditorContext"
+import { useEditorContext } from "@/app/utils/context/EditorContext"
 import { customTextProps } from "../defaultStyles"
 
 export const CustomizableTextComponent: ComponentConfig<RegularText> = {

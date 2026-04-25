@@ -4,7 +4,7 @@ import { ButtonContainer } from "../types";
 import { FieldLabel, Fields, useGetPuck } from "@puckeditor/core";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowRightLeft, ArrowUp, ArrowUpDown, LocateFixed, PaintBucket, Signpost, Square, SquareDashedBottom, Type } from "lucide-react";
 import { IconButton, ToggleButtonGroup } from "@mui/joy";
-import { EditorConxtextProps, useEditorContext } from "@utils/context/EditorContext";
+import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { GoogleFont, loadGoogleFont } from "useGoogleFonts";
 
 export const buttonResolvedFields: (data: any) => {} = (data: any) => {

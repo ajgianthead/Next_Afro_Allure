@@ -1,4 +1,4 @@
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import MonetizationClient from "./monetizationClient";
 import { Database } from "../../../../../lib/database.types";
 import { fetchBusinessUser, fetchUser } from "../actions";

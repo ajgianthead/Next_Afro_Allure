@@ -1,5 +1,5 @@
 import { configure, task } from "@trigger.dev/sdk/v3";
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Resend } from "resend";
 import { Database } from "../../lib/database.types";
 import ReminderBusiness from "../../emails/reminder-business";
@@ -45,9 +45,7 @@ const sendBusinessEmail = async (data: AppointmentReminderData) => {
           start: data.start,
           end: data.end
         }, socials: {
-          facebook: 'https://facebooks.com',
           instagram: 'https://instagram.com',
-          twitter: 'https://x.com'
         }, serviceName: data.serviceName, clientData: {
           firstName: data.clientData.firstName,
           lastName: data.clientData.lastName,
@@ -76,9 +74,7 @@ const sendClientEmail = async (data: AppointmentReminderData) => {
           start: data.start,
           end: data.end
         }, socials: {
-          facebook: 'https://facebooks.com',
           instagram: 'https://instagram.com',
-          twitter: 'https://x.com'
         }, serviceName: data.serviceName, clientData: {
           firstName: data.clientData.firstName,
           lastName: data.clientData.lastName,
@@ -238,21 +234,20 @@ export const sendLink = async (props: PaymentLinkProps) => {
 
 const checkPaymentStatus = async (appointmentId: string) => {
   const supabase = createClient<Database>()
-  const { data } = await supabase.from('appointments').select().eq('id', appointmentId).single()
+  const { data, error } = await supabase.from('appointments').select().eq('id', appointmentId).single()
   if (data?.service_paid) {
     // IDK Something
     return
   } else {
     await supabase.from('appointments').update({
       status: 'INCOMPLETE'
-    })
+    }).eq('id', appointmentId)
   }
 }
 
 export const reminderTask = task({
   id: `remind-appointment`,
-  // Set an optional maxDuration to prevent tasks from running indefinitely
-  maxDuration: 300, // Stop executing after 300 secs (5 mins) of compute
+  maxDuration: 300,
   run: async (payload: ReminderProps) => {
     await configureReminder(payload)
   },

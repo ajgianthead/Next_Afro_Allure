@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import { GA4ReportRow, runPageViewReport, runTotalReport, runTrafficSourceReport } from "../../../../../lib/analytics";
 import { fetchBusinessUser, fetchUser } from "../actions";
 import AnalyticsClient from "./analyticsClient";
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import { formatAppointmentAnalyticalData } from "./actions";
 import { redirect } from "next/navigation";
@@ -24,7 +24,7 @@ export default async function Page() {
     const pastNinetyDays = DateTime.now().minus({ month: 3 }).toISO()
 
 
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data } = await supabase.from('appointments').select("*, business_users(plan_type)").eq('business', business_user.business_id).neq('status', 'PENDING')
         .neq('status', 'DENIED')
         .neq('status', 'PROCESSING').gt('created_at', pastNinetyDays).lt('created_at', endOfTheDayToday)

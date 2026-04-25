@@ -8,13 +8,14 @@ import {
 } from '@stripe/react-connect-js';
 import * as Link from '@components/Link';
 import { Caption, Title } from '@tailus-ui/typography';
-import { useUserContext } from '@utils/context/UserContext';
+import { useUserContext } from '@/app/utils/context/UserContext';
 import React, { useState, useEffect } from 'react'
 import Separator from '@tailus-ui/Separator'
 import { Button, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
 import Card from '@tailus-ui/Card';
 import { ExternalLink } from 'lucide-react';
 import { createStripeLoginLink } from './actions';
+import { createAccountSessionAction } from '@/features/stripe/actions';
 import { useRouter } from 'next/navigation';
 
 interface PageProps {
@@ -26,21 +27,8 @@ export default function MonetizationClient({ stripeId }: PageProps) {
     useEffect(() => {
         const run = async (accountID: string) => {
             const fetchClientSecret = async () => {
-                const response = await fetch('/api/account_session', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        account: accountID
-                    })
-                })
-                if (!response.ok) {
-                    // Handle errors on the client side here
-                    const { error } = await response.json();
-                    console.error('An error occurred: ', error);
-                    return undefined;
-                } else {
-                    const res = await response.json();
-                    return res.clientSecret;
-                }
+                const clientSecret = await createAccountSessionAction(accountID)
+                return clientSecret!
             }
 
             return loadConnectAndInitialize({

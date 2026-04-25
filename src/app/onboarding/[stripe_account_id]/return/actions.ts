@@ -1,13 +1,13 @@
 'use server'
 
 import { stripe } from "../../../../lib/utils";
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 
 export const updateStripeOnboardInfo = async (stripeId: string) => {
     const account = await stripe.accounts.retrieve(stripeId);
     if (account.requirements!.currently_due!.length === 0) {
-        const supabase = createClient<Database>();
+        const supabase = await createClient<Database>();
         const paymentConfig = await stripe.paymentMethodConfigurations.create({
             name: `aa-${stripeId}`,
             card: {

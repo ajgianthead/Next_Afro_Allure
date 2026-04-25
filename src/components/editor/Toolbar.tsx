@@ -4,7 +4,7 @@ import { Button, IconButton, ToggleButtonGroup } from '@mui/joy'
 import { CircleCheck, Eye, Laptop, Monitor, Redo, Smartphone, Tablet, Undo, X } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import lz from "lzutf8";
-import { getEditorData, sendEditorData } from '@utils/editor_actions';
+import { getEditorData, sendEditorData } from '@/app/utils/editor_actions';
 import Toast from '@components/Toast';
 import { PostgrestError } from '@supabase/supabase-js';
 

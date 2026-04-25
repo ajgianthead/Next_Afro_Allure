@@ -4,7 +4,7 @@ import { Button, Input, Select, Switch } from "@mantine/core";
 import { ImageIcon, VideoIcon } from "lucide-react";
 import { useState } from "react";
 import { imageModal } from "../../image/fields";
-import { useEditorContext } from "@utils/context/EditorContext";
+import { useEditorContext } from "@/app/utils/context/EditorContext";
 
 export const defaultCardfields: Fields<Card, {}> = {
     cardContent: {

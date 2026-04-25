@@ -1,0 +1,268 @@
+/* Brand Colors */
+$primary: #FC6161;
+$primary-soft: #ffe5e5;
+
+/* Main Calendar Container */
+.calendar-wrapper {
+  position: relative;
+  height: 100%;
+  overflow: hidden; /* Prevent parent scroll conflicts */
+}
+
+.rbc-calendar {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  background: white;
+  border-radius: 16px;
+  height: 100%;
+  overflow: hidden; /* Let RBC manage scrolling */
+  touch-action: none; /* Prevent scroll+drag conflicts */
+}
+
+/* Layout */
+.rbc-time-view,
+.rbc-month-view {
+  background: white;
+  border-radius: 14px;
+}
+
+/* Headers */
+.rbc-header {
+  padding: 14px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+/* Time column */
+.rbc-time-gutter {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  background: #fafafa;
+}
+
+/* Larger time slots */
+.rbc-timeslot-group {
+  min-height: 60px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.rbc-time-slot {
+  min-height: 24px;
+}
+
+/* Time content scroll */
+.rbc-time-content {
+  overflow-y: auto; /* RBC manages scroll */
+  border-top: none;
+  will-change: transform; /* stabilizes drag/resizing */
+}
+
+/* Day bg */
+.rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid #f3f4f6;
+}
+
+/* Hover slot feedback */
+.rbc-day-slot .rbc-time-slot:hover {
+  background: rgba(252, 97, 97, 0.08);
+  cursor: pointer;
+}
+
+/* Today highlight */
+.rbc-today {
+  background: $primary-soft;
+}
+
+/* Selected slot */
+// .rbc-selected {
+//   background: rgba(252, 97, 97, 0.15) !important;
+// }
+
+/* Event Styling */
+.rbc-event {
+  padding: 6px;
+  border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(252, 97, 97, 0.18);
+    background: linear-gradient(135deg, #FC6161, #ff7b7b);
+
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 40px;       // ensures events are tall enough
+  max-height: 80px;       // prevents them from overflowing
+  height: auto;           // let the content decide
+  overflow: hidden;       // clip extra content if needed
+}
+
+.rbc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(252, 97, 97, 0.25);
+}
+
+/* Resize handle */
+.rbc-addons-dnd-resize-ns-anchor {
+  height: 6px !important;
+  cursor: ns-resize;
+}
+
+/* Appointment status */
+.appointment-confirmed {
+  background: #22c55e !important;
+}
+
+.appointment-pending {
+  background: #f59e0b !important;
+}
+
+.appointment-cancelled {
+  background: #ef4444 !important;
+}
+
+/* Month view */
+.rbc-month-row {
+  border-top: 1px solid #f1f5f9;
+}
+
+.rbc-date-cell {
+  padding: 6px 8px;
+  font-weight: 500;
+}
+
+/* Toolbar */
+.rbc-toolbar {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: white;
+}
+
+.rbc-toolbar button {
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  padding: 6px 10px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.rbc-toolbar button:hover {
+  background: #fff5f5;
+}
+
+.rbc-toolbar button.rbc-active {
+  background: $primary;
+  color: white;
+  border-color: $primary;
+}
+
+/* Event content text */
+.rbc-event-content {
+  white-space: normal;
+  line-height: 1.3;
+}
+
+/* Appointment card layout */
+.appointment-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  height: 100%;
+}
+
+.appointment-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: white;
+  color: $primary;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.appointment-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 100%; // prevent content from growing too tall
+}
+.appointment-client {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.appointment-service {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.appointment-time {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Gloss header */
+.gloss-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: white;
+  border-bottom: 1px solid #f1f5f9;
+  border-radius: 16px 16px 0 0;
+  font-family: 'Inter', sans-serif;
+
+  .nav-left,
+  .nav-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .nav-left button,
+  .nav-right button {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #fff5f5;
+    }
+
+    &.active {
+      background: $primary;
+      color: white;
+      border-color: $primary;
+    }
+  }
+
+  .current-month {
+    font-weight: 600;
+    font-size: 16px;
+    color: #111827;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+
+    .nav-left,
+    .nav-right {
+      justify-content: space-between;
+      width: 100%;
+    }
+  }
+}

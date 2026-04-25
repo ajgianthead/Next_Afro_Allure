@@ -1,396 +1,298 @@
 import { stripe } from "../../../../lib/utils";
-import pool from "@utils/dbPool";
-import { NextRequest, NextResponse } from "next/server";
-import mailchimp from '@mailchimp/mailchimp_transactional'
-import { checkAppointmentStatus, reminderTask, sendPaymentLink } from "trigger/reminder";
+import pool from "@/app/utils/dbPool";
+import { NextRequest } from "next/server";
+import { apiError, webhookAck } from "@/lib/api/response";
 import { DateTime } from "luxon";
-import NewAppointment from "../../../../../emails/new-appointment";
-import { Resend } from "resend";
-import AppointmentConfirmed from "../../../../../emails/appointment-confirmed";
+import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails";
+import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders";
 import Stripe from "stripe";
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import { trackAppointmentBooked } from "../../../../../lib/analytics";
 import { addCreateNewClient } from "app/dashboard/(other)/clients/actions";
 
-
 export async function POST(request: NextRequest) {
-  const endpointSecret = process.env.NEXT_PUBLIC_CONNECTED_ACCOUNT_WEBHOOK_SECRET!;
-  const rawBody = await request.arrayBuffer(); // ⬅️ equivalent to express.raw()
+  const endpointSecret = process.env.CONNECTED_ACCOUNT_WEBHOOK_SECRET!;
+  const rawBody = await request.arrayBuffer();
   const bodyBuffer = Buffer.from(rawBody);
   const sig = request.headers.get('stripe-signature');
 
-  let event;
-
+  let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(bodyBuffer, sig!, endpointSecret);
   } catch (err: any) {
-
-
-    return new NextResponse(JSON.stringify({ message: `Webhook Error: ${err.message}` }), {
-      status: 400
-    })
+    return apiError(`Webhook Error: ${err.message}`, 400);
   }
-  const paymentIntent = event.data.object as Stripe.PaymentIntent;
-  const { purpose: paymentPurpose, appointment_id: appointmentID, appointmentType } = paymentIntent.metadata
 
-  const client = await pool.connect()
-  // const businessID = await (await client.query(`SELECT business FROM business_users bu WHERE bu.stripe_acc_id = $1`, [event.account])).rows[0].business
-  const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+  const client = await pool.connect();
+  try {
+    switch (event.type) {
+      case 'refund.created':
+        await handleRefund(event.data.object as Stripe.Refund);
+        break;
+      case 'payment_intent.canceled':
+        await handlePaymentCanceled(event.data.object as Stripe.PaymentIntent, client);
+        break;
+      case 'payment_intent.payment_failed':
+        await handlePaymentFailed(event.data.object as Stripe.PaymentIntent, client);
+        break;
+      case 'payment_intent.succeeded':
+        await handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent, client);
+        break;
+    }
+  } catch (error: any) {
+    client.release();
+    return apiError(error.message ?? 'Webhook handler failed', 500);
+  }
 
+  client.release();
+  return webhookAck();
+}
 
-  // Handle the event
-  switch (event.type) {
-    // Refund Cases
-    case 'refund.created':
-      try {
-        const supabase = createClient<Database>()
-        const refund = event.data.object;
-        const appointment = await supabase.from('appointments').select("*, business_users(business_id, stripe_acc_id)").or(`deposit_charge_id.eq.${refund.payment_intent},service_charge_id.eq.${refund.payment_intent}`).single()
-        const paymentIntent = await stripe.paymentIntents.retrieve(refund.payment_intent?.toString()!, {
-          stripeAccount: appointment.data?.business_users.stripe_acc_id!
-        })
-        const { purpose } = paymentIntent.metadata
-        if (purpose === 'EOA') {
-          const transactionReversal = await stripe.tax.transactions.createReversal({
-            mode: 'full',
-            original_transaction: appointment.data?.eoa_tax_transaction!,
-            reference: refund.id,
-            expand: ['line_items'],
-          })
-        } else {
-          const transactionReversal = await stripe.tax.transactions.createReversal({
-            mode: 'full',
-            original_transaction: appointment.data?.deposit_tax_transaction!,
-            reference: refund.id,
-            expand: ['line_items'],
-          })
-        }
-      } catch (error) {
+async function handleRefund(refund: Stripe.Refund) {
+  try {
+    const supabase = await createClient();
+    const { data: appointment } = await supabase
+      .from('appointments')
+      .select("*, business_users(business_id, stripe_acc_id)")
+      .or(`deposit_charge_id.eq.${refund.payment_intent},service_charge_id.eq.${refund.payment_intent}`)
+      .single();
 
-      }
-      break;
-    case 'payment_intent.canceled':
-      // Delete appointment
-      try {
-        await client.query('BEGIN')
-        const appointment = await client.query(`DELETE FROM appointments app WHERE app.deposit_charge_id = $1  RETURNING *`, [paymentIntent.id])
-        await client.query('COMMIT')
-        // Send email and/or SMS confirming appointment
-      } catch (error: any) {
-        console.error(error.message)
-        await client.query('ROLLBACK')
-      }
+    const paymentIntent = await stripe.paymentIntents.retrieve(
+      refund.payment_intent?.toString()!,
+      { stripeAccount: appointment?.business_users.stripe_acc_id! }
+    );
 
-      break;
-    case 'payment_intent.payment_failed':
-      const { purpose } = paymentIntent.metadata
+    const originalTransaction = paymentIntent.metadata.purpose === 'EOA'
+      ? appointment?.eoa_tax_transaction!
+      : appointment?.deposit_tax_transaction!;
 
-      if (appointmentType === 'automated' && purpose !== 'EOA') {
-        try {
-          await client.query('BEGIN')
+    await stripe.tax.transactions.createReversal({
+      mode: 'full',
+      original_transaction: originalTransaction,
+      reference: refund.id,
+      expand: ['line_items'],
+    });
+  } catch (error) {
+    console.error('handleRefund failed:', error);
+  }
+}
 
-          const appointment = await client.query(
-            `DELETE FROM appointments
-         WHERE deposit_charge_id = $1
-         AND status = 'processing'
-         RETURNING *`,
-            [paymentIntent.id]
-          )
+async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent, client: any) {
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `DELETE FROM appointments app WHERE app.deposit_charge_id = $1 RETURNING *`,
+      [paymentIntent.id]
+    );
+    await client.query('COMMIT');
+  } catch (error: any) {
+    console.error('handlePaymentCanceled failed:', error.message);
+    await client.query('ROLLBACK');
+  }
+}
 
-          if (appointment.rowCount === 0) {
-            console.log(
-              `No processing appointment found for PaymentIntent ${paymentIntent.id}`
-            )
-          }
+async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, client: any) {
+  const { purpose, appointmentType } = paymentIntent.metadata;
+  if (appointmentType !== 'automated' || purpose === 'EOA') return;
 
-          await client.query('COMMIT')
+  try {
+    await client.query('BEGIN');
+    const result = await client.query(
+      `DELETE FROM appointments WHERE deposit_charge_id = $1 AND status = 'PROCESSING' RETURNING *`,
+      [paymentIntent.id]
+    );
+    if (result.rowCount === 0) {
+      console.log(`No processing appointment found for PaymentIntent ${paymentIntent.id}`);
+    }
+    await client.query('COMMIT');
+  } catch (error: any) {
+    console.error('handlePaymentFailed failed:', error.message);
+    await client.query('ROLLBACK');
+  }
+}
 
-        } catch (error: any) {
-          console.error(error.message)
-          await client.query('ROLLBACK')
-        }
-      }
+async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, client: any) {
+  const { purpose, appointment_id: appointmentID } = paymentIntent.metadata;
 
-      break
-    // Payment Intent has been processed
-    case 'payment_intent.succeeded':
-      const transaction = await stripe.tax.transactions.createFromCalculation({
-        calculation: paymentIntent.metadata.tax_calculation,
-        reference: paymentIntent.id
-      })
-      await client.query('BEGIN')
-      if (paymentPurpose === 'EOA') {
-        const res = (await client.query(`WITH updated AS (
+  const transaction = await stripe.tax.transactions.createFromCalculation({
+    calculation: paymentIntent.metadata.tax_calculation,
+    reference: paymentIntent.id,
+  });
+
+  if (purpose === 'EOA') {
+    let eoaRes: any;
+    try {
+      await client.query('BEGIN');
+      const result = await client.query(
+        `WITH updated AS (
           UPDATE appointments
-          SET service_paid = $1, service_paid_type = 'PLATFORM', service_charge_id = $2, eoa_tax_transaction = $3, status = 'COMPLETED', paid_amount = coalesce(paid_amount, 0) + $4 
+          SET service_paid = $1, service_paid_type = 'PLATFORM', service_charge_id = $2,
+              eoa_tax_transaction = $3, status = 'COMPLETED', paid_amount = coalesce(paid_amount, 0) + $4
           WHERE id = $5
           RETURNING *
         )
-        SELECT 
-          updated.*,
-          business_users.business_name,
-          business_users.email
-        FROM updated
-        JOIN business_users
-          ON updated.business = business_users.business_id`, [true, paymentIntent.id, transaction.id, paymentIntent.amount, appointmentID])).rows[0]
-        // Send reciept to email
-      } else {
-        const res = (await client.query(`WITH updated AS (
-          UPDATE appointments
-          SET status = 'CONFIRMED', paid_deposit = $1, deposit_tax_transaction = $2, paid_amount = coalesce(paid_amount, 0) + $3, amount_due = amount_due - $3
-          WHERE deposit_charge_id = $4
-          RETURNING *
-        )
-        SELECT 
-          updated.*,
-          business_users.business_name,
-          business_users.email,
-          business_user.account_settings
-        FROM updated
-        JOIN business_users
-          ON updated.business = business_users.business_id`, [true, transaction.id, paymentIntent.amount, paymentIntent.id])).rows[0]
-        await client.query('COMMIT')
-        const businessAddress = res.account_settings.business_address
-        try {
-          await resend.emails.send({
-            from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
-            to: res.client_metadata?.email,
-            subject: "Appointment Confirmed",
-            react: AppointmentConfirmed({
-              socials: {
-                facebook: "",
-                instagram: "",
-                twitter: ""
-              },
-              clientData: {
-                firstName: res.client_metadata.firstName,
-                lastName: res.client_metadata.lastName,
-              },
-              businessData: {
-                id: res.business,
-                name: res.business_name,
-                businessAddress: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
-              },
-              appointmentData: {
-                id: res.id,
-                start: DateTime.fromJSDate(res.start).toISO()!,
-                end: DateTime.fromJSDate(res.end).toISO()!
-              },
-              serviceName: res.service_data.name
-            }),
-          })
-          // If business email notifications are turned on
-          if (res.account_settings.notifications.email) {
-            await resend.emails.send({
-              from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
-              to: res?.email!,
-              subject: "Booking Alert",
-              react: NewAppointment({
-                socials: {
-                  facebook: "",
-                  instagram: "",
-                  twitter: ""
-                },
-                clientData: {
-                  firstName: res.client_metadata.firstName,
-                  lastName: res.client_metadata.lastName,
-                },
-                businessData: {
-                  id: res.business,
-                  name: res.business_name,
-                  businessAddress: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
-                },
-                appointmentData: {
-                  id: res.id,
-                  start: DateTime.fromJSDate(res.start).toISO()!,
-                  end: DateTime.fromJSDate(res.end).toISO()!
-                },
-                serviceName: res.service_data.name
-              }),
-            });
-          }
-          let remindClient_1 = null;
-          let remindClient_24 = null;
-          let remindBusiness_1 = null;
-          let remindBusiness_24 = null;
+        SELECT updated.*, business_users.business_name, business_users.email, business_users.account_settings
+        FROM updated JOIN business_users ON updated.business = business_users.business_id`,
+        [true, paymentIntent.id, transaction.id, paymentIntent.amount, appointmentID]
+      );
+      await client.query('COMMIT');
+      eoaRes = result.rows[0];
+    } catch (error: any) {
+      await client.query('ROLLBACK');
+      throw error;
+    }
 
-          // Send Reminder
-          const dayBefore = DateTime.fromJSDate(res.start).minus({ day: 1 })
-          const hourBefore = DateTime.fromJSDate(res.start).minus({ hour: 1 })
-          if (res.account_settings.app_reminders.email_1) {
-            remindClient_1 = await reminderTask.trigger({
-              serviceName: res.service_data.name,
-              delay: hourBefore.toISO()!,
-              sendToType: 'client',
-              sendBy: 'email',
-              appointmentData: {
-                id: res.id,
-                start: DateTime.fromJSDate(res.start).toISO()!,
-                end: DateTime.fromJSDate(res.end).toISO()!,
-              },
-              businessData: {
-                id: res.business,
-                name: res.business_name,
-                email: res.email,
-                address: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`,
-              },
-              clientData: {
-                firstName: res.client_metadata.firstName,
-                lastName: res.client_metadata.lastName,
-                email: res.client_metadata.email,
-                phoneNumber: res.client_metadata.phoneNumber,
-              },
-            }, { delay: hourBefore.toISO()! })
-          }
-          if (res.account_settings.app_reminders.email_24) {
-            remindClient_24 = await reminderTask.trigger({
-              serviceName: res.service_data.name,
-              delay: dayBefore.toISO()!,
-              sendToType: 'client',
-              sendBy: 'email',
-              appointmentData: {
-                id: res.id,
-                start: DateTime.fromJSDate(res.start).toISO()!,
-                end: DateTime.fromJSDate(res.end).toISO()!,
-              },
-              businessData: {
-                id: res.business,
-                name: res.business_name,
-                email: res.email,
-                address: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`,
-              },
-              clientData: {
-                firstName: res.client_metadata.firstName,
-                lastName: res.client_metadata.lastName,
-                email: res.client_metadata.email,
-                phoneNumber: res.client_metadata.phoneNumber,
-              },
-            }, { delay: hourBefore.toISO()! })
-          }
-
-          if (res.account_settings.notifications.email) {
-            if (res.account_settings.notifications.email_1) {
-              remindBusiness_1 = await reminderTask.trigger({
-                serviceName: res.service_data.name,
-                delay: hourBefore.toISO()!,
-                sendToType: 'business',
-                sendBy: 'email',
-                appointmentData: {
-                  id: res.id,
-                  start: DateTime.fromJSDate(res.start).toISO()!,
-                  end: DateTime.fromJSDate(res.end).toISO()!,
-                },
-                businessData: {
-                  id: res.business,
-                  name: res.business_name,
-                  email: res.email,
-                  address: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`,
-                },
-                clientData: {
-                  firstName: res.client_metadata.firstName,
-                  lastName: res.client_metadata.lastName,
-                  email: res.client_metadata.email,
-                  phoneNumber: res.client_metadata.phoneNumber,
-                },
-              }, { delay: hourBefore.toISO()! })
-            }
-            if (res.account_settings.notifications.email_24) {
-              remindBusiness_24 = await reminderTask.trigger({
-                serviceName: res.service_data.name,
-                delay: dayBefore.toISO()!,
-                sendToType: 'business',
-                sendBy: 'email',
-                appointmentData: {
-                  id: res.id,
-                  start: DateTime.fromJSDate(res.start).toISO()!,
-                  end: DateTime.fromJSDate(res.end).toISO()!,
-                },
-                businessData: {
-                  id: res.business,
-                  name: res.business_name,
-                  email: res.email,
-                  address: businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`,
-                },
-                clientData: {
-                  firstName: res.client_metadata.firstName,
-                  lastName: res.client_metadata.lastName,
-                  email: res.client_metadata.email,
-                  phoneNumber: res.client_metadata.phoneNumber,
-                },
-              }, { delay: dayBefore.toISO()! })
-            }
-          }
-
-          const linkDelay = DateTime.fromJSDate(res.end).minus({ minutes: 30 })
-          const timedPaymentLink = await sendPaymentLink.trigger({
-            businessData: {
-              id: res.business,
-              name: res.business_name,
-              email: res.email,
-            },
-            clientData: {
-              firstName: res.client_metadata.firstName,
-              lastName: res.client_metadata.lastName,
-              email: res.client_metadata.email,
-              phoneNumber: res.client_metadata.phoneNumber,
-            },
-            serviceName: res.service_data.name,
-            appointmentID: res.id
-          }, { delay: linkDelay.toISO()! })
-          const paymentCheck = await checkAppointmentStatus.trigger({
-            appointment_id: res.id
-          }, { delay: new Date(DateTime.fromJSDate(res.end).plus({ minutes: 30 }).toISO()!) })
-
-
-
-          // Save run id to appointment for later
-          await client.query('BEGIN')
-          await client.query(`UPDATE appointments SET reminder_ids = $1, payment_link_id = $2 WHERE appointments.id = $3  RETURNING *`, [
-            {
-              business: {
-                hour: remindBusiness_1 ? remindBusiness_1.id : remindBusiness_1,
-                day: remindBusiness_24 ? remindBusiness_24.id : remindBusiness_24,
-              },
-              client: {
-                hour: remindClient_1 ? remindClient_1.id : remindClient_1,
-                day: remindClient_24 ? remindClient_24.id : remindClient_24,
-              },
-              paymentCheck: paymentCheck.id
-            }, timedPaymentLink.id, appointmentID])
-          await client.query('COMMIT')
-
-        } catch (error) {
-
-          return new NextResponse(JSON.stringify({ error: error }), {
-            headers: { 'Content-Type': 'application/json' },
-            status: 400
-          })
-        }
-        await trackAppointmentBooked({
-          businessId: res.business,
-          serviceId: res.service_data.id,
-          serviceName: res.service_data.name,
-          servicePrice: res.service_data.price,
-          appointmentType: ""
-        })
-        // Add client to client_users
-        await addCreateNewClient({
-          first_name: res.client_metadata.firstName,
-          last_name: res.client_metadata.lastName,
-          email: res.client_metadata.email,
-          phone_number: res.client_metadata.phoneNumber,
-          business_id: res.business
-        })
+    if (eoaRes) {
+      try {
+        await AppointmentEmails.sendEOAReceipt({
+          clientMetadata: {
+            firstName: eoaRes.client_metadata.firstName,
+            lastName: eoaRes.client_metadata.lastName,
+            email: eoaRes.client_metadata.email,
+          },
+          businessData: {
+            id: eoaRes.business,
+            name: eoaRes.business_name,
+            email: eoaRes.email,
+            address: formatBusinessAddress(eoaRes.account_settings.business_address),
+          },
+          appointmentData: {
+            id: eoaRes.id,
+            start: DateTime.fromJSDate(eoaRes.start).toISO()!,
+            end: DateTime.fromJSDate(eoaRes.end).toISO()!,
+          },
+          serviceName: eoaRes.service_data.name,
+          notifyBusiness: false,
+          amountPaid: paymentIntent.amount,
+        });
+      } catch (emailErr) {
+        console.error('Failed to send EOA receipt email:', emailErr);
       }
-      break;
-    // ... handle other event types
-    default:
-
+    }
+    return;
   }
-  client.release()
-  // Return a 200 response to acknowledge receipt of the event
-  return new NextResponse(null, {
-    status: 200
-  })
+
+  // Deposit confirmed — update DB first, then side effects separately
+  let res: any;
+  try {
+    await client.query('BEGIN');
+    const result = await client.query(
+      `WITH updated AS (
+        UPDATE appointments
+        SET status = 'CONFIRMED', paid_deposit = $1, deposit_tax_transaction = $2,
+            paid_amount = coalesce(paid_amount, 0) + $3, amount_due = amount_due - $3
+        WHERE deposit_charge_id = $4
+        RETURNING *
+      )
+      SELECT updated.*, business_users.business_name, business_users.email, business_users.account_settings
+      FROM updated JOIN business_users ON updated.business = business_users.business_id`,
+      [true, transaction.id, paymentIntent.amount, paymentIntent.id]
+    );
+    await client.query('COMMIT');
+    res = result.rows[0];
+  } catch (error: any) {
+    await client.query('ROLLBACK');
+    throw error; // DB failure → signal Stripe to retry
+  }
+
+  // Side effects: appointment is already confirmed, so failures here must NOT
+  // return an error to Stripe — a retry would resend confirmation emails.
+  try {
+    await AppointmentEmails.sendConfirmed({
+      clientMetadata: {
+        firstName: res.client_metadata.firstName,
+        lastName: res.client_metadata.lastName,
+        email: res.client_metadata.email,
+      },
+      businessData: {
+        id: res.business,
+        name: res.business_name,
+        email: res.email,
+        address: formatBusinessAddress(res.account_settings.business_address),
+      },
+      appointmentData: {
+        id: res.id,
+        start: DateTime.fromJSDate(res.start).toISO()!,
+        end: DateTime.fromJSDate(res.end).toISO()!,
+      },
+      serviceName: res.service_data.name,
+      notifyBusiness: res.account_settings.notifications.email,
+    });
+    // Use res.id (the confirmed appointment's DB id) — appointmentID from PI metadata
+    // is undefined for automated bookings where only bookingSessionId is in metadata.
+    await scheduleReminders(res, res.id, client);
+
+    // Mark booking session confirmed if this was a session-based automated booking
+    const { bookingSessionId } = paymentIntent.metadata;
+    if (bookingSessionId) {
+      const supabase = await createClient();
+      await supabase
+        .from('booking_sessions')
+        .update({ status: 'confirmed', confirmed_at: DateTime.now().toISO() })
+        .eq('id', bookingSessionId);
+    }
+  } catch (error) {
+    console.error('Post-confirmation side effects failed (appointment already confirmed):', error);
+  }
+
+  // Fire-and-forget — non-critical, never throw back to Stripe
+  trackAppointmentBooked({
+    businessId: res.business,
+    serviceId: res.service_data.id,
+    serviceName: res.service_data.name,
+    servicePrice: res.service_data.price,
+    appointmentType: '',
+  }).catch(console.error);
+
+  addCreateNewClient({
+    first_name: res.client_metadata.firstName,
+    last_name: res.client_metadata.lastName,
+    email: res.client_metadata.email,
+    phone_number: res.client_metadata.phoneNumber,
+    business_id: res.business,
+  }).catch(console.error);
 }
+
+async function scheduleReminders(res: any, appointmentId: string, client: any) {
+  const settings = res.account_settings;
+
+  const ids = await AppointmentReminders.schedule({
+    appointmentId: appointmentId,
+    start: DateTime.fromJSDate(res.start).toISO()!,
+    end: DateTime.fromJSDate(res.end).toISO()!,
+    serviceName: res.service_data.name,
+    businessData: {
+      id: res.business,
+      name: res.business_name,
+      email: res.email,
+      address: formatBusinessAddress(settings.business_address),
+    },
+    clientData: {
+      firstName: res.client_metadata.firstName,
+      lastName: res.client_metadata.lastName,
+      email: res.client_metadata.email,
+      phoneNumber: res.client_metadata.phoneNumber,
+    },
+    settings: {
+      clientReminders: { email_1: settings.app_reminders.email_1, email_24: settings.app_reminders.email_24 },
+      businessReminders: { enabled: settings.notifications.email, email_1: settings.notifications.email_1, email_24: settings.notifications.email_24 },
+    },
+  });
+
+  await client.query('BEGIN');
+  await client.query(
+    `UPDATE appointments SET reminder_ids = $1, payment_link_id = $2 WHERE appointments.id = $3 RETURNING *`,
+    [
+      {
+        business: { hour: ids.business.hour, day: ids.business.day },
+        client: { hour: ids.client.hour, day: ids.client.day },
+        paymentCheck: ids.paymentCheck,
+      },
+      ids.paymentLink,
+      appointmentId,
+    ]
+  );
+  await client.query('COMMIT');
+}
+

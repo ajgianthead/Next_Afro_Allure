@@ -1,8 +1,9 @@
 "use client";
 import { Inter } from "next/font/google";
+import './global.css'
 import "./globals.scss";
-import { UserWrapper } from "@utils/context/UserContext";
-import { NextUIProvider } from "@nextui-org/react";
+import '../styles/globals.css'
+import { UserWrapper } from "@/app/utils/context/UserContext";
 import '@fontsource/inter';
 import Script from 'next/script'
 import { useEffect, useRef } from "react";
@@ -63,9 +64,7 @@ export default function RootLayout({
                     )}
                 </head>
                 <body className={inter.className}>
-                    <NextUIProvider>
-                        {children}
-                    </NextUIProvider>
+                    {children}
                 </body>
             </html>
 

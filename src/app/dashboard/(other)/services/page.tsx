@@ -1,4 +1,4 @@
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import ServicesClient from "./servicesClient";
 import { Database } from "../../../../../lib/database.types";
 import { fetchBusinessUser, fetchUser } from "../actions";
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Page() {
     const getServices = async (business_id: string) => {
-        const supabase = createClient<Database>();
+        const supabase = await createClient<Database>();
         let { data, error } = await supabase.from("services").select("*, business_users(business_id, default_availability, availabilities(business_id, availability_data, id), service_addons(id, name, price))").eq("business", business_id).order("created_at", { ascending: true })
         return data
     }

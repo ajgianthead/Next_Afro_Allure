@@ -30,7 +30,7 @@ export type Database = {
           id: string
           paid_amount: number
           paid_deposit: boolean
-          payment_link_id: string | null
+          payment_link_id: string
           policy_id: string | null
           reminder_ids: Json | null
           require_deposit: boolean
@@ -42,6 +42,8 @@ export type Database = {
           service_paid_type: Database["public"]["Enums"]["paid_type"] | null
           start: string
           status: Database["public"]["Enums"]["status"]
+          substraction: boolean
+          time_range: unknown
           updated_at: string
         }
         Insert: {
@@ -59,7 +61,7 @@ export type Database = {
           id?: string
           paid_amount?: number
           paid_deposit?: boolean
-          payment_link_id?: string | null
+          payment_link_id?: string
           policy_id?: string | null
           reminder_ids?: Json | null
           require_deposit?: boolean
@@ -71,6 +73,8 @@ export type Database = {
           service_paid_type?: Database["public"]["Enums"]["paid_type"] | null
           start: string
           status?: Database["public"]["Enums"]["status"]
+          substraction?: boolean
+          time_range?: unknown
           updated_at?: string
         }
         Update: {
@@ -88,7 +92,7 @@ export type Database = {
           id?: string
           paid_amount?: number
           paid_deposit?: boolean
-          payment_link_id?: string | null
+          payment_link_id?: string
           policy_id?: string | null
           reminder_ids?: Json | null
           require_deposit?: boolean
@@ -100,6 +104,8 @@ export type Database = {
           service_paid_type?: Database["public"]["Enums"]["paid_type"] | null
           start?: string
           status?: Database["public"]["Enums"]["status"]
+          substraction?: boolean
+          time_range?: unknown
           updated_at?: string
         }
         Relationships: [
@@ -177,6 +183,72 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "client_users"
             referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      booking_sessions: {
+        Row: {
+          amount: number | null
+          business_id: string
+          clientInfo: Json | null
+          confirmed_at: string | null
+          created_at: string
+          currency: string | null
+          expires_at: string | null
+          id: string
+          metadata: Json | null
+          payment_intent_id: string | null
+          selected_datetime: string | null
+          service_id: string | null
+          status: Database["public"]["Enums"]["booking_session_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          business_id?: string
+          clientInfo?: Json | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_intent_id?: string | null
+          selected_datetime?: string | null
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["booking_session_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          business_id?: string
+          clientInfo?: Json | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_intent_id?: string | null
+          selected_datetime?: string | null
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["booking_session_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_sessions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "booking_sessions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -971,6 +1043,50 @@ export type Database = {
               use_typmod?: boolean
             }
             Returns: string
+          }
+      confirm_booking_session:
+        | {
+            Args: {
+              p_amount_due: number
+              p_booking_session_id: string
+              p_business: string
+              p_client_metadata: Json
+              p_deposit_charge_id: string
+              p_deposit_price: number
+              p_end: string
+              p_paid_deposit: boolean
+              p_require_deposit: boolean
+              p_reschedules: number
+              p_selected_addons: Json
+              p_service_data: Json
+              p_service_id: string
+              p_start: string
+              p_status: string
+              p_subtraction: boolean
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_amount_due: number
+              p_booking_session_id: string
+              p_business: string
+              p_client_metadata: Json
+              p_deposit_charge_id: string
+              p_deposit_price: number
+              p_end: string
+              p_paid_deposit: boolean
+              p_require_deposit: boolean
+              p_reschedules: number
+              p_selected_addons: Json
+              p_service_data: Json
+              p_service_id: string
+              p_start: string
+              p_status: string
+              p_subtraction: number
+              p_user_id: string
+            }
+            Returns: undefined
           }
       dashboard_bookings_this_month: {
         Args: { business: string }
@@ -1782,6 +1898,14 @@ export type Database = {
       }
     }
     Enums: {
+      booking_session_status:
+        | "initiated"
+        | "details_completed"
+        | "payment_pending"
+        | "confirmed"
+        | "expired"
+        | "canceled"
+        | "date_selected"
       paid_type: "PLATFORM" | "CASH"
       plan_type: "STARTER" | "GROWTH"
       status:
@@ -1929,6 +2053,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      booking_session_status: [
+        "initiated",
+        "details_completed",
+        "payment_pending",
+        "confirmed",
+        "expired",
+        "canceled",
+        "date_selected",
+      ],
       paid_type: ["PLATFORM", "CASH"],
       plan_type: ["STARTER", "GROWTH"],
       status: [

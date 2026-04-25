@@ -4,7 +4,7 @@ import { ColorInput, Input, NumberInput, SegmentedControl, Select, Switch } from
 import { FontBoldIcon, FontFamilyIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
 import { IconButton, ToggleButtonGroup } from "@mui/joy"
 import { RegularText } from "../types"
-import { EditorConxtextProps, useEditorContext } from "@utils/context/EditorContext"
+import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext"
 import { GoogleFont, loadGoogleFont, loadNextFontChunk } from "useGoogleFonts"
 
 export let customizableTextFields: Fields<RegularText, {}> = {

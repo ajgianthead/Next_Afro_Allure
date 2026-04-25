@@ -3,7 +3,7 @@ import SelectEditorType from './selectEditorType';
 import { getUser } from '../getUser';
 import { fetchBusinessUser, fetchUser } from '../actions';
 import ManageBookingSite from './manageBookingSite';
-import { getEditorData } from '@utils/editor_actions';
+import { getEditorData } from '@/app/utils/editor_actions';
 import { PostgrestError } from '@supabase/supabase-js';
 
 export const metadata = {

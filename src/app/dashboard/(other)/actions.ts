@@ -1,5 +1,5 @@
 'use server'
-import { createClient } from "@utils/supabase/server"
+import { createClient } from "@/app/utils/supabase/server"
 import { redirect } from "next/navigation"
 import { Database } from "../../../../lib/database.types"
 import { Resend } from "resend"
@@ -7,7 +7,7 @@ import { PaymentLinkProps, sendLink } from "trigger/reminder"
 
 
 export const fetchUser = async () => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data, error } = await supabase.auth.getUser()
     return data?.user
 
@@ -25,7 +25,7 @@ export const sendFeedback = async ({ businessId, businessName, email, feedback }
     email: string;
     feedback: string;
 }) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data, error } = await supabase.from('user_feedback').insert({
         business_id: businessId,
         business_name: businessName,
@@ -39,13 +39,13 @@ export const sendFeedback = async ({ businessId, businessName, email, feedback }
 }
 
 export const fetchBusinessUser = async (user_id: string) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data: business, error } = await supabase.from('business_users').select().eq('user_id', user_id).single()
     return business!
 }
 
 export const fetchDashboardAnalytics = async (businessId: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const [
         revenue,
         bookings,
@@ -61,7 +61,7 @@ export const fetchDashboardAnalytics = async (businessId: string) => {
 }
 
 export const getDashboardGrowth = async (businessId: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const { data, error } = await supabase.rpc(
         'get_dashboard_growth',
         { p_stylist_id: businessId }

@@ -2,130 +2,73 @@
 
 import { loadStripe, Stripe } from '@stripe/stripe-js'
 import { Caption, Text, Title } from '@tailus-ui/typography'
+import { DateTime } from 'luxon'
 import React, { useEffect, useState } from 'react'
 import {
-    EmbeddedCheckoutProvider,
-    EmbeddedCheckout,
     Elements,
     PaymentElement,
     useElements,
     useStripe
 } from '@stripe/react-stripe-js';
-import { CircleCheckBig, Info } from 'lucide-react'
+import { CircleCheckBig } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import CircularProgress from '@mui/joy/CircularProgress'
 import Button from '@tailus-ui/Button'
-import { AppointmentReminderData, appointmentReminders } from '@utils/bull_mq'
-import { Card, FormControl, FormHelperText, FormLabel, Input } from '@mui/joy';
-import Head from 'next/head';
-
-const stripePromise = loadStripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!, {
-    stripeAccount: "acct_1Q6tUcFpD7KoueRC",
-});
+import { Card } from '@mui/joy';
+import { getAppointmentByIdAction, getBusinessByIdAction, getPolicyByIdAction } from '@/features/shared/appointments/actions'
+import { createCheckoutAction } from '@/features/stripe/actions'
 
 
 
 export default function EOAClient() {
-    const [options, setOptions] = useState<{
-        clientSecret: any,
-        onComplete?: any
-    }>();
+    const [options, setOptions] = useState<{ clientSecret: any }>()
     const { appointment_id } = useParams<{ appointment_id: string }>()
-    const [policies, setPolicies] = useState<any>();
     const [businessData, setBusinessData] = useState<any>({})
     const [appointmentData, setAppointmentData] = useState<any>({})
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [stripeID, setStripeID] = useState<string | null>(null)
-    const [clientEmail, setClientEmail] = useState<string>("")
     useEffect(() => {
-        // Fetch appointment data with appointmentID, when use businessID
-        // that's attached to the appointment to fetch the business's policies
-        const fetchAppointment = async () => {
-            const response = await fetch(`/api/appointments/${appointment_id}`, {
-                method: "GET",
-            });
-            if (!response.ok) {
-                // Handle errors on the client side here
-                const { error } = await response.json();
-                throw new Error("An error occurred: ", error);
-            } else {
-                const res = await response.json();
-                setAppointmentData(res.appointment)
-                return res.appointment
-            }
-        }
-        const fetchSession = async (stripeID: string, appointment: any, policy: Policy) => {
-            const stripePromise = loadStripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!, {
-                stripeAccount: stripeID,
-            });
-            setStripePromise(stripePromise)
-            const response = await fetch("/api/checkout", {
-                method: "POST",
-                body: JSON.stringify({
-                    connectedAccountId: stripeID,
-                    price: appointment.amount_due,
-                    purpose: "EOA",
-                    client_email: appointment.client_metadata.email,
-                    paymentIntent: appointment.service_charge_id,
-                    appointmentID: appointment_id
-                }),
-            });
-            if (!response.ok) {
-                // Handle errors on the client side here
-                const { error } = await response.json();
-                throw new Error("An error occurred: ", error);
-            } else {
-                const val = await response.json();
+        const init = async () => {
+            const appointment = await getAppointmentByIdAction(appointment_id)
+            setAppointmentData(appointment)
 
-                const clientSecret = val.clientSecret;
-                const opt = { clientSecret }
-                setOptions({
-                    ...options,
-                    clientSecret: opt.clientSecret,
-                })
-                setCompleted(false)
-            }
-        }
-        const getPolicies = async (data: any) => {
-            const response = await fetch(`/api/policies/policy/${data.policy_id}`, {
-                method: "GET",
-            });
-            if (!response.ok) {
-                // Handle errors on the client side here
-                const { error } = await response.json();
-                throw new Error("An error occurred: ", error);
-            } else {
-                const result = await response.json();
-                // setPolicies(result.booking_policies)
-                return result.policy
-            }
-        }
-        const getBusinessData = async (businessID: string) => {
-            const res = await fetch(`/api/${businessID}`, {
-                method: 'GET'
-            })
-            const result = await res.json();
-            setStripeID(result.data.stripe_acc_id)
-            setBusinessData(result.data)
-            return result.data
-        }
-        fetchAppointment().then((appointment) => {
             if (appointment.status !== 'CONFIRMED') {
                 setError(true)
-            } else {
-                if (appointment.service_paid) {
-                    setCompleted(true)
-                } else {
-                    getPolicies(appointment).then((policy) => {
-                        getBusinessData(appointment.business).then((businessData) => {
-                            fetchSession(businessData.stripe_acc_id, appointment, policy);
-                        })
-
-                    });
-                }
+                return
+            }
+            if (appointment.service_paid) {
+                setCompleted(true)
+                return
             }
 
-        })
+            const [, business] = await Promise.all([
+                getPolicyByIdAction(appointment.policy_id!),
+                getBusinessByIdAction(appointment.business),
+            ])
+            setStripeID(business.stripe_acc_id)
+            setBusinessData(business)
+
+            const stripePromise = loadStripe(
+                process.env.NODE_ENV === 'development'
+                    ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+                    : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!,
+                { stripeAccount: business.stripe_acc_id! }
+            )
+            setStripePromise(stripePromise)
+
+            const meta = appointment.client_metadata as any
+            const { clientSecret } = await createCheckoutAction({
+                connectedAccountId: business.stripe_acc_id!,
+                price: appointment.amount_due,
+                purpose: 'EOA',
+                client_email: meta.email,
+                paymentIntent: appointment.service_charge_id ?? undefined,
+                appointmentID: appointment_id,
+            })
+            setOptions({ clientSecret })
+            setCompleted(false)
+        }
+        init().catch(() => setError(true))
     }, []);
     const [error, setError] = useState<boolean>(false)
     const [completed, setCompleted] = useState<boolean | null>(null);
@@ -158,11 +101,14 @@ export default function EOAClient() {
                                                         <div className='flex lg:flex-row flex-col gap-2'>
                                                             <div className='w-full lg:w-1/2 lg:text-left justify-center text-center'>
                                                                 <Text className='font-medium'>Date:</Text>
-                                                                <Caption>April 20th, 2025</Caption>
+                                                                <Caption>{appointmentData.start ? DateTime.fromISO(appointmentData.start).toFormat('LLLL dd, yyyy') : '—'}</Caption>
                                                             </div>
                                                             <div className='w-full lg:w-1/2 lg:text-left text-center' >
                                                                 <Text className='font-medium'>Time:</Text>
-                                                                <Caption>4:00 PM ~ 7:00 PM</Caption>
+                                                                <Caption>
+                                                                    {appointmentData.start ? DateTime.fromISO(appointmentData.start).toLocaleString(DateTime.TIME_SIMPLE) : '—'}
+                                                                    {appointmentData.end ? ` ~ ${DateTime.fromISO(appointmentData.end).toLocaleString(DateTime.TIME_SIMPLE)}` : ''}
+                                                                </Caption>
                                                             </div>
                                                         </div>
                                                         <div className="flex lg:flex-row flex-col gap-5">
@@ -178,7 +124,7 @@ export default function EOAClient() {
                                                                 <div className='w-full flex flex-col gap-1'>
                                                                     <Caption>Name: {appointmentData.client_metadata.firstName + " " + appointmentData.client_metadata.lastName}</Caption>
                                                                     <Caption>Email: {appointmentData.client_metadata.email}</Caption>
-                                                                    <Caption>Phone Number: ({appointmentData.client_metadata.phoneNumber.slice(0, 3)}) {appointmentData.client_metadata.phoneNumber.slice(3, 6)}-{appointmentData.client_metadata.phoneNumber.slice(6)}</Caption>
+                                                                    <Caption>Phone Number: {formatPhone(appointmentData.client_metadata.phoneNumber)}</Caption>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -186,7 +132,7 @@ export default function EOAClient() {
                                                             <Text className='font-medium'>Add-ons:</Text>
                                                             {appointmentData.selected_addons.map((addon: any, index: number) => {
                                                                 return (
-                                                                    <Caption key={index}>{addon.name}: ${addon.price}</Caption>
+                                                                    <Caption key={index}>{addon.name}: ${addon.price / 100}</Caption>
                                                                 )
                                                             })}
                                                         </div>
@@ -229,12 +175,18 @@ export default function EOAClient() {
     )
 }
 
+function formatPhone(phone: string): string {
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length === 10) return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+    if (digits.length === 11 && digits[0] === '1') return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
+    return phone
+}
+
 const PaymentForm = ({ promise, appointmentID, stripeID }: { promise: Promise<Stripe | null>, appointmentID: string, stripeID: string }) => {
     const elements = useElements()
     const stripe = useStripe();
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        //TODO: Stripe confirmPayment
         if (!promise || !elements) {
             return;
         }
@@ -244,7 +196,7 @@ const PaymentForm = ({ promise, appointmentID, stripeID }: { promise: Promise<St
             //`Elements` instance that was used to create the Payment Element
             elements,
             confirmParams: {
-                return_url: `/appointment/${appointmentID}/${stripeID}/complete`,
+                return_url: `${window.location.origin}/appointment/${appointmentID}/${stripeID}/complete`,
 
             },
         })!;

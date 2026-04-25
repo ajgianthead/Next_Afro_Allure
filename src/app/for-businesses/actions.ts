@@ -1,7 +1,7 @@
 'use server'
 
 import { stripe } from "@lib/utils";
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../lib/database.types";
 
 export const createSubscriptionForExistingCustomer = async (customerID: string) => {
@@ -9,7 +9,7 @@ export const createSubscriptionForExistingCustomer = async (customerID: string) 
     const priceID = "price_1Sz52NFwA4PUWysawKBx8gUZ"
     const DOMAIN = process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_PROD_BASE_URL : process.env.NEXT_PUBLIC_BASE_URL
     let checkoutSession;
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data: hadTrial, error } = await supabase.from('business_users').select('had_trial, business_id').eq('stripe_customer_id', customerID).maybeSingle()
     try {
         if (!hadTrial?.had_trial) {
@@ -37,7 +37,7 @@ export const createSubscriptionForExistingCustomer = async (customerID: string) 
                 customer: customerID
             })
             if (customerID === undefined) {
-                const supabase = createClient<Database>()
+                const supabase = await createClient<Database>()
                 await supabase.from('business_users').update({
                     stripe_customer_id: checkoutSession.customer as string
                 }).eq('business_id', hadTrial?.business_id!)
@@ -57,7 +57,7 @@ export const createSubscriptionForExistingCustomer = async (customerID: string) 
                 customer: customerID
             })
             if (customerID === undefined) {
-                const supabase = createClient<Database>()
+                const supabase = await createClient<Database>()
                 await supabase.from('business_users').update({
                     stripe_customer_id: checkoutSession.customer as string
                 }).eq('business_id', hadTrial.business_id!)
@@ -101,7 +101,7 @@ export const createSubscriptionCheckout = async (had_trial: boolean, businessID?
                 customer: customerID
             })
             if (customerID === undefined) {
-                const supabase = createClient<Database>()
+                const supabase = await createClient<Database>()
                 await supabase.from('business_users').update({
                     stripe_customer_id: checkoutSession.customer as string
                 }).eq('business_id', businessID!)

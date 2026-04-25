@@ -5,7 +5,7 @@ import { CheckCircle, Info, TrendingDown, TrendingUp, XCircle } from 'lucide-rea
 import { data } from '@tailus-ui/visualizations/data';
 import ScrollArea from "@components/ScrollArea"
 import { useEffect, useState } from 'react';
-import { useUserContext } from '@utils/context/UserContext';
+import { useUserContext } from '@/app/utils/context/UserContext';
 import { DateTime } from 'luxon';
 import { Button, Card, DialogContent, DialogTitle, Divider, IconButton, Modal, ModalClose, ModalDialog, Snackbar, Typography } from '@mui/joy';
 import QRCode from "react-qr-code";
@@ -37,7 +37,7 @@ export const StackedCards = ({ appointments, businessData, dashboardAnalytics, g
   const [openSuccessModal, setOpenSuccessModal] = useState<boolean>(true)
 
   return (
-    <div className='flex flex-col gap-2'>
+    <div>
       {
         (() => {
           if (subscriptionSuccess === 'true') {
