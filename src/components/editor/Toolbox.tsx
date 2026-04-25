@@ -9,10 +9,10 @@ import { EditableButton } from './Button';
 import Drawer from '@mui/joy/Drawer';
 import ModalClose from '@mui/joy/ModalClose';
 import { Button, Input } from '@mui/joy'
-import { uploadImage } from '@utils/upload_editor_images'
+import { uploadImage } from '@/app/utils/upload_editor_images'
 import { getUser } from 'app/dashboard/(other)/getUser'
 import { User } from '@supabase/supabase-js'
-import { createClient } from '@utils/supabase/client'
+import { createClient } from '@/app/utils/supabase/client'
 import { Database } from '../../../lib/database.types'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
@@ -30,7 +30,7 @@ export default function Toolbox() {
     const fileInput = useRef<any>(null)
     const { editor_id } = useParams()
     const [imageUrls, setImageUrls] = useState<string[]>([]);
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     useEffect(() => {
         const getImages = async () => {
             const { data, error } = await supabase.storage.from('editor-media-pool').list(`editor/${editor_id}/image/`)

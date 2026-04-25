@@ -7,7 +7,7 @@ import { SketchPicker } from "react-color"
 import { Text } from "../types"
 import { PaintBucket, Type } from "lucide-react"
 import { GoogleFont, loadGoogleFont } from "useGoogleFonts"
-import { EditorConxtextProps, useEditorContext } from "@utils/context/EditorContext"
+import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext"
 import { ColorInput, Input, NumberInput, SegmentedControl, Select, Switch } from "@mantine/core"
 import { FontBoldIcon, FontFamilyIcon, FontItalicIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
 

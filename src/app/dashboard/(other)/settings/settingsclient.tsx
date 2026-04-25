@@ -11,7 +11,7 @@ import Separator from "@tailus-ui/Separator"
 import Button from '@tailus-ui/Button';
 import { usePathname } from 'next/navigation';
 import { ConnectAccountOnboarding, ConnectComponentsProvider } from "@stripe/react-connect-js";
-import useStripeConnect from '@utils/hooks/useStripeConnect';
+import useStripeConnect from '@/app/utils/hooks/useStripeConnect';
 import { Checkbox, CircularProgress, Button as MUIButton } from '@mui/joy';
 import { Json } from '../../../../../lib/database.types';
 import { saveAccountSettings } from './actions';

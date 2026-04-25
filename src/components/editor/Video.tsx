@@ -3,7 +3,7 @@ import { useEditor, useNode, UserComponent } from "@craftjs/core";
 import { Button, IconButton, Input } from "@mui/joy";
 import Popover from "@tailus-ui/Popover";
 import { Caption } from "@tailus-ui/typography";
-import { useEditorContext } from "@utils/context/EditorContext";
+import { useEditorContext } from "@/app/utils/context/EditorContext";
 import Image from "next/image";
 import { useState } from "react";
 import { SketchPicker } from "react-color";

@@ -4,7 +4,7 @@ import { TwoAreasChart } from '@components/dashboard/AreaCharts';
 import { SimpleBarChart } from '@components/dashboard//BarChart';
 import { Traffic } from '@components/dashboard/Traffic';
 import { StackedAreaChart } from '@components/dashboard/StackedAreas';
-import { createClient } from '@utils/supabase/server';
+import { createClient } from '@/app/utils/supabase/server';
 import { Database } from '../../../../lib/database.types';
 import { fetchDashboardAnalytics, fetchUser, getDashboardGrowth } from './actions';
 import { PostgrestError } from '@supabase/supabase-js';
@@ -13,7 +13,7 @@ import { DateTime } from 'luxon';
 export default async function Dashboard() {
     const user = await fetchUser()
     const fetchData = async () => {
-        const supabase = createClient<Database>();
+        const supabase = await createClient<Database>();
         const { data: businessData } = await supabase.from('business_users').select("*").eq('user_id', user!.id).single()
         let { data, error: supabaseError } = await supabase
             .from('appointments')
@@ -30,22 +30,15 @@ export default async function Dashboard() {
         const dashboardAnalytics = await fetchDashboardAnalytics(res.businessData?.business_id!)
         const growth = await getDashboardGrowth(res.businessData?.business_id!)
         return (
-            <>
-                <div className="h-screen overflow-y-visible lg:flex">
-                    <main>
-                        <div className=" p-6 lg:p-0 space-y-6">
-                            <StackedCards growth={growth.data![0]} dashboardAnalytics={dashboardAnalytics} businessData={res.businessData!} appointments={res.appointments!} />
-                            {/* <div className="mt-6 lg:w-[calc(100vw-20rem)] grid gap-6 lg:grid-cols-2">
-                            <TwoAreasChart />
-                            <SimpleBarChart />
-                            <Traffic />
-                            <StackedAreaChart />
-                        </div>
-                        <Orders /> */}
-                        </div>
-                    </main>
-                </div>
-            </>
+
+            <div>
+                <main>
+                    <div className="p-6">
+                        <StackedCards growth={growth.data![0]} dashboardAnalytics={dashboardAnalytics} businessData={res.businessData!} appointments={res.appointments!} />
+                    </div>
+                </main>
+            </div>
+
         );
     }
 

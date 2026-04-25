@@ -1,63 +1,54 @@
+/* =============================
+   GLOBAL VARIABLES FOR SHADCN
+   ============================= */
+
+/* Top-level :root variables for light theme */
+:root {
+  /* Backgrounds */
+  --background: 255 255% 100%;
+  --foreground: 222.2 84% 4.9%;
+
+  --card: 255 255% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --popover: 255 255% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  /* Primary / Secondary colors */
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  /* Borders and inputs */
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+}
+
+/* Dark mode overrides */
+
+/* =============================
+   YOUR OTHER SCSS PARTIALS
+   ============================= */
 @import 'styles/_variables.scss';
 @import 'styles/_keyframe-animations.scss';
 
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-
-:root {
-  --foreground-rgb: theme(colors.primary.600);
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 23, 36, 65;
-  --primary-color: theme(colors.primary.500)
-  --puck-font-family: Roboto;
-}
+/* =============================
+   TAILWIND IMPORTS
+   ============================= */
 
 
-/* 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 23, 36, 65;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-
-} */
-
-body {
-  color: var(--foreground-rgb);
-  overflow-x: hidden;
-}
-
-
+/* =============================
+   CUSTOM BASE + UTILITIES
+   ============================= */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 }
 
-@layer base {
-  html {
-    color-scheme: light !important;
-  }
 
-  :root {
-    --card-padding: theme("spacing[6]");
-    --accordion-padding: theme("spacing[4]");
-    --feedback-padding: var(--card-padding);
-    --toast-padding: theme("spacing[4]");
-    --display-text-color: theme(colors.gray.950);
-    --title-text-color: var(--display-text-color);
-    --caption-text-color: theme(colors.gray.500);
-    --body-text-color: theme(colors.gray.700);
-    --placeholder-text-color: theme(colors.gray.400);
-    --area-primary-stroke: theme(colors.primary.600);
-    --area-secondary-stroke: theme(colors.secondary.600);
-    --area-accent-stroke: theme(colors.accent.600);
-    --area-gray-stroke: theme(colors.gray.600);
-    --area-neutral-stroke: theme(colors.gray.950);
-  }
-
-}

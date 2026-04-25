@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from "@utils/supabase/server"
+import { createClient } from "@/app/utils/supabase/server"
 import { Database } from "../../../../../lib/database.types"
 
 export interface Client {
@@ -23,7 +23,7 @@ export interface BannedClient {
 }
 
 export const getBusinessClients = async (businessId: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const { data, error } = await supabase.from('client_users').select('*').eq('business_id', businessId)
     if (error) {
         return error
@@ -32,7 +32,7 @@ export const getBusinessClients = async (businessId: string) => {
 }
 
 export const getBannedClients = async (businessId: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const { data, error } = await supabase.from('banned_clients').select('*').eq('business_id', businessId)
     if (error) {
         return error
@@ -41,7 +41,7 @@ export const getBannedClients = async (businessId: string) => {
 }
 
 export const addCreateNewClient = async (client: Client) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     // Check if client is on business banned list before adding
     const { data: bannedClient, error: bannedListError } = await supabase
         .from('banned_clients')
@@ -73,7 +73,7 @@ export const addCreateNewClient = async (client: Client) => {
 }
 
 export const updateClientInfo = async (client: Client) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     // Check if client already exists with business via email and/or phone number
     const { data: clientRes, error: errorClientRes } = await supabase
         .from('client_users')
@@ -98,7 +98,7 @@ export const updateClientInfo = async (client: Client) => {
 }
 
 export const deleteClient = async (clientId: string) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     // Check if client already exists with business via email and/or phone number
     const { data, error } = await supabase.from('client_users').delete().eq('client_id', clientId).select('business_id').single()
     if (error) {
@@ -108,7 +108,7 @@ export const deleteClient = async (clientId: string) => {
 }
 
 export const banClientFromList = async (clientId: string) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
 
 
     const { data, error } = await supabase.from('client_users').delete().eq('client_id', clientId).select().single()
@@ -125,7 +125,7 @@ export const banClientFromList = async (clientId: string) => {
 }
 
 export const banClient = async (bannedClient: BannedClient) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data, error } = await supabase.from('banned_clients').insert({
         email: bannedClient.email,
         phone_number: bannedClient.phone_number
@@ -136,7 +136,7 @@ export const banClient = async (bannedClient: BannedClient) => {
 }
 
 export const unbanClient = async (bannedClient: BannedClient) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     // Delete from ban list, add to client list
     const { data, error } = await supabase.from('banned_clients').delete().eq('id', bannedClient.id).select().single()
     if (error) return error

@@ -1,6 +1,12 @@
 import { PostgrestError } from "@supabase/supabase-js";
 import { fetchBusinessData, fetchBusinessPolicies } from "../actions";
-import BookClient from "./bookClient";
+import { BusinessUser } from "@/lib/businessUser/BusinessUser";
+import { createClient } from "@/app/utils/supabase/server";
+import { BusinessPolicy, BusinessPolicyType } from "@/lib/businessPolicy/BusinessPolicy";
+import { Availability, AvailabilityType } from "@/features/availability/server/models/Availability";
+import { Appointment, AppointmentType } from "@/features/manualBooking/server/models/Appointment";
+import { Service, ServiceType } from "@/lib/service/Service";
+import { BookClient } from "@/features/automatedBooking/components";
 
 export const dynamic = 'force-dynamic'
 
@@ -13,10 +19,33 @@ export default async function Page({ params }: {
         businessName: string
     }
 }) {
+
     const { businessName } = await params;
-    const businessData = await fetchBusinessData(businessName)
-    if (!(businessData instanceof PostgrestError)) {
-        const policy = await fetchBusinessPolicies(businessData.result.booking_policies)
-        return <BookClient businessData={{ ...businessData.result, policy }} />;
-    }
+    const supabase = await createClient();
+
+    const business = await BusinessUser.fetchByURLName(supabase, businessName)
+    const clientBusinessData = business.toClient()
+
+    const availabilities = (await Availability.fetch(supabase, business.id)) as Availability[]
+    let availabilitiesClient: AvailabilityType[] = []
+    availabilities.forEach((availability) => {
+        availabilitiesClient.push(availability.toClient())
+    })
+
+    const appointments = (await Appointment.fetch(supabase, business.id)) as Appointment[]
+    let appointmentsClient: AppointmentType[] = []
+    appointments.forEach((appointment) => {
+        appointmentsClient.push(appointment.toClient())
+    })
+
+    const services = (await Service.fetch(supabase, business.id)) as Service[]
+    let serviceClient: ServiceType[] = []
+    services.forEach((service) => {
+        serviceClient.push(service.toClient())
+    })
+
+    const policy = (await BusinessPolicy.fetch(supabase, business.id)).toClient()
+
+    return <BookClient services={serviceClient} policy={policy} appointments={appointmentsClient} businessData={clientBusinessData} availabilities={availabilitiesClient} />;
+
 }

@@ -12,7 +12,7 @@ import { SketchPicker } from 'react-color';
 import { TbBoxMargin } from "react-icons/tb";
 import { TbBoxPadding } from "react-icons/tb";
 import 'react-resizable/css/styles.css';
-import { useEditorContext } from '@utils/context/EditorContext';
+import { useEditorContext } from '@/app/utils/context/EditorContext';
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
 import { Resizable } from 're-resizable';

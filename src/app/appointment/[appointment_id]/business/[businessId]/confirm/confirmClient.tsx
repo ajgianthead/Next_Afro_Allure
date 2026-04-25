@@ -4,28 +4,29 @@ import { loadStripe, Stripe } from '@stripe/stripe-js'
 import { Caption, Text, Title } from '@tailus-ui/typography'
 import React, { useEffect, useState } from 'react'
 import {
-    EmbeddedCheckoutProvider,
-    EmbeddedCheckout,
     Elements,
     PaymentElement,
     useElements,
     useStripe
 } from '@stripe/react-stripe-js';
 import { CircleCheckBig } from 'lucide-react'
-import { useParams } from 'next/navigation'
 import CircularProgress from '@mui/joy/CircularProgress'
 import Button from '@tailus-ui/Button'
-import { AppointmentReminderData, appointmentReminders } from '@utils/bull_mq'
 import { Card } from '@mui/joy';
-import Head from 'next/head';
 import { DateTime } from 'luxon';
+import { createCheckout } from '@/lib/stripe/createCheckout';
+import { AppointmentType, CheckoutType } from '@/features/shared/appointments/types';
+import { Appointment } from '@/features/manualBooking/server/models/Appointment';
+import { confirmAppointment } from '../actions';
+import { BusinessUser } from '@/lib/businessUser/BusinessUser';
 
 
 interface PageProps {
-    appointment: any,
+    appointment: InstanceType<typeof Appointment>,
+    business: InstanceType<typeof BusinessUser>
 }
 
-export default function ConfirmAppClient({ appointment }: PageProps) {
+export default function ConfirmAppClient({ appointment, business }: PageProps) {
     const [options, setOptions] = useState<{
         clientSecret: any,
         onComplete?: any
@@ -33,88 +34,48 @@ export default function ConfirmAppClient({ appointment }: PageProps) {
     const [appointmentData, setAppointmentData] = useState<any>({ ...appointment })
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [stripeID, setStripeID] = useState<string | null>(null)
-    const [businessData, setBusinessData] = useState<any>({ ...appointment.business_users })
     const [amountDue, setAmountDue] = useState<number>()
     useEffect(() => {
-        const fetchSession = async (stripeID: string, appointment: Appointment) => {
+        const fetchSession = async (stripeAccountId: string, appointment: Appointment) => {
             const stripePromise = loadStripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!, {
-                stripeAccount: stripeID,
+                stripeAccount: stripeAccountId,
             });
             setStripePromise(stripePromise)
-            const response = await fetch("/api/checkout", {
-                method: "POST",
-                body: JSON.stringify({
-                    connectedAccountId: stripeID,
-                    price: appointment.deposit_price,
-                    appointmentID: appointment.id,
-                    client_email: appointment.client_metadata.email,
-                    paymentIntent: appointment.deposit_charge_id,
-                    purpose: 'DEPOSIT',
-                    appointmentType: 'manual'
-                }),
-            });
-            if (!response.ok) {
-                // Handle errors on the client side here
-                const { error } = await response.json();
-                throw new Error("An error occurred: ", error.message);
-            } else {
-                const val = await response.json();
-                setAmountDue(val.amountDue)
-                const clientSecret = val.clientSecret;
-                const opt = { clientSecret }
-                setOptions({
-                    ...options,
-                    clientSecret: opt.clientSecret,
-                    onComplete: handleCompleted
-                })
-                setCompleted(false)
-            }
+            setStripeID(stripeAccountId)
+            const res = await createCheckout(CheckoutType.DEPOSIT, AppointmentType.MANUAL, appointment.depositPrice, appointment.businessId, appointment.id)
+
+            setAmountDue(res?.amount)
+            const clientSecret = res?.client_secret;
+            setOptions({ clientSecret })
+            setCompleted(false)
         }
         if (appointment.status === "CONFIRMED") {
             setCompleted(true)
         } else {
-            if (appointment.require_deposit) {
-                fetchSession(businessData.stripe_acc_id, appointment);
+            if (appointment) {
+                fetchSession(business.stripeAccountId, appointment);
             } else {
                 setCompleted(false)
-                // Updates the appointment status and change the completed state
-                // handleCompleted()
             }
         }
     }, []);
     const [completed, setCompleted] = useState<boolean | null>(null);
     const handleCompleted = async () => {
         // Update the appointment status, then change the completed state
-        const response = await fetch(`/api/appointments`, {
-            method: "PUT",
-            body: JSON.stringify({
-                id: appointment.id,
-                start: appointmentData.start,
-                end: appointmentData.end,
-                status: "CONFIRMED",
-            })
-        });
-        if (!response.ok) {
-            // Handle errors on the client side here
-            const { error } = await response.json();
-            throw new Error("An error occurred: ", error);
-        } else {
+        const confirmedAppointment = await confirmAppointment(appointment.id, appointment.businessId)
+        if (!Array.isArray(confirmedAppointment)) {
             setCompleted(true)
         }
     }
     return (
         <div>
-            <Head>
-                <title>My page title</title>
-                <meta property="og:title" content="My page title" key="title" />
-            </Head>
             {completed !== null ? <div>
                 {Object.keys(appointmentData).length ? <div className='w-full h-screen overflow-x-hidden overflow-scroll flex py-10 justify-center'>
                     {!completed && options && promise ? <Elements
                         stripe={promise}
                         options={options}
                     >
-                        <div className='flex lg:flex-row flex-col gap-2 justify-between w-full  max-w-[1280px]'>
+                        <div className='flex lg:flex-row flex-col gap-2 justify-between w-full  max-w-7xl'>
                             <div className='lg:w-1/2 w-full m-2'>
                                 <Card sx={{
                                     width: '100%',
@@ -248,12 +209,12 @@ export default function ConfirmAppClient({ appointment }: PageProps) {
                                     </Button.Root>
                                 </Card>
                             </div>
-                        </div> : <div className='flex h-[500px] gap-2 px-5 flex-col w-screen justify-center items-center'>
+                        </div> : <div className='flex h-125 gap-2 px-5 flex-col w-screen justify-center items-center'>
                             <div className='flex gap-3'>
                                 <CircleCheckBig color='green' />
                                 <Title>Appointment Confirmed</Title></div>
                             <div className='text-center'>
-                                <Caption>If you have any questions regarding your appointment, please contact {businessData.business_name}</Caption>
+                                <Caption>If you have any questions regarding your appointment, please contact {business.name}</Caption>
                             </div>
                         </div>}</div>}
                 </div> : <div>
@@ -271,7 +232,6 @@ const PaymentForm = ({ promise, appointmentID, stripeID }: { promise: Promise<St
     const stripe = useStripe();
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        //TODO: Stripe confirmPayment
         if (!promise || !elements) {
             return;
         }
@@ -279,7 +239,7 @@ const PaymentForm = ({ promise, appointmentID, stripeID }: { promise: Promise<St
             //`Elements` instance that was used to create the Payment Element
             elements,
             confirmParams: {
-                return_url: `https://beta.afroallure.co/appointment/${appointmentID}/${stripeID}/complete`,
+                return_url: `${window.location.origin}/appointment/${appointmentID}/${stripeID}/complete`,
 
             },
         })!;

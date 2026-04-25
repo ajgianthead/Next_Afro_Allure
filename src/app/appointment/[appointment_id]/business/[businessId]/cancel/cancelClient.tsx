@@ -6,10 +6,10 @@ import { CircularProgress } from '@nextui-org/react'
 import Button, { Label } from '@tailus-ui/Button'
 import Card from '@tailus-ui/Card'
 import { Caption, Text, Title } from '@tailus-ui/typography'
-import { cancelAppointment } from 'app/business/[businessName]/actions'
 import { CheckIcon, CircleCheckBig } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import React, { ChangeEvent, useEffect, useState } from 'react'
+import { getAppointmentByIdAction, cancelClientAppointmentAction } from '@/features/shared/appointments/actions'
 
 export default function CancelClient() {
     const [isChecked, setIsChecked] = useState<boolean>(false)
@@ -20,19 +20,9 @@ export default function CancelClient() {
 
     useEffect(() => {
         (async () => {
-            const result = await fetch(`/api/appointments/${appointment_id}`,
-                {
-                    method: 'GET'
-                }
-            )
-            const res = await result.json()
-            setAppointment(res.appointment)
-            if (res.appointment.status === 'CANCELLED') {
-                setCancelled(true)
-            }
-            else {
-                setCancelled(false)
-            }
+            const appt = await getAppointmentByIdAction(appointment_id as string)
+            setAppointment(appt)
+            setCancelled(appt.status === 'CANCELLED')
         })()
     }, []);
 
@@ -76,26 +66,22 @@ export default function CancelClient() {
                             <div>
                                 <Button.Root disabled={reasons.size === 0 || sendingData} intent='danger' className='w-full md:w-auto' onClick={async () => {
                                     setSendingData(true)
-                                    let clone = [...reasons]
-                                    if (clone.includes('other')) {
-                                        let index = clone.findIndex((value) => value === 'other')
-                                        clone.splice(index, 1, otherReason)
-                                    }
-                                    const res = await fetch(`/api/appointments`, {
-                                        method: 'PUT',
-                                        body: JSON.stringify({
-                                            id: appointment_id,
-                                            start: appointment.start,
-                                            end: appointment.end,
-                                            status: 'CANCELLED',
-                                            reason: clone
-                                        })
-                                    })
-                                    if (res.status === 200) {
+                                    try {
+                                        let clone = [...reasons]
+                                        if (clone.includes('other')) {
+                                            let index = clone.findIndex((value) => value === 'other')
+                                            clone.splice(index, 1, otherReason)
+                                        }
+                                        await cancelClientAppointmentAction(
+                                            appointment_id as string,
+                                            appointment.start,
+                                            appointment.end,
+                                            clone
+                                        )
                                         setCancelled(true)
+                                    } finally {
+                                        setSendingData(false)
                                     }
-                                    setSendingData(false)
-
                                 }}>
                                     <Button.Label>{!sendingData ? "Cancel Appointment" : <CircularProgress />}</Button.Label>
                                 </Button.Root>

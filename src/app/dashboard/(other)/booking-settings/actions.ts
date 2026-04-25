@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import { BookingSettings, PaymentConfig } from "./bookingSettingsClient";
 import { PostgrestSingleResponse } from "@supabase/supabase-js";
@@ -10,7 +10,7 @@ import Stripe from "stripe";
 
 
 export const handleBookingSettings = async (bookingSettings: any, businessId: string, paymentConfigId: string, paymentConfig: PaymentConfig, ogPaymentConfig: any) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     let oldPayConfig = JSON.stringify({
         google_pay: {
             display_preference: {

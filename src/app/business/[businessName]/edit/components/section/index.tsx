@@ -4,7 +4,7 @@
 import { ComponentConfig, createUsePuck, SlotComponent } from "@puckeditor/core";
 import { sectionFields } from "./fields";
 import { useEffect, useState } from "react";
-import { useEditorContext } from "@utils/context/EditorContext";
+import { useEditorContext } from "@/app/utils/context/EditorContext";
 import { Section } from "../types";
 import { sectionProps } from "../defaultStyles";
 import { usePathname } from "next/navigation";

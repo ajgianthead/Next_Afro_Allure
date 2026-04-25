@@ -10,7 +10,7 @@ import { FcGoogle } from "react-icons/fc";
 import Aligner from '@components/Aligner';
 import Switch from '@components/Switch';
 import { useState } from 'react';
-import { createClient } from '@utils/supabase/client';
+import { createClient } from '@/app/utils/supabase/client';
 import { Database } from '../../../../lib/database.types';
 import CircularProgress from '@mui/joy/CircularProgress';
 import { useRouter, useSearchParams } from 'next/navigation';

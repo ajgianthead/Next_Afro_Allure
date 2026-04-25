@@ -1,20 +1,21 @@
 'use client'
 
-import { fa } from '@faker-js/faker'
 import CircularProgress from '@mui/joy/CircularProgress'
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon'
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider'
 import Button from '@tailus-ui/Button'
 import Card from '@tailus-ui/Card'
-import { Caption, Text, Title } from '@tailus-ui/typography'
-import { BookingData, useBooking } from '@utils/context/BookingDataContext'
+import { Caption, Title } from '@tailus-ui/typography'
 import { getAvailability, getUnavailability, rescheduleAppointment } from 'app/business/[businessName]/actions'
 import { CircleCheckBig } from 'lucide-react'
 import { DateTime } from 'luxon'
 import { useParams } from 'next/navigation'
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { getSlots } from 'slot-calculator'
+import { getAvailabilitiesAction } from '@/features/availability/server/actions'
+import { getBusinessAppointmentsAction } from '@/app/dashboard/(other)/appointments/actions'
+import { getBusinessByIdAction } from '@/features/shared/appointments/actions'
 
 export default function RescheduleClient() {
     const { appointment_id, businessId } = useParams<{ appointment_id: string, businessId: string }>()
@@ -23,6 +24,7 @@ export default function RescheduleClient() {
     const [slots, setSlots] = useState<any>({})
     const [currSlots, setCurrSlots] = useState<any>([]);
     const [appointments, setAppointments] = useState<any[]>([])
+    const [businessName, setBusinessName] = useState<string>('')
 
     const getData = async (startDate: string, endDate: string, availabilities: any[], appointments: any[]) => {
         // Get availability id for server actions
@@ -89,21 +91,15 @@ export default function RescheduleClient() {
     const [availabilities, setAvailabilities] = useState<Availability[]>([])
     useEffect(() => {
         const fetchData = async () => {
-            const res = await fetch(`/api/${businessId}/availabilities`, {
-                method: 'GET'
-            })
-            const result = await res.json();
-            const availabilities = result.result.availabilities
-            setAvailabilities(availabilities)
-            const _res = await fetch(`/api/${businessId}/appointments`, {
-                method: "GET"
-            })
-            const appointments = await _res.json();
+            const [{ availabilities }, appointments, business] = await Promise.all([
+                getAvailabilitiesAction(businessId),
+                getBusinessAppointmentsAction(businessId),
+                getBusinessByIdAction(businessId).catch(() => null),
+            ])
+            setAvailabilities(availabilities as any)
+            if (business?.business_name) setBusinessName(business.business_name)
 
-            return {
-                availabilities: availabilities,
-                appointments: appointments.appointments
-            }
+            return { availabilities, appointments }
         }
         const initialize = async (availabilities: any, appointments: any) => {
             const startDate = DateTime.now().startOf("day").toISO()
@@ -166,13 +162,14 @@ export default function RescheduleClient() {
     }
     const [sendingData, setSendingData] = useState(false)
     const [confirmed, setConfirmed] = useState(false)
+    const [rescheduleError, setRescheduleError] = useState<string>('')
     const [canReschedule, setCanReschedule] = useState<boolean | null>(null)
     return (
         <div>{canReschedule === null ? <div className='w-full h-screen flex justify-center items-center'>
             <CircularProgress />
         </div> : canReschedule === false ? <div className='w-full px-5 flex-col text-center h-screen gap-2 flex justify-center items-center'>
             <Caption>You have reached the maximum number of reschedule requests according to this business's policies.</Caption>
-            <Caption>Contact INSERT BUSINESS NAME directly about rescheduling your appointment</Caption>
+            <Caption>Contact {businessName || 'the business'} directly about rescheduling your appointment</Caption>
         </div> : <div>
             {confirmed ? <RescheduleConfirmation /> : <div className='flex justify-center items-center w-full h-screen'>
                 <div className='w-[1280px] flex flex-col justify-center items-center'>
@@ -208,20 +205,27 @@ export default function RescheduleClient() {
                             </div>
                         </div>
                     </Card>
-                    <div className='w-full mt-10 px-20 flex justify-end items-end'>
+                    <div className='w-full mt-10 px-20 flex flex-col items-end gap-2'>
+                        {rescheduleError && <Caption className='text-red-500'>{rescheduleError}</Caption>}
                         <Button.Root disabled={isDisabled} onClick={async () => {
                             setSendingData(true)
                             setIsDisabled(true)
-                            await rescheduleAppointment(appointment_id, {
-                                start: selectedDateTime.start,
-                                end: selectedDateTime.end,
-                                appointmentLength: appointment.service_data.length
-                            }, businessId, availability.id, Intl.DateTimeFormat().resolvedOptions().timeZone).then((res) => {
+                            setRescheduleError('')
+                            try {
+                                const res = await rescheduleAppointment(appointment_id, {
+                                    start: selectedDateTime.start,
+                                    end: selectedDateTime.end,
+                                    appointmentLength: appointment.service_data.length
+                                }, businessId, availability.id, Intl.DateTimeFormat().resolvedOptions().timeZone)
                                 if (res) {
                                     setConfirmed(true)
                                 }
-                            })
-
+                            } catch (err: any) {
+                                setRescheduleError(err?.message ?? 'Failed to reschedule. Please try again.')
+                                setIsDisabled(false)
+                            } finally {
+                                setSendingData(false)
+                            }
                         }}>
                             <Button.Label>{
                                 sendingData ? <CircularProgress size='sm' /> : "Reschedule Appointment"
@@ -242,7 +246,7 @@ const RescheduleConfirmation = () => {
                 <CircleCheckBig color='green' />
                 <Title>Appointment Successfully Rescheduled</Title></div>
             <div className='text-center'>
-                <Caption>If you have any questions regarding your appointment, please contact {"INSERT BUSINESS NAME"} </Caption>
+                <Caption>If you have any questions regarding your appointment, please contact the business directly.</Caption>
             </div>
         </div>
     )

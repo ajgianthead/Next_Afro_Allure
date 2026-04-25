@@ -1,10 +1,16 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "../../../lib/database.types";
 
+export enum NotificationType {
+    NewBooking = 'new-booking',
+    CancelledBooking = 'cancelled-booking',
+    RescheduledBooking = 'rescheduled-booking',
+}
+
 interface NotiData {
-    title: string,
-    body: string,
-    type: 'new-booking' | 'cancelled-booking' | 'rescheduled-booking'
+    title: string;
+    body: string;
+    type: NotificationType;
 }
 
 export class Notification {

@@ -1,11 +1,11 @@
 'use server'
 
-import { createClient } from "@utils/supabase/server"
+import { createClient } from "@/app/utils/supabase/server"
 import { Database, Json } from "../../../../../lib/database.types"
 import { PostgrestError } from "@supabase/supabase-js";
 
 export const updateBookingTheme = async (themeData: any, businessId: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const { data, error } = await supabase.from('web_editors').update({
         theme_data: themeData
     }).eq("business_id", businessId).select("*").maybeSingle()
@@ -15,7 +15,7 @@ export const updateBookingTheme = async (themeData: any, businessId: string) => 
 
 // Check if URL name is available
 export const updateBusinessURL = async (businessId: string, urlName: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
 
     const { error: updateError } = await supabase
         .from("business_users")
@@ -28,7 +28,7 @@ export const updateBusinessURL = async (businessId: string, urlName: string) => 
     return updateError
 }
 export const isURLNameAvailable = async (urlName: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const { data, error } = await supabase.from('business_users').select("business_id").eq('url_name', urlName).limit(1).maybeSingle()
     if (error) {
         throw error
@@ -36,7 +36,7 @@ export const isURLNameAvailable = async (urlName: string) => {
     return !data
 }
 export const createSectionEditorState = async (business_name: string, business_id: string, switchType: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const { data: editorId, error: editorError } = await supabase.from('web_editors').select('id').eq('business_id', business_id).maybeSingle()
     if (switchType === 'true' || editorId !== null) {
         const { data, error } = await supabase.from('web_editors').update({
@@ -88,7 +88,7 @@ export const createSectionEditorState = async (business_name: string, business_i
 
 export const createEditorState = async (business_id: string, switchType: string) => {
     try {
-        const supabase = createClient<Database>();
+        const supabase = await createClient<Database>();
         const { data: editorId, error: editorError } = await supabase.from('web_editors').select('id').eq('business_id', business_id).maybeSingle()
 
         if (switchType === 'true' || editorId !== null) {
@@ -122,7 +122,7 @@ export const createEditorState = async (business_id: string, switchType: string)
 }
 
 export const uploadImgSectionChanges = async (file: any, business_id: string, editor_id?: string, array_length?: number) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const url = await supabase.storage.from('web-section-images').upload(`private/${business_id}/${file.id}`, file.fileBody!).then((res) => {
         return supabase.storage.from('web-section-images').getPublicUrl(res.data?.path!)
     })
@@ -137,14 +137,14 @@ export const uploadImgSectionChanges = async (file: any, business_id: string, ed
 };
 
 export const getSectionData = async (business_id: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const { data, error } = await supabase.from('web_editors').select('*').eq('business_id', business_id).single()
     return data
 
 }
 
 export const saveSectionData = async (sectionData: any[], business_id: string, currentlyPublished: boolean) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     if (!currentlyPublished) {
         await supabase.from('business_users').update({
             published_site: true
@@ -159,7 +159,7 @@ export const saveSectionData = async (sectionData: any[], business_id: string, c
 
 
 export const getSectionImages = async (editor_id: string, business_id?: string) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data, error } = await supabase
         .storage
         .from('web-section-images')
@@ -180,7 +180,7 @@ export const getSectionImages = async (editor_id: string, business_id?: string) 
 
 export const editSectionImage = async (imgObjId: string, fileBody: File, businessId: string) => {
     // Change image object image source
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const newUrl = await supabase.storage.from('web-section-images').update(`private/${businessId}/${imgObjId}`, fileBody).then((res) => {
         return supabase.storage.from('web-section-images').getPublicUrl(res.data?.path!)
     })
@@ -188,7 +188,7 @@ export const editSectionImage = async (imgObjId: string, fileBody: File, busines
 }
 
 export const deleteUploadedImg = async (imageName: string, business_id: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const { data, error } = await supabase.storage.from('web-section-images').remove([`private/${business_id}/${imageName}`])
     if (error) {
         return error
@@ -198,7 +198,7 @@ export const deleteUploadedImg = async (imageName: string, business_id: string) 
 
 export const deleteSectionImage = async (business_id: string, imageObjId: string) => {
     // Delete in storage
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const updatedArray = await supabase.storage.from('web-section-images').remove([`private/${business_id}/${imageObjId}`]).then(async (res) => {
         return await supabase.from('image_section').delete().eq('id', imageObjId).select().single().then(async (res) => {
             const { data } = await supabase.from('image_section').select().gt('index', res.data?.index)

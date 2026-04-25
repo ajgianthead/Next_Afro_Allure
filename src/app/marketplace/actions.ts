@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from "@utils/supabase/server"
+import { createClient } from "@/app/utils/supabase/server"
 import { Database } from "../../../lib/database.types"
 import { Client } from "@googlemaps/google-maps-services-js";
 import { DateTime } from "luxon";
@@ -128,7 +128,7 @@ export const getCityAndStateFromCoords = async (latLng: {
 }
 
 export const getBusinessesInCityAndState = async ({ city, state }: { city: string, state: string }) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data, error } = await supabase.from('business_users').select('*, marketplace_profile(*)').eq('has_marketplace_profile', true).eq('account_settings->business_address->>city', city).eq('account_settings->business_address->>state', state)
     if (error) return error
     return data
@@ -138,7 +138,7 @@ export const getPopularServicesFromBusiness = async (
     businessId: string,
     timezone: string
 ) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
 
     const thirtyDaysAgo = DateTime.now().setZone(timezone).minus({ days: 30 }).toISO();
     const rightNow = DateTime.now().setZone(timezone).toISO();
@@ -213,7 +213,7 @@ export const getPopularServicesFromMultipleBusinesses = async (
 
 // Create
 export const createMarketplaceProfile = async (profileData: MarketplaceProfile) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient<Database>();
     const coords = await getCoordsFromAddress(profileData.address)
 
     const profileImgUrl = await supabase.storage.from('marketplace-profile_photos').upload(`private/${profileData.businessId}/${crypto.randomUUID()}`, profileData.profilePhoto).then((data) => {
@@ -257,7 +257,7 @@ export const createMarketplaceProfile = async (profileData: MarketplaceProfile) 
 //     categories: string[]
 //     yearsOfExperience: number
 // }) => {
-//     const supabase = createClient<Database>();
+//     const supabase = await createClient<Database>();
 
 //     if (profileData.profilePhoto instanceof Blob) {
 //         await supabase.storage.from('marketplace-profile_photos').upload(`private/${profileData.businessId}/${crypto.randomUUID()}`, profileData.profilePhoto)
@@ -294,7 +294,7 @@ export const createMarketplaceProfile = async (profileData: MarketplaceProfile) 
 
 // Create Review
 export const createReview = async (reviewData: Review) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data, error } = await supabase.from('reviews').insert({
         business_id: reviewData.businessId,
         details: reviewData.details,
@@ -305,14 +305,14 @@ export const createReview = async (reviewData: Review) => {
 }
 // Get Reviews based on business
 export const getReviews = async (businessId: string) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data, error } = await supabase.from('reviews').select('*').eq('business_id', businessId)
     if (error) return error
     return data
 }
 
 export const findNearbyStylists = async (lat: number, lng: number, radius: number) => {
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const { data: businesses, error } = await supabase.rpc('search_stylists_nearby', {
         user_lat: lat,
         user_lon: lng,
@@ -324,7 +324,7 @@ export const findNearbyStylists = async (lat: number, lng: number, radius: numbe
 
 export const stylistFilter = async (filter: FilterProps) => {
     let result;
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     if (filter.filterBy === 'stylist') {
         // Get all businesses in the current location
         const { data: businesses, error } = await supabase.rpc('search_stylists_nearby', {

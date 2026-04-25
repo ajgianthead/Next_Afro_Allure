@@ -1,5 +1,5 @@
 import { configure, task } from "@trigger.dev/sdk/v3";
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Resend } from "resend";
 import { Database } from "../../lib/database.types";
 import ReminderBusiness from "../../emails/reminder-business";
@@ -234,14 +234,14 @@ export const sendLink = async (props: PaymentLinkProps) => {
 
 const checkPaymentStatus = async (appointmentId: string) => {
   const supabase = createClient<Database>()
-  const { data } = await supabase.from('appointments').select().eq('id', appointmentId).single()
+  const { data, error } = await supabase.from('appointments').select().eq('id', appointmentId).single()
   if (data?.service_paid) {
     // IDK Something
     return
   } else {
     await supabase.from('appointments').update({
       status: 'INCOMPLETE'
-    })
+    }).eq('id', appointmentId)
   }
 }
 

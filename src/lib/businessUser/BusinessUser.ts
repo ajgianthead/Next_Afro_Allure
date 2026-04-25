@@ -1,4 +1,4 @@
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../lib/database.types";
 import { stripe } from '../utils'
 import { Time } from "@internationalized/date";
@@ -6,15 +6,30 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { createStripeCustomer } from "@lib/stripe/createStripeCustomer";
 import { createStripeAccount } from "@lib/stripe/createStripeAccount";
 import { UserAuth } from "@lib/auth/UserAuth";
-import { Availability } from "@lib/availability/Availability";
+import { Availability } from "@/features/availability/server/models/Availability";
 import { Service } from "@lib/service/Service";
 import { BusinessPolicy } from "@lib/businessPolicy/BusinessPolicy";
 import { createStripeOnboardingLink } from "@lib/stripe/createStripeOnboardingLink";
 import { Client } from "@lib/clients/Client";
-import { Appointment } from "@lib/appointments/Appointment";
+import { Appointment } from "@/features/manualBooking/server/models/Appointment";
 import { Notification } from "@lib/notifications/Notification";
 
-
+export interface BusinessType {
+    id: string,
+    name: string,
+    email: string,
+    stripeAccountId: string,
+    stripeCustomerId: string,
+    completedStripeOnboarding: boolean,
+    completedOnboarding: boolean,
+    urlName: string,
+    currentOnboardingLink: string,
+    accountSettings: AccountSettings,
+    planType: 'STARTER' | 'GROWTH',
+    hadTrial: boolean,
+    publishedSite: boolean,
+    paymentMethodConfigId: string
+}
 
 interface AccountSettings {
     business_address: {
@@ -64,6 +79,25 @@ export class BusinessUser {
         return data !== null
     }
 
+    toClient() {
+        return {
+            id: this.id,
+            name: this.name,
+            email: this.email,
+            stripeAccountId: this.stripeAccountId,
+            stripeCustomerId: this.stripeCustomerId,
+            completedStripeOnboarding: this.completedStripeOnboarding,
+            completedOnboarding: this.completedOnboarding,
+            urlName: this.urlName,
+            currentOnboardingLink: this.currentOnboardingLink,
+            accountSettings: this.accountSettings,
+            planType: this.planType,
+            hadTrial: this.hadTrial,
+            publishedSite: this.publishedSite,
+            paymentMethodConfigId: this.paymentMethodConfigId
+        }
+    }
+
     private static fromRow(row: Database['public']['Tables']['business_users']['Row']) {
         return new BusinessUser(
             row.business_id,
@@ -83,7 +117,17 @@ export class BusinessUser {
         )
     }
 
-    static async create(supabase: SupabaseClient<Database>, email: string, password: string, name: string) {
+    static async fetchWithUserId(supabase: SupabaseClient<Database, any>, userId: string) {
+        try {
+            const { data: row, error } = await supabase.from('business_users').select().eq('user_id', userId).single()
+            if (error) throw Error(error.message)
+            return BusinessUser.fromRow(row)
+        } catch (error: any) {
+            throw Error(error.message)
+        }
+    }
+
+    static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string) {
         try {
             if (await this.businessNameExists(name, supabase)) {
                 throw Error('Business name already exists')
@@ -151,37 +195,49 @@ export class BusinessUser {
             throw Error(error.message)
         }
     }
-    async getServices(supabase: SupabaseClient<Database>) {
+    static async fetchByURLName(supabase: SupabaseClient<Database>, urlName: string) {
+        try {
+            const { data: row, error } = await supabase.from('business_users').select().eq('url_name', urlName).single()
+            if (error) throw Error(error.message)
+            return BusinessUser.fromRow(row)
+        } catch (error: any) {
+            throw Error(error.message)
+        }
+    }
+    async getServices(supabase: SupabaseClient<Database, any>) {
         return await Service.fetch(supabase, this.id)
     }
-    async getAvailabilities(supabase: SupabaseClient<Database>) {
+    async getAvailabilities(supabase: SupabaseClient<Database, any>) {
         return await Availability.fetch(supabase, this.id)
     }
-    async getClients(supabase: SupabaseClient<Database>) {
+    async getClients(supabase: SupabaseClient<Database, any>) {
         return await Client.fetch(supabase, this.id)
     }
-    async getBannedClients(supabase: SupabaseClient<Database>) {
+    async getBannedClients(supabase: SupabaseClient<Database, any>) {
         return await Client.fetchBannedClients(supabase, this.id)
     }
-    async getAppointments(supabase: SupabaseClient<Database>) {
+    async getAppointments(supabase: SupabaseClient<Database, any>) {
         return await Appointment.fetch(supabase, this.id)
     }
-    async getConfirmedAppointments(supabase: SupabaseClient<Database>) {
+    async getConfirmedAppointments(supabase: SupabaseClient<Database, any>) {
         return await Appointment.fetchByStatus(supabase, this.id, 'CONFIRMED')
     }
-    async getCancelledAppointments(supabase: SupabaseClient<Database>) {
+    async getCancelledAppointments(supabase: SupabaseClient<Database, any>) {
         return await Appointment.fetchByStatus(supabase, this.id, 'CANCELLED')
     }
-    async getPendingAppointments(supabase: SupabaseClient<Database>) {
+    async getPendingAppointments(supabase: SupabaseClient<Database, any>) {
         return await Appointment.fetchByStatus(supabase, this.id, 'PENDING')
     }
-    async getProcessingAppointments(supabase: SupabaseClient<Database>) {
+    async getProcessingAppointments(supabase: SupabaseClient<Database, any>) {
         return await Appointment.fetchByStatus(supabase, this.id, 'PROCESSING')
     }
-    async getCompletedAppointments(supabase: SupabaseClient<Database>) {
+    async getCompletedAppointments(supabase: SupabaseClient<Database, any>) {
         return await Appointment.fetchByStatus(supabase, this.id, 'COMPLETED')
     }
-    async getNotifications(supabase: SupabaseClient<Database>) {
+    async getNotifications(supabase: SupabaseClient<Database, any>) {
         return await Notification.fetch(supabase, this.id)
+    }
+    async getPolicy(supabase: SupabaseClient<Database, any>) {
+        return await BusinessPolicy.fetch(supabase, this.id)
     }
 }

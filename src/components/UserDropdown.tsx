@@ -1,10 +1,10 @@
 import DropdownMenu from '@tailus-ui/Dropdown';
 import Button from '@tailus-ui/Button';
-import { Check, ChevronRight, HelpCircle, LogOut, MessageCircleQuestion, Settings, Settings2, User, UserPlus } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { Caption, Title } from '@tailus-ui/typography';
 import { AdminAvatar } from './AdminAvatar';
-import { TAILUS_AVATAR } from './../const';
 import { redirect } from 'next/navigation';
+import { signOutAction } from '@/app/(auth)/actions';
 
 export const UserDropdown = ({ businessData }: any) => {
   return (
@@ -41,13 +41,8 @@ export const UserDropdown = ({ businessData }: any) => {
                   <Button.Label>Settings</Button.Label>
                 </Button.Root>
                 <Button.Root onClick={async () => {
-                  const signOut = await fetch(`/api/auth/signout`, {
-                    method: 'POST'
-                  })
-                  const res = await signOut.json();
-
+                  await signOutAction()
                   redirect('/login')
-
                 }} className="bg-gray-50" variant="outlined" size="xs" intent="gray">
                   <Button.Icon size="xs" type="leading">
                     <LogOut />

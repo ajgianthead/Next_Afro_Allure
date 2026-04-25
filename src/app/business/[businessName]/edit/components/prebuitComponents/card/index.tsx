@@ -6,7 +6,7 @@ import { resolveCardFields, defaultCardfields } from "./fields"
 import { Card as MUICard, CardContent, CardCover } from "@mui/joy"
 import { Card } from "../../types"
 import { useRouter } from "next/navigation"
-import { useEditorContext } from "@utils/context/EditorContext"
+import { useEditorContext } from "@/app/utils/context/EditorContext"
 import CryptoJS from "crypto-js";
 
 

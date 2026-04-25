@@ -2,17 +2,17 @@ import React from 'react';
 import Editor from './editor';
 import { getUser } from 'app/dashboard/(other)/getUser';
 import { fetchBusinessUser, fetchUser } from 'app/dashboard/(other)/actions';
-import { getEditorData } from '@utils/editor_actions';
+import { getEditorData } from '@/app/utils/editor_actions';
 import { PostgrestError } from '@supabase/supabase-js';
 import { fetchGoogleFonts } from 'useGoogleFonts';
-import { EditorWrapper } from '@utils/context/EditorContext';
-import { createClient } from '@utils/supabase/server';
+import { EditorWrapper } from '@/app/utils/context/EditorContext';
+import { createClient } from '@/app/utils/supabase/server';
 import { Database } from '../../../../../lib/database.types';
 
 const Page = async ({ params }: { params: { businessName: string } }) => {
     const user = await fetchUser();
     const { businessName } = await params
-    const supabase = createClient<Database>()
+    const supabase = await createClient<Database>()
     const business = await fetchBusinessUser(user?.id!)
 
     if (business && business.url_name === businessName) {

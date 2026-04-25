@@ -5,8 +5,8 @@ import Textarea from '@components/TextArea'
 import Button from '@tailus-ui/Button'
 import Card from '@tailus-ui/Card'
 import { Caption, Text, Title } from '@tailus-ui/typography'
-import { useUserContext } from '@utils/context/UserContext'
-import { createClient } from '@utils/supabase/client'
+import { useUserContext } from '@/app/utils/context/UserContext'
+import { createClient } from '@/app/utils/supabase/client'
 import { randomUUID } from 'crypto'
 import React, { useCallback, useEffect, useState } from 'react'
 import { v4 } from 'uuid';
@@ -27,7 +27,7 @@ import Select from '@components/Select'
 import Checkbox from '@components/Checkbox'
 import { CheckedState } from '@radix-ui/react-checkbox'
 import { fetchUser } from '../actions'
-import { createPublicImgURL, updateImg, uploadImg } from './actions'
+import { createPublicImgURL, updateImg, uploadImg, createServiceAction, updateServiceAction, deleteServiceAction, createAddonAction, updateAddonAction, deleteAddonAction } from './actions'
 
 interface PageProps {
     servicesData: Service[];
@@ -45,14 +45,8 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
     const [services, setServices] = useState<any[]>(servicesData)
     const [createOpen, setCreateOpen] = useState<boolean>(false)
     const handleDelete = async (serviceID: string, index: number) => {
-        // Delete in supabase, then component state
-        const result = await fetch(`/api/${businessId}/services/${serviceID}`, {
-            method: 'DELETE',
-        });
-        let clone = [...services];
-        clone.splice(index, 1)
-        setServices(clone)
-        return await result.json();
+        const updatedServices = await deleteServiceAction(businessId, serviceID)
+        setServices(updatedServices ?? [])
     }
     const [currIndex, setCurrIndex] = useState<number>()
     const [service, setService] = useState<Service>({
@@ -89,79 +83,38 @@ export default function ServicesClient({ servicesData, serviceAddonsData, availa
         price: 0
     })
     const createAddon = async () => {
-        const res = await fetch(`/api/${businessId}/services/addon`, {
-            method: 'POST',
-            body: JSON.stringify(addon)
-        })
-        const result = await res.json()
-        if (result.message === "Service Addon created!") {
-            setServiceAddons([
-                ...serviceAddons,
-                result.data
-            ])
-            setOpenAddon(false)
-            setConfirmation(true)
-            setConfirmationData({
-                title: "Success",
-                description: result.message
-            })
-            setAddon({
-                name: "",
-                price: 0
-            })
-        }
-        else { // If error
-
-        }
+        const result = await createAddonAction(businessId, addon.name, addon.price)
+        setServiceAddons([...serviceAddons, result])
+        setOpenAddon(false)
+        setConfirmation(true)
+        setConfirmationData({ title: "Success", description: "Service Addon created!" })
+        setAddon({ name: "", price: 0 })
     }
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
     const [isEditingAddon, setIsEditingAddon] = useState<boolean>(false)
     const [currAddon, setCurrAddon] = useState<any>()
     const [addonIndex, setAddonIndex] = useState<number>(0)
     const editAddon = async (index: number) => {
-        const res = await fetch(`/api/${businessId}/services/addon`, {
-            method: 'PUT',
-            body: JSON.stringify(currAddon)
-        })
-        const result = await res.json()
-        if (result.message === "Service Addon updated!") {
-            let temp = [...serviceAddons]
-            temp[addonIndex] = currAddon
-            setServiceAddons(temp)
-            setIsEditingAddon(false)
-            setOpenAddon(false)
-            setConfirmation(true)
-            setConfirmationData({
-                title: "Success",
-                description: result.message
-            })
-            setCurrAddon({})
-        }
-        else { // If error
-
-        }
+        await updateAddonAction(currAddon)
+        let temp = [...serviceAddons]
+        temp[addonIndex] = currAddon
+        setServiceAddons(temp)
+        setIsEditingAddon(false)
+        setOpenAddon(false)
+        setConfirmation(true)
+        setConfirmationData({ title: "Success", description: "Service Addon updated!" })
+        setCurrAddon({})
     }
     const deleteAddon = async () => {
-        const res = await fetch(`/api/${businessId}/services/addon/${currAddon.id}`, {
-            method: 'DELETE',
-        })
-        const result = await res.json()
-        if (result.message === "Service Addon deleted!") {
-            let temp = [...serviceAddons]
-            temp.splice(addonIndex, 1)
-            setServiceAddons(temp)
-            setIsEditingAddon(false)
-            setOpenAddon(false)
-            setConfirmation(true)
-            setConfirmationData({
-                title: "Success",
-                description: result.message
-            })
-            setCurrAddon({})
-        }
-        else { // If error
-
-        }
+        await deleteAddonAction(currAddon.id)
+        let temp = [...serviceAddons]
+        temp.splice(addonIndex, 1)
+        setServiceAddons(temp)
+        setIsEditingAddon(false)
+        setOpenAddon(false)
+        setConfirmation(true)
+        setConfirmationData({ title: "Success", description: "Service Addon deleted!" })
+        setCurrAddon({})
     }
     return (
         <div className='px-6'>
@@ -393,17 +346,9 @@ const CreateServiceDialog = ({ serviceAddons, services, setServices, open, setIs
         }
 
 
-        const res = await fetch(`/api/${user}/services`, {
-            method: 'POST',
-            body: JSON.stringify(image.imageBlob ? clone : { ...service, price: service.price * 100 })
-        })
-        const dataBack = await res.json();
-
-
-        setServices([
-            ...services,
-            dataBack.data
-        ])
+        const serviceData = image.imageBlob ? clone : { ...service, price: service.price * 100 }
+        const dataBack = await createServiceAction(user, serviceData as any)
+        setServices([...services, dataBack])
         setImage({
             imageURL: null,
             imageBlob: null
@@ -705,14 +650,11 @@ const EditServiceDialog = ({ serviceAddons, availabilities, open, setIsOpen, ser
             let imageURL = await editImage()
             clone.photo_url = imageURL;
         }
-        await fetch(`/api/${service.business}/services`, {
-            method: 'PUT',
-            body: JSON.stringify(hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })
-        })
+        const updatedServiceData = hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) }
+        await updateServiceAction(service.business, updatedServiceData as any)
 
-        // Update my component state
         let newServices = [...services];
-        newServices.splice(index, 1, hasImage.length ? clone : { ...service, addons: Array.from(checkedAddons) })
+        newServices.splice(index, 1, updatedServiceData)
         setServices(newServices)
         setDataSending(false)
         setIsOpen(false)
@@ -722,23 +664,14 @@ const EditServiceDialog = ({ serviceAddons, availabilities, open, setIsOpen, ser
         })
         setConfirmation(true)
     }
-    // Delete Service
     const handleDelete = async () => {
-        // Delete in supabase
         setDataSending(true)
         const id = services[index].id
-        const res = await fetch(`/api/${service.business}/services/${id}`, {
-            method: 'DELETE'
-        })
-        const updatedServices = await res.json()
-        // Delete in local state
-        setServices(updatedServices.result)
+        const updatedServices = await deleteServiceAction(service.business, id)
+        setServices(updatedServices ?? [])
         setDataSending(false)
         setIsOpen(false)
-        setConfirmationData({
-            title: "Success",
-            description: "Service Deleted"
-        })
+        setConfirmationData({ title: "Success", description: "Service Deleted" })
         setConfirmation(true)
     }
     const [deleteOpen, setDeleteOpen] = useState(false)

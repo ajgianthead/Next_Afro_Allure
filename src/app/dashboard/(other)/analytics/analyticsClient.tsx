@@ -10,7 +10,7 @@ import { Info, TrendingDown, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useEffect, useState } from "react";
 import { GA4ReportRow, runPageViewReport, runTotalReport } from "../../../../../lib/analytics";
-import { useUserContext } from "@utils/context/UserContext";
+import { useUserContext } from "@/app/utils/context/UserContext";
 import { DateTime } from "luxon";
 import { formatAppointmentAnalyticalData } from "./actions";
 
