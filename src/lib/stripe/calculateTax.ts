@@ -1,4 +1,4 @@
-import { stripe } from "../utils"
+import { stripe } from "./stripeClient"
 
 export interface TaxAddress {
     line1: string

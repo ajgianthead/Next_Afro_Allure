@@ -1,4 +1,4 @@
-import { stripe } from "@lib/utils"
+import { stripe } from "./stripeClient"
 
 export const createStripeAccount = async () => {
     const account = await stripe.accounts.create({

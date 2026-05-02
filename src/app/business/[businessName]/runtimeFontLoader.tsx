@@ -14,7 +14,6 @@ export function RuntimeFontLoader({
     fonts: FontUsage[];
 }) {
     useEffect(() => {
-        console.log(fonts);
         if (!fonts.length) return;
 
         const href = buildGoogleFontsUrl(fonts);

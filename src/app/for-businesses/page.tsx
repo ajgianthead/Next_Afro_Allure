@@ -3,6 +3,7 @@ import ForBusinesses from './forBusinessesClient';
 import { fetchUser } from 'app/dashboard/(other)/actions';
 import { fetchBusinessData } from 'app/business/[businessName]/actions';
 import { PostgrestError } from '@supabase/supabase-js';
+import AfroAllureBusiness from './forBusinessesClient';
 
 const Page = async () => {
     const user = await fetchUser()
@@ -11,14 +12,14 @@ const Page = async () => {
         if (!(business instanceof PostgrestError)) {
             return (
                 <div>
-                    <ForBusinesses user={user} business={business.result} />
+                    <AfroAllureBusiness />
                 </div>
             );
         }
     } else {
         return (
             <div>
-                <ForBusinesses user={user} business={null} />
+                <AfroAllureBusiness />
             </div>
         );
     }

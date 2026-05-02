@@ -3,7 +3,6 @@
 
 import { ComponentConfig, SlotComponent } from "@puckeditor/core"
 import { resolveCardFields, defaultCardfields } from "./fields"
-import { Card as MUICard, CardContent, CardCover } from "@mui/joy"
 import { Card } from "../../types"
 import { useRouter } from "next/navigation"
 import { useEditorContext } from "@/app/utils/context/EditorContext"
@@ -22,42 +21,45 @@ export const CardComponent: ComponentConfig<Card> = {
                     router.push(`/${editorState.businessName}/book?service=${CryptoJS.AES.encrypt(service, process.env.NEXT_PUBLIC_SECRET!).toString()}`)
                 }
             }}>
-                {variant === 'basic' ? <MUICard sx={{ minWidth: 300, flexGrow: 1 }}>
-                    <CardContent>
-                        <Content />
-                    </CardContent>
-                </MUICard> : <MUICard sx={{ minWidth: 300, flexGrow: 1 }}>
-                    {cardCover === 'image' ? <CardCover >
-                        <img
-                            src={imageSource!}
-                            srcSet={`${imageSource} 2x`}
-                            loading="lazy"
-                            alt=""
-                        />
-                    </CardCover> : <CardCover>
-                        <video
-                            autoPlay
-                            loop
-                            muted
-                            poster="https://assets.codepen.io/6093409/river.jpg"
-                        >
-                            <source
-                                src={videoSource}
-                                type="video/mp4"
+                {variant === 'basic' ? (
+                    <div className="min-w-[300px] flex-grow rounded-md border bg-card shadow-sm">
+                        <div className="p-4">
+                            <Content />
+                        </div>
+                    </div>
+                ) : (
+                    <div className="min-w-[300px] flex-grow rounded-md overflow-hidden relative">
+                        {cardCover === 'image' ? (
+                            <img
+                                src={imageSource!}
+                                srcSet={`${imageSource} 2x`}
+                                loading="lazy"
+                                alt=""
+                                className="absolute inset-0 w-full h-full object-cover"
                             />
-                        </video>
-                    </CardCover>}
-
-                    <CardCover
-                        sx={{
-                            background:
-                                'linear-gradient(to top, rgba(0, 0, 0, 0.705), rgba(0,0,0,0) 200px), linear-gradient(to top, rgba(0, 0, 0, 0.459), rgba(0,0,0,0) 300px)',
-                        }}
-                    />
-                    <CardContent>
-                        <Content />
-                    </CardContent>
-                </MUICard>}
+                        ) : (
+                            <video
+                                autoPlay
+                                loop
+                                muted
+                                poster="https://assets.codepen.io/6093409/river.jpg"
+                                className="absolute inset-0 w-full h-full object-cover"
+                            >
+                                <source src={videoSource} type="video/mp4" />
+                            </video>
+                        )}
+                        <div
+                            className="absolute inset-0"
+                            style={{
+                                background:
+                                    'linear-gradient(to top, rgba(0, 0, 0, 0.705), rgba(0,0,0,0) 200px), linear-gradient(to top, rgba(0, 0, 0, 0.459), rgba(0,0,0,0) 300px)',
+                            }}
+                        />
+                        <div className="relative z-10 p-4">
+                            <Content />
+                        </div>
+                    </div>
+                )}
             </div>
 
         )

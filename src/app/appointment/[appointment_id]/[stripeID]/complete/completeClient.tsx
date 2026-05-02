@@ -15,9 +15,7 @@ export default function CompleteClient() {
     useEffect(() => {
         const checkPayment = async () => {
             const stripe = await loadStripe(
-                process.env.NODE_ENV === "development"
-                    ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-                    : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!,
+                process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
                 { stripeAccount: stripeID }
             )
 

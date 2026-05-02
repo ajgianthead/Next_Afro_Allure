@@ -12,6 +12,7 @@ export interface Text {
     linkType: string
     url: string
     sections: string
+    textTransform: string
 }
 
 export interface PreBuiltComponents {
@@ -53,7 +54,7 @@ export interface CTA { }
 export interface RegularText extends Text {
     fontSize: number
     fontWeight: number
-
+    maxWidth: number
 }
 
 export interface ColumnLayout {
@@ -84,6 +85,7 @@ export interface GridLayout {
     numberOfColumns: number
     gapX: number
     gapY: number
+    firstCellRowSpan: number
 }
 
 export interface Section {
@@ -133,11 +135,22 @@ export interface Container {
     flexDirection: 'flex-col' | 'flex-row' | 'grid'
     mainAxisLayout: 'start' | 'end' | 'center' | 'space-between' | 'space-around' | 'space-evenly'
     altAxisLayout: 'start' | 'end' | 'center' | 'baseline' | 'stretch'
+    aspectRatio: string
+    overflow: string
+    minHeight: number
+    maxWidth: number
+    gridTemplateColumns: string
+    responsiveDirection: string
+    hideBelow: string
+    hideAbove: string
 }
 
 export interface ImageComponent {
     url: string | null
     width: number
+    objectFit: string
+    height: number
+    aspectRatio: string
     borderExpanded: string
     borderWidth: number
     borderRadius: number
@@ -178,6 +191,71 @@ export interface ButtonContainer extends Omit<Container, 'content'>, Omit<Regula
     variant: string
 }
 
+export interface LuxuryNavProps {
+    brandName: string
+    ctaText: string
+    nav1: string; nav2: string; nav3: string; nav4: string
+    bgColor: string; textColor: string; borderColor: string
+}
+
+export interface LuxuryHeroProps {
+    eyebrow: string
+    headingLine1: string; headingLine2Italic: string; headingLine3Underline: string; headingLine4: string
+    bodyText: string
+    cta1Text: string; cta2Text: string
+    heroImageUrl: string
+    pressQuote: string
+    stat1Value: string; stat1Label: string
+    stat2Value: string; stat2Label: string
+    stat3Value: string; stat3Label: string
+    bgColor: string; textColor: string; mutedColor: string; borderColor: string
+}
+
+export interface ServiceMenuProps {
+    eyebrow: string; heading: string; pricingNote: string
+    services: { name: string; duration: string; price: number; desc: string }[]
+    bgColor: string; textColor: string; mutedColor: string; borderColor: string
+}
+
+export interface PortfolioGalleryProps {
+    eyebrow: string
+    headingMain: string; headingItalic: string; headingSuffix: string
+    archiveLinkText: string
+    gallery: { imageUrl: string; tone: string; label: string }[]
+    bgColor: string; textColor: string; mutedColor: string
+}
+
+export interface AboutStylistProps {
+    eyebrow: string
+    headingLine1: string; headingLine2: string; headingLine3Italic: string; headingLine3Suffix: string
+    bio: string
+    credential1: string; credential2: string; credential3: string
+    portraitImageUrl: string
+    bgColor: string; textColor: string; mutedColor: string; borderColor: string
+}
+
+export interface ReviewsSectionProps {
+    eyebrow: string; heading: string
+    reviews: { name: string; stars: number; body: string }[]
+    bgColor: string; textColor: string; mutedTextColor: string; dividerColor: string
+}
+
+export interface BookingCTAProps {
+    eyebrow: string
+    headingLine1: string; headingLine2Italic: string
+    bodyText: string; ctaText: string
+    bgColor: string; textColor: string; mutedColor: string; borderColor: string
+}
+
+export interface LuxuryFooterProps {
+    brandName: string
+    addressLine1: string; addressLine2: string; addressLine3: string
+    col1Heading: string; col1Items: { text: string }[]
+    col2Heading: string; col2Items: { text: string }[]
+    col3Heading: string; col3Items: { text: string }[]
+    bgColor: string; textColor: string; mutedColor: string; borderColor: string
+}
+
 export interface Components {
     Column: ColumnLayout
     Row: RowLayout
@@ -204,4 +282,12 @@ export interface Components {
     Image: ImageComponent
     Video: VideoComponent
     Button: ButtonContainer
+    LuxuryNav: LuxuryNavProps
+    LuxuryHero: LuxuryHeroProps
+    ServiceMenu: ServiceMenuProps
+    PortfolioGallery: PortfolioGalleryProps
+    AboutStylist: AboutStylistProps
+    ReviewsSection: ReviewsSectionProps
+    BookingCTA: BookingCTAProps
+    LuxuryFooter: LuxuryFooterProps
 };

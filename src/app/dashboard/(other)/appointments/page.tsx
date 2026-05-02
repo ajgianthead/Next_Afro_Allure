@@ -65,6 +65,8 @@ export default async function Page() {
             return service.toClient()
         })
     }
+    serviceClient = await assignAddons(supabase, serviceClient as any)
+    console.log(serviceClient);
 
     return <ToggleAppointmentView events={events} policy={policy} services={serviceClient!} data={tableFormattedData} />
 }

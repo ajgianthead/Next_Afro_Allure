@@ -37,7 +37,7 @@ export default function ConfirmAppClient({ appointment, business }: PageProps) {
     const [amountDue, setAmountDue] = useState<number>()
     useEffect(() => {
         const fetchSession = async (stripeAccountId: string, appointment: Appointment) => {
-            const stripePromise = loadStripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!, {
+            const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
                 stripeAccount: stripeAccountId,
             });
             setStripePromise(stripePromise)

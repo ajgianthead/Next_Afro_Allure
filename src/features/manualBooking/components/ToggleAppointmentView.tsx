@@ -11,8 +11,9 @@ import { ManualBookingWrapper } from "../context/ManualBookingContext";
 import AddAppointmentFAB from "./AddAppointmentFAB";
 import { CreateAppointmentModal } from "./modals/CreateAppointmentModal";
 import { RescheduleConfirmation, RescheduleConfirmationModal } from "./modals/RescheduleAppointmentModal";
+import { ServiceData } from "@/features/services/types";
 
-export const ToggleAppointmentView = ({ events, services, policy, data }: { data: AppointmentTableData[], events: AppointmentEvent[], services: ServiceType[], policy: BusinessPolicyType }) => {
+export const ToggleAppointmentView = ({ events, services, policy, data }: { data: AppointmentTableData[], events: AppointmentEvent[], services: any[], policy: BusinessPolicyType }) => {
     return (
         <div>
             <ManualBookingWrapper appointmentEvents={events} services={services} policy={policy}>

@@ -1,10 +1,10 @@
 import React from 'react';
-import LandingPage from './landingPage';
+import AfroAllureLanding from './landingPage';
 
 const Page = () => {
   return (
     <div>
-      <LandingPage />
+      <AfroAllureLanding />
     </div>
   );
 }

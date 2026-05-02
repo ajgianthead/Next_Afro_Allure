@@ -3,7 +3,7 @@
 import { createClient } from "@/app/utils/supabase/server"
 import { BusinessUser } from "../businessUser/BusinessUser"
 import { Appointment } from "../../features/manualBooking/server/models/Appointment"
-import { stripe } from "../utils"
+import { stripe } from "./stripeClient"
 import { calculateTax, buildTaxAddress } from "./calculateTax"
 import Stripe from "stripe"
 import { AppointmentType, CheckoutType } from "../../features/shared/appointments/types"

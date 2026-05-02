@@ -4,7 +4,7 @@ import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import { BookingSettings, PaymentConfig } from "./bookingSettingsClient";
 import { PostgrestSingleResponse } from "@supabase/supabase-js";
-import { stripe } from "@lib/utils";
+import { stripe } from "@/lib/stripe/stripeClient";
 import Stripe from "stripe";
 
 

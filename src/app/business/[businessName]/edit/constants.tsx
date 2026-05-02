@@ -1,4 +1,3 @@
-import { TypographySystem } from "@mui/joy";
 import { Box, Columns, Grid2X2, Heading, ImageIcon, Layers, MousePointerClick, Rows, Type, Video } from "lucide-react";
 import type { Config, Slot } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
@@ -13,12 +12,19 @@ import { CustomizableTextComponent } from "./components/customizableText";
 import { ContainerComponent } from "./components/container";
 import { textPresetsComponents } from "./components/textPresets";
 import { Components } from "./components/types";
-import { GalleryComponent } from "./components/prebuitComponents/gallery";
 import { ColumnLayoutComponent } from "./components/column";
 import { RowLayoutComponent } from "./components/row";
 import { GridLayoutComponent } from "./components/grid";
 import { FooterComponent } from "./components/prebuitComponents/footer";
 import { SectionComponent } from "./components/section";
+import { LuxuryNavComponent } from "./components/templateSections/luxuryNav";
+import { LuxuryHeroComponent } from "./components/templateSections/luxuryHero";
+import { ServiceMenuComponent } from "./components/templateSections/serviceMenu";
+import { PortfolioGalleryComponent } from "./components/templateSections/portfolioGallery";
+import { AboutStylistComponent } from "./components/templateSections/aboutStylist";
+import { ReviewsSectionComponent } from "./components/templateSections/reviewsSection";
+import { BookingCTAComponent } from "./components/templateSections/bookingCta";
+import { LuxuryFooterComponent } from "./components/templateSections/luxuryFooter";
 
 
 
@@ -31,10 +37,7 @@ export const config: Config<Components> = {
         },
         prebuilt: {
             title: 'Pre-built Components',
-            components: ['Navbar', 'HeroSection', 'AboutBusiness',
-                'Card',
-                'Footer'
-            ]
+            components: ['Navbar', 'HeroSection', 'AboutBusiness', 'Card', 'Footer']
         },
         media: {
             defaultExpanded: false,
@@ -47,8 +50,12 @@ export const config: Config<Components> = {
         other: {
             title: 'Other',
             components: ['Button']
-        }
-
+        },
+        templates: {
+            title: 'Template Sections',
+            defaultExpanded: false,
+            components: ['LuxuryNav', 'LuxuryHero', 'ServiceMenu', 'PortfolioGallery', 'AboutStylist', 'ReviewsSection', 'BookingCTA', 'LuxuryFooter']
+        },
     },
     components: {
         Card: CardComponent,
@@ -65,6 +72,14 @@ export const config: Config<Components> = {
         Image: ImageComponent,
         CustomizableText: CustomizableTextComponent,
         Container: ContainerComponent,
+        LuxuryNav: LuxuryNavComponent,
+        LuxuryHero: LuxuryHeroComponent,
+        ServiceMenu: ServiceMenuComponent,
+        PortfolioGallery: PortfolioGalleryComponent,
+        AboutStylist: AboutStylistComponent,
+        ReviewsSection: ReviewsSectionComponent,
+        BookingCTA: BookingCTAComponent,
+        LuxuryFooter: LuxuryFooterComponent,
         HeadingOne: textPresetsComponents.HeadingOne,
         HeadingTwo: textPresetsComponents.HeadingTwo,
         HeadingThree: textPresetsComponents.HeadingThree,
@@ -84,7 +99,7 @@ export const drawerItemStyleProps = new Map<
     string,
     {
         icon: React.JSX.Element;
-        fontLevel: keyof TypographySystem | "inherit" | undefined;
+        fontLevel: string | undefined;
         label: string
     }
 >([
@@ -201,6 +216,14 @@ export const drawerItemStyleProps = new Map<
             label: 'Video'
         }
     ],
+    ['LuxuryNav', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Luxury Nav' }],
+    ['LuxuryHero', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Luxury Hero' }],
+    ['ServiceMenu', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Service Menu' }],
+    ['PortfolioGallery', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Portfolio Gallery' }],
+    ['AboutStylist', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'About Stylist' }],
+    ['ReviewsSection', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Reviews Section' }],
+    ['BookingCTA', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Booking CTA' }],
+    ['LuxuryFooter', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Luxury Footer' }],
     [
         "HeadingOne",
         {

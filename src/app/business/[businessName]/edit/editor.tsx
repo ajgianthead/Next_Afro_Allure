@@ -4,25 +4,25 @@ import { createUsePuck, Puck, useGetPuck } from "@puckeditor/core";
 import React, { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import type { Config, Data, Slot, DefaultComponents, ComponentDataMap } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
-import { Box, Columns2, Type } from "lucide-react";
-import { Typography } from "@mui/joy";
+import { Box, Columns2, Loader2, Type } from "lucide-react";
 import { config, drawerItemStyleProps } from "./constants";
 import { sendEditorData } from "@/app/utils/editor_actions";
 import Settings from "./settings";
-import { GoogleFont, loadAllFontsProgressively, loadGoogleFont, preloadFonts } from "useGoogleFonts";
+import { TemplatePicker } from "./templatePicker";
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { Components } from "./components/types";
 import { Json } from "../../../../../lib/database.types";
-import { Accordion, Button } from "@mantine/core";
+import * as Accordion from '@radix-ui/react-accordion';
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 
 
 // Describe the initial data
 const initialData = {};
 
-// Save the data to your database
 const saveData = async (data: Data<DefaultComponents, any>, businessId: string, currentlyPublished: boolean) => {
-    const result = await sendEditorData(JSON.stringify(data), businessId, currentlyPublished)
+    await sendEditorData(JSON.stringify(data), businessId, currentlyPublished)
 };
 interface ServiceType {
     addons: Json[] | null;
@@ -49,61 +49,43 @@ interface PageProps {
 // Render Puck editor
 function Editor({ businessId, editorData, businessName, services, isPublished }: PageProps) {
     const { editorState, setEditorState } = useEditorContext()
-    const fontFamilies = useMemo(
-        () => editorState.fonts?.map(f => f.family) ?? [],
-        [editorState.fonts]
-    );
+
     useEffect(() => {
-        setEditorState!({
-            ...editorState,
-            businessName: businessName,
-            services: services
-        })
+        setEditorState!(prev => ({ ...prev, businessName, services }))
+    }, [businessName, services]);
+
+    useEffect(() => {
         if (editorData.length > 0) {
             const data = JSON.parse(editorData)
             data.content.forEach((component: ComponentDataMap<Components>) => {
                 if (component.type === 'Section') {
-                    if (!editorState.sections.has(component.props.id)) {
-                        let newState = { ...editorState }
-                        newState.sections.add(component.props.id)
-                        setEditorState!(newState)
-                    }
+                    setEditorState!(prev => {
+                        if (prev.sections.has(component.props.id)) return prev
+                        const newSections = new Set(prev.sections)
+                        newSections.add(component.props.id)
+                        return { ...prev, sections: newSections }
+                    })
                 }
             })
         }
-    }, [fontFamilies]);
-    console.log(typeof editorData);
+    }, []);
 
-    return <Puck config={config} data={editorData.length > 0 ? JSON.parse(editorData) : undefined} onAction={(action, state, prevState) => {
+    return <Puck config={config} data={editorData.length > 0 ? JSON.parse(editorData) : undefined} onAction={(action, state) => {
         if (action.type === 'insert') {
-            const stateContent = state.data.content
-            if (stateContent.length) {
-                stateContent.forEach((component, index) => {
-                    if (component.type === 'Section') {
-                        if (!editorState.sections.has(component.props.id)) {
-                            let newState = { ...editorState }
-                            newState.sections.add(component.props.id)
-                            setEditorState!(newState)
-                        }
-                    }
+            const inserted = state.data.content.filter(c => c.type === 'Section').map(c => c.props.id)
+            if (inserted.length) {
+                setEditorState!(prev => {
+                    const next = new Set(prev.sections)
+                    inserted.forEach((id: string) => next.add(id))
+                    return { ...prev, sections: next }
                 })
             }
         }
         if (action.type === 'remove') {
-            const stateContent = state.data.content
-            if (stateContent.length) {
-                let res: string[] = []
-                stateContent.forEach((component, index) => {
-                    if (component.type === 'Section') {
-                        if (!editorState.sections.has(component.props.id)) {
-                            res.push(component.props.id)
-                        }
-                    }
-                })
-                let newState = { ...editorState }
-                newState.sections = new Set(res)
-                setEditorState!(newState)
-            }
+            const remaining = new Set(
+                state.data.content.filter(c => c.type === 'Section').map(c => c.props.id)
+            )
+            setEditorState!(prev => ({ ...prev, sections: remaining }))
         }
     }} onPublish={async (data) => {
         await saveData(data, businessId, isPublished)
@@ -114,22 +96,22 @@ function Editor({ businessId, editorData, businessName, services, isPublished }:
             const [savingData, setSavingData] = useState<boolean>(false)
             return (
                 <>
+                    <TemplatePicker />
                     <Button
-                        loading={savingData}
-                        loaderProps={{
-                            type: 'dots'
-                        }}
-                        color="rgb(252, 97, 97)"
+                        disabled={savingData}
+                        style={{ backgroundColor: 'rgb(252, 97, 97)' }}
                         onClick={async () => {
                             setSavingData(true)
-                            await saveData(appState.data, businessId, isPublished)
-                            setSavingData(false)
+                            try {
+                                await saveData(appState.data, businessId, isPublished)
+                            } finally {
+                                setSavingData(false)
+                            }
                         }}
                     >
+                        {savingData && <Loader2 className="size-4 animate-spin mr-2" />}
                         {isPublished ? 'Save Changes' : 'Publish Site'}
                     </Button>
-
-                    {/* Render default header actions, such as the default Button */}
                     {/*{children}*/}
                 </>
             )
@@ -140,24 +122,31 @@ function Editor({ businessId, editorData, businessName, services, isPublished }:
             return (
                 <div>
                     {drawerItems[0].props.title === 'layout' ? <div>
-                        <Accordion multiple defaultValue={['layout']}>
+                        <Accordion.Root type="multiple" defaultValue={['layout']}>
                             {drawerItems.map((section: any, index: number) => {
                                 return (
                                     <Accordion.Item key={index} value={section.props.title}>
-                                        <Accordion.Control className="text-xs text-slate-400 font-semibold">{section.props.title.toUpperCase()}</Accordion.Control>
-                                        <Accordion.Panel><div className="grid gap-2 grid-cols-2" key={index}>{section.props.children.map((item: any, index: number) => {
-                                            return (
-                                                <div key={index}>
-                                                    {item}
-                                                </div>
-                                            )
-                                        })}</div></Accordion.Panel>
+                                        <Accordion.Header>
+                                            <Accordion.Trigger className="flex w-full items-center justify-between px-4 py-2 text-xs text-slate-400 font-semibold uppercase hover:bg-accent transition-colors [&[data-state=open]>svg]:rotate-180">
+                                                {section.props.title.toUpperCase()}
+                                                <ChevronDown className="size-3 transition-transform duration-200" />
+                                            </Accordion.Trigger>
+                                        </Accordion.Header>
+                                        <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                                            <div className="grid gap-2 grid-cols-2 p-2" key={index}>
+                                                {section.props.children.map((item: any, index: number) => {
+                                                    return (
+                                                        <div key={index}>
+                                                            {item}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </Accordion.Content>
                                     </Accordion.Item>
                                 )
                             })}
-
-
-                        </Accordion>
+                        </Accordion.Root>
                     </div> : children}
                 </div>
 
@@ -165,7 +154,10 @@ function Editor({ businessId, editorData, businessName, services, isPublished }:
         },
         drawerItem: ({ name }) => {
             return (
-                <div className="flex items-center bg-white border-[#f0f0f0] rounded-md flex-col py-5 border px-2 gap-2 text-center"><p className="text-center">{drawerItemStyleProps.get(name)?.icon}</p><Typography level={`${drawerItemStyleProps.get(name)?.fontLevel!}`}>{drawerItemStyleProps.get(name)?.label}</Typography></div>
+                <div className="flex items-center bg-white border-[#f0f0f0] rounded-md flex-col py-5 border px-2 gap-2 text-center">
+                    <p className="text-center">{drawerItemStyleProps.get(name)?.icon}</p>
+                    <span className="text-sm">{drawerItemStyleProps.get(name)?.label}</span>
+                </div>
             )
         },
         fields: ({ children, isLoading, itemSelector }) => {
@@ -174,7 +166,6 @@ function Editor({ businessId, editorData, businessName, services, isPublished }:
                 return s.selectedItem
             })
             if (isLoading) return <div>Loading...</div>;
-            // Convert children to array of React elements
             const fields = React.Children.toArray(children);
             return (
                 <Settings fields={fields} componentName={selectedItem?.type!} />

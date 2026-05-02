@@ -51,9 +51,7 @@ export const DepositPayment = ({ setError, setOpenErrorDialog, setRbbOpen, agree
             ; (async () => {
                 if (data.stripe_id.length) {
                     const stripePromise = loadStripe(
-                        process.env.NODE_ENV === 'development'
-                            ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-                            : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!,
+                        process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
                         { stripeAccount: data.stripe_id }
                     )
                     setStripePromise(stripePromise)

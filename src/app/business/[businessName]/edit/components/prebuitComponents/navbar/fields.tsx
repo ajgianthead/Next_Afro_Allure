@@ -1,5 +1,3 @@
-import { ButtonTypeMap, Checkbox as MUICheckbox, CircularProgress, DialogActions, DialogContent, Divider, Drawer, ExtendButton, IconButton, Input as MUIInput, Modal, ModalClose, ModalDialog, Button as MUIButton, ToggleButtonGroup, TypographySystem } from "@mui/joy";
-
 export const ButtonLinkDefaultProps = {
     fontSize: 1,
     fontWeight: 400,
@@ -53,24 +51,16 @@ export const ButtonLinkDefaultProps = {
 }
 
 export const navbarFields = {
-    content: {
-        type: 'slot'
-    },
-    logo: {
-        type: 'slot'
-    },
+    content: { type: 'slot' },
+    logo: { type: 'slot' },
     menu: {
         label: 'Navigation Menu',
         type: "array",
         arrayFields: {
-            item: {
-                type: 'slot'
-            }
+            item: { type: 'slot' }
         },
         getItemSummary(item: any, index: number) {
-            if (item.item) {
-                return item.item[0].props.text
-            }
+            if (item.item) return item.item[0].props.text
         },
         defaultItemProps: {
             item: [{
@@ -86,20 +76,19 @@ export const navbarFields = {
     },
     variants: {
         type: 'custom',
-        render: (({ value, onChange }: any) => {
-            return (
-                <div className="grid w-full grid-cols-2 gap-2 ">
-                    <MUIButton variant="outlined" sx={{
-                        width: '100%',
-                        paddingY: 8,
-                        border: value === 'default' ? 'black 1px solid' : 'none'
-                    }}></MUIButton>
-
-                    <MUIButton variant="outlined" sx={{
-                        width: '100%'
-                    }}></MUIButton>
-                </div>
-            )
-        })
+        render: ({ value, onChange }: any) => (
+            <div className="grid w-full grid-cols-2 gap-2">
+                <button
+                    type="button"
+                    onClick={() => onChange('default')}
+                    className={`py-2 rounded border text-xs transition-colors ${value === 'default' ? 'border-black' : 'border-input'}`}
+                />
+                <button
+                    type="button"
+                    onClick={() => onChange('alt')}
+                    className={`py-2 rounded border text-xs transition-colors ${value === 'alt' ? 'border-black' : 'border-input'}`}
+                />
+            </div>
+        )
     }
 }

@@ -1,287 +1,942 @@
+// AfroAllure — Main Landing Page
+// Editorial, warm, confident. Lead with operational pain, identity second.
 'use client'
-// import { IconBrandInstagram } from '@tabler/icons-react';
-
-import { Button, Card, CardContent, IconButton, Link, Tooltip, Typography } from "@mui/joy";
-import Image from "next/image";
+import { useEffect } from "react";
 import LOGO from '../../public/images/logo_transparent_background.png'
-import { BadgeDollarSign, Calendar, Globe, Lightbulb, Mail, Menu, MessageCircleMore, TrendingUp } from "lucide-react";
-import { CssVarsProvider, extendTheme } from '@mui/joy/styles';
-import HERO_BACKGROUND from '../../public/images/magicpattern-grid-pattern-1753632850729.png'
-import HERO_IMAGE from '../../public/images/localhost_3000_dashboard_appointments.png'
-import MONEY_IMG from '../../public/images/localhost_3000_dashboard_monetization.png'
-
-import LandingPageNavDrawer from "./landingPageNavDrawer";
-import { motion } from "motion/react"
-import { Caption } from "@tailus-ui/typography";
-import { fa } from "@faker-js/faker";
-import { ActionIcon, Anchor, Container, Group, Text } from "@mantine/core";
-import classes from './footer.module.css';
-import { IoLogoInstagram } from "react-icons/io5";
+import Image from "next/image";
 
 
 
-export const theme = extendTheme({
-    "colorSchemes": {
-        "light": {
-            "palette": {
-                "primary": {
-                    "50": "#FFEBEB",
-                    "100": "#FECFCF",
-                    "200": "#FEB4B4",
-                    "300": "#FD9898",
-                    "400": "#FD7D7D",
-                    "500": "#FC6161",
-                    "600": "#D54949",
-                    "700": "#AF3131",
-                    "800": "#881818",
-                    "900": "#610000"
-                }
-            }
-        },
-        "dark": {
-            "palette": {}
-        }
+const RED = '#FC6161';
+const DARK = '#0F0E0E';
+const WARM = '#FAF7F2';
+const GOLD = '#C9974A';
+const INK = '#1A1818';
+const MUTED = '#6F6863';
+const LINE = '#E8E2D6';
+
+const SERIF = "'Fraunces', 'Times New Roman', serif";
+const SANS = "'Inter', system-ui, sans-serif";
+const MONO = "ui-monospace, 'SF Mono', Menlo, monospace";
+
+// ─────────────────────────────────────────────────────────────
+// RESPONSIVE CSS — injected once, scoped to .aa-landing-root
+// ─────────────────────────────────────────────────────────────
+const RESPONSIVE_CSS = `
+    .aa-landing-root, .aa-landing-root * { box-sizing: border-box; }
+
+    @media (max-width: 1024px) {
+      .aa-landing-root .aa-section { padding-left: 36px !important; padding-right: 36px !important; }
+      .aa-landing-root .aa-nav { padding-left: 36px !important; padding-right: 36px !important; }
+      .aa-landing-root .aa-features-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .aa-landing-root .aa-features-cell:nth-child(2n) { border-right: none !important; }
+      .aa-landing-root .aa-features-cell:nth-child(odd) { border-right: 1px solid #E8E2D6 !important; }
+      .aa-landing-root .aa-features-cell:nth-child(-n+4) { border-bottom: 1px solid #E8E2D6 !important; }
+      .aa-landing-root .aa-marketplace-grid { grid-template-columns: 1fr !important; gap: 56px !important; }
+      .aa-landing-root .aa-problem-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+      .aa-landing-root .aa-dashboard { grid-template-columns: 1fr 1fr !important; }
+      .aa-landing-root .aa-dashboard-earnings { grid-column: span 2 !important; }
+      .aa-landing-root .aa-footer-grid { grid-template-columns: 1.4fr 1fr 1fr !important; }
     }
-})
 
+    @media (max-width: 720px) {
+      .aa-landing-root .aa-section { padding-left: 22px !important; padding-right: 22px !important; padding-top: 72px !important; padding-bottom: 72px !important; }
+      .aa-landing-root .aa-nav { padding: 16px 22px !important; flex-wrap: wrap !important; gap: 12px !important; }
+      .aa-landing-root .aa-nav-links { display: none !important; }
+      .aa-landing-root .aa-hero { padding: 48px 22px 64px !important; }
+      .aa-landing-root .aa-hero-stats { gap: 18px !important; flex-direction: column !important; align-items: flex-start !important; }
+      .aa-landing-root .aa-hero-cta { flex-direction: column !important; align-items: stretch !important; }
+      .aa-landing-root .aa-hero-cta button { width: 100% !important; }
+      .aa-landing-root .aa-features-grid { grid-template-columns: 1fr !important; }
+      .aa-landing-root .aa-features-cell { border-right: none !important; border-bottom: 1px solid #E8E2D6 !important; }
+      .aa-landing-root .aa-features-cell:last-child { border-bottom: none !important; }
+      .aa-landing-root .aa-marketplace-mock { grid-template-columns: 1fr !important; gap: 16px !important; padding: 16px !important; }
+      .aa-landing-root .aa-marketplace-coming { right: 8px !important; top: -14px !important; }
+      .aa-landing-root .aa-dashboard { grid-template-columns: 1fr !important; padding: 16px !important; gap: 14px !important; }
+      .aa-landing-root .aa-dashboard-earnings { grid-column: span 1 !important; }
+      .aa-landing-root .aa-cta-form { flex-direction: column !important; border-radius: 18px !important; padding: 8px !important; gap: 6px !important; }
+      .aa-landing-root .aa-cta-form input { padding: 10px 14px !important; }
+      .aa-landing-root .aa-cta-form button { width: 100% !important; }
+      .aa-landing-root .aa-footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+      .aa-landing-root .aa-footer-bottom { flex-direction: column !important; gap: 8px !important; }
+      .aa-landing-root .aa-features-header { flex-direction: column !important; align-items: flex-start !important; }
+    }
+  `;
 
-export default function LandingPage() {
-    return (
-        <CssVarsProvider theme={theme}>
-            <div className="bg-white text-gray-900 font-sans">
-                <nav className="w-full py-2 hidden md:flex justify-center bg-white sticky top-0 z-50">
-                    <div className="w-[1280px]  flex justify-between">
-                        <div>
-                            <Image src={LOGO} alt="logo-img" width={150} />
-                        </div>
-                        <div className="flex gap-20">
-                            <div className="flex gap-10">
-                                <Link color="neutral" href="/for-businesses" fontSize={12}>For Businesses</Link>
-
-                                <Link href="#features" color="neutral" fontSize={12}>Features</Link>
-                                <Link color="neutral" href='#about' fontSize={12}>About</Link>
-                            </div>
-                            <div className="flex items-center gap-5">
-                                <Button component='a' role="link" href="/for-businesses" variant="outlined">For Businesses</Button>
-
-                                <Button component='a' role="link" href="/">Find a Professional</Button>
-                            </div>
-                        </div>
-
-                    </div>
-                </nav>
-                <div className="md:hidden sticky top-0 z-50">
-                    <LandingPageNavDrawer forBusinesses={false} />
-                </div>
-                <header className="relative bg-white flex flex-col px-10 z-10 items-center text-center w-full gap-5 pt-24 mb-10">
-                    <Image className="absolute z-[-1] w-full h-[730px] blur-lg bg-cover top-0" src={HERO_BACKGROUND} alt="background" />
-                    <div className="flex flex-col items-center gap-5">
-                        <div className=" lg:px-48">
-                            <Typography level="h1">Empowering black-owned beauty businesses with advanced tools and features</Typography>
-
-                        </div>
-                        <div className=" lg:px-72">
-                            <Typography>AfroAllure connects Black stylists and professionals with the people who need them — offering powerful tools for booking, branding, and business success.</Typography>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button component='a' role="link" href="/register">Join the Beta Today</Button>
-                            <Button variant="outlined">Learn More </Button>
-                        </div>
-                        <div className="w-2/3 bg-white ">
-                            <AnimatedImage initial={{ opacity: 0, translateY: 50 }} animate={{ opacity: 1, translateY: 0, transition: { duration: 2 } }} src={HERO_IMAGE} alt="hero-image" className="border-black border-solid rounded-xl shadow-lg" />
-                        </div>
-                    </div>
-
-                </header>
-                <section id="about" className="flex w-full justify-center z-20 relative py-24  text-white bg-[#272635]">
-                    <div className="w-[1280px] gap-5 flex items-center text-center flex-col">
-                        <Caption className="text-white font-medium">About</Caption>
-                        <Typography level="h4"></Typography>
-                        <div className="lg:px-48">
-                            <Typography sx={{ color: 'white' }} level="h2">Built to put Black beauty professionals on the map</Typography>
-                        </div>
-                        <div className="flex justify-center px-20 items-center flex-col gap-2">
-                            <Typography sx={{ color: 'white' }}>AfroAllure was created for stylists, barbers, braiders, and beauty pros who are tired of being overlooked. We know how hard it is to grow a business when you're hidden by the algorithm, underbooked, or working in a city where your work isn’t seen or understood.</Typography>
-                            <Typography sx={{ color: 'white' }}>That’s why AfroAllure gives you the tools to run your business your way — from booking and payments to client management and visibility. And the best part? It’s made specifically with Black beauty in mind, so you're not just another listing — you're part of a movement.
-                            </Typography>
-                            <Typography sx={{ color: 'white', marginTop: 3 }} className="font-bold">You’ve got the talent. We’ve got the platform.
-
-                            </Typography>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-16 px-6 md:px-16" id="features">
-                    <h2 className="text-3xl font-bold mb-8 text-center">Everything You Need to Run Your Business</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        <Feature
-                            title="Smart Booking Calendar"
-                            desc="Automated, conflict-free scheduling that lets clients book only when you're available"
-                            icon={<Calendar color="purple" />}
-                        />
-                        <Feature
-                            title="Integrated Payments"
-                            desc="Get paid fast and securely. Accept deposits and/or full payments online"
-                            icon={<BadgeDollarSign color="green" />}
-                        />
-                        <Feature
-                            title="Business & Earnings Analytics"
-                            desc="Track your income, appointments, and top-performing services at a glance"
-                            icon={<TrendingUp color="lightgreen" />}
-                        />
-                        <Feature
-                            title="Free Public Booking Page"
-                            desc="Showcase your services, pricing, and availability with a beautiful, mobile-ready booking page"
-                            icon={<Globe color="lightblue" />}
-                        />
-                        <Feature
-                            title="Client Communication Tools"
-                            desc="Send appointment reminders, confirmations, and direct updates to your clients."
-                            icon={<MessageCircleMore color="brown" />}
-                        />
-                        <Feature
-                            title="All-in-One Simplicity"
-                            desc="No confusing tech. Just powerful tools made simple — and made for you."
-                            icon={<Lightbulb color="orange" />}
-                        />
-                    </div>
-                </section>
-                <section className="xl:pb-80 pb-24 xl:mt-48 mt-20  w-full flex justify-center overflow-x-hidden">
-                    <div className="w-[1280px] flex-col xl:flex-row flex justify-start items-center overflow-x-hidden">
-                        <div className="xl:w-2/5 w-full flex flex-col gap-5 px-10">
-                            <div>
-                                <Caption className="font-medium mb-2">Monetization</Caption>
-                                <Typography level="h2">Turn Every Appointment Into Opportunity</Typography>
-
-                            </div>
-                            <Typography>AfroAllure helps you <strong>earn more</strong> with built-in monetization tools — whether you're working solo or running a team.</Typography>
-                            <ul className="pl-5 flex flex-col gap-1 mt-2 list-disc">
-                                <li>Integrated payments with deposits, tips, and add-ons</li>
-                                <li>Loyalty program to reward repeat clients <span className=" italic">(Coming Soon)</span></li>
-                                <li>Product upsells at checkout <span className=" italic">(Coming Soon)</span></li>
-                                <li>Analytics to track your best-earning services</li>
-                            </ul>
-
-                        </div>
-                        <div className="xl:absolute relative xl:mt-0 mt-10 xl:mx-0 mx-10 xl:block hidden">
-                            <AnimatedImage initial={{ opacity: 0, translateX: 900 }}
-                                whileInView={{ opacity: 1, translateX: 600, transition: { duration: 2 } }} width={1200} height={300} src={MONEY_IMG} alt="montization-image" className="border-black border-solid rounded-xl shadow-lg " />
-                        </div>
-                        <div className="xl:absolute relative xl:mt-0 mt-10 xl:mx-0 mx-10 xl:hidden block">
-                            <AnimatedImage initial={{ opacity: 0, translateX: 200 }}
-                                whileInView={{ opacity: 1, translateX: 0, transition: { duration: 2 } }} width={1200} height={300} src={MONEY_IMG} alt="montization-image" className="border-black border-solid rounded-xl shadow-lg " />
-                        </div>
-                    </div>
-                </section>
-
-                <section className="flex w-full justify-center z-20 relative py-24 bg-[#272635]">
-                    <div className="w-[1280px] gap-5 flex items-center text-center flex-col">
-                        <div className="lg:px-48">
-                            <Typography sx={{ color: 'white' }} level="h2">Now in Open Beta — Finally, a Booking Platform That Gets It</Typography>
-                        </div>
-                        <div className="lg:px-48">
-                            <Typography sx={{ color: 'white' }}>We're publicly beta testing AfroAllure to build the best possible platform for Black stylists.
-                                During this phase, you get early access to core features and can help shape the platform. All for <strong>FREE </strong>
-                                This is your chance to grow with us — and stay ahead of the curve.</Typography>
-                        </div>
-                        <Button sx={{ color: 'white' }} variant="outlined" component='a' role="link" href="/register">Become a Beta Stylist</Button>
-                    </div>
-                </section>
-
-                <FooterCentered />
-            </div >
-        </CssVarsProvider>
-
-    );
+function injectCss(id: any, css: any) {
+    if (typeof document === 'undefined' || document.getElementById(id)) return;
+    const el = document.createElement('style');
+    el.id = id;
+    el.textContent = css;
+    document.head.appendChild(el);
 }
 
-const AnimatedImage = motion.create(Image)
 
-function Feature({ title, desc, icon }: { title: string, desc: string, icon: any }) {
+// ─────────────────────────────────────────────────────────────
+// ICONS — simple inline SVGs, stroke-based
+// ─────────────────────────────────────────────────────────────
+const Icon = ({ d, size = 22, stroke = 1.6, fill = 'none' }: any) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor"
+        strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
+        {typeof d === 'string' ? <path d={d} /> : d}
+    </svg>
+);
+
+const ICONS = {
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 9h18M8 3v4M16 3v4" /></>,
+    card: <><rect x="2" y="6" width="20" height="13" rx="2" /><path d="M2 11h20M6 16h4" /></>,
+    chart: <><path d="M3 3v18h18" /><path d="M7 14l3-3 3 3 5-6" /></>,
+    page: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
+    bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" /><path d="M10 21a2 2 0 0 0 4 0" /></>,
+    users: <><circle cx="9" cy="8" r="3.5" /><circle cx="17" cy="9.5" r="2.5" /><path d="M3 20c0-3 2.5-5 6-5s6 2 6 5M21 20c0-2.5-1.7-4-4.5-4" /></>,
+    arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+    search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
+    star: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z" fill="currentColor" />,
+    spark: <path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3z" fill="currentColor" />,
+    check: <path d="M5 12l5 5L20 7" />,
+};
+
+// ─────────────────────────────────────────────────────────────
+// SHARED — buttons, placeholder
+// ─────────────────────────────────────────────────────────────
+const Btn = ({ children, primary, light, dark, outline, onLight, full, sm, ...p }: any) => {
+    const base = {
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        fontFamily: SANS, fontWeight: 600, fontSize: sm ? 13 : 15,
+        padding: sm ? '10px 18px' : '14px 22px',
+        borderRadius: 999, border: '1.5px solid transparent',
+        cursor: 'pointer', textDecoration: 'none', whiteSpace: 'nowrap',
+        letterSpacing: '-.005em', transition: 'transform .15s',
+        width: full ? '100%' : 'auto',
+    } as any;
+    let style = { ...base };
+    if (primary) style = { ...style, background: RED, color: '#fff' };
+    else if (light) style = { ...style, background: WARM, color: INK };
+    else if (dark) style = { ...style, background: INK, color: WARM };
+    else if (outline && onLight) style = { ...style, background: 'transparent', color: INK, borderColor: INK };
+    else if (outline) style = { ...style, background: 'transparent', color: WARM, borderColor: 'rgba(250,247,242,.4)' };
+    else style = { ...style, background: INK, color: WARM };
+    return <button style={style} {...p}>{children}<Icon d={ICONS.arrow} size={16} stroke={2} /></button>;
+};
+
+// Tonal warm-color placeholder
+const Placeholder = ({ label, h = 200, tone = 'warm', radius = 16, style = {} }: any) => {
+    const tones = {
+        warm: { bg: '#E8DCC8', fg: '#7A5A3A' },
+        rose: { bg: '#F2C8C8', fg: '#8C3838' },
+        gold: { bg: '#E8CFA0', fg: '#5C401A' },
+        cocoa: { bg: '#3E2A1E', fg: '#D9B687' },
+        cream: { bg: '#F2E9D8', fg: '#8C7253' },
+        noir: { bg: '#1A1614', fg: '#C9974A' },
+    } as any;
+    const c = tones[tone] || tones.warm;
     return (
-        <Card variant="outlined" sx={{
-            boxShadow: 10,
+        <div style={{
+            height: h, width: '100%', background: c.bg, borderRadius: radius,
+            display: 'flex', alignItems: 'flex-end', padding: 14, ...style,
         }}>
-            <CardContent>
-                <h3 className="text-xl flex gap-2 font-semibold">{icon}{title}</h3>
-                <p>{desc}</p>
-            </CardContent>
+            <span style={{
+                fontFamily: MONO, fontSize: 10, letterSpacing: '.18em',
+                textTransform: 'uppercase', color: c.fg, fontWeight: 600,
+            }}>{label}</span>
+        </div>
+    );
+};
 
-        </Card>
+// ─────────────────────────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────────────────────────
+function Nav({ dark = false }) {
+    const fg = dark ? WARM : INK;
+    const muted = dark ? 'rgba(250,247,242,.7)' : MUTED;
+    return (
+        <nav className="aa-nav" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '22px 56px', borderBottom: `1px solid ${dark ? 'rgba(250,247,242,.08)' : LINE}`,
+            background: dark ? DARK : WARM,
+        }}>
+            <a style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                <div>
+                    <Image src={LOGO} alt="logo-img" width={150} />
+                </div>
+            </a>
+            <div className="aa-nav-links" style={{ display: 'flex', gap: 36, fontFamily: SANS, fontSize: 14, color: muted, fontWeight: 500 }}>
+                <a href="#features">Features</a>
+                <a>Marketplace</a>
+                <a href="/for-businesses">For Businesses</a>
+            </div>
+            <a style={{
+                fontFamily: SANS, fontWeight: 600, fontSize: 13,
+                background: RED, color: '#fff', padding: '11px 18px', borderRadius: 999,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+            }}>
+                Join Beta — Free
+            </a>
+        </nav>
     );
 }
 
+// ─────────────────────────────────────────────────────────────
+// HERO
+// ─────────────────────────────────────────────────────────────
+function Hero() {
+    return (
+        <section className="aa-hero aa-section" style={{ padding: '80px 56px 96px', background: WARM, position: 'relative' }}>
+            <div style={{ maxWidth: 1240, margin: '0 auto' }}>
+                {/* Eyebrow */}
+                <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 10,
+                    fontFamily: MONO, fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase',
+                    color: MUTED, marginBottom: 28,
+                }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED }} />
+                    Now in beta · invitation open
+                </div>
 
-const data = [
+                {/* Headline */}
+                <h1 style={{
+                    fontFamily: SERIF, fontWeight: 400,
+                    fontSize: 'clamp(54px, 7vw, 96px)', lineHeight: .98,
+                    letterSpacing: '-.035em', margin: 0, color: INK,
+                    maxWidth: 1100, textWrap: 'balance',
+                }}>
+                    The platform Black<br />
+                    beauty was <em style={{ fontStyle: 'italic', color: RED }}>waiting for.</em>
+                </h1>
 
-    {
-        title: 'Platform',
-        links: [
-            { label: 'Home', link: '/' },
-            { label: 'Find a Professional', link: '#' },
-        ],
-    },
-    {
-        title: 'For Businesses',
-        links: [
-            { label: 'Dashboard', link: '/dashboard' },
-            { label: 'Features', link: '/for-businesses#features' },
-            { label: 'Pricing', link: '/for-businesses#pricing' },
-        ],
-    },
+                {/* Subheadline */}
+                <p style={{
+                    fontFamily: SANS, fontSize: 19, lineHeight: 1.5, color: '#3A3532',
+                    margin: '32px 0 40px', maxWidth: 600, fontWeight: 400,
+                }}>
+                    Stop managing your business from your DMs. AfroAllure gives Black stylists,
+                    barbers, and beauty pros a complete booking and business system —
+                    built for how you actually work.
+                </p>
 
-];
+                {/* CTAs */}
+                <div className="aa-hero-cta" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 36 }}>
+                    <Btn primary>Claim Your Spot</Btn>
+                    <Btn outline onLight>See How It Works</Btn>
+                </div>
 
-export function FooterCentered() {
-    const groups = data.map((group) => {
-        const links = group.links.map((link, index) => (
-            <Text<'a'>
-                key={index}
-                className={classes.link}
-                component="a"
-                href={link.link}
-                onClick={(event) => event.preventDefault()}
-            >
-                {link.label}
-            </Text>
-        ));
+                {/* Stats row */}
+                <div className="aa-hero-stats" style={{
+                    display: 'flex', gap: 40, flexWrap: 'wrap', paddingTop: 28,
+                    borderTop: `1px solid ${LINE}`, maxWidth: 720, marginBottom: 80,
+                }}>
+                    {[
+                        ['100%', 'Free during beta'],
+                        ['$0', 'Setup fees'],
+                        ['1', 'Platform for all of it'],
+                    ].map(([n, l], i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                            <span style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 500, color: INK, letterSpacing: '-.02em' }}>{n}</span>
+                            <span style={{ fontFamily: SANS, fontSize: 13, color: MUTED, fontWeight: 500 }}>{l}</span>
+                        </div>
+                    ))}
+                </div>
 
-        return (
-            <div className={classes.wrapper} key={group.title}>
-                <Text className={classes.title}>{group.title}</Text>
-                {links}
+                {/* Dashboard mockup */}
+                <DashboardMock />
             </div>
-        );
-    });
+        </section>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// DASHBOARD MOCK — calendar + today's appointments + earnings
+// ─────────────────────────────────────────────────────────────
+function DashboardMock() {
+    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    const today = 3; // Thursday
+    const appts = [
+        { time: '10:00', name: 'Imani O.', service: 'Knotless braids — medium', tone: 'warm', amt: '$220' },
+        { time: '12:30', name: 'Brielle T.', service: 'Silk press + trim', tone: 'rose', amt: '$110' },
+        { time: '15:00', name: 'Ade K.', service: 'Color refresh', tone: 'gold', amt: '$165' },
+    ];
+    return (
+        <div style={{
+            background: '#fff', borderRadius: 24, padding: 24,
+            boxShadow: '0 30px 80px -30px rgba(15,14,14,.25), 0 1px 0 rgba(15,14,14,.04)',
+            border: `1px solid ${LINE}`,
+            display: 'grid', gridTemplateColumns: '1.1fr 1.4fr 1fr', gap: 20,
+        }} className="aa-dashboard">
+            {/* Side: profile + week */}
+            <div style={{
+                background: WARM, borderRadius: 16, padding: 22,
+                display: 'flex', flexDirection: 'column', gap: 22,
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{
+                        width: 42, height: 42, borderRadius: '50%', background: '#E8DCC8',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: '#7A5A3A'
+                    }}>N</div>
+                    <div>
+                        <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK }}>Nia's Studio</div>
+                        <div style={{ fontFamily: MONO, fontSize: 10, color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase' }}>Stylist · Atlanta</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+                        <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: INK }}>This week</span>
+                        <span style={{ fontFamily: MONO, fontSize: 10, color: MUTED }}>SEP</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
+                        {days.map((d, i) => (
+                            <div key={i} style={{
+                                textAlign: 'center', padding: '10px 0',
+                                borderRadius: 8,
+                                background: i === today ? INK : 'transparent',
+                                color: i === today ? WARM : INK,
+                                fontFamily: SANS, fontSize: 12, fontWeight: 600,
+                            }}>
+                                <div style={{ fontSize: 10, opacity: .6, marginBottom: 2 }}>{d}</div>
+                                <div>{15 + i}</div>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
+                        {[3, 5, 2, 6, 4, 1, 0].map((n, i) => (
+                            <span key={i} style={{
+                                flex: 1, height: 4, borderRadius: 2,
+                                background: n === 0 ? LINE : i === today ? RED : '#D9C9B0',
+                                opacity: i === today ? 1 : .55 + n * .05,
+                            }} />
+                        ))}
+                    </div>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 9, color: MUTED, letterSpacing: '.12em',
+                        textTransform: 'uppercase', marginTop: 6
+                    }}>Bookings density</div>
+                </div>
+
+                <div style={{ marginTop: 'auto', padding: 14, borderRadius: 12, background: '#fff', border: `1px solid ${LINE}` }}>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 9, color: MUTED, letterSpacing: '.14em',
+                        textTransform: 'uppercase', marginBottom: 6
+                    }}>Next opening</div>
+                    <div style={{ fontFamily: SERIF, fontSize: 18, color: INK, fontWeight: 500 }}>Tue · 11:30 am</div>
+                </div>
+            </div>
+
+            {/* Center: today's appointments */}
+            <div style={{ padding: '4px 4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, color: MUTED, letterSpacing: '.14em',
+                            textTransform: 'uppercase', marginBottom: 4
+                        }}>Thursday · today</div>
+                        <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500, color: INK, letterSpacing: '-.01em' }}>
+                            3 sittings booked
+                        </div>
+                    </div>
+                    <span style={{
+                        fontFamily: SANS, fontSize: 11, fontWeight: 600, color: RED,
+                        background: 'rgba(252,97,97,.1)', padding: '6px 10px', borderRadius: 999,
+                    }}>$495 expected</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {appts.map((a, i) => (
+                        <div key={i} style={{
+                            display: 'flex', alignItems: 'center', gap: 14,
+                            padding: 12, borderRadius: 12,
+                            background: i === 0 ? '#FBF7EE' : 'transparent',
+                            border: `1px solid ${i === 0 ? '#EDE3CD' : LINE}`,
+                        }}>
+                            <div style={{
+                                width: 4, alignSelf: 'stretch', borderRadius: 2,
+                                background: i === 0 ? RED : '#D9C9B0'
+                            }} />
+                            <div style={{ fontFamily: MONO, fontSize: 11, color: INK, fontWeight: 600, minWidth: 44 }}>{a.time}</div>
+                            <div style={{
+                                width: 36, height: 36, borderRadius: '50%',
+                                background: a.tone === 'warm' ? '#E8DCC8' : a.tone === 'rose' ? '#F2C8C8' : '#E8CFA0',
+                            }} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK }}>{a.name}</div>
+                                <div style={{
+                                    fontFamily: SANS, fontSize: 11, color: MUTED, whiteSpace: 'nowrap',
+                                    overflow: 'hidden', textOverflow: 'ellipsis'
+                                }}>{a.service}</div>
+                            </div>
+                            <div style={{ fontFamily: SERIF, fontSize: 16, color: INK, fontWeight: 500 }}>{a.amt}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Right: earnings */}
+            <div className="aa-dashboard-earnings" style={{
+                background: INK, color: WARM, borderRadius: 16, padding: 22,
+                display: 'flex', flexDirection: 'column', gap: 18,
+            }}>
+                <div>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 10, letterSpacing: '.14em',
+                        textTransform: 'uppercase', color: 'rgba(250,247,242,.55)', marginBottom: 8
+                    }}>This month</div>
+                    <div style={{ fontFamily: SERIF, fontSize: 38, fontWeight: 400, letterSpacing: '-.02em', color: WARM }}>
+                        $4,820
+                    </div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: '#7BD8A0', marginTop: 4, fontWeight: 500 }}>
+                        ↑ 18% vs August
+                    </div>
+                </div>
+
+                {/* Mini bar chart */}
+                <div style={{ display: 'flex', alignItems: 'end', gap: 6, height: 80 }}>
+                    {[35, 52, 41, 68, 48, 72, 58, 84, 62, 90, 76, 95].map((h, i) => (
+                        <div key={i} style={{
+                            flex: 1, height: `${h}%`, borderRadius: 3,
+                            background: i === 11 ? RED : `rgba(250,247,242,${.15 + h / 200})`,
+                        }} />
+                    ))}
+                </div>
+
+                <div style={{
+                    display: 'flex', justifyContent: 'space-between',
+                    paddingTop: 14, borderTop: '1px solid rgba(250,247,242,.1)'
+                }}>
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 9, letterSpacing: '.12em',
+                            textTransform: 'uppercase', color: 'rgba(250,247,242,.5)'
+                        }}>Deposits</div>
+                        <div style={{ fontFamily: SERIF, fontSize: 18, color: WARM, marginTop: 4 }}>$960</div>
+                    </div>
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 9, letterSpacing: '.12em',
+                            textTransform: 'uppercase', color: 'rgba(250,247,242,.5)'
+                        }}>Clients</div>
+                        <div style={{ fontFamily: SERIF, fontSize: 18, color: WARM, marginTop: 4 }}>34</div>
+                    </div>
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 9, letterSpacing: '.12em',
+                            textTransform: 'uppercase', color: 'rgba(250,247,242,.5)'
+                        }}>Repeat</div>
+                        <div style={{ fontFamily: SERIF, fontSize: 18, color: WARM, marginTop: 4 }}>71%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// PROBLEM SECTION (dark)
+// ─────────────────────────────────────────────────────────────
+function Problem() {
+    return (
+        <section className="aa-section" style={{ background: DARK, color: WARM, padding: '120px 56px' }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+                <div style={{
+                    fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                    color: 'rgba(250,247,242,.5)', marginBottom: 32,
+                }}>
+                    <span style={{ color: RED }}>02</span> &nbsp; The problem
+                </div>
+                <h2 style={{
+                    fontFamily: SERIF, fontWeight: 400,
+                    fontSize: 'clamp(40px, 5.2vw, 68px)', lineHeight: 1.02,
+                    letterSpacing: '-.025em', margin: 0, color: WARM, maxWidth: 1000,
+                    textWrap: 'balance',
+                }}>
+                    You've got the talent. The<br />
+                    algorithm wasn't <em style={{ fontStyle: 'italic', color: GOLD }}>built for you.</em>
+                </h2>
+
+                <div className="aa-problem-grid" style={{
+                    marginTop: 64, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80,
+                    fontFamily: SERIF, fontSize: 21, lineHeight: 1.55, color: 'rgba(250,247,242,.82)',
+                    fontWeight: 400,
+                }}>
+                    <p style={{ margin: 0, textWrap: 'pretty' }}>
+                        Search for "stylist near me" in Athens, Madison, or any college town
+                        and you'll see ten of the same salons — none of them yours. Black beauty
+                        pros are doing extraordinary work in cities that pretend they aren't there.
+                        The discovery layer has been broken for a long time, and platforms built
+                        for the "general market" have never seriously tried to fix it.
+                    </p>
+                    <p style={{ margin: 0, textWrap: 'pretty' }}>
+                        Meanwhile, you're running a business across DMs, Cash App requests,
+                        a screenshot of your hours, and a Notes app full of client preferences.
+                        Every booking is a thread. Every deposit is a favor. The tools weren't
+                        made for how you actually work — so you've been duct-taping a business
+                        together. That stops here.
+                    </p>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// FEATURES
+// ─────────────────────────────────────────────────────────────
+function Features() {
+    const feats = [
+        {
+            i: ICONS.calendar, t: 'Smart Booking System',
+            d: 'Set your hours, services, and buffers once. Clients book themselves — no more DM tag.'
+        },
+        {
+            i: ICONS.card, t: 'Payments & Deposits',
+            d: 'Take deposits at booking. Cards, Apple Pay, Cash App. Cancellation policy handled.'
+        },
+        {
+            i: ICONS.chart, t: 'Business Analytics',
+            d: 'See what services pay best, who your repeat clients are, and what to raise prices on.'
+        },
+        {
+            i: ICONS.page, t: 'Free Booking Page',
+            d: 'Your own page at yourname.afroallure.site. Designed to convert, not to look generic.'
+        },
+        {
+            i: ICONS.bell, t: 'Automated Reminders',
+            d: 'Email and SMS reminders go out for you. Less ghosting, fewer empty chairs.'
+        },
+        {
+            i: ICONS.users, t: 'Client Management',
+            d: 'Notes on hair history, allergies, preferences — right where you need them, every booking.'
+        },
+    ];
 
     return (
-        <footer className={classes.footer}>
-            <Container className={classes.inner}>
-                <div className={classes.logo}>
-                    <Image alt='image-footer' src={LOGO} width={150} />
-                    <Text size="xs" c="dimmed" className={classes.description}>
-                        Empowering black-owned beauty businesses
-                    </Text>
+        <section className="aa-section" id="features" style={{ background: WARM, padding: '120px 56px' }}>
+            <div style={{ maxWidth: 1240, margin: '0 auto' }}>
+                <div className="aa-features-header" style={{
+                    display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+                    gap: 48, marginBottom: 64, flexWrap: 'wrap',
+                }}>
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                            color: RED, marginBottom: 24, fontWeight: 600,
+                        }}>
+                            <span style={{ color: MUTED }}>03 &nbsp;</span> Features
+                        </div>
+                        <h2 style={{
+                            fontFamily: SERIF, fontWeight: 400,
+                            fontSize: 'clamp(40px, 5vw, 64px)', lineHeight: 1.02,
+                            letterSpacing: '-.025em', margin: 0, color: INK, textWrap: 'balance',
+                            maxWidth: 700,
+                        }}>
+                            Everything you need.<br />
+                            <em style={{ fontStyle: 'italic' }}>Nothing you don't.</em>
+                        </h2>
+                    </div>
+                    <p style={{
+                        fontFamily: SANS, fontSize: 15, lineHeight: 1.6, color: MUTED,
+                        maxWidth: 360, margin: 0, fontWeight: 400,
+                    }}>
+                        Six tools, one platform. Built around the workflow of independent stylists,
+                        not the workflow of a venture-backed booking app.
+                    </p>
                 </div>
-                <div className={classes.groups}>{groups}</div>
-            </Container>
-            <Container className={classes.afterFooter}>
-                <Text c="dimmed" size="sm">
-                    © 2026 AfroAllure. All rights reserved.
-                </Text>
 
-                <Group gap={0} className={classes.social} justify="flex-end" wrap="nowrap">
+                <div className="aa-features-grid" style={{
+                    display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0,
+                    border: `1px solid ${LINE}`, borderRadius: 24, overflow: 'hidden', background: '#fff',
+                }}>
+                    {feats.map((f, i) => (
+                        <div key={i} className="aa-features-cell" style={{
+                            padding: '36px 32px 40px',
+                            borderRight: i % 3 !== 2 ? `1px solid ${LINE}` : 'none',
+                            borderBottom: i < 3 ? `1px solid ${LINE}` : 'none',
+                            minHeight: 220,
+                        }}>
+                            <div style={{
+                                width: 44, height: 44, borderRadius: 12,
+                                background: WARM, color: INK,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                marginBottom: 22,
+                            }}>
+                                <Icon d={f.i} size={22} stroke={1.6} />
+                            </div>
+                            <div style={{
+                                fontFamily: SERIF, fontSize: 22, fontWeight: 500, color: INK,
+                                letterSpacing: '-.015em', marginBottom: 10,
+                            }}>{f.t}</div>
+                            <div style={{
+                                fontFamily: SANS, fontSize: 14, lineHeight: 1.55, color: MUTED, fontWeight: 400,
+                            }}>{f.d}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
 
+// ─────────────────────────────────────────────────────────────
+// MARKETPLACE — search-result list with filters
+// ─────────────────────────────────────────────────────────────
+function Marketplace() {
+    return (
+        <section className="aa-section" style={{ background: '#fff', padding: '120px 56px' }}>
+            <div className="aa-marketplace-grid" style={{
+                maxWidth: 1240, margin: '0 auto',
+                display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: 80, alignItems: 'center',
+            }}>
+                {/* Left: text */}
+                <div>
+                    <div style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                        background: 'rgba(201,151,74,.12)', color: GOLD,
+                        fontFamily: MONO, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+                        padding: '7px 12px', borderRadius: 999, fontWeight: 700, marginBottom: 28,
+                    }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD }} />
+                        In development
+                    </div>
 
-                    <ActionIcon component="a" href="https://instagram.com/afroallure_" target="_blank" size="lg" color="gray" variant="subtle" aria-label="Instagram">
-                        <IoLogoInstagram size={18} />
-                    </ActionIcon>
-                    <ActionIcon component="a" href="mailto:abijahnesbitt@afroallure.co" target="_blank" size="lg" color="gray" variant="subtle" aria-label="Instagram">
-                        <Mail size={18} />
-                    </ActionIcon>
-                </Group>
-            </Container>
+                    <h2 style={{
+                        fontFamily: SERIF, fontWeight: 400,
+                        fontSize: 'clamp(40px, 5vw, 60px)', lineHeight: 1, letterSpacing: '-.025em',
+                        margin: 0, color: INK, textWrap: 'balance',
+                    }}>
+                        Your spot in the<br />
+                        Black beauty <em style={{ fontStyle: 'italic' }}>directory.</em>
+                    </h2>
+
+                    <div style={{
+                        fontFamily: SANS, fontSize: 16, lineHeight: 1.6, color: '#3A3532',
+                        marginTop: 28, fontWeight: 400, maxWidth: 500,
+                    }}>
+                        <p style={{ margin: '0 0 18px' }}>
+                            We're building the first discovery marketplace designed around Black
+                            beauty professionals. Real specialty filters — locs, color, silk press,
+                            tape-ins. Real distance from real clients in real towns.
+                        </p>
+                        <p style={{ margin: 0 }}>
+                            Beta members become <strong style={{ color: INK }}>founding members</strong>.
+                            When the marketplace opens, your profile is already there — and listed first.
+                        </p>
+                    </div>
+
+                    <div style={{ marginTop: 36 }}>
+                        <Btn primary>Join Now — Get Listed First</Btn>
+                    </div>
+
+                    <div style={{
+                        marginTop: 24, fontFamily: MONO, fontSize: 11, letterSpacing: '.12em',
+                        textTransform: 'uppercase', color: MUTED,
+                    }}>
+                        184 founding members so far
+                    </div>
+                </div>
+
+                {/* Right: marketplace mock */}
+                <MarketplaceMock />
+            </div>
+        </section>
+    );
+}
+
+function MarketplaceMock() {
+    const stylists = [
+        { name: 'Imani Braiding Studio', loc: 'Athens, GA · 1.2 mi', tags: ['Knotless', 'Boho', 'Kids'], rating: 4.9, reviews: 142, tone: 'warm', founding: true },
+        { name: 'House of Coil', loc: 'Athens, GA · 2.4 mi', tags: ['Locs', 'Twists', 'Color'], rating: 4.8, reviews: 89, tone: 'cocoa', founding: true },
+        { name: 'Brielle · Silk Press', loc: 'Watkinsville · 4.1 mi', tags: ['Silk press', 'Trim'], rating: 5.0, reviews: 56, tone: 'rose' },
+    ];
+    return (
+        <div style={{ position: 'relative' }}>
+            {/* "Coming soon" tag */}
+            <div className="aa-marketplace-coming" style={{
+                position: 'absolute', top: -18, right: -18, zIndex: 2,
+                background: GOLD, color: '#fff',
+                fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
+                padding: '8px 14px', borderRadius: 999, fontWeight: 700,
+                transform: 'rotate(3deg)',
+                boxShadow: '0 8px 24px -8px rgba(201,151,74,.5)',
+            }}>
+                Launching soon
+            </div>
+
+            <div className="aa-marketplace-mock" style={{
+                background: WARM, borderRadius: 24, padding: 22,
+                border: `1px solid ${LINE}`,
+                boxShadow: '0 30px 80px -30px rgba(15,14,14,.18)',
+                display: 'grid', gridTemplateColumns: '180px 1fr', gap: 18,
+                // Slight blur to indicate "coming soon"
+                position: 'relative', overflow: 'hidden',
+            }}>
+                {/* Subtle "in development" overlay */}
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(180deg, transparent 60%, rgba(250,247,242,.6))',
+                    pointerEvents: 'none', zIndex: 1,
+                }} />
+
+                {/* Filters sidebar */}
+                <aside style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                    <div style={{
+                        background: '#fff', borderRadius: 12, padding: '10px 12px',
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        border: `1px solid ${LINE}`,
+                    }}>
+                        <span style={{ color: MUTED, display: 'flex' }}><Icon d={ICONS.search} size={14} stroke={2} /></span>
+                        <span style={{ fontFamily: SANS, fontSize: 12, color: INK, fontWeight: 500 }}>Athens, GA</span>
+                    </div>
+
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 9, color: MUTED, letterSpacing: '.16em',
+                            textTransform: 'uppercase', marginBottom: 10, fontWeight: 600
+                        }}>Specialty</div>
+                        {[
+                            { l: 'Knotless braids', n: 24, on: true },
+                            { l: 'Locs & twists', n: 18, on: false },
+                            { l: 'Silk press', n: 12, on: true },
+                            { l: 'Color', n: 9, on: false },
+                            { l: 'Barbering', n: 31, on: false },
+                        ].map((f, i) => (
+                            <label key={i} style={{
+                                display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0',
+                                fontFamily: SANS, fontSize: 12, color: INK, cursor: 'pointer',
+                            }}>
+                                <span style={{
+                                    width: 14, height: 14, borderRadius: 4,
+                                    border: `1.5px solid ${f.on ? RED : '#C9C2B5'}`,
+                                    background: f.on ? RED : 'transparent',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                    {f.on && <span style={{ color: '#fff', fontSize: 9, lineHeight: 1 }}>✓</span>}
+                                </span>
+                                <span style={{ flex: 1 }}>{f.l}</span>
+                                <span style={{ color: MUTED, fontSize: 10 }}>{f.n}</span>
+                            </label>
+                        ))}
+                    </div>
+
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 9, color: MUTED, letterSpacing: '.16em',
+                            textTransform: 'uppercase', marginBottom: 10, fontWeight: 600
+                        }}>Distance</div>
+                        <div style={{
+                            height: 4, background: LINE, borderRadius: 2, position: 'relative',
+                        }}>
+                            <div style={{
+                                position: 'absolute', left: 0, width: '40%', height: '100%',
+                                background: INK, borderRadius: 2,
+                            }} />
+                            <div style={{
+                                position: 'absolute', left: '40%', top: -4, width: 12, height: 12,
+                                borderRadius: '50%', background: RED, transform: 'translateX(-50%)',
+                            }} />
+                        </div>
+                        <div style={{ fontFamily: SANS, fontSize: 11, color: MUTED, marginTop: 6 }}>Within 5 mi</div>
+                    </div>
+                </aside>
+
+                {/* Results */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <div style={{ fontFamily: SERIF, fontSize: 16, color: INK, fontWeight: 500 }}>
+                            <em style={{ fontStyle: 'italic' }}>3</em> stylists in Athens, GA
+                        </div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, color: MUTED, letterSpacing: '.12em',
+                            textTransform: 'uppercase'
+                        }}>Sort · Top rated</div>
+                    </div>
+
+                    {stylists.map((s, i) => (
+                        <div key={i} style={{
+                            background: '#fff', borderRadius: 12, padding: 14,
+                            display: 'flex', gap: 14, alignItems: 'center',
+                            border: `1px solid ${i === 0 ? '#EDE3CD' : LINE}`,
+                            position: 'relative',
+                        }}>
+                            {s.founding && (
+                                <span style={{
+                                    position: 'absolute', top: 10, right: 12,
+                                    fontFamily: MONO, fontSize: 8, letterSpacing: '.16em',
+                                    textTransform: 'uppercase', fontWeight: 700, color: GOLD,
+                                }}>★ Founding</span>
+                            )}
+                            <Placeholder label="" h={64} tone={s.tone} radius={10} style={{ width: 64, flexShrink: 0 }} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontFamily: SERIF, fontSize: 16, color: INK, fontWeight: 500, marginBottom: 2 }}>
+                                    {s.name}
+                                </div>
+                                <div style={{ fontFamily: SANS, fontSize: 11, color: MUTED, marginBottom: 6 }}>{s.loc}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: GOLD }}>
+                                        <Icon d={ICONS.star} size={11} fill="currentColor" />
+                                        <span style={{ fontFamily: SANS, fontSize: 11, color: INK, fontWeight: 600 }}>{s.rating}</span>
+                                        <span style={{ fontFamily: SANS, fontSize: 10, color: MUTED }}>({s.reviews})</span>
+                                    </span>
+                                    {s.tags.map((t, j) => (
+                                        <span key={j} style={{
+                                            fontFamily: SANS, fontSize: 10, color: INK, fontWeight: 500,
+                                            padding: '3px 8px', borderRadius: 999,
+                                            background: '#F4EFE3',
+                                        }}>{t}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// BETA CTA SECTION
+// ─────────────────────────────────────────────────────────────
+function BetaCTA() {
+    return (
+        <section className="aa-section" style={{ background: RED, color: '#fff', padding: '120px 56px' }}>
+            <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+                <div style={{
+                    fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                    color: 'rgba(255,255,255,.7)', marginBottom: 28,
+                }}>
+                    <span style={{ color: '#fff' }}>05</span> &nbsp; The offer
+                </div>
+
+                <h2 style={{
+                    fontFamily: SERIF, fontWeight: 400,
+                    fontSize: 'clamp(42px, 5.5vw, 72px)', lineHeight: 1, letterSpacing: '-.025em',
+                    margin: 0, color: '#fff', textWrap: 'balance',
+                }}>
+                    The beta is free.<br />
+                    The founding spots <em style={{ fontStyle: 'italic' }}>won't be.</em>
+                </h2>
+
+                <p style={{
+                    fontFamily: SANS, fontSize: 17, lineHeight: 1.55,
+                    color: 'rgba(255,255,255,.88)',
+                    margin: '24px auto 40px', maxWidth: 540, fontWeight: 400,
+                }}>
+                    Full Growth-plan access during beta. Founding member listing in the
+                    marketplace at launch. Direct line to the team building this. No card required.
+                </p>
+
+                {/* Email + button */}
+                <form className="aa-cta-form" style={{
+                    display: 'flex', gap: 8, maxWidth: 480, margin: '0 auto',
+                    background: '#fff', borderRadius: 999, padding: 6,
+                    boxShadow: '0 20px 60px -20px rgba(15,14,14,.4)',
+                }} onSubmit={(e) => e.preventDefault()}>
+                    <input
+                        type="email"
+                        placeholder="you@studio.com"
+                        style={{
+                            flex: 1, border: 'none', outline: 'none', background: 'transparent',
+                            padding: '0 18px', fontFamily: SANS, fontSize: 15, color: INK,
+                        }}
+                    />
+                    <button style={{
+                        border: 'none', background: INK, color: '#fff',
+                        fontFamily: SANS, fontWeight: 600, fontSize: 14,
+                        padding: '12px 22px', borderRadius: 999, cursor: 'pointer',
+                    }}>Claim Your Spot</button>
+                </form>
+
+                <a style={{
+                    display: 'inline-block', marginTop: 22,
+                    fontFamily: SANS, fontSize: 14, color: '#fff',
+                    borderBottom: '1px solid rgba(255,255,255,.5)', paddingBottom: 2,
+                }}>Or create your account now →</a>
+            </div>
+        </section>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// FOOTER
+// ─────────────────────────────────────────────────────────────
+function Footer() {
+    return (
+        <footer className="aa-section" style={{ background: DARK, color: WARM, padding: '64px 56px 48px' }}>
+            <div className="aa-footer-grid" style={{
+                maxWidth: 1240, margin: '0 auto',
+                display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: 48,
+                paddingBottom: 48, borderBottom: '1px solid rgba(250,247,242,.1)',
+            }}>
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 16 }}>
+                        <div>
+                            <Image style={{ filter: 'brightness(0) invert(1)' }}
+                                src={LOGO} alt="logo-img" width={150} />
+                        </div>
+                    </div>
+                    <p style={{
+                        fontFamily: SERIF, fontSize: 18, color: 'rgba(250,247,242,.7)',
+                        margin: 0, fontStyle: 'italic', maxWidth: 320, lineHeight: 1.4
+                    }}>
+                        The platform Black beauty was waiting for.
+                    </p>
+                </div>
+                <div>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 10, letterSpacing: '.16em',
+                        textTransform: 'uppercase', color: 'rgba(250,247,242,.5)', marginBottom: 18
+                    }}>Platform</div>
+                    <ul style={{
+                        listStyle: 'none', padding: 0, margin: 0,
+                        display: 'flex', flexDirection: 'column', gap: 12, fontFamily: SANS, fontSize: 14
+                    }}>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Features</a></li>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Marketplace</a></li>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>For Businesses</a></li>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Register</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 10, letterSpacing: '.16em',
+                        textTransform: 'uppercase', color: 'rgba(250,247,242,.5)', marginBottom: 18
+                    }}>Reach us</div>
+                    <ul style={{
+                        listStyle: 'none', padding: 0, margin: 0,
+                        display: 'flex', flexDirection: 'column', gap: 12, fontFamily: SANS, fontSize: 14
+                    }}>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Instagram</a></li>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>hello@afroallure.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div className="aa-footer-bottom" style={{
+                maxWidth: 1240, margin: '0 auto', paddingTop: 24,
+                display: 'flex', justifyContent: 'space-between',
+                fontFamily: MONO, fontSize: 11, color: 'rgba(250,247,242,.4)',
+                letterSpacing: '.08em',
+            }}>
+                <span>© 2026 AfroAllure, Inc.</span>
+                <span>Made with care · Atlanta &amp; everywhere</span>
+            </div>
         </footer>
     );
 }
 
+// ─────────────────────────────────────────────────────────────
+// PAGE EXPORT
+// ─────────────────────────────────────────────────────────────
+function AfroAllureLanding() {
+    useEffect(() => { injectCss('aa-landing-css', RESPONSIVE_CSS); }, []);
+    return (
+        <div className="aa-landing-root" style={{ background: WARM, color: INK, fontFamily: SANS, width: '100%' }}>
+            <Nav />
+            <Hero />
+            <Problem />
+            <Features />
+            <Marketplace />
+            <BetaCTA />
+            <Footer />
+        </div>
+    );
+}
+
+export default AfroAllureLanding;

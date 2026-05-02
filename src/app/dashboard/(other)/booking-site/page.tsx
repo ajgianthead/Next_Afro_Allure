@@ -5,6 +5,7 @@ import { fetchBusinessUser, fetchUser } from '../actions';
 import ManageBookingSite from './manageBookingSite';
 import { getEditorData } from '@/app/utils/editor_actions';
 import { PostgrestError } from '@supabase/supabase-js';
+import { redirect } from 'next/navigation';
 
 export const metadata = {
     title: 'Choose Builder Type | AfroAllure',
@@ -23,12 +24,12 @@ const Page = async ({ searchParams }: { searchParams?: { 'switch-editor': string
         );
     }
     else if (businessUser.published_site) {
-        if (!(editorData instanceof PostgrestError)) {
-            return (
-                <ManageBookingSite editorData={editorData} urlName={businessUser.url_name} />
-            )
+        if (editorData instanceof PostgrestError) {
+            redirect('/dashboard')
         }
-        // Return error or something
+        return (
+            <ManageBookingSite editorData={editorData} urlName={businessUser.url_name} />
+        )
     } else {
         return (
             <div>

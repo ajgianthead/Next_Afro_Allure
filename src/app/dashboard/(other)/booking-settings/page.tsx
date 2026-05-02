@@ -3,7 +3,7 @@ import { fetchBusinessUser, fetchUser } from "../actions";
 import BookingSettingsClient from "./bookingSettingsClient";
 import { Database } from "../../../../../lib/database.types";
 import { PostgrestSingleResponse } from "@supabase/supabase-js";
-import { stripe } from "@lib/utils";
+import { stripe } from "@/lib/stripe/stripeClient";
 
 export const dynamic = 'force-dynamic';
 

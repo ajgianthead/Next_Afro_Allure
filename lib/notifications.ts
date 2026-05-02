@@ -8,7 +8,7 @@ import AppointmentConfirmed from "../emails/appointment-confirmed";
 import AppointmentRescheduled from "../emails/appointment-rescheduled";
 import AppointmentCancelled from "../emails/appointment-cancelled";
 
-const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = await createClient<Database>();
 
 export type AppointmentNotiData = {

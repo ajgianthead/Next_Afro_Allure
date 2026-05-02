@@ -7,6 +7,7 @@ import { Availability, AvailabilityType } from "@/features/availability/server/m
 import { Appointment, AppointmentType } from "@/features/manualBooking/server/models/Appointment";
 import { Service, ServiceType } from "@/lib/service/Service";
 import { BookClient } from "@/features/automatedBooking/components";
+import { assignAddons } from "@/app/dashboard/(other)/appointments/actions";
 
 export const dynamic = 'force-dynamic'
 
@@ -41,8 +42,9 @@ export default async function Page({ params }: {
     const services = (await Service.fetch(supabase, business.id)) as Service[]
     let serviceClient: ServiceType[] = []
     services.forEach((service) => {
-        serviceClient.push(service.toClient())
+        serviceClient.push({ ...service.toClient(), photo_url: service.photo_url.length ? `${service.photo_url}?t=${Date.now()}` : "" })
     })
+    serviceClient = await assignAddons(supabase, serviceClient as any) as ServiceType[]
 
     const policy = (await BusinessPolicy.fetch(supabase, business.id)).toClient()
 

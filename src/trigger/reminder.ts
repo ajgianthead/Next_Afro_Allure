@@ -7,11 +7,10 @@ import ReminderClient from "../../emails/reminder-client";
 import PaymentLinkEmail from "../../emails/payment-link";
 
 configure({
-  // this is the default and if the `TRIGGER_SECRET_KEY` environment variable is set, can omit calling configure
-  secretKey: process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_TRIGGER_API_KEY : process.env.NEXT_PUBLIC_TRIGGER_PROD_KEY,
+  secretKey: process.env.NEXT_PUBLIC_TRIGGER_API_KEY,
 });
 
-const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export type AppointmentReminderData = {
   serviceName: string;

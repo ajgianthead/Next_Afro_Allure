@@ -1,6 +1,5 @@
 'use client'
 
-import { IconButton, Button as MUIButton, ToggleButtonGroup, } from "@mui/joy";
 import { FieldLabel, registerOverlayPortal } from "@puckeditor/core";
 import React, { useEffect, useRef } from 'react';
 import type { Fields } from "@puckeditor/core";

@@ -4,15 +4,13 @@ import { createClient } from "@/app/utils/supabase/client";
 import { UserAuthContext } from "@/app/utils/types/user";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { Database } from "../../../../lib/database.types";
-
 interface UserContextValue {
     user: UserAuthContext;
     setUser: Dispatch<SetStateAction<UserAuthContext>>;
 }
 
 const UserContext = createContext<UserContextValue | null>(null);
-const supabase = await createClient<Database>()
+const supabase = createClient()
 
 export function UserWrapper({ children }: { children: React.ReactNode }) {
     let [user, setUser] = useState<UserAuthContext>({

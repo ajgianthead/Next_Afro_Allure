@@ -1,107 +1,178 @@
 'use client'
 
-import { Button, Card, Tooltip } from '@mui/joy';
-import { Caption, Title } from '@tailus-ui/typography';
-import { Info, LayoutPanelTop, PencilRuler } from 'lucide-react';
+import { Check, LayoutPanelTop, Loader2, PencilRuler } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { createEditorState, createSectionEditorState } from './actions';
 import { PostgrestError } from '@supabase/supabase-js';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface PageProps {
-    businessId: string,
+    businessId: string
     urlName: string
-    businessName: string,
+    businessName: string
     switchType: string
 }
 
+const DRAG_DROP_FEATURES = [
+    '20+ pre-built components — Navbar, Hero, Card, Footer',
+    'Full layout control with columns, rows, and grids',
+    'Complete typography, color, and spacing customization',
+]
+
+const SECTIONS_FEATURES = [
+    'Rich text editing with formatting tools',
+    'Image upload with banner-format display',
+    'Drag to reorder sections instantly',
+]
+
 const SelectEditorType = ({ businessId, urlName, businessName, switchType }: PageProps) => {
-    const [creatingSections, setCreatingSections] = useState<boolean>(false)
-    const [creatingEditor, setCreatingEditor] = useState<boolean>(false)
+    const [creatingSections, setCreatingSections] = useState(false)
+    const [creatingEditor, setCreatingEditor] = useState(false)
     const router = useRouter()
+    const anyLoading = creatingSections || creatingEditor
+
     return (
-        <div>
-            <div className='w-full flex flex-col items-center justify-center'>
-                <div className='flex w-full justify-start flex-col mb-10 gap-1 pl-6'>
-                    <Title>Choose Web Editor Type</Title>
-                    <Caption>Below, choose which editor you want to build your webpage with. The section editor allows you to add sections/parts to your webpage in the form of images or text. While the drag & drop editor allows for more customization, and comes along with prebuilt components and templates.</Caption>
-                </div>
-                <div className='w-full flex md:flex-row flex-col justify-center gap-5 h-[300px] items-center'>
-                    <Button loading={creatingEditor} disabled={creatingSections} onClick={async () => {
-                        setCreatingEditor(true)
-                        await createEditorState(businessId, switchType).then((res) => {
-                            if (res instanceof PostgrestError) {
-                                setCreatingEditor(false)
-                                return
-                            }
-                            else if (res) {
-                                router.push(`/${urlName}/edit`)
-                            }
-                        })
-                    }} className='flex flex-col' variant='outlined'>
-                        <div className='w-full flex justify-end'>
-                            <Tooltip title={
-                                <div className='text-center'>
-                                    <p>The <strong>Drag & Drop Editor</strong> is recommended for those who are</p>
-                                    <p>looking to build their booking site either from scratch or a provided template</p>
-                                </div>
-                            } size='sm' placement='top' variant="solid">
-                                <Info size={15} />
-                            </Tooltip>
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            width: 300,
-                            gap: 10,
-                            textAlign: 'center',
-                            paddingTop: 20,
-                            paddingBottom: 20
-                        }}><PencilRuler />Build with Drag and Drop Editor</div></Button>
-                    <Button loading={creatingSections} disabled={creatingEditor} onClick={async () => {
-                        setCreatingSections(true)
-                        await createSectionEditorState(businessName, businessId, switchType).then((res) => {
-                            console.log(res);
+        <div className="max-w-3xl mx-auto px-6 py-16">
 
-                            if (res instanceof PostgrestError) {
-
-                                setCreatingSections(false)
-                                return
-                            }
-                            else {
-                                router.push(`/dashboard/booking-site/upload-sections`)
-
-                            }
-                        })
-
-                    }} className='flex flex-col' variant='outlined'>
-                        <div className='w-full flex justify-end'>
-                            <Tooltip title={
-                                <div className='text-center'>
-                                    <p>The <strong>Section Editor</strong> is recommended for those who are</p>
-                                    <p>familiar with tools such as <strong className='underline'>Acuity</strong>, that have a similar editor</p>
-                                </div>
-                            } size='sm' placement='top' variant="solid">
-                                <Info size={15} />
-                            </Tooltip>
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            width: 300,
-                            gap: 10,
-                            textAlign: 'center',
-                            paddingTop: 20,
-                            paddingBottom: 20
-                        }}><LayoutPanelTop />Build with Section Editor</div></Button>
-
-                </div>
+            {/* Header */}
+            <div className="text-center mb-12">
+                <h1 className="text-2xl font-semibold tracking-tight mb-2">
+                    How would you like to build your booking page?
+                </h1>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    Choose the editor that fits your style. You can always switch later from your booking site settings.
+                </p>
             </div>
-        </div>
 
-    );
+            {/* Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                {/* Drag & Drop */}
+                <button
+                    disabled={anyLoading}
+                    onClick={async () => {
+                        setCreatingEditor(true)
+                        const res = await createEditorState(businessId, switchType)
+                        if (res instanceof PostgrestError) {
+                            setCreatingEditor(false)
+                            return
+                        }
+                        if (res) router.push(`/${urlName}/edit`)
+                    }}
+                    className={cn(
+                        'relative flex flex-col text-left rounded-xl border bg-card p-7 gap-5 transition-all duration-200',
+                        'hover:border-primary hover:shadow-md',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        creatingEditor && 'opacity-60 pointer-events-none',
+                        anyLoading && !creatingEditor && 'opacity-40 pointer-events-none'
+                    )}
+                >
+                    <div className="absolute top-5 right-5">
+                        <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border border-primary/20 text-xs font-medium px-2 py-0.5">
+                            Recommended
+                        </Badge>
+                    </div>
+
+                    <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <PencilRuler className="size-5 text-primary" />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-base font-semibold">Drag &amp; Drop Editor</h2>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Best for a custom, professional look
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                            Build a fully custom page using a palette of pre-built components. Drag, drop, and style everything to match your brand.
+                        </p>
+                    </div>
+
+                    <ul className="flex flex-col gap-2.5 flex-1">
+                        {DRAG_DROP_FEATURES.map((f) => (
+                            <li key={f} className="flex items-start gap-2 text-sm">
+                                <Check className="size-4 text-primary mt-0.5 shrink-0" />
+                                <span>{f}</span>
+                            </li>
+                        ))}
+                    </ul>
+
+                    <div className="mt-auto pt-1">
+                        <div className="w-full inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-primary-foreground bg-primary transition-colors hover:bg-primary/90">
+                            {creatingEditor && <Loader2 className="size-4 animate-spin" />}
+                            {creatingEditor ? 'Setting up…' : 'Get started'}
+                        </div>
+                    </div>
+                </button>
+
+                {/* Section Editor */}
+                <button
+                    disabled={anyLoading}
+                    onClick={async () => {
+                        setCreatingSections(true)
+                        const res = await createSectionEditorState(businessName, businessId, switchType)
+                        if (res instanceof PostgrestError) {
+                            setCreatingSections(false)
+                            return
+                        }
+                        router.push(`/dashboard/booking-site/upload-sections`)
+                    }}
+                    className={cn(
+                        'relative flex flex-col text-left rounded-xl border bg-card p-7 gap-5 transition-all duration-200',
+                        'hover:border-foreground/30 hover:shadow-md',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        creatingSections && 'opacity-60 pointer-events-none',
+                        anyLoading && !creatingSections && 'opacity-40 pointer-events-none'
+                    )}
+                >
+                    <div className="absolute top-5 right-5">
+                        <Badge variant="secondary" className="text-xs font-medium px-2 py-0.5">
+                            Simpler option
+                        </Badge>
+                    </div>
+
+                    <div className="w-11 h-11 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <LayoutPanelTop className="size-5 text-muted-foreground" />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-base font-semibold">Section Editor</h2>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Best for getting up and running fast
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                            Stack text and image blocks in a clean, structured layout. Familiar if you&apos;ve used tools like Acuity or similar booking platforms.
+                        </p>
+                    </div>
+
+                    <ul className="flex flex-col gap-2.5 flex-1">
+                        {SECTIONS_FEATURES.map((f) => (
+                            <li key={f} className="flex items-start gap-2 text-sm">
+                                <Check className="size-4 text-muted-foreground mt-0.5 shrink-0" />
+                                <span>{f}</span>
+                            </li>
+                        ))}
+                    </ul>
+
+                    <div className="mt-auto pt-1">
+                        <div className="w-full inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium bg-background transition-colors hover:bg-accent">
+                            {creatingSections && <Loader2 className="size-4 animate-spin" />}
+                            {creatingSections ? 'Setting up…' : 'Get started'}
+                        </div>
+                    </div>
+                </button>
+
+            </div>
+
+            {/* Footer nudge */}
+            <p className="text-center text-xs text-muted-foreground mt-8">
+                Not sure where to start?{' '}
+                <strong className="font-medium text-foreground">Section Editor</strong> is the quickest way to get your page live — you can always upgrade to Drag &amp; Drop later.
+            </p>
+
+        </div>
+    )
 }
 
 export default SelectEditorType;

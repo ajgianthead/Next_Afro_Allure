@@ -1,11 +1,117 @@
 import { PaintBucket, Type } from "lucide-react"
 import { ComponentData, DefaultComponentProps, Fields, useGetPuck } from "@puckeditor/core"
-import { ColorInput, Input, NumberInput, SegmentedControl, Select, Switch } from "@mantine/core"
 import { FontBoldIcon, FontFamilyIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
-import { IconButton, ToggleButtonGroup } from "@mui/joy"
 import { RegularText } from "../types"
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext"
-import { GoogleFont, loadGoogleFont, loadNextFontChunk } from "useGoogleFonts"
+import { GoogleFont, loadGoogleFont } from "useGoogleFonts"
+import { NumInput, StrSelect } from "../fieldPrimitives"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
+import { useEffect } from "react"
+
+const ColorField = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => (
+    <div className="grid grid-cols-4 items-center gap-1.5">
+        <p className="text-xs font-medium text-slate-400">{label}</p>
+        <div className="col-span-3 flex items-center gap-2 border border-input rounded-md px-2 py-1 bg-background cursor-pointer">
+            <div className="relative shrink-0">
+                <div className="size-4 rounded-sm border shadow-sm" style={{ backgroundColor: value }} />
+                <input
+                    type="color"
+                    value={value ?? '#000000'}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+            </div>
+            <span className="text-xs font-mono text-muted-foreground truncate">{value}</span>
+        </div>
+    </div>
+)
+
+const StyleToggle = ({ value, onChange }: { value: string[], onChange: (v: string[]) => void }) => {
+    const current: string[] = Array.isArray(value) ? value : []
+    const toggle = (v: string) => {
+        const next = current.includes(v) ? current.filter(s => s !== v) : [...current, v]
+        onChange(next)
+    }
+    return (
+        <div className="flex gap-1 w-full">
+            {([
+                { v: 'bold', icon: <FontBoldIcon /> },
+                { v: 'italic', icon: <FontItalicIcon /> },
+                { v: 'underline', icon: <UnderlineIcon /> },
+            ] as const).map(({ v, icon }) => (
+                <button
+                    key={v}
+                    type="button"
+                    onClick={() => toggle(v)}
+                    className={cn(
+                        'flex-1 flex items-center justify-center py-1 rounded border text-sm transition-colors',
+                        current.includes(v)
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background border-input hover:bg-accent'
+                    )}
+                >
+                    {icon}
+                </button>
+            ))}
+        </div>
+    )
+}
+
+const AlignField = ({ value, onChange }: { value: string, onChange: (v: string) => void }) => (
+    <div className="grid grid-cols-4 items-center gap-1.5">
+        <p className="text-xs font-medium text-slate-400">Align</p>
+        <div className="col-span-3 flex gap-1">
+            {([
+                { v: 'start', icon: <TextAlignLeftIcon /> },
+                { v: 'center', icon: <TextAlignCenterIcon /> },
+                { v: 'end', icon: <TextAlignRightIcon /> },
+                { v: 'justify', icon: <TextAlignJustifyIcon /> },
+            ] as const).map(({ v, icon }) => (
+                <button
+                    key={v}
+                    type="button"
+                    onClick={() => onChange(v)}
+                    className={cn(
+                        'flex-1 flex items-center justify-center py-1 rounded border text-xs transition-colors',
+                        value === v
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background border-input hover:bg-accent'
+                    )}
+                >
+                    {icon}
+                </button>
+            ))}
+        </div>
+    </div>
+)
+
+const SectionsField = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => {
+    const { editorState } = useEditorContext()
+    const getPuck = useGetPuck()
+    const { appState } = getPuck()
+    const sectionData = appState.data.content
+        .filter(c => c.type === 'Section' && editorState.sections.has(c.props.id))
+        .map(c => ({ value: c.props.sectionName, label: c.props.sectionName }))
+    return (
+        <div className="grid grid-cols-4 items-center gap-1.5">
+            <p className="text-xs font-medium text-slate-400">{label}</p>
+            <div className="col-span-3">
+                <Select value={value} onValueChange={(v) => onChange(v)}>
+                    <SelectTrigger className="h-6 text-xs">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {sectionData.map(s => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+    )
+}
 
 export let customizableTextFields: Fields<RegularText, {}> = {
     text: {
@@ -14,78 +120,41 @@ export let customizableTextFields: Fields<RegularText, {}> = {
         contentEditable: true,
         labelIcon: <Type size={16} className="mr-1" />,
         render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-2">
-                <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                <Input
-                    className=" col-span-3"
-                    size="xs"
-                    radius="md"
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                />
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p className="text-xs font-medium text-slate-400">{field.label}</p>
+                <Input className="col-span-3 h-6 text-xs" value={value} onChange={(e) => onChange(e.target.value)} />
             </div>
-
-
         )
     },
     fontFamily: {
         type: 'custom',
         label: 'Font Family',
         labelIcon: <Type size={16} className="mr-1" />,
-        render: ({ onChange, value, field, id }) => {
+        render: ({ onChange, value, id }) => {
             const { editorState }: { editorState: EditorConxtextProps } = useEditorContext()
-            loadGoogleFont(value!)
+            useEffect(() => {
+                if (value) loadGoogleFont(value)
+            }, [value])
             return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{"Font"}</p>
-                    <Select
-                        leftSection={<FontFamilyIcon />}
-                        className="col-span-3"
-                        size="xs"
-                        radius={'md'}
-                        searchable
-                        value={value}
-                        onChange={(value) => {
-                            if (!value) return;
-                            loadGoogleFont(value);
-                            onChange(value);
-                        }}
-                        renderOption={({ option }) => {
-                            let hoveredEl: HTMLElement | null = null;
-
-                            return <div
-                                style={{
-                                    width: '100%',
-                                    height: '100%',
-                                }}
-                                onMouseEnter={async (e) => {
-                                    const el = e.currentTarget;
-
-                                    // apply a temporary “loading” style
-                                    el.style.opacity = "0.5";  // slightly faded while font loads
-                                    el.style.transition = "opacity 0.15s ease";
-
-                                    await loadGoogleFont(option.value); // wait for font to start loading
-                                    el.style.fontFamily = option.value;
-
-                                    // remove the temporary style
-                                    el.style.opacity = "1";
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.opacity = "1";
-                                    e.currentTarget.style.fontFamily = ""; // reset font if you want
-                                }}
-                            >
-                                {option.label}
-                            </div>
-                        }}
-
-                        data={editorState.fonts?.map((font: GoogleFont, index: number) => {
-                            return font.family
-                        })}
-                    />
+                <div className="grid grid-cols-4 items-center gap-1.5">
+                    <p className="text-xs font-medium text-slate-400">Font</p>
+                    <div className="col-span-3">
+                        <input
+                            list={`font-list-${id}`}
+                            className="w-full h-6 border border-input rounded-md px-2 text-xs bg-background"
+                            value={value ?? ''}
+                            onChange={(e) => {
+                                onChange(e.target.value)
+                                loadGoogleFont(e.target.value)
+                            }}
+                        />
+                        <datalist id={`font-list-${id}`}>
+                            {editorState.fonts?.map((font: GoogleFont) => (
+                                <option key={font.family} value={font.family} />
+                            ))}
+                        </datalist>
+                    </div>
                 </div>
-
             )
         }
     },
@@ -93,515 +162,156 @@ export let customizableTextFields: Fields<RegularText, {}> = {
         type: 'custom',
         label: 'Font Weight',
         labelIcon: <Type size={16} className="mr-1" />,
-        render: ({ onChange, value }) => (
-            <div className="grid grid-cols-4 items-center gap-2">
-                <NumberInput step={50} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            </div>
-
-        )
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={100} icon={<FontBoldIcon />} />,
     },
     fontSize: {
         type: 'custom',
         label: 'Font Size (rem)',
-        labelIcon: <Type size={16} className="mr-1" />,
-        render: ({ onChange, value }) => (
-            <NumberInput leftSection={<FontSizeIcon />} step={0.1} className="w-full" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-        )
+        labelIcon: <FontSizeIcon />,
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<FontSizeIcon />} />,
     },
     style: {
         type: 'custom',
-        render: ({ value, onChange }) => (
-            <div >
-                <ToggleButtonGroup size="lg" sx={{
-                    width: '100%'
-                }} value={value} onChange={(e: any, newValue: any) => onChange(newValue!)}>
-                    <IconButton className="w-1/3" size={'sm'} value={'bold'}>
-                        <FontBoldIcon />
-                    </IconButton>
-                    <IconButton className="w-1/3" size="sm" value={'italic'}>
-                        <FontItalicIcon />
-                    </IconButton><IconButton className="w-1/3" size="sm" value={'underline'}>
-                        <UnderlineIcon />
-                    </IconButton>
-                </ToggleButtonGroup>
-            </div>
-
-        )
+        render: ({ value, onChange }) => <StyleToggle value={value ?? []} onChange={onChange} />
     },
     lineHeight: {
         type: 'custom',
         label: 'Line Height',
-        labelIcon: <Type size={16} />,
-        render: ({ onChange, value, field }) => (
-            <NumberInput leftSection={<LineHeightIcon />} size="xs" radius={'md'} step={0.1} className="w-full" value={value} onChange={(e) => onChange(Number(e))} />
-        )
+        labelIcon: <LineHeightIcon />,
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LineHeightIcon />} />,
     },
     letterSpacing: {
         type: 'custom',
         label: 'Letter Spacing',
-        labelIcon: <Type size={16} />,
-        render: ({ onChange, value, field }) => (
-            <NumberInput leftSection={<LetterSpacingIcon />} step={0.1} radius={'md'} className="w-full" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-        )
+        labelIcon: <LetterSpacingIcon />,
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LetterSpacingIcon />} />,
     },
     align: {
         type: 'custom',
         label: 'Align',
-        labelIcon: <Type size={16} className="mr-1" />,
-        render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-2">
-                <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e: any) => { onChange(e) }} className=" col-span-3"
-                    data={[{
-                        label: <div className="flex justify-center"><TextAlignLeftIcon /></div>,
-                        value: 'start'
-                    }, {
-                        label: <div className="flex justify-center"><TextAlignCenterIcon /></div>,
-                        value: 'center'
-                    }, {
-                        label: <div className="flex justify-center"><TextAlignRightIcon /></div>,
-                        value: 'end'
-                    },
-                    {
-                        label: <div className="flex justify-center"><TextAlignJustifyIcon /></div>,
-                        value: 'justify'
-                    },
-                    ]} />
-            </div>
-        )
+        render: ({ onChange, value }) => <AlignField value={value} onChange={onChange} />
     },
-
     color: {
         type: 'custom',
         label: 'Color',
         labelIcon: <PaintBucket size={16} className="mr-1" />,
-        render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-2">
-                <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                <ColorInput
-                    className="col-span-3"
-                    placeholder="Choose a color"
-                    value={value}
-                    onChangeEnd={(e) => onChange(e)}
-                    format="hexa"
-                />
-            </div>
-        )
+        render: ({ onChange, value, field }) => <ColorField value={value} onChange={onChange} label={field.label!} />
     },
     isLink: {
         type: 'custom',
         label: 'Hyperlink',
-        render: (({ value, onChange, field }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <Switch checked={value} onChange={(e) => { onChange(e.currentTarget.checked) }} />
-                </div>
-            )
-        })
+        render: ({ value, onChange, field }) => (
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p className="text-xs font-medium text-slate-400">{field.label}</p>
+                <label className="col-span-3 flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={!!value}
+                        onChange={(e) => onChange(e.target.checked)}
+                        className="h-3.5 w-3.5"
+                    />
+                    <span className="text-xs text-muted-foreground">Enable link</span>
+                </label>
+            </div>
+        )
     },
     linkType: {
         type: 'custom',
         label: 'Link Type',
-        render: (({ value, onChange, field }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <Select value={value} onChange={(value) => onChange(value!)} data={[
-                        {
-                            label: 'External',
-                            value: 'external'
-                        },
-                        {
-                            label: 'Internal',
-                            value: 'internal'
-                        }
-                    ]} />
+        visible: false,
+        render: ({ value, onChange, field }) => (
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p className="text-xs font-medium text-slate-400">{field.label}</p>
+                <div className="col-span-3">
+                    <Select value={value} onValueChange={(v) => onChange(v)}>
+                        <SelectTrigger className="h-6 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="external">External</SelectItem>
+                            <SelectItem value="internal">Internal</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
-            )
-        })
+            </div>
+        )
     },
     url: {
         type: 'custom',
         label: 'URL',
+        visible: false,
         render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-2">
-                <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                <Input
-                    className=" col-span-3"
-                    size="xs"
-                    placeholder="Ex. https://google.com"
-                    radius="md"
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                />
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p className="text-xs font-medium text-slate-400">{field.label}</p>
+                <Input className="col-span-3 h-6 text-xs" placeholder="https://example.com" value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
             </div>
         )
     },
     sections: {
         type: 'custom',
-        label: "Section",
-        render: (({ value, onChange, field }) => {
-            const { editorState } = useEditorContext()
-            const getPuck = useGetPuck()
-            const sections = Array.from(editorState.sections)
-            const { appState } = getPuck()
-            const appStateContent = appState.data.content
-            let sectionData: { value: string, label: string }[] = []
-            appStateContent.forEach((component) => {
-                if (component.type === 'Section') {
-                    if (editorState.sections.has(component.props.id)) {
-                        sectionData.push({ value: component.props.id, label: component.props.sectionName })
-                    }
-                }
-            })
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <Select value={value} onChange={(value) => onChange(value!)} data={sectionData} />
-                </div>
-            )
-        })
-    }
-
+        label: 'Section',
+        visible: false,
+        render: ({ value, onChange, field }) => <SectionsField value={value} onChange={onChange} label={field.label!} />
+    },
+    textTransform: {
+        type: 'custom',
+        label: 'Transform',
+        render: ({ value, onChange, field }) => (
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                <StrSelect value={value ?? 'none'} onChange={onChange} options={['none', 'uppercase', 'lowercase', 'capitalize']} className="col-span-2 col-start-3" />
+            </div>
+        )
+    },
+    maxWidth: {
+        type: 'custom',
+        label: 'Max Width (rem)',
+        render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} step={0.5} />
+    },
 }
 
 export const resolveCustomizableTextFields: (data: Omit<ComponentData<RegularText, string, Record<string, DefaultComponentProps>>, "type">) => Fields<RegularText, {}> | Promise<Fields<RegularText, {}>> = (data) => {
-    let customizableTextFields: Fields<RegularText, {}> = {
-        text: {
-            type: 'custom',
-            label: 'Text',
-            contentEditable: true,
-            labelIcon: <Type size={16} className="mr-1" />,
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <Input
-                        className=" col-span-3"
-                        size="xs"
-                        radius="md"
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                    />
-                </div>
-            )
-        },
-        fontFamily: {
-            type: 'custom',
-            label: 'Font Family',
-            labelIcon: <Type size={16} className="mr-1" />,
-            render: ({ onChange, value, field, id }) => {
-                const { editorState }: { editorState: EditorConxtextProps } = useEditorContext()
-                loadGoogleFont(value!)
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{"Font"}</p>
-                        <Select
-                            leftSection={<FontFamilyIcon />}
-                            className="col-span-3"
-                            size="xs"
-                            radius={'md'}
-                            searchable
-                            value={value}
-                            onChange={(value) => {
-                                if (!value) return;
-                                loadGoogleFont(value);
-                                onChange(value);
-                            }}
-                            renderOption={({ option }) => {
-                                let hoveredEl: HTMLElement | null = null;
+    let fields: Fields<RegularText, {}> = { ...customizableTextFields }
 
-                                return <div
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                    }}
-                                    onMouseEnter={async (e) => {
-                                        const el = e.currentTarget;
-
-                                        // apply a temporary “loading” style
-                                        el.style.opacity = "0.5";  // slightly faded while font loads
-                                        el.style.transition = "opacity 0.15s ease";
-
-                                        await loadGoogleFont(option.value); // wait for font to start loading
-                                        el.style.fontFamily = option.value;
-
-                                        // remove the temporary style
-                                        el.style.opacity = "1";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.opacity = "1";
-                                        e.currentTarget.style.fontFamily = ""; // reset font if you want
-                                    }}
-                                >
-                                    {option.label}
-                                </div>
-                            }}
-
-                            data={editorState.fonts?.map((font: GoogleFont, index: number) => {
-                                return font.family
-                            })}
-                        />
-                    </div>
-
-                )
-            }
-        },
-        fontWeight: {
-            type: 'custom',
-            label: 'Font Weight',
-            labelIcon: <Type size={16} className="mr-1" />,
-            render: ({ onChange, value }) => (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <NumberInput step={50} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-                </div>
-
-            )
-        },
-        fontSize: {
-            type: 'custom',
-            label: 'Font Size (rem)',
-            labelIcon: <Type size={16} className="mr-1" />,
-            render: ({ onChange, value }) => (
-                <NumberInput leftSection={<FontSizeIcon />} step={0.1} className="w-full" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        },
-        style: {
-            type: 'custom',
-            render: ({ value, onChange }) => (
-                <div >
-                    <ToggleButtonGroup size="lg" sx={{
-                        width: '100%'
-                    }} value={value} onChange={(e: any, newValue: any) => onChange(newValue!)}>
-                        <IconButton className="w-1/3" size={'sm'} value={'bold'}>
-                            <FontBoldIcon />
-                        </IconButton>
-                        <IconButton className="w-1/3" size="sm" value={'italic'}>
-                            <FontItalicIcon />
-                        </IconButton><IconButton className="w-1/3" size="sm" value={'underline'}>
-                            <UnderlineIcon />
-                        </IconButton>
-                    </ToggleButtonGroup>
-                </div>
-
-            )
-        },
-        lineHeight: {
-            type: 'custom',
-            label: 'Line Height',
-            labelIcon: <Type size={16} />,
-            render: ({ onChange, value, field }) => (
-                <NumberInput leftSection={<LineHeightIcon />} size="xs" radius={'md'} step={0.1} className="w-full" value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        },
-        letterSpacing: {
-            type: 'custom',
-            label: 'Letter Spacing',
-            labelIcon: <Type size={16} />,
-            render: ({ onChange, value, field }) => (
-                <NumberInput leftSection={<LetterSpacingIcon />} step={0.1} radius={'md'} className="w-full" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        },
-        align: {
-            type: 'custom',
-            label: 'Align',
-            labelIcon: <Type size={16} className="mr-1" />,
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e: any) => { onChange(e) }} className=" col-span-3"
-                        data={[{
-                            label: <div className="flex justify-center"><TextAlignLeftIcon /></div>,
-                            value: 'start'
-                        }, {
-                            label: <div className="flex justify-center"><TextAlignCenterIcon /></div>,
-                            value: 'center'
-                        }, {
-                            label: <div className="flex justify-center"><TextAlignRightIcon /></div>,
-                            value: 'end'
-                        },
-                        {
-                            label: <div className="flex justify-center"><TextAlignJustifyIcon /></div>,
-                            value: 'justify'
-                        },
-                        ]} />
-                </div>
-            )
-        },
-
-        color: {
-            type: 'custom',
-            label: 'Color',
-            labelIcon: <PaintBucket size={16} className="mr-1" />,
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <ColorInput
-                        className="col-span-3"
-                        placeholder="Choose a color"
-                        value={value}
-                        onChangeEnd={(e) => onChange(e)}
-                        format="hexa"
-                    />
-                </div>
-            )
-        },
-        isLink: {
-            type: 'custom',
-            label: 'Hyperlink',
-            render: (({ value, onChange, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <Switch size="xs" checked={value} onChange={(e) => { onChange(e.currentTarget.checked) }} />
-                    </div>
-                )
-            })
-        },
-        linkType: {
-            type: 'custom',
-            label: 'Link Type',
-            visible: false,
-
-            render: (({ value, onChange, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <Select className="col-span-3  col-start-2" size="xs"
-                            radius={'md'} value={value} onChange={(value) => onChange(value!)} data={[
-                                {
-                                    label: 'External',
-                                    value: 'external'
-                                },
-                                {
-                                    label: 'Internal',
-                                    value: 'internal'
-                                }
-                            ]} />
-                    </div>
-                )
-            })
-        },
-        url: {
-            type: 'custom',
-            label: 'URL',
-            visible: false,
-
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <Input
-                        className=" col-span-3"
-                        size="xs"
-                        placeholder="Ex. https://google.com"
-                        radius="md"
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                    />
-                </div>
-            )
-        },
-        sections: {
-            type: 'custom',
-            label: "Section",
-            visible: false,
-            render: (({ value, onChange, field }) => {
-                const { editorState } = useEditorContext()
-                const getPuck = useGetPuck()
-                const { appState } = getPuck()
-                const appStateContent = appState.data.content
-                let sectionData: { value: string, label: string }[] = []
-                appStateContent.forEach((component) => {
-                    if (component.type === 'Section') {
-                        if (editorState.sections.has(component.props.id)) {
-                            sectionData.push({ value: component.props.sectionName, label: component.props.sectionName })
-                        }
-                    }
-                })
-                console.log(sectionData);
-
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <Select value={value} onChange={(value) => onChange(value!)} data={sectionData} />
-                    </div>
-                )
-            })
-        }
-
-    }
     if (data.props.isLink) {
-        customizableTextFields.linkType = {
+        fields.linkType = {
             type: 'custom',
             label: 'Link Type',
             visible: true,
-
-            render: (({ value, onChange, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <Select className="col-span-3  col-start-2" size="xs" value={value} onChange={(value) => onChange(value!)} data={[
-                            {
-                                label: 'External',
-                                value: 'external'
-                            },
-                            {
-                                label: 'Internal',
-                                value: 'internal'
-                            }
-                        ]} />
+            render: ({ value, onChange, field }) => (
+                <div className="grid grid-cols-4 items-center gap-1.5">
+                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
+                    <div className="col-span-3">
+                        <Select value={value} onValueChange={(v) => onChange(v)}>
+                            <SelectTrigger className="h-6 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="external">External</SelectItem>
+                                <SelectItem value="internal">Internal</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                )
-            })
+                </div>
+            )
         }
         if (data.props.linkType === 'external') {
-            customizableTextFields.url = {
+            fields.url = {
                 type: 'custom',
                 label: 'URL',
                 visible: true,
-
                 render: ({ onChange, value, field }) => (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <Input
-                            className=" col-span-3"
-                            size="xs"
-                            placeholder="Ex. https://google.com"
-                            radius="md"
-                            value={value}
-                            onChange={(e) => onChange(e.target.value)}
-                        />
+                    <div className="grid grid-cols-4 items-center gap-1.5">
+                        <p className="text-xs font-medium text-slate-400">{field.label}</p>
+                        <Input className="col-span-3 h-6 text-xs" placeholder="https://example.com" value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
                     </div>
                 )
             }
         } else {
-            customizableTextFields.sections = {
+            fields.sections = {
                 type: 'custom',
-                label: "Section",
+                label: 'Section',
                 visible: true,
-                render: (({ value, onChange, field }) => {
-                    const { editorState } = useEditorContext()
-                    const getPuck = useGetPuck()
-                    const { appState } = getPuck()
-                    const appStateContent = appState.data.content
-                    let sectionData: { value: string, label: string }[] = []
-                    appStateContent.forEach((component) => {
-                        if (component.type === 'Section') {
-                            if (editorState.sections.has(component.props.id)) {
-                                sectionData.push({ value: component.props.sectionName, label: component.props.sectionName })
-                            }
-                        }
-                    })
-                    return (
-                        <div className="grid grid-cols-4 items-center gap-2">
-                            <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                            <Select className="col-span-3  col-start-2" size="xs" value={value} onChange={(value) => onChange(value!)} data={sectionData} />
-                        </div>
-                    )
-                })
+                render: ({ value, onChange, field }) => <SectionsField value={value} onChange={onChange} label={field.label!} />
             }
         }
     }
 
-    return customizableTextFields
+    return fields
 }

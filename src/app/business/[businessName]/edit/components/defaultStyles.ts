@@ -45,7 +45,15 @@ export const containerDefaultProps: Container = {
     responsive: true,
     flexDirection: 'flex-row',
     mainAxisLayout: 'start',
-    altAxisLayout: 'start'
+    altAxisLayout: 'start',
+    aspectRatio: '',
+    overflow: 'visible',
+    minHeight: 0,
+    maxWidth: 0,
+    gridTemplateColumns: '',
+    responsiveDirection: 'none',
+    hideBelow: 'none',
+    hideAbove: 'none',
 }
 // Column
 export const columnProps: ColumnLayout = {
@@ -69,7 +77,8 @@ export const gridProps: GridLayout = {
     gapX: 10,
     gapY: 10,
     justifyItems: 'stretch',
-    alignItems: 'stretch'
+    alignItems: 'stretch',
+    firstCellRowSpan: 1,
 }
 // Section
 export const sectionProps: Section = {
@@ -80,6 +89,9 @@ export const sectionProps: Section = {
 export const imageProps: ImageComponent = {
     url: 'https://jappbqntqogmnoluifzx.supabase.co/storage/v1/object/public/editor-media-pool/placeholder_photo.jpg',
     width: 100,
+    objectFit: 'fill',
+    height: 0,
+    aspectRatio: '',
     borderColor: '#000000',
     borderRadius: 8,
     borderWidth: 1,
@@ -105,6 +117,8 @@ export const videoProps: VideoComponent = {
     url: 'https://www.youtube.com/watch?v=gTgrHPax0hk&t=1025s&ab_channel=Dream',
     width: 450,
     height: 250,
+    objectFit: 'fill',
+    aspectRatio: '',
     borderColor: '#000000',
     borderRadius: 8,
     borderWidth: 1,
@@ -143,7 +157,9 @@ export const customTextProps: RegularText = {
     isLink: false,
     linkType: 'external',
     sections: "",
-    url: ""
+    url: "",
+    textTransform: 'none',
+    maxWidth: 0,
 }
 // Button
 export const buttonProps: ButtonContainer = {
@@ -161,6 +177,7 @@ export const buttonProps: ButtonContainer = {
     style: [],
     fontFamily: 'Inter',
     align: 'start',
+    textTransform: 'none',
     gapX: 0,
     variant: 'solid',
     gapY: 0,
@@ -200,6 +217,14 @@ export const buttonProps: ButtonContainer = {
     flexDirection: 'flex-row',
     mainAxisLayout: 'start',
     altAxisLayout: 'start',
+    aspectRatio: '',
+    overflow: 'visible',
+    minHeight: 0,
+    maxWidth: 0,
+    gridTemplateColumns: '',
+    responsiveDirection: 'none',
+    hideBelow: 'none',
+    hideAbove: 'none',
 }
 
 

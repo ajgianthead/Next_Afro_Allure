@@ -47,6 +47,7 @@ import { NavMain } from '@/app/nav-main';
 import { NavDocuments } from '@/app/nav-documents';
 import { NavSecondary } from '@/app/nav-secondary';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { Toaster } from '@/components/ui/sonner';
 
 interface BusinessNoti extends Business {
     notifications: BusinessNotification[],
@@ -221,7 +222,7 @@ export default function LayoutComp({
 
 
             </SidebarProvider>
-
+            <Toaster />
 
         </div>
     );

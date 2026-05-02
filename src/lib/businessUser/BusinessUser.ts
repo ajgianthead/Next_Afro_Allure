@@ -1,6 +1,6 @@
 import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../lib/database.types";
-import { stripe } from '../utils'
+import { stripe } from '../stripe/stripeClient'
 import { Time } from "@internationalized/date";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { createStripeCustomer } from "@lib/stripe/createStripeCustomer";

@@ -1,8 +1,7 @@
 'use server'
 
-import { stripe } from "@/lib/utils"
+import { stripe } from "@/lib/stripe/stripeClient"
 import { createClient } from "@/app/utils/supabase/server"
-import { Database } from "../../../lib/database.types"
 import { buildTaxAddress, calculateTax } from "@/lib/stripe/calculateTax"
 
 export const createCheckoutAction = async (params: {
@@ -23,7 +22,7 @@ export const createCheckoutAction = async (params: {
         return { clientSecret: intent.client_secret, id: intent.id }
     }
 
-    const supabase = await createClient<Database>()
+    const supabase = await createClient()
     const { data } = await supabase
         .from('business_users')
         .select('payment_method_config_id, account_settings')
@@ -60,9 +59,7 @@ export const createCheckoutAction = async (params: {
 }
 
 export const createAccountLinkAction = async (accountId: string) => {
-    const base = process.env.NODE_ENV === 'development'
-        ? process.env.NEXT_PUBLIC_BASE_URL
-        : process.env.NEXT_PUBLIC_PROD_BASE_URL
+    const base = process.env.NEXT_PUBLIC_BASE_URL
 
     const accountLink = await stripe.accountLinks.create({
         account: accountId,
@@ -72,7 +69,7 @@ export const createAccountLinkAction = async (accountId: string) => {
         collection_options: { fields: 'eventually_due' },
     })
 
-    const supabase = await createClient<Database>()
+    const supabase = await createClient()
     await supabase
         .from('business_users')
         .update({ current_onboarding_link: accountLink.url })

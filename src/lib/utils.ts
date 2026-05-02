@@ -1,7 +1,6 @@
 import { twMerge } from "tailwind-merge";
 import React from "react";
 import { Settings } from "luxon";
-import Stripe from "stripe";
 import { clsx, type ClassValue } from "clsx"
 
 export function cloneElement(element: React.ReactElement, classNames: string) {
@@ -21,13 +20,6 @@ export function cloneElement(element: React.ReactElement, classNames: string) {
 
 
 Settings.defaultZone = 'system'
-
-
-// export const stripe = new Stripe(process.env.NODE_ENV === 'development' ? process.env.STRIPE_SECRET_KEY! : process.env.STRIPE_SECRET_LIVE_KEY!, {
-//     apiVersion: '2025-06-30.basil',
-// });
-
-export const stripe = new Stripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY! : process.env.NEXT_PUBLIC_STRIPE_SECRET_LIVE_KEY!, { apiVersion: '2025-08-27.basil' })
 
 
 export function cn(...inputs: ClassValue[]) {

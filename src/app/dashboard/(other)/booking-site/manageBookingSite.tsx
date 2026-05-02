@@ -1,16 +1,22 @@
 'use client'
 
-import { ColorInput, ColorPicker, Input, Select, TextInput } from '@mantine/core';
-import { Button, DialogActions, DialogContent, IconButton, Modal, ModalClose, ModalDialog, Tab, TabList, TabPanel, Tabs, Tooltip } from '@mui/joy';
-import { Caption, Title } from '@tailus-ui/typography';
-import { Info, Pencil } from 'lucide-react';
+import { ExternalLink, Globe, Info, LayoutPanelTop, Loader2, Pencil, PencilRuler, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Database, Json } from '../../../../../lib/database.types';
 import { isURLNameAvailable, updateBookingTheme, updateBusinessURL } from './actions';
 import { fetchGoogleFonts, GoogleFont } from 'useGoogleFonts';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 interface PageProps {
-    urlName: string,
+    urlName: string
     editorData: {
         business_id: string | null;
         created_at: string;
@@ -34,189 +40,334 @@ interface ThemeSettings {
     fontFamily: string
 }
 
-
 const ManageBookingSite = ({ urlName, editorData }: PageProps) => {
     const [themeSettings, setThemeSettings] = useState<ThemeSettings>({
         primaryColor: editorData.theme_data.primaryColor,
         secondaryColor: editorData.theme_data.secondaryColor,
         fontFamily: editorData.theme_data.fontFamily
     })
+    const [updatingTheme, setUpdatingTheme] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [loading, setLoading] = useState<boolean>(false)
-    const [updatingTheme, setUpdatingTheme] = useState<boolean>(false)
+    const [fonts, setFonts] = useState<GoogleFont[]>([])
+    const [editUrlName, setEditUrlName] = useState(false)
+    const [newUrlName, setNewUrlName] = useState(urlName)
+    const [editedUrlName, setEditedUrlName] = useState(urlName)
+
+    const isCustom = editorData.type === 'CUSTOM'
+    const bookingPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/${newUrlName}`
+    const editPageLink = isCustom
+        ? `${process.env.NEXT_PUBLIC_BASE_URL}/${newUrlName}/edit`
+        : `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/booking-site/upload-sections`
+    const isInvalid = editedUrlName.length > 0 && !/^[a-z]+$/.test(editedUrlName)
+    const previewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/${editedUrlName || '…'}`
+
+    useEffect(() => {
+        (async () => {
+            const fnt = await fetchGoogleFonts()
+            setFonts(fnt)
+        })()
+    }, [])
+
     const updateTheme = async () => {
         setUpdatingTheme(true)
         try {
-            const data = await updateBookingTheme(themeSettings, editorData.business_id!)
-        } catch (error) {
-            console.log(error)
+            await updateBookingTheme(themeSettings, editorData.business_id!)
+            toast.success('Appearance saved')
+        } catch {
+            toast.error('Failed to save appearance')
         } finally {
             setUpdatingTheme(false)
         }
     }
 
     const handleUpdateUrl = async () => {
-        setLoading(true);
+        setLoading(true)
         try {
-            const available = await isURLNameAvailable(editedUrlName);
+            const available = await isURLNameAvailable(editedUrlName)
             if (!available) {
-                setError("This URL name is already taken");
-                return;
+                setError('This URL name is already taken')
+                return
             }
-            console.log(editorData);
-
             const updateError = await updateBusinessURL(editorData.business_id!, editedUrlName)
-
-            if (updateError) {
-                throw updateError
-            } else {
-                setEditUrlName(false)
-                setNewUrlName(editedUrlName)
-            };
-        } catch (err) {
-            setError("Something went wrong. Please try again.");
+            if (updateError) throw updateError
+            setEditUrlName(false)
+            setNewUrlName(editedUrlName)
+        } catch {
+            setError('Something went wrong. Please try again.')
         } finally {
-            setLoading(false);
-
+            setLoading(false)
         }
-    };
-    const [fonts, setFonts] = useState<GoogleFont[]>([])
-    const [editUrlName, setEditUrlName] = useState<boolean>(false)
-    const [newUrlName, setNewUrlName] = useState<string>(urlName)
-    const [editedUrlName, setEditedUrlName] = useState<string>(newUrlName)
-    const editPageLink = editorData.type === 'CUSTOM' ? `https://beta.afroallure.co/${newUrlName}/edit` : "https://beta.afroallure.co/dashboard/booking-site/upload-sections"
-    const isInvalid = editedUrlName.length > 0 && !/^[a-z]+$/.test(editedUrlName);
-    useEffect(() => {
+    }
 
-        (async () => {
-            const fnt = await fetchGoogleFonts()
-            setFonts(fnt)
-        })()
-    }, []);
     return (
-        <div className='w-full'>
-            <Modal open={editUrlName} onClose={() => {
-                setEditUrlName(false)
-                setEditedUrlName(newUrlName)
-                setError(null)
-            }}>
-                <ModalDialog size='lg' className="w-[500px]">
-                    <ModalClose />
-                    <DialogContent>
-                        <Input.Wrapper label='Edit Booking Page URL' description={<div className='mb-2'>
-                            {/* <p>URL name requirements:</p> */}
-                            <ul className='list-disc list-inside'>
-                                <li>Lowercase letters only (a–z)</li>
-                                <li>No spaces</li>
-                                <li>No numbers or special characters</li>
-                            </ul>
-                        </div>}>
-                            <Caption className='text-red-600'>{error}</Caption>
-                            <span className='flex items-center gap-1'><p className='text-sm'>https://beta.afroallure.co/</p><TextInput error={
-                                isInvalid ? "Only lowercase letters (a–z) allowed" : null} value={editedUrlName} radius={'md'} size='xs' onChange={(e) => setEditedUrlName(e.target.value)} />
-                            </span>
+        <div className="max-w-4xl mx-auto px-6 py-10">
 
-                        </Input.Wrapper>
-                    </DialogContent>
-                    <div className='flex flex-col gap-2'>
-                        <Button disabled={isInvalid || editedUrlName === newUrlName} loading={loading} onClick={async () => await handleUpdateUrl()}>Update</Button>
-                        <Button variant='outlined' onClick={() => {
+            {/* URL Edit Dialog */}
+            <Dialog open={editUrlName} onOpenChange={(open) => {
+                if (!open) {
+                    setEditedUrlName(newUrlName)
+                    setError(null)
+                }
+                setEditUrlName(open)
+            }}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Edit Booking Page URL</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <Label>URL slug</Label>
+                            <ul className='list-disc list-inside text-xs text-muted-foreground space-y-0.5'>
+                                <li>Lowercase letters only (a–z)</li>
+                                <li>No spaces, numbers, or special characters</li>
+                            </ul>
+                        </div>
+                        <div className="space-y-2">
+                            <div className='flex items-center gap-1'>
+                                <p className='text-sm text-muted-foreground whitespace-nowrap shrink-0'>
+                                    {process.env.NEXT_PUBLIC_BASE_URL}/
+                                </p>
+                                <Input
+                                    value={editedUrlName}
+                                    onChange={(e) => {
+                                        setEditedUrlName(e.target.value)
+                                        setError(null)
+                                    }}
+                                    className={isInvalid ? 'border-destructive focus-visible:ring-destructive' : ''}
+                                    placeholder="yourbusiness"
+                                />
+                            </div>
+                            {isInvalid && (
+                                <p className="text-xs text-destructive">Only lowercase letters (a–z) allowed</p>
+                            )}
+                            {error && (
+                                <p className="text-xs text-destructive">{error}</p>
+                            )}
+                        </div>
+                        {/* Live preview */}
+                        <div className="rounded-lg bg-muted/50 border px-3 py-2.5">
+                            <p className="text-xs text-muted-foreground mb-0.5">Preview</p>
+                            <p className="text-sm font-mono truncate">{previewUrl}</p>
+                        </div>
+                    </div>
+                    <div className='flex flex-col gap-2 mt-1'>
+                        <Button
+                            disabled={isInvalid || editedUrlName === newUrlName || loading || editedUrlName.length === 0}
+                            onClick={handleUpdateUrl}
+                        >
+                            {loading && <Loader2 className="size-4 animate-spin mr-2" />}
+                            Update URL
+                        </Button>
+                        <Button variant='outline' onClick={() => {
                             setEditUrlName(false)
                             setEditedUrlName(newUrlName)
                             setError(null)
-                        }}>Cancel</Button>
+                        }}>
+                            Cancel
+                        </Button>
                     </div>
-                </ModalDialog>
-            </Modal>
-            <div className='w-full flex flex-col items-center justify-center'>
-                <div className='flex w-full justify-start flex-col mb-3 gap-1 pl-6'>
-                    <Title>Manage Booking Site</Title>
-                    <Caption>Below, you can update and manage your booking site. You're also able to switch between editors if you choose to do so</Caption>
+                </DialogContent>
+            </Dialog>
+
+            {/* Page Header */}
+            <div className="flex items-start justify-between mb-8 gap-4">
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2.5">
+                        <h1 className="text-2xl font-semibold tracking-tight">Booking Site</h1>
+                        <Badge className="bg-green-100 text-green-700 border border-green-200 hover:bg-green-100 text-xs font-medium px-2 py-0.5">
+                            ● Live
+                        </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        Manage your public booking page, appearance, and editor settings.
+                    </p>
                 </div>
-                <div className='w-full p-6 flex gap-5 h-[300px]'>
-                    <div className='flex flex-col gap-2 w-full'>
-                        <div className='flex w-full justify-end gap-2'>
-                            <Button variant='outlined' component='a' href={`https://beta.afroallure.co/${newUrlName}`} target='_blank'>Visit Booking Page</Button>
-                            <Button component='a' href={editPageLink} target='_blank'>Edit Booking Page</Button>
-                        </div>
-                        <div className='p-5 border border-[#ECECEC] rounded-lg w-full'>
-                            <div className='flex gap-2 items-center'>
-                                <span>{`Booking Page URL: `}<a className='underline' href={`https://beta.afroallure.co/${newUrlName}`}>{`${`https://beta.afroallure.co/${newUrlName}`}`}</a></span>
-                                <Tooltip title='Edit URL' size='sm' placement='top'>
-                                    <IconButton onClick={() => {
-                                        setEditUrlName(true)
-                                    }}>
-                                        <Pencil color='#674502' size={16} className='cursor-pointer' />
-
-                                    </IconButton>
-                                </Tooltip>
-                            </div>
-                            <div className='flex gap-2 items-center'>
-                                <p>Page Editor Type:</p>
-                                <p>{`${editorData.type === 'CUSTOM' ? 'Drag & Drop Editor' : 'Sections Editor'}`}</p>
-                            </div>
-                            <div className='flex items-center gap-2 pt-5 pb-2 '>
-                                <Caption className='text-xs'>THEME</Caption>
-                                <Tooltip title={<div className='text-center'>
-                                    <p>The styles selected here will be for the booking process page the client</p>
-                                    <p>will see when they book their appointment</p>
-                                </div>} size='sm' placement='right'>
-                                    <Info color='#353535' size={12} className='cursor-pointer' />
-                                </Tooltip>
-                            </div>
-                            <div className='flex flex-col gap-2'>
-                                <div className='flex gap-2 items-center'>
-                                    <p>Primary Color: </p>
-                                    <ColorInput size='xs' value={themeSettings.primaryColor} onChange={(value) => {
-                                        setThemeSettings({
-                                            ...themeSettings,
-                                            primaryColor: value
-                                        })
-                                    }} />
-
-                                </div>
-                                <div className='flex gap-2 items-center'>
-                                    <p>Secondary Color: </p>
-                                    <ColorInput size='xs' value={themeSettings.secondaryColor} onChange={(value) => {
-                                        setThemeSettings({
-                                            ...themeSettings,
-                                            secondaryColor: value
-                                        })
-                                    }} />
-
-                                </div>
-                                <div className='flex gap-2 items-center'>
-                                    <p>Font Family: </p>
-                                    <Select
-                                        className="col-span-3"
-                                        size="xs"
-                                        searchable
-                                        value={themeSettings.fontFamily}
-                                        onChange={(value) => {
-                                            setThemeSettings({
-                                                ...themeSettings,
-                                                fontFamily: value!
-                                            })
-                                        }}
-                                        data={fonts?.map((font: GoogleFont, index: number) => {
-                                            return font.family
-                                        })}
-                                    />
-                                </div>
-                            </div>
-                            <div className='mt-5 flex gap-2'>
-                                <Button component='a' className='text-center' href='http://localhost:3000/dashboard/booking-site?switch-editor=true' variant='outlined' size='sm'>Switch Page Editor Type</Button>
-                                <Button loading={updatingTheme} variant='solid' size='sm' className='text-center' onClick={async () => {
-                                    await updateTheme()
-                                }}>Save Changes</Button>
-
-                            </div>
-                        </div>
-                    </div>
+                <div className="flex gap-2 shrink-0">
+                    <Button variant="outline" size="sm" asChild>
+                        <a href={bookingPageUrl} target="_blank" className="flex items-center gap-1.5">
+                            <ExternalLink className="size-3.5" />
+                            Visit Site
+                        </a>
+                    </Button>
+                    <Button size="sm" asChild>
+                        <a href={editPageLink} target="_blank" className="flex items-center gap-1.5">
+                            {isCustom
+                                ? <PencilRuler className="size-3.5" />
+                                : <LayoutPanelTop className="size-3.5" />
+                            }
+                            Edit Page
+                        </a>
+                    </Button>
                 </div>
             </div>
+
+            {/* Two-column grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+                {/* Left — Site Details */}
+                <div className="rounded-xl border bg-card p-6 flex flex-col gap-5">
+                    <h2 className="text-sm font-semibold">Site Details</h2>
+                    <Separator />
+
+                    {/* URL row */}
+                    <div className="flex flex-col gap-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Page URL</p>
+                        <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/40 px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <Globe className="size-3.5 text-muted-foreground shrink-0" />
+                                <a
+                                    href={bookingPageUrl}
+                                    target="_blank"
+                                    className="text-sm truncate hover:underline"
+                                >
+                                    {bookingPageUrl}
+                                </a>
+                            </div>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="size-7 shrink-0"
+                                            onClick={() => setEditUrlName(true)}
+                                        >
+                                            <Pencil className="size-3.5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Edit URL</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
+
+                    {/* Editor type row */}
+                    <div className="flex flex-col gap-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Editor Type</p>
+                        <div className="flex items-center gap-2.5 rounded-lg border bg-muted/40 px-3 py-2">
+                            {isCustom
+                                ? <PencilRuler className="size-4 text-muted-foreground" />
+                                : <LayoutPanelTop className="size-4 text-muted-foreground" />
+                            }
+                            <span className="text-sm">{isCustom ? 'Drag & Drop Editor' : 'Section Editor'}</span>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Switch editor */}
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">Want to try the other editor?</p>
+                        <Button variant="ghost" size="sm" className="gap-1.5 text-sm" asChild>
+                            <a href={`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/booking-site?switch-editor=true`}>
+                                <RefreshCw className="size-3.5" />
+                                Switch editor
+                            </a>
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Right — Appearance */}
+                <div className="rounded-xl border bg-card p-6 flex flex-col gap-5">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold">Checkout Appearance</h2>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Info className="size-3.5 text-muted-foreground cursor-pointer" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-[220px] text-center text-xs">
+                                    These styles apply to the booking checkout page your clients see when scheduling an appointment.
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                    <Separator />
+
+                    {/* Colors — side by side */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                Primary Color
+                            </Label>
+                            <div className="flex items-center gap-2.5 rounded-lg border bg-muted/40 px-3 py-2 cursor-pointer">
+                                <div className="relative shrink-0">
+                                    <div
+                                        className="size-5 rounded-sm border shadow-sm"
+                                        style={{ backgroundColor: themeSettings.primaryColor }}
+                                    />
+                                    <input
+                                        type="color"
+                                        value={themeSettings.primaryColor}
+                                        onChange={(e) => setThemeSettings({ ...themeSettings, primaryColor: e.target.value })}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    />
+                                </div>
+                                <span className="text-sm font-mono text-muted-foreground">
+                                    {themeSettings.primaryColor}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                Secondary Color
+                            </Label>
+                            <div className="flex items-center gap-2.5 rounded-lg border bg-muted/40 px-3 py-2 cursor-pointer">
+                                <div className="relative shrink-0">
+                                    <div
+                                        className="size-5 rounded-sm border shadow-sm"
+                                        style={{ backgroundColor: themeSettings.secondaryColor }}
+                                    />
+                                    <input
+                                        type="color"
+                                        value={themeSettings.secondaryColor}
+                                        onChange={(e) => setThemeSettings({ ...themeSettings, secondaryColor: e.target.value })}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    />
+                                </div>
+                                <span className="text-sm font-mono text-muted-foreground">
+                                    {themeSettings.secondaryColor}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Font */}
+                    <div className="flex flex-col gap-2">
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Font Family
+                        </Label>
+                        <Select
+                            value={themeSettings.fontFamily}
+                            onValueChange={(value) => setThemeSettings({ ...themeSettings, fontFamily: value })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a font" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {fonts.map((font: GoogleFont) => (
+                                    <SelectItem key={font.family} value={font.family}>
+                                        {font.family}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Save */}
+                    <div className="flex justify-end mt-auto pt-2">
+                        <Button size="sm" disabled={updatingTheme} onClick={updateTheme}>
+                            {updatingTheme && <Loader2 className="size-4 animate-spin mr-2" />}
+                            Save Appearance
+                        </Button>
+                    </div>
+                </div>
+
+            </div>
         </div>
-    );
+    )
 }
 
 export default ManageBookingSite;

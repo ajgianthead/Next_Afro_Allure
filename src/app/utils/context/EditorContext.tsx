@@ -29,10 +29,7 @@ export function EditorWrapper({ children }: any) {
     useEffect(() => {
         (async () => {
             const fonts = await fetchGoogleFonts()
-            setEditorState({
-                ...editorState,
-                fonts: fonts
-            })
+            setEditorState(prev => ({ ...prev, fonts }))
         })()
 
     }, []);

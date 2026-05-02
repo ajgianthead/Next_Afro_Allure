@@ -1,23 +1,44 @@
-import { createClient } from "@/app/utils/supabase/server";
-import ServicesClient from "./servicesClient";
-import { Database } from "../../../../../lib/database.types";
-import { fetchBusinessUser, fetchUser } from "../actions";
-import { redirect } from "next/navigation";
+import { createClient } from '@/app/utils/supabase/server'
+import { ServicesClient } from '@/features/services/components'
+import { fetchBusinessUser, fetchUser } from '../actions'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
 export default async function Page() {
-    const getServices = async (business_id: string) => {
-        const supabase = await createClient<Database>();
-        let { data, error } = await supabase.from("services").select("*, business_users(business_id, default_availability, availabilities(business_id, availability_data, id), service_addons(id, name, price))").eq("business", business_id).order("created_at", { ascending: true })
-        return data
-    }
     const user = await fetchUser()
-    if (user) {
-        const business = await fetchBusinessUser(user.id)
-        const services = await getServices(business?.business_id!)
-        return <ServicesClient businessId={business?.business_id!} servicesData={services!} serviceAddonsData={services![0].business_users.service_addons} defaultAvail={services![0].business_users.default_availability} availabilitiesData={services![0].business_users.availabilities} />;
-    }
-    redirect('/login')
+    if (!user) redirect('/login')
 
+    const business = await fetchBusinessUser(user.id)
+    if (!business) redirect('/login')
+
+    const supabase = await createClient()
+
+    const [servicesResult, businessResult] = await Promise.all([
+        supabase
+            .from('services')
+            .select('*')
+            .eq('business', business.business_id)
+            .order('created_at', { ascending: true }),
+        supabase
+            .from('business_users')
+            .select('default_availability, service_addons(id, name, price, business_id), availabilities(id, availability_data)')
+            .eq('business_id', business.business_id)
+            .single(),
+    ])
+
+    const services = servicesResult.data ?? []
+    const addons = (businessResult.data?.service_addons as any[]) ?? []
+    const availabilities = (businessResult.data?.availabilities as any[]) ?? []
+    const defaultAvailability = businessResult.data?.default_availability ?? ''
+
+    return (
+        <ServicesClient
+            businessId={business.business_id}
+            servicesData={services}
+            addonsData={addons}
+            availabilitiesData={availabilities}
+            defaultAvailability={defaultAvailability}
+        />
+    )
 }

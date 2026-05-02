@@ -1,0 +1,6 @@
+export { default as ServicesClient } from './ServicesClient'
+export { ServiceCard } from './ServiceCard'
+export { ServiceEditor } from './ServiceEditor'
+export { AddonManager } from './AddonManager'
+export { AddonEditor } from './AddonEditor'
+export { DeleteServiceDialog } from './DeleteServiceDialog'

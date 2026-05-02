@@ -12,7 +12,7 @@ export const metadata = {
 
 export default async function Layout({ children }: any) {
     const fetchUserData = async (user_id: string) => {
-        const supabase = await createClient<Database>();
+        const supabase = await createClient();
         const businessData = (await supabase.from('business_users').select("*, notifications(*)").eq('user_id', user_id).single()).data
         return businessData
     }

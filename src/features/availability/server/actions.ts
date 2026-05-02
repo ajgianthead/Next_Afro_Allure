@@ -1,11 +1,10 @@
 'use server'
 
 import { createClient } from "@/app/utils/supabase/server"
-import { Database } from "@/lib/database.types"
 
 
 export const checkAvailabilityToServices = async (availabilityId: string) => {
-    const supabase = await createClient<Database>();
+    const supabase = await createClient();
     const { data, error } = await supabase.from('services').select().eq('availability', availabilityId)
 
     if (error) {
@@ -18,7 +17,7 @@ export const checkAvailabilityToServices = async (availabilityId: string) => {
 }
 
 export const getAvailabilitiesAction = async (businessId: string) => {
-    const supabase = await createClient<Database>()
+    const supabase = await createClient()
     const { data, error } = await supabase
         .from('availabilities')
         .select('business_users(default_availability), *')
@@ -31,7 +30,7 @@ export const getAvailabilitiesAction = async (businessId: string) => {
 }
 
 export const createAvailabilityAction = async (businessId: string, availabilityData: any) => {
-    const supabase = await createClient<Database>()
+    const supabase = await createClient()
     const { data, error } = await supabase
         .from('availabilities')
         .insert([{ availability_data: availabilityData, business_id: businessId, id: availabilityData.id }])
@@ -47,7 +46,7 @@ export const updateAvailabilityAction = async (
     id: string,
     defaultAvailability: string
 ) => {
-    const supabase = await createClient<Database>()
+    const supabase = await createClient()
     const { data: old, error: fetchError } = await supabase
         .from('availabilities')
         .select('id, business_users(default_availability)')
@@ -74,7 +73,7 @@ export const updateAvailabilityAction = async (
 }
 
 export const deleteAvailabilityAction = async (businessId: string, availabilityId: string) => {
-    const supabase = await createClient<Database>()
+    const supabase = await createClient()
 
     const { data: attached, error: serviceError } = await supabase
         .from('services')

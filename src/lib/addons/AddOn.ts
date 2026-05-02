@@ -65,7 +65,7 @@ export class Addon {
     }
     async update(supabase: SupabaseClient<Database>, data: typeof Addon.prototype) {
         try {
-            const { data: row, error } = await supabase.from('service_addons').insert({
+            const { data: row, error } = await supabase.from('service_addons').update({
                 name: data.name,
                 price: data.price
             }).eq('id', this.id).select().single()

@@ -4,6 +4,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/app/utils/supabase/server";
 import { Database, Enums } from "../../../../../lib/database.types";
 import { Service } from "@/lib/service/Service";
+import { ServiceData } from "@/features/services/types";
 
 
 
@@ -20,20 +21,20 @@ export const markAppointmentAs = async (status: Enums<'status'>, amount_due: num
     return data
 }
 
-export const assignAddons = async (supabase: SupabaseClient, services: Service[]) => {
+export const assignAddons = async (supabase: SupabaseClient, services: ServiceData[]) => {
     const uniqueAddonIds = [...new Set(services?.flatMap(service => service.addons))]
     const { data: addons, error } = await supabase.from('service_addons').select("*").in('id', uniqueAddonIds)
     const addonsById = Object.fromEntries((addons ?? []).map(addon => [addon.id, addon]))
     const servicesWithAddons = services?.map(service => ({
         ...service,
-        addonDetails: service.addons!.map((id: any) => addonsById[id]).filter(Boolean)
+        addons: service.addons!.map((id: any) => addonsById[id]).filter(Boolean)
     }));
     return servicesWithAddons
 }
 
 
 export const getBusinessAppointmentsAction = async (businessId: string, status?: Database['public']['Enums']['status']) => {
-    const supabase = await createClient<Database>()
+    const supabase = await createClient()
     let query = supabase.from('appointments').select('*').eq('business', businessId)
     if (status) {
         query = query.eq('status', status).order('start', { ascending: true }).limit(5) as any

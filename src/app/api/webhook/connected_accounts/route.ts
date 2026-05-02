@@ -1,4 +1,4 @@
-import { stripe } from "../../../../lib/utils";
+import { stripe } from "@/lib/stripe/stripeClient";
 import pool from "@/app/utils/dbPool";
 import { NextRequest } from "next/server";
 import { apiError, webhookAck } from "@/lib/api/response";

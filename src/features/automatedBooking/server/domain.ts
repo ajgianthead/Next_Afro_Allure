@@ -1,7 +1,7 @@
 import { createClient } from "@/app/utils/supabase/server";
 import { BookingSessionData } from "../types";
 import { DateTime } from "luxon";
-import { stripe } from "@/lib/utils";
+import { stripe } from "@/lib/stripe/stripeClient";
 import { createCheckout } from "@/lib/stripe/createCheckout";
 import { AppointmentType as Appointment, CheckoutType } from "../../shared/appointments/types";
 import Stripe from "stripe";

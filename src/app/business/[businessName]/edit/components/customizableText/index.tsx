@@ -12,10 +12,10 @@ export const CustomizableTextComponent: ComponentConfig<RegularText> = {
     // fields: customizableTextFields,
     resolveFields: resolveCustomizableTextFields,
     defaultProps: customTextProps,
-    render: ({ text, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, sections, url, isLink, linkType }) => {
+    render: ({ text, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, sections, url, isLink, linkType, textTransform, maxWidth }) => {
         const { editorState } = useEditorContext()
-        return isLink ? <a href={linkType === 'external' ? url : `${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/${editorState.businessName}/#${sections.toLowerCase().replace(/\s+/g, "")}`} style={{
-            textWrap: 'wrap',
+        const textStyle: React.CSSProperties = {
+            textWrap: 'wrap' as any,
             fontSize: `${fontSize}rem`,
             fontFamily,
             fontWeight: style?.includes('bold') ? 'bold' : fontWeight,
@@ -24,20 +24,12 @@ export const CustomizableTextComponent: ComponentConfig<RegularText> = {
             lineHeight,
             textAlign: align as any,
             textDecoration: style?.includes('underline') ? 'underline' : "none",
-            fontStyle: style?.includes('italic') ? 'italic' : 'normal'
-
-        }} className={`apply-font-${id.split('-')[1]}`}>{text}</a> : <p style={{
-            textWrap: 'wrap',
-            fontSize: `${fontSize}rem`,
-            fontFamily,
-            fontWeight: style?.includes('bold') ? 'bold' : fontWeight,
-            color,
-            letterSpacing,
-            lineHeight,
-            textAlign: align as any,
-            textDecoration: style?.includes('underline') ? 'underline' : "none",
-            fontStyle: style?.includes('italic') ? 'italic' : 'normal'
-
-        }} className={`apply-font-${id.split('-')[1]}`}>{text}</p>
+            fontStyle: style?.includes('italic') ? 'italic' : 'normal',
+            textTransform: (textTransform && textTransform !== 'none' ? textTransform : undefined) as any,
+            maxWidth: maxWidth > 0 ? `${maxWidth}rem` : undefined,
+        }
+        return isLink
+            ? <a href={linkType === 'external' ? url : `${process.env.NEXT_PUBLIC_BASE_URL}/${editorState.businessName}/#${sections.toLowerCase().replace(/\s+/g, "")}`} style={textStyle} className={`apply-font-${id.split('-')[1]}`}>{text}</a>
+            : <p style={textStyle} className={`apply-font-${id.split('-')[1]}`}>{text}</p>
     }
 }

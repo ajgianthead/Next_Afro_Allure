@@ -1,492 +1,257 @@
-import { Divider } from '@mui/joy';
-import React from 'react';
+'use client'
+
+import React, { useMemo } from 'react'
+import * as Accordion from '@radix-ui/react-accordion'
+import {
+    AlignLeft, Box, ChevronDown, Columns, Grid2X2, ImageIcon,
+    LayoutDashboard, Maximize2, MousePointerClick, Move,
+    PaintBucket, Play, Rows, Square, Type, Video,
+} from 'lucide-react'
+
+// ─── Section definitions ───────────────────────────────────────────────────
+
+interface Section {
+    title: string
+    icon: React.ReactNode
+    fieldNames: string[]
+}
+
+const LAYOUT: Section = {
+    title: 'Layout',
+    icon: <LayoutDashboard size={13} />,
+    fieldNames: ['flexDirection', 'mainAxisLayout', 'altAxisLayout', 'grow', 'responsive', 'responsiveDirection', 'hideBelow', 'hideAbove'],
+}
+const SPACING: Section = {
+    title: 'Spacing',
+    icon: <Maximize2 size={13} />,
+    fieldNames: [
+        'gapX', 'gapY',
+        'paddingExpanded', 'padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight',
+        'marginExpanded', 'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight',
+        'aspectRatio', 'overflow', 'minHeight', 'maxWidth', 'gridTemplateColumns',
+    ],
+}
+const FILL: Section = {
+    title: 'Fill',
+    icon: <PaintBucket size={13} />,
+    fieldNames: ['backgroundColor'],
+}
+const BORDER: Section = {
+    title: 'Border',
+    icon: <Square size={13} />,
+    fieldNames: ['borderExpanded', 'borderWidth', 'borderTop', 'borderBottom', 'borderLeft', 'borderRight', 'borderColor', 'borderType'],
+}
+const RADIUS: Section = {
+    title: 'Radius',
+    icon: <Square size={13} />,
+    fieldNames: ['borderRadiusExpanded', 'borderRadius', 'borderRadiusTopLeft', 'borderRadiusTopRight', 'borderRadiusBottomLeft', 'borderRadiusBottomRight'],
+}
+const POSITION: Section = {
+    title: 'Position',
+    icon: <Move size={13} />,
+    fieldNames: ['positionType', 'top', 'bottom', 'left', 'right', 'rotation'],
+}
+const TYPOGRAPHY: Section = {
+    title: 'Typography',
+    icon: <Type size={13} />,
+    fieldNames: ['fontFamily', 'fontSize', 'fontWeight', 'style', 'align', 'color', 'lineHeight', 'letterSpacing', 'textTransform', 'maxWidth'],
+}
+const CONTENT_TEXT: Section = {
+    title: 'Content',
+    icon: <AlignLeft size={13} />,
+    fieldNames: ['text', 'isLink', 'linkType', 'url', 'sections'],
+}
+
+const COMPONENT_SECTIONS: Record<string, Section[]> = {
+    CustomizableText: [CONTENT_TEXT, TYPOGRAPHY],
+    Container: [LAYOUT, SPACING, FILL, BORDER, RADIUS, POSITION],
+    Button: [
+        { title: 'Content', icon: <AlignLeft size={13} />, fieldNames: ['text', 'link', 'action', 'variant'] },
+        TYPOGRAPHY,
+        LAYOUT,
+        SPACING,
+        FILL,
+        BORDER,
+        RADIUS,
+        POSITION,
+    ],
+    Image: [
+        { title: 'Source', icon: <ImageIcon size={13} />, fieldNames: ['url', 'width', 'objectFit', 'height', 'aspectRatio'] },
+        BORDER, RADIUS, POSITION,
+    ],
+    Video: [
+        { title: 'Source', icon: <Video size={13} />, fieldNames: ['url'] },
+        { title: 'Playback', icon: <Play size={13} />, fieldNames: ['loop', 'controls', 'autoPlay', 'speed'] },
+        { title: 'Size', icon: <Maximize2 size={13} />, fieldNames: ['width', 'height'] },
+        BORDER, RADIUS, POSITION,
+    ],
+    Row: [
+        { title: 'Layout', icon: <Rows size={13} />, fieldNames: ['numberOfRows', 'gap', 'justifyItems'] },
+    ],
+    Column: [
+        { title: 'Layout', icon: <Columns size={13} />, fieldNames: ['numberOfColumns', 'gap', 'alignItems'] },
+    ],
+    Grid: [
+        { title: 'Layout', icon: <Grid2X2 size={13} />, fieldNames: ['numberOfColumns', 'numberOfRows', 'gapX', 'gapY', 'justifyItems', 'alignItems', 'firstCellRowSpan'] },
+    ],
+    Section: [
+        { title: 'Settings', icon: <Box size={13} />, fieldNames: ['sectionName'] },
+    ],
+    Card: [
+        { title: 'Content', icon: <AlignLeft size={13} />, fieldNames: ['variant', 'cardCover', 'imageSource', 'videoSource', 'linkToService', 'service'] },
+    ],
+}
+
+// Text presets share the typography section
+const TEXT_PRESET_NAMES = [
+    'HeadingOne', 'HeadingTwo', 'HeadingThree', 'HeadingFour',
+    'TitleLarge', 'TitleMedium', 'TitleSmall',
+    'BodyLarge', 'BodyMedium', 'BodySmall', 'BodyExtraSmall',
+]
+TEXT_PRESET_NAMES.forEach(name => { COMPONENT_SECTIONS[name] = [CONTENT_TEXT, TYPOGRAPHY] })
+
+// ─── Component labels + icons for the header bar ───────────────────────────
+
+const COMPONENT_META: Record<string, { label: string; icon: React.ReactNode }> = {
+    CustomizableText: { label: 'Text', icon: <Type size={13} className="text-slate-500" /> },
+    Container: { label: 'Container', icon: <Box size={13} className="text-slate-500" /> },
+    Button: { label: 'Button', icon: <MousePointerClick size={13} className="text-slate-500" /> },
+    Image: { label: 'Image', icon: <ImageIcon size={13} className="text-slate-500" /> },
+    Video: { label: 'Video', icon: <Video size={13} className="text-slate-500" /> },
+    Row: { label: 'Row', icon: <Rows size={13} className="text-slate-500" /> },
+    Column: { label: 'Column', icon: <Columns size={13} className="text-slate-500" /> },
+    Grid: { label: 'Grid', icon: <Grid2X2 size={13} className="text-slate-500" /> },
+    Section: { label: 'Section', icon: <Box size={13} className="text-slate-500" /> },
+    Card: { label: 'Card', icon: <Box size={13} className="text-slate-500" /> },
+    Navbar: { label: 'Navbar', icon: <LayoutDashboard size={13} className="text-slate-500" /> },
+    HeadingOne: { label: 'Heading 1', icon: <Type size={13} className="text-slate-500" /> },
+    HeadingTwo: { label: 'Heading 2', icon: <Type size={13} className="text-slate-500" /> },
+    HeadingThree: { label: 'Heading 3', icon: <Type size={13} className="text-slate-500" /> },
+    HeadingFour: { label: 'Heading 4', icon: <Type size={13} className="text-slate-500" /> },
+    TitleLarge: { label: 'Title Large', icon: <Type size={13} className="text-slate-500" /> },
+    TitleMedium: { label: 'Title Medium', icon: <Type size={13} className="text-slate-500" /> },
+    TitleSmall: { label: 'Title Small', icon: <Type size={13} className="text-slate-500" /> },
+    BodyLarge: { label: 'Body Large', icon: <Type size={13} className="text-slate-500" /> },
+    BodyMedium: { label: 'Body Medium', icon: <Type size={13} className="text-slate-500" /> },
+    BodySmall: { label: 'Body Small', icon: <Type size={13} className="text-slate-500" /> },
+    BodyExtraSmall: { label: 'Body XS', icon: <Type size={13} className="text-slate-500" /> },
+}
+
+// Fields that are compact enough to share a row with a peer
+const HALF_WIDTH_FIELDS = new Set([
+    'gapX', 'gapY',
+    'fontSize', 'fontWeight',
+    'lineHeight', 'letterSpacing',
+    'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight',
+    'marginTop', 'marginBottom', 'marginLeft', 'marginRight',
+    'borderTop', 'borderBottom', 'borderLeft', 'borderRight',
+    'borderRadiusTopLeft', 'borderRadiusTopRight',
+    'borderRadiusBottomLeft', 'borderRadiusBottomRight',
+    'top', 'bottom', 'left', 'right',
+    'minHeight', 'maxWidth',
+    'height', 'firstCellRowSpan',
+])
+
+// ─── SectionPanel ──────────────────────────────────────────────────────────
+
+function SectionPanel({
+    section,
+    fieldMap,
+}: {
+    section: Section
+    fieldMap: Map<string, React.ReactNode>
+}) {
+    const rows = section.fieldNames
+        .map(name => ({ name, el: fieldMap.get(name) }))
+        .filter((r): r is { name: string; el: React.ReactNode } => r.el != null)
+
+    if (rows.length === 0) return null
+
+    return (
+        <Accordion.Item
+            value={section.title}
+            className="border-b border-slate-100 last:border-0"
+        >
+            <Accordion.Header>
+                <Accordion.Trigger className="flex w-full items-center justify-between px-3 py-2 hover:bg-slate-50 transition-colors [&[data-state=open]>svg]:rotate-180">
+                    <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                        <span className="text-slate-400">{section.icon}</span>
+                        {section.title}
+                    </span>
+                    <ChevronDown className="size-3 shrink-0 text-slate-300 transition-transform duration-200" />
+                </Accordion.Trigger>
+            </Accordion.Header>
+            <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 px-3 pb-2 pt-0.5">
+                    {rows.map(({ name, el }) => (
+                        <div key={name} className={HALF_WIDTH_FIELDS.has(name) ? '' : 'col-span-2'}>
+                            {el}
+                        </div>
+                    ))}
+                </div>
+            </Accordion.Content>
+        </Accordion.Item>
+    )
+}
+
+// ─── Main Settings component ───────────────────────────────────────────────
 
 interface SettingsProps {
-    fields: (string | number | bigint | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<React.AwaitedReactNode>)[]
+    fields: React.ReactNode[]
+    componentName: string
 }
 
+function Settings({ fields, componentName }: SettingsProps) {
+    // Build a name → element map. Puck sets field keys; React.Children.toArray
+    // prefixes them with ".$", so ".$fieldName" → strip to "fieldName".
+    const fieldMap = useMemo(() => {
+        const map = new Map<string, React.ReactNode>()
+        fields.forEach(f => {
+            if (React.isValidElement(f) && f.key) {
+                const name = String(f.key).replace(/^\.\$?/, '')
+                if (name) map.set(name, f)
+            }
+        })
+        return map
+    }, [fields])
 
-
-const TextSettings = ({ fields }: SettingsProps) => {
-    console.log(fields);
-
-    return (
-        <div className='p-5'>
-            {fields.map((field, index) => {
-                if (index === 1) {
-                    return (
-                        <div key={index} className='p-0 flex flex-col gap-2'>
-                            {fields[index - 1]}
-                            {field}
-                            {fields[index + 1]}
-                            <div className='grid grid-cols-4 gap-2'>
-                                <div className="col-span-3 col-start-2 grid grid-cols-2 grid-rows-2 items-start gap-2">
-                                    {fields[index + 2]}
-                                    {fields[index + 3]}
-                                    {fields[index + 4]}
-                                    {fields[index + 5]}
-                                </div>
-                            </div>
-                            {fields[index + 6]}
-                            {fields[index + 7]}
-                            {fields[index + 8]}
-                            {fields[index + 9]}
-                            {fields[index + 10]}
-                            {fields[index + 11]}
-
-                        </div>
-                    )
-                }
-
-
-            })}
-        </div>
-    )
-}
-const ImageSettings = ({ fields }: SettingsProps) => {
-    return (
-        <div className='p-5 mb-10'>
-            {fields.map((field, index) => {
-                if (index === 0) {
-                    return (
-                        <div key={index} className='space-y-2'>
-                            {fields[index]}
-                            {fields[index + 1]}
-                            {/* Border */}
-                            <div className='mt-2'>
-                                {fields[index + 2]}
-                            </div>
-                            {fields[index + 3]}
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 4]}
-                                    {fields[index + 5]}
-                                    {fields[index + 6]}
-                                    {fields[index + 7]}
-                                </div>
-                            </div>
-                            {fields[index + 8]}
-                            {fields[index + 9]}
-                            {/* Border Radius */}
-                            <div className='mt-2 space-y-2'>
-                                {fields[index + 10]}
-                                {fields[index + 11]}
-                            </div>
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 12]}
-                                    {fields[index + 13]}
-                                    {fields[index + 14]}
-                                    {fields[index + 15]}
-                                </div>
-                            </div>
-                            {/* Position */}
-                            <div className='mt-2 space-y-2'>
-                                {fields[index + 16]}
-                            </div>
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 17]}
-                                    {fields[index + 18]}
-                                    {fields[index + 19]}
-                                    {fields[index + 20]}
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
-            })}
-        </div>
-    )
-}
-const VideoSettings = ({ fields }: SettingsProps) => {
-    return (
-        <div className='p-5 mb-10'>
-            {fields.map((field, index) => {
-                if (index === 0) {
-                    return (
-                        <div key={index} className='space-y-2'>
-                            {fields[index]}
-
-                            {/* Checkboxes */}
-                            <div className='grid grid-cols-4'>
-                                <div className='py-2 flex col-span-3 col-start-2 flex-col gap-2'>
-                                    {fields[index + 1]}
-                                    {fields[index + 2]}
-                                    {fields[index + 3]}
-                                </div>
-                            </div>
-
-                            {fields[index + 4]}
-                            {fields[index + 5]}
-                            {fields[index + 6]}
-
-                            {/* Border */}
-                            <div className='mt-2'>
-                                {fields[index + 7]}
-                            </div>
-                            {fields[index + 8]}
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 9]}
-                                    {fields[index + 10]}
-                                    {fields[index + 11]}
-                                    {fields[index + 12]}
-                                </div>
-                            </div>
-                            {fields[index + 13]}
-                            {fields[index + 14]}
-                            {/* Border Radius */}
-                            <div className='mt-2 space-y-2'>
-                                {fields[index + 15]}
-                                {fields[index + 16]}
-                            </div>
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 17]}
-                                    {fields[index + 18]}
-                                    {fields[index + 19]}
-                                    {fields[index + 20]}
-                                </div>
-                            </div>
-                            {/* Position */}
-                            <div className='mt-2 space-y-2'>
-                                {fields[index + 21]}
-                            </div>
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 22]}
-                                    {fields[index + 23]}
-                                    {fields[index + 24]}
-                                    {fields[index + 25]}
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
-            })}
-        </div>
-    )
-}
-const ContainerSettings = ({ fields }: SettingsProps) => {
-    return (
-        <div className='p-5 mb-10'>
-            {fields.map((field, index) => {
-                if (index === 1) {
-                    return (
-                        <div key={index} className='p-0 flex flex-col gap-2'>
-                            {fields[index + 39]}
-                            {field}
-
-                            <div className='grid grid-cols-4 items-center'>
-                                <p className="text-sm font-medium text-slate-400">Gap</p>
-                                <div className='col-span-3 grid grid-cols-2 gap-2 items-center'>
-                                    {fields[index + 1]}
-                                    {fields[index + 2]}
-                                </div>
-                            </div>
-                            {fields[index + 3]}
-                            {fields[index + 4]}
-                            {fields[index + 5]}
-
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 6]}
-                                    {fields[index + 7]}
-                                    {fields[index + 8]}
-                                    {fields[index + 9]}
-
-                                </div>
-                            </div>
-                            {fields[index + 10]}
-                            {fields[index + 11]}
-
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 12]}
-                                    {fields[index + 13]}
-                                    {fields[index + 14]}
-                                    {fields[index + 15]}
-
-
-                                </div>
-                            </div>
-                            {fields[index + 16]}
-                            {/* TODO: Responsive Field */}
-                            {fields[index + 18]}
-                            <div className='mt-5 space-y-2'>
-                                {fields[index + 19]}
-                                {fields[index + 20]}
-                            </div>
-                            {/* Border */}
-                            {/* <div className='mt-2'>
-                                {fields[index + 21]}
-                            </div> */}
-                            {/* {fields[index + 22]} */}
-                            {fields[index + 21]}
-
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 22]}
-                                    {fields[index + 23]}
-                                    {fields[index + 24]}
-                                    {fields[index + 25]}
-
-                                </div>
-                            </div>
-                            {fields[index + 26]}
-                            {/* Border Radius */}
-                            <div className='mt-2 space-y-2'>
-                                {fields[index + 27]}
-                                {fields[index + 28]}
-                            </div>
-                            {fields[index + 29]}
-
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 30]}
-                                    {fields[index + 31]}
-                                    {fields[index + 32]}
-                                    {fields[index + 33]}
-
-                                </div>
-                            </div>
-                            {/* Position */}
-                            <div className='mt-2 space-y-2'>
-                                {fields[index + 34]}
-
-                            </div>
-                            <div className='grid grid-cols-4'>
-                                <div className='grid col-start-2 gap-2 col-span-3 grid-cols-2 grid-rows-2'>
-                                    {fields[index + 35]}
-                                    {fields[index + 36]}
-                                    {fields[index + 37]}
-                                    {fields[index + 38]}
-
-                                </div>
-                            </div>
-
-                        </div>
-                    )
-                }
-
-
-            })}
-        </div>
-    )
-}
-const ButtonSettings = ({ fields }: SettingsProps) => {
-    console.log(fields.slice(44));
+    const sections = COMPONENT_SECTIONS[componentName]
+    const meta = COMPONENT_META[componentName] ?? { label: componentName, icon: <Box size={13} className="text-slate-500" /> }
 
     return (
-        <div className=' mb-10'>
-            {fields.map((field, index) => {
-                if (index === 0) {
-                    return (
-                        <div>
-                            <div className='mb-5 p-5 space-y-2'>
-                                {field}
-                                {fields[index + 2]}
+        <div className="flex flex-col h-full bg-white">
+            {/* Header */}
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 bg-white sticky top-0 z-10">
+                <div className="size-6 rounded-md bg-slate-100 flex items-center justify-center shrink-0">
+                    {meta.icon}
+                </div>
+                <span className="text-sm font-semibold text-slate-700 leading-none">{meta.label}</span>
+            </div>
 
-                            </div>
-                            {/* <div className='mb-8'>
-                                <p className='text-medium font-semibold pb-5 text-slate-600'>Typography</p>
-                                <TextSettings fields={fields.splice(39, 9)} />
-                            </div> */}
-                            <div className='flex flex-col gap-5'>
-                                <div className=''>
-                                    <p className='text-medium font-semibold pl-5 text-slate-600'>Typography</p>
-                                    <TextSettings fields={fields.slice(44)} />
-                                </div>
-                                <div className='mb-8'>
-                                    <p className='text-medium font-semibold pl-5 text-slate-600'>Layout</p>
-                                    <ContainerSettings fields={fields.slice(2, 44)} />
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
-
-
-            })}
-        </div>
-    )
-}
-const RowSettings = ({ fields }: SettingsProps) => {
-    return (
-        <div className='p-5 mb-10'>
-            {fields.map((field, index) => {
-                if (index === 0) {
-                    return (
-                        <div className='space-y-2'>
-                            {fields[index + 2]}
-                            {fields[index]}
-                            {fields[index + 1]}
-                        </div>
-                    )
-                }
-
-            })}
+            {/* Sections */}
+            <div className="flex-1 overflow-y-auto">
+                {sections ? (
+                    <Accordion.Root
+                        type="multiple"
+                        defaultValue={sections.map(s => s.title)}
+                    >
+                        {sections.map(section => (
+                            <SectionPanel
+                                key={section.title}
+                                section={section}
+                                fieldMap={fieldMap}
+                            />
+                        ))}
+                    </Accordion.Root>
+                ) : (
+                    // Fallback for Navbar and other unmapped components
+                    <div className="flex flex-col gap-1.5 px-3 py-3">
+                        {fields}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
 
-const ColumnSettings = ({ fields }: SettingsProps) => {
-    return (
-        <div className='p-5 mb-10'>
-            {fields.map((field, index) => {
-                if (index === 0) {
-                    return (
-                        <div className='space-y-2'>
-                            {fields[index + 2]}
-                            {fields[index]}
-                            {fields[index + 1]}
-                        </div>
-                    )
-                }
-
-            })}
-        </div>
-    )
-}
-
-const GridSettings = ({ fields }: SettingsProps) => {
-    return (
-        <div className='p-5 mb-10'>
-            {fields.map((field, index) => {
-                if (index === 0) {
-                    return (
-                        <div className='space-y-2'>
-                            {fields[index + 7]}
-                            {fields[index + 3]}
-                            {fields[index + 5]}
-                            {fields[index + 6]}
-                            {fields[index + 1]}
-                            {fields[index + 2]}
-                        </div>
-                    )
-                }
-
-            })}
-        </div>
-    )
-}
-const TextPreset = ({ fields }: SettingsProps) => {
-    return (
-        <div className='p-5 mb-10'>
-            {fields.map((field, index) => {
-                if (index === 0) {
-                    return (
-                        <div className='space-y-2'>
-                            {fields[index]}
-                            {fields[index + 1]}
-                            <div className='grid grid-cols-4 gap-2'>
-                                <div className='col-span-3 col-start-2'>{fields[index + 2]}</div>
-                            </div>
-                            <div className='grid grid-cols-4 gap-2'>
-                                <div className="col-span-3 col-start-2 grid grid-cols-2 items-start gap-2">
-
-                                    {fields[index + 3]}
-                                    {fields[index + 4]}
-                                </div>
-                            </div>
-                            {fields[index + 5]}
-
-                            {fields[index + 6]}
-                            {fields[index + 7]}
-                            {fields[index + 8]}
-                            {fields[index + 9]}
-                            {fields[index + 10]}
-                        </div>
-                    )
-                }
-
-            })}
-        </div>
-    )
-}
-
-const CardSettings = ({ fields }: SettingsProps) => {
-    return (
-        <div className='p-5 mb-10'>
-            {fields.map((field, index) => {
-                if (index === 0) {
-                    return (
-                        <div className='space-y-3'>
-                            {fields[index + 1]}
-                            {fields[index + 2]}
-                            {fields[index + 3]}
-                            {fields[index + 4]}
-                            {fields[index + 5]}
-                            {fields[index + 6]}
-                        </div>
-                    )
-                }
-
-            })}
-        </div>
-    )
-}
-
-const SectionSettings = ({ fields }: SettingsProps) => {
-    return (
-        <div className='p-5 mb-10'>
-            {fields.map((field, index) => {
-                if (index === 0) {
-                    return (
-                        <div className='space-y-2'>
-                            {fields[index + 1]}
-
-
-                        </div>
-                    )
-                }
-
-            })}
-        </div>
-    )
-}
-
-const Settings = ({ fields, componentName }: { fields: SettingsProps['fields'], componentName: string }) => {
-    if (componentName) {
-        if (componentName === 'Navbar') {
-            return fields
-        }
-        if (componentName === 'CustomizableText') {
-            return <TextSettings fields={fields} />
-        }
-        if (componentName === 'Container') {
-            return <ContainerSettings fields={fields} />
-        }
-        if (componentName === 'Image') {
-            return <ImageSettings fields={fields} />
-        }
-        if (componentName === 'Video') {
-            return <VideoSettings fields={fields} />
-        }
-        if (componentName === 'Button') {
-            return <ButtonSettings fields={fields} />
-        }
-        if (componentName === 'Row') {
-            return <RowSettings fields={fields} />
-        }
-        if (componentName === 'Column') {
-            return <ColumnSettings fields={fields} />
-        }
-        if (componentName === 'Grid') {
-            return <GridSettings fields={fields} />
-        }
-        if (componentName.startsWith('Heading') || componentName.startsWith('Title') || componentName.startsWith('Body')) {
-            return <TextPreset fields={fields} />
-        }
-        if (componentName === 'Card') {
-            return <CardSettings fields={fields} />
-        }
-        if (componentName === 'Section') {
-            return <SectionSettings fields={fields} />
-        }
-    }
-    return
-}
-
-export default Settings;
+export default Settings
