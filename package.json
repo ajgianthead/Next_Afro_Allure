@@ -33,7 +33,6 @@
     "@mui/joy": "^5.0.0-beta.48",
     "@mui/material": "^7.0.2",
     "@mui/x-date-pickers": "^7.19.0",
-    "@next/third-parties": "^15.3.2",
     "@nextui-org/system": "^2.2.6",
     "@puckeditor/core": "^0.21.0",
     "@radix-ui/react-accordion": "^1.2.0",
