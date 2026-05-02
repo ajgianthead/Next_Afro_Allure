@@ -9,7 +9,6 @@ import { useUserContext } from '@/app/utils/context/UserContext'
 import { Info } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 import { handleBookingSettings } from './actions'
-import { theme } from 'app/for-businesses/forBusinessesClient'
 import Stripe from 'stripe'
 
 enum Level {
@@ -195,7 +194,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
     const [bookingAdvanceValue, setBookingAdvanceValue] = useState<number>(Number(policyData.book_ahead_value.split(' ')[0]))
     const [bookingAdvanceError, setBookingAdvanceError] = useState<boolean>(false)
     return (
-        <CssVarsProvider theme={theme}>
+        <div>
             <Modal open={open} onClose={() => setOpen(false)}>
                 <ModalDialog className="w-full md:w-[500px]">
                     <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', textAlign: 'center', width: '100%' }}>
@@ -555,6 +554,6 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                     </Button>
                 </div>
             </div>
-        </CssVarsProvider>
+        </div>
     )
 }
