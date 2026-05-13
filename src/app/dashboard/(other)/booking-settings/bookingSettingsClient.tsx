@@ -1,43 +1,37 @@
 'use client'
 
-import Input from '@components/Input'
-import Label from '@components/Label'
-import Textarea from '@components/TextArea'
-import { CircularProgress, Input as JoyInput, Checkbox as JoyCheckbox, Button, Switch, CssVarsProvider, Sheet, Modal, ModalDialog, DialogTitle, DialogActions, Divider, Select, Option, FormControl, FormHelperText } from '@mui/joy'
-import { Caption, Text, Title } from '@tailus-ui/typography'
-import { useUserContext } from '@/app/utils/context/UserContext'
-import { Info } from 'lucide-react'
-import React, { useState, useEffect } from 'react'
+import { CircularProgress, CssVarsProvider, Divider, FormControl, FormHelperText, Input as JoyInput, Option, Select } from '@mui/joy'
+import { Info, Check, Lock } from 'lucide-react'
+import React, { useState } from 'react'
 import { handleBookingSettings } from './actions'
 import Stripe from 'stripe'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Button as ShadcnButton } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
+import { useRouter } from 'next/navigation'
 
-enum Level {
-    LIGHT = "light",
-    MODERATE = "moderate",
-    STRICT = 'strict'
+const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
+const BRAND = {
+    black: '#0F0E0E',
+    cream: '#FAF7F2',
+    red: '#FC6161',
+    gold: '#C9974A',
+    dark: '#1A1818',
+    warm: '#6F6863',
+    sand: '#E8E2D6',
 }
-enum Type {
-    FLAT = "flat",
-    PERCENT = "percent"
-}
+
+enum Level { LIGHT = "light", MODERATE = "moderate", STRICT = 'strict' }
+enum Type { FLAT = "flat", PERCENT = "percent" }
 
 export interface BookingSettings {
     deposit: {
         enabled: boolean;
-        settings: {
-            type: Type,
-            value: number,
-            subtraction: boolean
-        }
+        settings: { type: Type; value: number; subtraction: boolean }
     };
-    lateFee: {
-        enabled: boolean,
-        fee?: number
-    };
-    noShowPolicy: {
-        enabled: boolean
-        level?: Level
-    }
+    lateFee: { enabled: boolean; fee?: number };
+    noShowPolicy: { enabled: boolean; level?: Level }
     rescheduleLimit: string;
     rescheduleDayLimit: string;
     cancelDayLimit: string;
@@ -45,7 +39,6 @@ export interface BookingSettings {
     readBeforeBooking: string;
     refundPolicy: string;
     bookAheadValue: string
-
 }
 
 interface PageProps {
@@ -68,37 +61,16 @@ interface PageProps {
     paymentConfigId?: string,
     paymentConfig?: any
 }
+
 export interface PaymentConfig {
-    card: {
-        display_preference: {
-            preference: Stripe.PaymentMethodConfiguration.Card.DisplayPreference.Preference
-        }
-    },
-    google_pay: {
-        display_preference: {
-            preference: Stripe.PaymentMethodConfiguration.GooglePay.DisplayPreference.Preference
-        }
-    },
-    apple_pay: {
-        display_preference: {
-            preference: Stripe.PaymentMethodConfiguration.ApplePay.DisplayPreference.Preference
-        }
-    },
-    amazon_pay: {
-        display_preference: {
-            preference: Stripe.PaymentMethodConfiguration.AmazonPay.DisplayPreference.Preference
-        }
-    },
-    cashapp: {
-        display_preference: {
-            preference: Stripe.PaymentMethodConfiguration.Cashapp.DisplayPreference.Preference
-        }
-    }
+    card: { display_preference: { preference: Stripe.PaymentMethodConfiguration.Card.DisplayPreference.Preference } },
+    google_pay: { display_preference: { preference: Stripe.PaymentMethodConfiguration.GooglePay.DisplayPreference.Preference } },
+    apple_pay: { display_preference: { preference: Stripe.PaymentMethodConfiguration.ApplePay.DisplayPreference.Preference } },
+    amazon_pay: { display_preference: { preference: Stripe.PaymentMethodConfiguration.AmazonPay.DisplayPreference.Preference } },
+    cashapp: { display_preference: { preference: Stripe.PaymentMethodConfiguration.Cashapp.DisplayPreference.Preference } }
 }
 
 export default function BookingSettingsClient({ businessUser, policyData, paymentConfig, paymentConfigId }: PageProps) {
-    const { user } = useUserContext()
-    const [loading, setLoading] = useState<boolean>(true);
     const [bookingPolicy, setBookingPolicy] = useState<BookingSettings>({
         deposit: policyData.deposit,
         lateFee: policyData.late_fee,
@@ -110,7 +82,8 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
         readBeforeBooking: policyData.read_before_booking!,
         refundPolicy: "",
         bookAheadValue: policyData.book_ahead_value
-    });
+    })
+
     enum PaymentValue {
         GooglePay = "GOOGLE_PAY",
         ApplePay = "APPLE_PAY",
@@ -118,442 +91,416 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
         CashApp = "CASH_APP"
     }
 
-    const [paymentMethodConfig, setPaymentMethodConfig] = useState<PaymentConfig | null>(paymentConfig !== undefined ? {
-        card: {
-            display_preference: {
-                preference: paymentConfig.card?.display_preference.preference!
-            }
-        },
-        google_pay: {
-            display_preference: {
-                preference: paymentConfig.google_pay?.display_preference.preference!
-            }
-        },
-        apple_pay: {
-            display_preference: {
-                preference: paymentConfig.apple_pay?.display_preference.preference!
-            }
-        },
-        amazon_pay: {
-            display_preference: {
-                preference: paymentConfig.amazon_pay?.display_preference.preference!
-            }
-        },
-        cashapp: {
-            display_preference: {
-                preference: paymentConfig.cashapp?.display_preference.preference!
-            }
-        }
-    } : null)
-    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [paymentMethodConfig, setPaymentMethodConfig] = useState<PaymentConfig | null>(
+        paymentConfig !== undefined ? {
+            card: { display_preference: { preference: paymentConfig.card?.display_preference.preference! } },
+            google_pay: { display_preference: { preference: paymentConfig.google_pay?.display_preference.preference! } },
+            apple_pay: { display_preference: { preference: paymentConfig.apple_pay?.display_preference.preference! } },
+            amazon_pay: { display_preference: { preference: paymentConfig.amazon_pay?.display_preference.preference! } },
+            cashapp: { display_preference: { preference: paymentConfig.cashapp?.display_preference.preference! } }
+        } : null
+    )
+
+    const [isLoading, setIsLoading] = useState(false)
+    const [open, setOpen] = useState(false)
+    const [upgradeLoading, setUpgradeLoading] = useState(false)
+    const [unitOfTime, setUnitOfTime] = useState(policyData.book_ahead_value.split(' ')[1])
+    const [bookingAdvanceValue, setBookingAdvanceValue] = useState(Number(policyData.book_ahead_value.split(' ')[0]))
+    const [bookingAdvanceError, setBookingAdvanceError] = useState(false)
+
+    const router = useRouter()
+
+    const handleUpgrade = async () => {
+        setUpgradeLoading(true)
+        const session = businessUser.stripe_customer_id
+            ? await createSubscriptionForExistingCustomer(businessUser.stripe_customer_id)
+            : await createSubscriptionCheckout(businessUser.had_trial, businessUser.business_id)
+        router.push(session.url!)
+    }
+
     const handlePaymentMethodConfig = (value: PaymentValue, checked: boolean) => {
         if (value === PaymentValue.GooglePay) {
-            setPaymentMethodConfig({
-                ...paymentMethodConfig!,
-                google_pay: {
-                    display_preference: {
-                        preference: checked ? 'on' : 'off'
-                    }
-                }
-            })
+            setPaymentMethodConfig({ ...paymentMethodConfig!, google_pay: { display_preference: { preference: checked ? 'on' : 'off' } } })
         } else if (value === PaymentValue.ApplePay) {
-            setPaymentMethodConfig({
-                ...paymentMethodConfig!,
-                apple_pay: {
-                    display_preference: {
-                        preference: checked ? 'on' : 'off'
-                    }
-                }
-            })
+            setPaymentMethodConfig({ ...paymentMethodConfig!, apple_pay: { display_preference: { preference: checked ? 'on' : 'off' } } })
         } else if (value === PaymentValue.AmazonPay) {
-            setPaymentMethodConfig({
-                ...paymentMethodConfig!,
-                amazon_pay: {
-                    display_preference: {
-                        preference: checked ? 'on' : 'off'
-                    }
-                }
-            })
+            setPaymentMethodConfig({ ...paymentMethodConfig!, amazon_pay: { display_preference: { preference: checked ? 'on' : 'off' } } })
         } else if (value === PaymentValue.CashApp) {
-            setPaymentMethodConfig({
-                ...paymentMethodConfig!,
-                cashapp: {
-                    display_preference: {
-                        preference: checked ? 'on' : 'off'
-                    }
-                }
-            })
+            setPaymentMethodConfig({ ...paymentMethodConfig!, cashapp: { display_preference: { preference: checked ? 'on' : 'off' } } })
         }
-        console.log(paymentMethodConfig);
-
     }
-    const [open, setOpen] = useState<boolean>(false)
-    console.log(bookingPolicy)
 
-    const [unitOfTime, setUnitOfTime] = useState<string>(policyData.book_ahead_value.split(' ')[1])
-    const [bookingAdvanceValue, setBookingAdvanceValue] = useState<number>(Number(policyData.book_ahead_value.split(' ')[0]))
-    const [bookingAdvanceError, setBookingAdvanceError] = useState<boolean>(false)
+    const interceptPaymentToggle = (value: PaymentValue, checked: boolean) => {
+        if (businessUser.plan_type === 'STARTER') {
+            setOpen(true)
+            return
+        }
+        handlePaymentMethodConfig(value, checked)
+    }
+
+    const isOnboarded = businessUser.completed_stripe_onboarding
+
     return (
-        <div>
-            <Modal open={open} onClose={() => setOpen(false)}>
-                <ModalDialog className="w-full md:w-[500px]">
-                    <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', textAlign: 'center', width: '100%' }}>
-                        Accept Express Payments
-                    </DialogTitle>
+        <div className="p-6 max-w-2xl space-y-8">
 
-                    <p style={{ marginTop: 8, lineHeight: 1.6 }}>
-                        Give clients a faster, one-tap checkout experience.
-                        Stylists using express payments see fewer abandoned bookings
-                        and a more premium brand feel.
-                    </p>
-
-                    <div style={{
-                        background: '#f6f6f6',
-                        padding: '12px 16px',
-                        borderRadius: 8,
-                        marginTop: 16,
-                        fontSize: 14
-                    }}>
-                        ✨ Included with <strong>AfroAllure Growth</strong>:
-                        <ul style={{ marginTop: 8, paddingLeft: 18, listStyleType: 'disc' }}>
-                            <li>Unlimited bookings</li>
-                            <li>Express Pay (Apple Pay, Google Pay, Cash App Pay, etc.)</li>
-                            <li>Advanced analytics</li>
-                            <li>Automated appointment reminders</li>
-                            <li>Drag & drop website builder</li>
-                        </ul>
+            {/* Upgrade Dialog */}
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle style={{ fontFamily: SERIF, fontSize: '1.35rem', color: BRAND.dark }}>
+                            You've reached your monthly limit
+                        </DialogTitle>
+                        <p className="text-sm mt-1" style={{ color: BRAND.warm }}>
+                            That's amazing growth. Upgrade to keep the momentum going.
+                        </p>
+                    </DialogHeader>
+                    <div className="space-y-2 py-1">
+                        {['Unlimited bookings', 'Apple Pay, Google Pay, Cash App Pay', 'Automated reminders', 'Detailed analytics', 'Drag & drop builder'].map(f => (
+                            <div key={f} className="flex items-center gap-2 text-sm" style={{ color: BRAND.dark }}>
+                                <Check size={13} style={{ color: BRAND.gold }} />{f}
+                            </div>
+                        ))}
                     </div>
-
-                    <DialogActions sx={{ marginTop: 2 }}>
-                        <Button
-                            variant="solid"
-                            color="primary"
-                            sx={{ fontWeight: 600 }}
-                        >
-                            Upgrade to Growth
-                        </Button>
-                        <Button
-                            variant="plain"
-                            color="neutral"
-                            onClick={() => setOpen(false)}
-                        >
-                            Maybe later
-                        </Button>
-                    </DialogActions>
-                </ModalDialog>
-            </Modal>
-            <div>
-                <div className='px-10 md:w-3/4 w-full'>
                     <div>
-                        <Title>Booking Settings</Title>
-                        <Caption>Customize your booking settings to control how clients book with you</Caption>
+                        <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>$25/month · 14-day free trial</p>
+                        <p className="text-xs mt-0.5" style={{ color: BRAND.warm }}>No credit card required</p>
                     </div>
-                    {/* Policy Options */}
-                    <Text className='font-semibold mt-5 mb-2 text-gray-300'>General</Text>
-                    <div className='flex flex-col gap-2'>
-                        <div className="flex flex-col gap-2 items-start">
-                            {!businessUser.completed_stripe_onboarding ? <Caption className='flex gap-1 items-center font-semibold'><Info size={16} />Finish <a className='underline' href={businessUser.current_onboarding_link!} target='_blank'>Monetization Onboarding</a> to enable deposits</Caption> : <></>}
-                            <JoyCheckbox checked={bookingPolicy.deposit.enabled} disabled={!businessUser.completed_stripe_onboarding} onChange={(e) => {
-                                setBookingPolicy({
-                                    ...bookingPolicy,
-                                    deposit: {
-                                        enabled: e.target.checked,
-                                        settings: bookingPolicy.deposit.settings
-                                    }
-                                })
-                            }} label="Require a deposit during booking" />
+                    <DialogFooter className="flex-col gap-2 sm:flex-col">
+                        <ShadcnButton onClick={handleUpgrade} disabled={upgradeLoading} className="w-full" style={{ backgroundColor: BRAND.red, color: 'white', border: 'none' }}>
+                            {upgradeLoading ? 'Loading…' : 'Start Free Trial'}
+                        </ShadcnButton>
+                        <ShadcnButton variant="ghost" onClick={() => setOpen(false)} className="w-full" style={{ color: BRAND.warm }}>
+                            Maybe Later
+                        </ShadcnButton>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
-                        </div>
-                        {bookingPolicy.deposit.enabled && <div className='ml-5 mt-3 flex flex-col gap-2 font-medium'>
-                            <div className="flex gap-2 items-center">
-                                <div>
-                                    <div className='flex gap-2 items-center mb-2'>
-                                        <JoyCheckbox checked={bookingPolicy.deposit.settings?.type === Type.PERCENT} onChange={(e) => {
-                                            let clone = { ...bookingPolicy }
-                                            if (bookingPolicy.deposit.settings?.type === Type.PERCENT) {
-                                                clone.deposit.settings.type = Type.FLAT
-                                            } else {
-                                                clone.deposit.settings.type = Type.PERCENT
-                                            }
-                                            setBookingPolicy(clone)
-                                        }} />
-                                        <Caption>Percent Rate</Caption>
-                                    </div>
-                                    <JoyInput className='w-1/2' onChange={(e) => {
-                                        setBookingPolicy({
-                                            ...bookingPolicy,
-                                            deposit: {
-                                                enabled: true,
-                                                settings: {
-                                                    value: parseInt(e.target.value),
-                                                    type: bookingPolicy.deposit.settings.type,
-                                                    subtraction: bookingPolicy.deposit.settings.subtraction
-                                                }
-                                            }
-                                        })
-                                    }} value={bookingPolicy.deposit.settings?.value} disabled={bookingPolicy.deposit.settings?.type !== Type.PERCENT} endDecorator={'%'} />
-                                </div>
-                            </div>
-                            <div className="flex gap-2 items-center">
-                                <div>
-                                    <div className='flex gap-2 items-center mb-2'>
-                                        <JoyCheckbox checked={bookingPolicy.deposit.settings?.type === Type.FLAT} onChange={(e) => {
-                                            let clone = { ...bookingPolicy };
-                                            if (bookingPolicy.deposit.settings?.type === Type.PERCENT) {
-                                                clone.deposit.settings.type = Type.FLAT
-                                            } else {
-                                                clone.deposit.settings.type = Type.PERCENT
-                                            }
-                                            setBookingPolicy(clone)
-                                        }} />
-                                        <Caption>Flat Rate</Caption>
-                                    </div>
-                                    <JoyInput className='w-1/2' disabled={bookingPolicy.deposit.settings?.type !== Type.FLAT} startDecorator={'$'} />
-                                </div>
-                            </div>
-
-                        </div>}
-                        <Text className='font-semibold mt-5 mb-2 text-gray-300'>Payment Processing Method Settings</Text>
-                        <div className='flex flex-col gap-2'>
-                            <div className='flex items-center gap-2'>
-                                <JoyCheckbox checked={true} disabled />
-                                <p>Allow clients to pay with debit/credit card</p>
-                            </div>
-                            <div className='mt-3'>
-                                {!businessUser.completed_stripe_onboarding ? <Caption>Complete <a className="underline font-medium" href={businessUser.current_onboarding_link!} target='_blank'>Monetization Onboarding</a> to select payment processing methods</Caption> : <Caption>Check the box(es) below to enable a payment processing method</Caption>
-                                }
-
-                            </div>
-                            <div className='flex items-center gap-2'>
-                                <JoyCheckbox disabled={!businessUser.completed_stripe_onboarding} checked={paymentMethodConfig !== null ? paymentMethodConfig!.google_pay.display_preference.preference === 'on' : false} onChange={(event) => {
-                                    if (businessUser.plan_type === 'STARTER') {
-                                        setOpen(true)
-                                        setPaymentMethodConfig({
-                                            ...paymentMethodConfig!,
-                                            google_pay: {
-                                                display_preference: {
-                                                    preference: 'off'
-                                                }
-                                            }
-                                        })
-                                    } else {
-                                        const checked = event.target.checked;
-                                        const value = event.target.value as PaymentValue
-                                        handlePaymentMethodConfig(value, checked)
-                                    }
-
-                                }} value={PaymentValue.GooglePay} />
-                                <Sheet variant='soft' sx={{ paddingX: 1 }}><img width="30" height="30" src="https://img.icons8.com/external-tal-revivo-color-tal-revivo/96/external-google-pay-is-the-fast-simple-way-to-pay-online-in-stores-and-more-logo-color-tal-revivo.png" alt="external-google-pay-is-the-fast-simple-way-to-pay-online-in-stores-and-more-logo-color-tal-revivo" /></Sheet>
-                                <p>Google Pay </p>
-
-                            </div>
-                            <div className='flex items-center gap-2'>
-                                <JoyCheckbox disabled={!businessUser.completed_stripe_onboarding} checked={paymentMethodConfig !== null ? paymentMethodConfig!.apple_pay.display_preference.preference === 'on' : false} onChange={(event) => {
-                                    if (businessUser.plan_type === 'STARTER') {
-                                        setOpen(true)
-                                        setPaymentMethodConfig({
-                                            ...paymentMethodConfig!,
-                                            apple_pay: {
-                                                display_preference: {
-                                                    preference: 'off'
-                                                }
-                                            }
-                                        })
-                                    } else {
-                                        const checked = event.target.checked;
-                                        const value = event.target.value as PaymentValue
-                                        handlePaymentMethodConfig(value, checked)
-                                    }
-                                }} value={PaymentValue.ApplePay} />
-                                <Sheet variant='soft' sx={{ paddingX: 1 }}><img width="30" height="30" src="https://img.icons8.com/ios-glyphs/90/apple-pay.png" alt="apple-pay" /></Sheet>                                <p>Apple Pay</p>
-                            </div>
-                            <div className='flex items-center gap-2'>
-                                <JoyCheckbox disabled={!businessUser.completed_stripe_onboarding} checked={paymentMethodConfig !== null ? paymentMethodConfig!.amazon_pay.display_preference.preference === 'on' : false} onChange={(event) => {
-                                    if (businessUser.plan_type === 'STARTER') {
-                                        setOpen(true)
-                                        setPaymentMethodConfig({
-                                            ...paymentMethodConfig!,
-                                            amazon_pay: {
-                                                display_preference: {
-                                                    preference: 'off'
-                                                }
-                                            }
-                                        })
-                                    } else {
-                                        const checked = event.target.checked;
-                                        const value = event.target.value as PaymentValue
-                                        handlePaymentMethodConfig(value, checked)
-                                    }
-                                }} value={PaymentValue.AmazonPay} />
-                                <Sheet variant='soft' sx={{ paddingX: 1 }}><img width="30" height="30" src="https://img.icons8.com/windows/32/amazon-pay.png" alt="amazon-pay" /></Sheet>
-                                <p>Amazon Pay</p>
-                            </div>
-                            <div className='flex items-center gap-2'>
-                                <JoyCheckbox disabled={!businessUser.completed_stripe_onboarding} checked={paymentMethodConfig !== null ? paymentMethodConfig!.cashapp.display_preference.preference === 'on' : false} value={PaymentValue.CashApp} onChange={(event) => {
-                                    if (businessUser.plan_type === 'STARTER') {
-                                        setOpen(true)
-                                        setPaymentMethodConfig({
-                                            ...paymentMethodConfig!,
-                                            cashapp: {
-                                                display_preference: {
-                                                    preference: 'off'
-                                                }
-                                            }
-                                        })
-                                    } else {
-                                        const checked = event.target.checked;
-                                        const value = event.target.value as PaymentValue
-                                        handlePaymentMethodConfig(value, checked)
-                                    }
-                                }} />
-                                <Sheet variant='soft' sx={{ paddingX: 1 }}><img width="30" height="30" src="https://img.icons8.com/fluency/48/cash-app--v1.png" alt="cash-app--v1" /></Sheet>
-                                <p>Cash App Pay</p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <Text className='font-semibold mt-5 mb-2 text-gray-300'>Appointments</Text>
-                            <div className='flex items-center gap-5'>
-                                <Text>Clients can <span className='font-bold'>reschedule</span></Text>
-                                <Input variant='bottomOutlined' className='w-[20px]' value={bookingPolicy.rescheduleLimit} onChange={(e) => {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        rescheduleLimit: e.target.value
-                                    })
-                                }} />
-                                <Text>times before having to repay their deposit</Text>
-                            </div>
-                            <div className='flex items-center gap-5'>
-                                <Text>Clients can't <span className='font-bold'>reschedule</span></Text>
-                                <Input variant='bottomOutlined' className='w-[20px]' value={bookingPolicy.rescheduleDayLimit} onChange={(e) => {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        rescheduleDayLimit: e.target.value
-                                    })
-                                }} />
-                                <Text>days before their appointment</Text>
-                            </div>
-                            <div className='flex items-center gap-5'>
-                                <Text>Clients can't <span className='font-bold'>cancel</span></Text>
-                                <Input variant='bottomOutlined' className='w-[20px]' value={bookingPolicy.cancelDayLimit} onChange={(e) => {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        cancelDayLimit: e.target.value
-                                    })
-                                }} />
-                                <Text>days before their appointment</Text>
-                            </div>
-                        </div>
-                        <div>
-                            <Text className='font-semibold mt-5 mb-2 text-gray-300'>Booking Site</Text>
-                            <div className='mb-5'>
-                                <Label>Booking Ahead</Label>
-                                <Caption>Determine how far out clients can book from the beginning of the month</Caption>
-                                <FormControl error={bookingAdvanceError}>
-                                    <JoyInput
-                                        value={bookingAdvanceValue}
-                                        type='number'
-                                        onChange={(e) => {
-                                            if (unitOfTime === 'month') {
-                                                if (Number(e.target.value) < 1) {
-                                                    setBookingAdvanceError(true)
-                                                } else {
-                                                    setBookingAdvanceError(false)
-                                                }
-                                            } else if (unitOfTime === 'week') {
-                                                if (Number(e.target.value) < 4) {
-                                                    setBookingAdvanceError(true)
-                                                } else {
-                                                    setBookingAdvanceError(false)
-                                                }
-                                            } else {
-                                                if (Number(e.target.value) < 28) {
-                                                    setBookingAdvanceError(true)
-                                                } else {
-                                                    setBookingAdvanceError(false)
-                                                }
-                                            }
-                                            setBookingAdvanceValue(Number(e.target.value))
-                                        }}
-                                        endDecorator={
-                                            <React.Fragment>
-                                                <Divider orientation="vertical" />
-                                                <Select
-                                                    variant="plain"
-                                                    value={unitOfTime}
-                                                    onChange={(_, value) => {
-                                                        setUnitOfTime(value!)
-                                                        if (value === 'month') {
-                                                            setBookingAdvanceValue(1)
-                                                        } else if (value === 'day') {
-                                                            setBookingAdvanceValue(28)
-                                                        } else {
-                                                            setBookingAdvanceValue(4)
-                                                        }
-                                                        setBookingAdvanceError(false)
-                                                    }}
-                                                    slotProps={{
-                                                        listbox: {
-                                                            variant: 'outlined',
-                                                        },
-                                                    }}
-                                                    sx={{ mr: -1.5, '&:hover': { bgcolor: 'transparent' } }}
-                                                >
-                                                    <Option value="month">month(s)</Option>
-                                                    <Option value="day">days</Option>
-                                                    <Option value="week">weeks</Option>
-                                                </Select>
-                                            </React.Fragment>
-                                        }
-                                        sx={{ width: 300 }}
-                                    />
-                                    {bookingAdvanceError ? <FormHelperText>
-                                        <Info size={16} />
-                                        You <b>MUST</b> allow clients to book at least one month, four weeks, or 28 days in advance
-                                    </FormHelperText> : <></>}
-                                </FormControl>
-                            </div>
-                            <div className='mb-5'>
-                                <Label>Read before booking</Label>
-                                <Caption>Let clients know anything else they need to know before beginning to book with you</Caption>
-                                <Textarea className="lg:w-1/2 w-full mt-2" value={bookingPolicy.readBeforeBooking} onChange={(e) => {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        readBeforeBooking: e.target.value
-                                    })
-                                }} />
-                            </div>
-
-                            <div className='mb-5'>
-                                <Label>Refund/Cancellation Policy</Label>
-                                <Caption>Business's refund and cancellation policy, if any</Caption>
-                                <Textarea className="lg:w-1/2 w-full mt-2" value={bookingPolicy.refundPolicy} onChange={(e) => {
-                                    setBookingPolicy({
-                                        ...bookingPolicy,
-                                        refundPolicy: e.target.value
-                                    })
-                                }} />
-                            </div>
-
-                        </div>
-
-                    </div>
-                    <Button loading={isLoading} sx={{
-                        marginBottom: 5
-                    }} onClick={async () => {
-                        setIsLoading(true)
-                        let clone = { ...bookingPolicy }
-                        clone.bookAheadValue = bookingAdvanceValue.toString() + " " + unitOfTime
-                        const res = await handleBookingSettings(clone, businessUser.business_id, paymentConfigId!, paymentMethodConfig!, { ...paymentConfig })
-                        if (res === false) {
-                            console.log('Error: Stripe onboarding must be completed before enabling deposits');
-                        }
-                        setIsLoading(false)
-                    }}>
-                        Save Changes
-                    </Button>
-                </div>
+            {/* Page header */}
+            <div>
+                <h1 className="text-2xl font-semibold" style={{ fontFamily: SERIF, color: BRAND.dark }}>Booking Settings</h1>
+                <p className="text-sm mt-1" style={{ color: BRAND.warm }}>Customize how clients book with you</p>
             </div>
+
+            {/* Deposits */}
+            <Section label="Deposits">
+                {!isOnboarded && (
+                    <a href={businessUser.current_onboarding_link!} target="_blank" className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3" style={{ backgroundColor: 'rgba(201,151,74,0.08)', color: BRAND.gold }}>
+                        <Info size={13} />
+                        Complete Monetization Onboarding to enable deposits
+                    </a>
+                )}
+                <SettingRow
+                    label="Require a deposit during booking"
+                    description="Clients will be charged a deposit when they book"
+                >
+                    <Checkbox
+                        checked={bookingPolicy.deposit.enabled}
+                        disabled={!isOnboarded}
+                        onCheckedChange={(checked: boolean) => setBookingPolicy({ ...bookingPolicy, deposit: { ...bookingPolicy.deposit, enabled: checked } })}
+                    />
+                </SettingRow>
+
+                {bookingPolicy.deposit.enabled && (
+                    <div className="mt-4 pl-4 border-l-2 space-y-4" style={{ borderColor: BRAND.sand }}>
+                        <p className="text-xs font-medium" style={{ color: BRAND.warm }}>Deposit type</p>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    checked={bookingPolicy.deposit.settings?.type === Type.PERCENT}
+                                    onChange={() => setBookingPolicy({ ...bookingPolicy, deposit: { ...bookingPolicy.deposit, settings: { ...bookingPolicy.deposit.settings, type: Type.PERCENT } } })}
+                                    className="accent-current"
+                                    style={{ accentColor: BRAND.gold }}
+                                />
+                                <span className="text-sm" style={{ color: BRAND.dark }}>Percent rate</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    checked={bookingPolicy.deposit.settings?.type === Type.FLAT}
+                                    onChange={() => setBookingPolicy({ ...bookingPolicy, deposit: { ...bookingPolicy.deposit, settings: { ...bookingPolicy.deposit.settings, type: Type.FLAT } } })}
+                                    style={{ accentColor: BRAND.gold }}
+                                />
+                                <span className="text-sm" style={{ color: BRAND.dark }}>Flat rate</span>
+                            </label>
+                        </div>
+                        {bookingPolicy.deposit.settings?.type === Type.PERCENT && (
+                            <div className="flex items-center gap-2">
+                                <BrandInput
+                                    type="number"
+                                    value={bookingPolicy.deposit.settings?.value}
+                                    onChange={(e) => setBookingPolicy({ ...bookingPolicy, deposit: { enabled: true, settings: { value: parseInt(e.target.value), type: Type.PERCENT, subtraction: bookingPolicy.deposit.settings.subtraction } } })}
+                                    className="w-24"
+                                />
+                                <span className="text-sm" style={{ color: BRAND.warm }}>%</span>
+                            </div>
+                        )}
+                        {bookingPolicy.deposit.settings?.type === Type.FLAT && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm" style={{ color: BRAND.warm }}>$</span>
+                                <BrandInput type="number" className="w-24" />
+                            </div>
+                        )}
+                    </div>
+                )}
+            </Section>
+
+            {/* Payment Methods */}
+            <Section label="Payment Methods">
+                {!isOnboarded && (
+                    <a href={businessUser.current_onboarding_link!} target="_blank" className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3" style={{ backgroundColor: 'rgba(201,151,74,0.08)', color: BRAND.gold }}>
+                        <Info size={13} />
+                        Complete Monetization Onboarding to enable payment methods
+                    </a>
+                )}
+                <div className="space-y-2">
+                    <PaymentMethodRow
+                        logo="https://img.icons8.com/color/48/mastercard-logo.png"
+                        name="Debit / Credit Card"
+                        checked={true}
+                        disabled={true}
+                        onChange={() => {}}
+                        locked={false}
+                    />
+                    <PaymentMethodRow
+                        logo="https://img.icons8.com/external-tal-revivo-color-tal-revivo/96/external-google-pay-is-the-fast-simple-way-to-pay-online-in-stores-and-more-logo-color-tal-revivo.png"
+                        name="Google Pay"
+                        checked={paymentMethodConfig?.google_pay.display_preference.preference === 'on'}
+                        disabled={!isOnboarded}
+                        onChange={(checked) => interceptPaymentToggle(PaymentValue.GooglePay, checked)}
+                        locked={businessUser.plan_type === 'STARTER'}
+                    />
+                    <PaymentMethodRow
+                        logo="https://img.icons8.com/ios-glyphs/90/apple-pay.png"
+                        name="Apple Pay"
+                        checked={paymentMethodConfig?.apple_pay.display_preference.preference === 'on'}
+                        disabled={!isOnboarded}
+                        onChange={(checked) => interceptPaymentToggle(PaymentValue.ApplePay, checked)}
+                        locked={businessUser.plan_type === 'STARTER'}
+                    />
+                    <PaymentMethodRow
+                        logo="https://img.icons8.com/windows/32/amazon-pay.png"
+                        name="Amazon Pay"
+                        checked={paymentMethodConfig?.amazon_pay.display_preference.preference === 'on'}
+                        disabled={!isOnboarded}
+                        onChange={(checked) => interceptPaymentToggle(PaymentValue.AmazonPay, checked)}
+                        locked={businessUser.plan_type === 'STARTER'}
+                    />
+                    <PaymentMethodRow
+                        logo="https://img.icons8.com/fluency/48/cash-app--v1.png"
+                        name="Cash App Pay"
+                        checked={paymentMethodConfig?.cashapp.display_preference.preference === 'on'}
+                        disabled={!isOnboarded}
+                        onChange={(checked) => interceptPaymentToggle(PaymentValue.CashApp, checked)}
+                        locked={businessUser.plan_type === 'STARTER'}
+                    />
+                </div>
+            </Section>
+
+            {/* Appointments */}
+            <Section label="Appointments">
+                <div className="space-y-4">
+                    <InlineNumberRule
+                        prefix="Clients can reschedule"
+                        suffix="times before having to repay their deposit"
+                        value={bookingPolicy.rescheduleLimit}
+                        onChange={(v) => setBookingPolicy({ ...bookingPolicy, rescheduleLimit: v })}
+                    />
+                    <InlineNumberRule
+                        prefix="Clients can't reschedule within"
+                        suffix="days of their appointment"
+                        value={bookingPolicy.rescheduleDayLimit}
+                        onChange={(v) => setBookingPolicy({ ...bookingPolicy, rescheduleDayLimit: v })}
+                    />
+                    <InlineNumberRule
+                        prefix="Clients can't cancel within"
+                        suffix="days of their appointment"
+                        value={bookingPolicy.cancelDayLimit}
+                        onChange={(v) => setBookingPolicy({ ...bookingPolicy, cancelDayLimit: v })}
+                    />
+                </div>
+            </Section>
+
+            {/* Booking Site */}
+            <Section label="Booking Site">
+                <div className="space-y-6">
+                    <div>
+                        <FieldLabel>Booking ahead</FieldLabel>
+                        <FieldCaption>How far out clients can book from today</FieldCaption>
+                        <CssVarsProvider>
+                            <FormControl error={bookingAdvanceError} className="mt-2">
+                                <JoyInput
+                                    value={bookingAdvanceValue}
+                                    type="number"
+                                    onChange={(e) => {
+                                        const v = Number(e.target.value)
+                                        const min = unitOfTime === 'month' ? 1 : unitOfTime === 'week' ? 4 : 28
+                                        setBookingAdvanceError(v < min)
+                                        setBookingAdvanceValue(v)
+                                    }}
+                                    endDecorator={
+                                        <React.Fragment>
+                                            <Divider orientation="vertical" />
+                                            <Select
+                                                variant="plain"
+                                                value={unitOfTime}
+                                                onChange={(_, value) => {
+                                                    setUnitOfTime(value!)
+                                                    setBookingAdvanceValue(value === 'month' ? 1 : value === 'day' ? 28 : 4)
+                                                    setBookingAdvanceError(false)
+                                                }}
+                                                slotProps={{ listbox: { variant: 'outlined' } }}
+                                                sx={{ mr: -1.5, '&:hover': { bgcolor: 'transparent' } }}
+                                            >
+                                                <Option value="month">month(s)</Option>
+                                                <Option value="week">weeks</Option>
+                                                <Option value="day">days</Option>
+                                            </Select>
+                                        </React.Fragment>
+                                    }
+                                    sx={{ width: 260 }}
+                                />
+                                {bookingAdvanceError && (
+                                    <FormHelperText>
+                                        <Info size={14} />
+                                        Must allow at least 1 month, 4 weeks, or 28 days
+                                    </FormHelperText>
+                                )}
+                            </FormControl>
+                        </CssVarsProvider>
+                    </div>
+
+                    <div>
+                        <FieldLabel>Read before booking</FieldLabel>
+                        <FieldCaption>Shown to clients before they start booking — policies, prep instructions, etc.</FieldCaption>
+                        <BrandTextarea
+                            value={bookingPolicy.readBeforeBooking}
+                            onChange={(e) => setBookingPolicy({ ...bookingPolicy, readBeforeBooking: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <FieldLabel>Refund &amp; Cancellation Policy</FieldLabel>
+                        <FieldCaption>Your policy for refunds and cancellations, if any</FieldCaption>
+                        <BrandTextarea
+                            value={bookingPolicy.refundPolicy}
+                            onChange={(e) => setBookingPolicy({ ...bookingPolicy, refundPolicy: e.target.value })}
+                        />
+                    </div>
+                </div>
+            </Section>
+
+            {/* Save */}
+            <button
+                disabled={isLoading || bookingAdvanceError}
+                onClick={async () => {
+                    setIsLoading(true)
+                    const clone = { ...bookingPolicy, bookAheadValue: `${bookingAdvanceValue} ${unitOfTime}` }
+                    const res = await handleBookingSettings(clone, businessUser.business_id, paymentConfigId!, paymentMethodConfig!, { ...paymentConfig })
+                    if (res === false) console.log('Stripe onboarding must be completed before enabling deposits')
+                    setIsLoading(false)
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-opacity disabled:opacity-50"
+                style={{ backgroundColor: BRAND.dark, color: 'white' }}
+            >
+                {isLoading && <CssVarsProvider><CircularProgress size="sm" sx={{ '--CircularProgress-trackColor': 'rgba(255,255,255,0.3)', '--CircularProgress-progressColor': 'white' }} /></CssVarsProvider>}
+                {isLoading ? 'Saving…' : 'Save Changes'}
+            </button>
         </div>
     )
+}
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <div className="rounded-2xl p-5 border" style={{ borderColor: BRAND.sand, backgroundColor: 'white' }}>
+            <p className="text-xs font-semibold tracking-widest mb-4" style={{ color: BRAND.gold }}>{label.toUpperCase()}</p>
+            {children}
+        </div>
+    )
+}
+
+function SettingRow({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) {
+    return (
+        <div className="flex items-start justify-between gap-4">
+            <div>
+                <p className="text-sm font-medium" style={{ color: BRAND.dark }}>{label}</p>
+                {description && <p className="text-xs mt-0.5" style={{ color: BRAND.warm }}>{description}</p>}
+            </div>
+            {children}
+        </div>
+    )
+}
+
+function PaymentMethodRow({ logo, name, checked, disabled, onChange, locked }: {
+    logo: string; name: string; checked: boolean; disabled: boolean; onChange: (checked: boolean) => void; locked: boolean
+}) {
+    return (
+        <div
+            className="flex items-center justify-between px-4 py-3 rounded-xl border"
+            style={{ borderColor: BRAND.sand, backgroundColor: checked ? 'rgba(201,151,74,0.04)' : 'white' }}
+        >
+            <div className="flex items-center gap-3">
+                <div className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ backgroundColor: BRAND.cream }}>
+                    <img width={22} height={22} src={logo} alt={name} />
+                </div>
+                <span className="text-sm font-medium" style={{ color: BRAND.dark }}>{name}</span>
+                {locked && (
+                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(201,151,74,0.1)', color: BRAND.gold }}>
+                        <Lock size={10} />Growth
+                    </span>
+                )}
+            </div>
+            <Checkbox
+                checked={checked}
+                disabled={disabled}
+                onCheckedChange={onChange}
+            />
+        </div>
+    )
+}
+
+function InlineNumberRule({ prefix, suffix, value, onChange }: { prefix: string; suffix: string; value: string; onChange: (v: string) => void }) {
+    return (
+        <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm" style={{ color: BRAND.dark }}>{prefix}</span>
+            <input
+                type="number"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-14 text-center rounded-lg border px-2 py-1 text-sm font-medium focus:outline-none"
+                style={{ borderColor: BRAND.sand, color: BRAND.dark, backgroundColor: BRAND.cream }}
+            />
+            <span className="text-sm" style={{ color: BRAND.dark }}>{suffix}</span>
+        </div>
+    )
+}
+
+function BrandInput({ className = '', ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+    return (
+        <input
+            {...props}
+            className={`rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${className}`}
+            style={{ borderColor: BRAND.sand, color: BRAND.dark, backgroundColor: BRAND.cream }}
+        />
+    )
+}
+
+function BrandTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+    return (
+        <textarea
+            {...props}
+            rows={4}
+            className="mt-2 w-full rounded-xl border px-3 py-2 text-sm focus:outline-none resize-none"
+            style={{ borderColor: BRAND.sand, color: BRAND.dark, backgroundColor: BRAND.cream }}
+        />
+    )
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+    return <p className="text-sm font-medium" style={{ color: BRAND.dark }}>{children}</p>
+}
+
+function FieldCaption({ children }: { children: React.ReactNode }) {
+    return <p className="text-xs mt-0.5" style={{ color: BRAND.warm }}>{children}</p>
 }

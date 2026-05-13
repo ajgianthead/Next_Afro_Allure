@@ -371,6 +371,7 @@ export type Database = {
           stripe_acc_id: string | null
           stripe_customer_id: string | null
           updated_at: string
+          upgrade_prompt_dismissed_at: string | null
           url_name: string
           user_id: string
         }
@@ -397,6 +398,7 @@ export type Database = {
           stripe_acc_id?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
+          upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
         }
@@ -423,6 +425,7 @@ export type Database = {
           stripe_acc_id?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
+          upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
         }
@@ -1232,6 +1235,54 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_booking_performance: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_bookings_per_week: number
+          bookings_by_day: Json
+          bookings_by_hour: Json
+          busiest_day_of_week: string
+          cancellation_rate: number
+          completion_rate: number
+          no_show_rate: number
+          total_bookings_last_month: number
+          total_bookings_this_month: number
+        }[]
+      }
+      get_client_analytics: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_days_between_visits: number
+          average_lifetime_value: number
+          average_visits_per_client: number
+          client_growth_percent: number
+          new_clients_last_month: number
+          new_clients_this_month: number
+          one_time_clients: number
+          retention_rate: number
+          returning_clients: number
+          total_unique_clients: number
+        }[]
+      }
+      get_client_list: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_days_between_visits: number
+          average_spend_per_visit: number
+          client_email: string
+          client_name: string
+          days_since_last_visit: number
+          first_visit: string
+          is_at_risk: boolean
+          is_due_soon: boolean
+          is_loyal: boolean
+          last_visit: string
+          most_booked_service: string
+          preferred_day: string
+          total_spent: number
+          total_visits: number
+        }[]
+      }
       get_dashboard_growth: {
         Args: { p_stylist_id: string }
         Returns: {
@@ -1241,6 +1292,80 @@ export type Database = {
           revenue_growth: number
           revenue_last_month: number
           revenue_this_month: number
+        }[]
+      }
+      get_financial_summary: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_monthly_revenue: number
+          months_active: number
+          net_earnings_all_time: number
+          net_earnings_this_year: number
+          total_deposits_all_time: number
+          total_deposits_this_year: number
+          total_earned_all_time: number
+          total_earned_this_year: number
+          total_outstanding_balances: number
+          total_platform_fees_all_time: number
+          total_platform_fees_this_year: number
+        }[]
+      }
+      get_growth_trends: {
+        Args: { p_business_id: string }
+        Returns: {
+          best_growth_month: string
+          bookings_last_month: number
+          bookings_mom_growth: number
+          bookings_this_month: number
+          clients_last_month: number
+          clients_mom_growth: number
+          clients_this_month: number
+          on_pace_vs_last_month: string
+          projected_month_revenue: number
+          revenue_3month_avg: number
+          revenue_last_month: number
+          revenue_mom_growth: number
+          revenue_this_month: number
+        }[]
+      }
+      get_revenue_by_month: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_ticket: number
+          booking_count: number
+          month: string
+          month_label: string
+          revenue: number
+        }[]
+      }
+      get_revenue_overview: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_per_appointment: number
+          best_month_amount: number
+          best_month_date: string
+          revenue_growth_percent: number
+          total_deposits_collected: number
+          total_last_12_months: number
+          total_last_3_months: number
+          total_last_month: number
+          total_outstanding: number
+          total_this_month: number
+          total_this_year: number
+        }[]
+      }
+      get_service_analytics: {
+        Args: { p_business_id: string }
+        Returns: {
+          addon_revenue: number
+          average_price: number
+          cancellation_count: number
+          repeat_client_count: number
+          revenue_percent: number
+          service_id: string
+          service_name: string
+          total_bookings: number
+          total_revenue: number
         }[]
       }
       gettransactionid: { Args: never; Returns: unknown }

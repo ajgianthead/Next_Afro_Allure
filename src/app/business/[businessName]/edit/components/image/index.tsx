@@ -6,8 +6,9 @@ import { imageProps } from "../defaultStyles"
 export const ImageComponent: any = {
     resolveFields: imageResolvedFields,
     defaultProps: imageProps,
-    render: ({ url, width, objectFit, height: cssHeight, aspectRatio: imgAspectRatio, borderBottom, borderColor, borderExpanded, borderLeft, borderRadius, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusExpanded, borderRadiusTopLeft, borderRadiusTopRight, borderRight, borderTop, borderType, borderWidth, bottom, positionType, right, left, top }: any) => {
+    render: ({ url, width, objectFit, height: cssHeight, aspectRatio: imgAspectRatio, borderBottom, borderColor, borderExpanded, borderLeft, borderRadius, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusExpanded, borderRadiusTopLeft, borderRadiusTopRight, borderRight, borderTop, borderType, borderWidth, bottom, positionType, right, left, top, mobileVisibility }: any) => {
         return (
+            <div className={mobileVisibility === 'hide' ? 'hidden md:block' : ''}>
             <div style={{ display: 'block', width: `${width}%`, lineHeight: 0 }}>
                 <img
                     src={url ?? ''}
@@ -37,6 +38,7 @@ export const ImageComponent: any = {
                         left,
                     }}
                 />
+            </div>
             </div>
         )
     }

@@ -1,31 +1,11 @@
 "use client"
-import Input from '@components/Input'
-import { Caption, Text, Title } from '@tailus-ui/typography'
 import Image from 'next/image'
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
-import Stepper from '@mui/joy/Stepper';
-import Step from '@mui/joy/Step';
-import StepButton from '@mui/joy/StepButton';
-import StepIndicator from '@mui/joy/StepIndicator';
-import { ArrowLeftCircleIcon, Check } from 'lucide-react'
-import Card from '@tailus-ui/Card'
-import Separator from "@tailus-ui/Separator"
+import { ArrowLeftCircleIcon, Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider'
-import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
-import Skeleton from '@mui/joy/Skeleton';
 import { DateTime } from 'luxon'
-import { getAvailability, getUnavailability } from '../../../app/business/[businessName]/actions'
 import { createAppointmentAction } from '@/features/shared/appointments/actions'
-import { getSlots } from "slot-calculator"
-import { useParams, useRouter } from 'next/navigation'
-import CircularProgress from '@mui/joy/CircularProgress'
-import Dialog from '@components/Dialog';
-import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { BookingData, BookingWrapper } from '@/features/automatedBooking/context/BookingDataContext';
-import { Card as MUICard, Button, Checkbox, Snackbar, Modal, DialogContent, DialogTitle, ModalClose, Typography, ModalDialog, Divider } from '@mui/joy';
 import { BusinessType } from '@/lib/businessUser/BusinessUser';
 import { AvailabilityType } from '@/features/availability/server/models/Availability';
 import { AppointmentType } from '@/features/manualBooking/server/models/Appointment';
@@ -37,39 +17,115 @@ import { ClientInfo } from './ClientInfomation';
 import { DepositPayment } from './DepositPayment';
 import { useBooking } from '../hooks/useBookingData'
 import { createBookingSessionAction, updateDateTimeAction, updateClientInfoAction, getBookingSessionAction } from '../server'
+import { BookingStepper } from './BookingStepper'
+import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
+import { useRouter } from 'next/navigation'
 
-export function BookClient({ businessData, availabilities, appointments, services, policy }: {
+const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
+
+export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData }: {
     businessData: BusinessType,
     availabilities: AvailabilityType[],
     appointments: AppointmentType[],
     services: ServiceType[],
-    policy: BusinessPolicyType
+    policy: BusinessPolicyType,
+    bookingLimitReached?: boolean
+    themeData?: BookingTheme | null
 }) {
-    const params = useParams();
-    // useEffect(() => {
-    //     if (typeof window !== 'undefined' && window.gtag) {
-    //         window.gtag('event', 'business_page_view', {
-    //             business_slug: businessData.urlName, // or dynamically pulled from the route
-    //             page_type: 'book',
-    //         });
-    //     }
-    // }, []);
-    return <BookingWrapper businessData={businessData} availabilities={availabilities} appointments={appointments} services={services} policy={policy}>
-        <Book businessName={businessData.urlName} />
-    </BookingWrapper>
+    return (
+        <BookingWrapper businessData={businessData} availabilities={availabilities} appointments={appointments} services={services} policy={policy}>
+            <Book businessName={businessData.urlName} businessData={businessData} bookingLimitReachedInitial={bookingLimitReached} themeData={themeData} />
+        </BookingWrapper>
+    )
 }
 
+function BookingFullMessage({ businessData }: { businessData: BusinessType }) {
+    return (
+        <div className="flex flex-col items-center text-center py-16 px-6 max-w-md mx-auto">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-5" style={{ backgroundColor: 'var(--t-bg)' }}>
+                <ArrowLeftCircleIcon size={22} style={{ color: 'var(--t-accent)' }} />
+            </div>
+            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--t-text)' }}>
+                This stylist&apos;s booking slots are currently full for this month
+            </h2>
+            <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--t-muted)' }}>
+                Please reach out to them directly to get on their waitlist.
+            </p>
+            {(businessData as any).email && (
+                <a
+                    href={`mailto:${(businessData as any).email}`}
+                    className="text-sm font-medium underline-offset-2 hover:underline"
+                    style={{ color: 'var(--t-accent)' }}
+                >
+                    {(businessData as any).email}
+                </a>
+            )}
+        </div>
+    )
+}
 
-const Book = ({ businessName }: { businessName: string }) => {
+function BookingCheckbox({
+    id,
+    checked,
+    onChange,
+    children,
+}: {
+    id: string
+    checked: boolean
+    onChange: (v: boolean) => void
+    children: React.ReactNode
+}) {
+    return (
+        <label htmlFor={id} className="flex items-start gap-3 cursor-pointer select-none">
+            <button
+                id={id}
+                type="button"
+                role="checkbox"
+                aria-checked={checked}
+                onClick={() => onChange(!checked)}
+                className="shrink-0 flex items-center justify-center rounded-md transition-colors mt-0.5"
+                style={{
+                    width: 18, height: 18,
+                    border: checked ? 'none' : '1.5px solid var(--t-primary)',
+                    backgroundColor: checked ? 'var(--t-primary)' : 'transparent',
+                }}
+            >
+                {checked && <Check size={11} color="var(--t-primary-text)" strokeWidth={3} />}
+            </button>
+            <span className="text-xs leading-relaxed" style={{ color: 'var(--t-muted)' }}>
+                {children}
+            </span>
+        </label>
+    )
+}
+
+const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeData }: {
+    businessName: string
+    businessData: BusinessType
+    bookingLimitReachedInitial?: boolean
+    themeData?: BookingTheme | null
+}) => {
+    const theme = { ...DEFAULT_BOOKING_THEME, ...themeData }
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [activeStep, setActiveStep] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [agreedAfroAllure, setAgreedAfroAllure] = useState<boolean>(false)
     const [agreedBusiness, setAgreedBusiness] = useState<boolean>(false)
+    const [bookingLimitReached, setBookingLimitReached] = useState<boolean>(bookingLimitReachedInitial ?? false)
+    const [submitting, setSubmitting] = useState<boolean>(false)
+    const [error, setError] = useState<string>("")
+    const [openErrorDialog, setOpenErrorDialog] = useState<boolean>(false)
+    const [rbbOpen, setRbbOpen] = useState(false)
+    const [rbbAccepted, setRbbAccepted] = useState<boolean>(false)
+    const router = useRouter()
 
     const steps = !data.booking_policy ? [] : data.booking_policy.deposit.enabled
-        ? ["Select a service", "Pick a date and a time", "Contact Information", "Pay Booking Deposit"]
-        : ["Select a service", "Pick a date and a time", "Contact Information"]
+        ? ["Service", "Date & Time", "Contact", "Deposit"]
+        : ["Service", "Date & Time", "Contact"]
+
+    useEffect(() => {
+        setRbbOpen(data.booking_policy?.readBeforeBooking?.length > 0)
+    }, [data.booking_policy])
 
     useEffect(() => {
         const sessionId = typeof window !== 'undefined' ? localStorage.getItem('bookingSessionId') : null
@@ -113,14 +169,13 @@ const Book = ({ businessName }: { businessName: string }) => {
             default: return null
         }
     }
-    const [submitting, setSubmitting] = useState<boolean>(false)
-    const router = useRouter()
+
     const handleSubmit = async () => {
         const { firstName, lastName, email, phoneNumber } = data.clientInfo
         if (!firstName || !lastName || !email || !phoneNumber) {
             setError("Please fill in all contact information fields")
             setOpenErrorDialog(true)
-            return
+            return false
         }
         await createAppointmentAction({
             business: data.business_id,
@@ -139,15 +194,9 @@ const Book = ({ businessName }: { businessName: string }) => {
         })
         return true
     }
-    const [error, setError] = useState<string>("")
-    const [openErrorDialog, setOpenErrorDialog] = useState<boolean>(false)
-    const [rbbOpen, setRbbOpen] = useState(data.booking_policy.readBeforeBooking.length > 0)
-    const [accepted, setAccepted] = useState<boolean>(false)
 
     const handleSessionUpdates = async () => {
-        // This function can be used to handle any updates to the booking session after each step
         if (activeStep === 0 && !data.bookingSession && data.selectedService.length > 0) {
-            // Call API to update selected service in session
             const session = await createBookingSessionAction(data.business_id, data.selectedService)
             localStorage.setItem('bookingSessionId', session.id!)
             setData((prev) => ({
@@ -168,7 +217,6 @@ const Book = ({ businessName }: { businessName: string }) => {
                 }
             }))
         } else if (activeStep === 1 && data.bookingSession && Object.values(data.selectedDateTime).length > 0) {
-            // Call API to update selected date and time in session
             const updatedSession = await updateDateTimeAction(data.bookingSession.id!, `${data.selectedDateTime.start!}`)
             setData((prev) => ({
                 ...prev,
@@ -195,123 +243,194 @@ const Book = ({ businessName }: { businessName: string }) => {
         await handleSessionUpdates()
         setActiveStep((prev) => Math.min(prev + 1, steps.length - 1))
     }
-    console.log(data);
+
+    const canGoNext =
+        (activeStep === 0 && data.selectedService.length > 0) ||
+        (activeStep === 1 && Object.values(data.selectedDateTime).filter(Boolean).length > 0) ||
+        (activeStep === 2 && data.clientInfo.firstName.length > 0 && data.clientInfo.lastName.length > 0 && data.clientInfo.email.length > 0 && data.clientInfo.phoneNumber.length > 0)
+
+    const themeVars = {
+        '--t-bg': theme.backgroundColor,
+        '--t-card': theme.cardColor,
+        '--t-border': theme.borderColor,
+        '--t-primary': theme.primaryColor,
+        '--t-primary-text': theme.primaryTextColor,
+        '--t-text': theme.textColor,
+        '--t-muted': theme.mutedColor,
+        '--t-accent': theme.accentColor,
+        '--t-btn-r': theme.buttonRadius,
+        '--t-input-r': theme.inputRadius,
+        '--t-card-r': theme.cardRadius,
+    } as React.CSSProperties
 
     return (
-        <div className='flex justify-center items-center flex-col'>
-            <Modal
-                open={rbbOpen}
-
-            >
-                <ModalDialog className="w-md rounded-2xl p-0 overflow-hidden">
-                    {/* Header */}
-                    <div className="p-5 border-b">
-                        <DialogTitle className="text-lg font-semibold">
-                            Please Read Before Booking
-                        </DialogTitle>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Make sure you understand the policies before continuing
-                        </p>
+        <div style={{ ...themeVars, backgroundColor: 'var(--t-bg)', minHeight: '100dvh' }}>
+            {/* Read Before Booking modal */}
+            {rbbOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                    style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+                >
+                    <div
+                        className="w-full max-w-md overflow-hidden"
+                        style={{
+                            backgroundColor: 'var(--t-card)',
+                            border: '1px solid var(--t-border)',
+                            borderRadius: 'var(--t-card-r)',
+                        }}
+                    >
+                        <div className="p-5" style={{ borderBottom: '1px solid var(--t-border)' }}>
+                            <h2 className="text-base font-semibold" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>
+                                Please Read Before Booking
+                            </h2>
+                            <p className="text-sm mt-1" style={{ color: 'var(--t-muted)' }}>
+                                Make sure you understand the policies before continuing
+                            </p>
+                        </div>
+                        <div className="p-5 max-h-60 overflow-y-auto">
+                            <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--t-text)' }}>
+                                {data.booking_policy?.readBeforeBooking}
+                            </p>
+                        </div>
+                        <div className="p-4 flex items-center justify-between gap-3" style={{ borderTop: '1px solid var(--t-border)' }}>
+                            <BookingCheckbox
+                                id="rbb-accept"
+                                checked={rbbAccepted}
+                                onChange={setRbbAccepted}
+                            >
+                                I understand and agree
+                            </BookingCheckbox>
+                            <button
+                                disabled={!rbbAccepted}
+                                onClick={() => setRbbOpen(false)}
+                                className="text-sm font-medium px-4 py-2 transition-opacity hover:opacity-90 disabled:opacity-40"
+                                style={{
+                                    backgroundColor: 'var(--t-primary)',
+                                    color: 'var(--t-primary-text)',
+                                    borderRadius: 'var(--t-btn-r)',
+                                    border: 'none',
+                                }}
+                            >
+                                Continue
+                            </button>
+                        </div>
                     </div>
-
-                    {/* Content */}
-                    <div className="p-5 max-h-75 overflow-y-auto space-y-3">
-                        <Typography className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                            {data.booking_policy.readBeforeBooking}
-                        </Typography>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="p-4 border-t flex items-center justify-between gap-3">
-                        <label className="flex items-center gap-2 text-sm text-gray-600">
-                            <input
-                                type="checkbox"
-                                className="accent-indigo-600"
-                                checked={accepted}
-                                onChange={(e) => setAccepted(e.target.checked)}
-                            />
-                            I understand and agree
-                        </label>
-
-                        <button
-                            disabled={!accepted}
-                            onClick={() => setRbbOpen(false)}
-                            className={`px-4 py-2 rounded-lg text-white transition
-          ${accepted
-                                    ? "bg-indigo-600 hover:bg-indigo-700"
-                                    : "bg-gray-300 cursor-not-allowed"}
-        `}
-                        >
-                            Continue
-                        </button>
-                    </div>
-                </ModalDialog>
-            </Modal>
-            <Snackbar
-                color='danger'
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right'
-                }}
-                open={openErrorDialog}
-                onClose={() => {
-                    setOpenErrorDialog(false)
-                }}
-            >
-                {error}
-            </Snackbar>
-            <div className='w-full grid grid-cols-3 p-5'>
-                <a href="/afroallure" className='items-center flex max-w-min'>
-                    <Caption className='flex text-md items-center gap-2 cursor-pointer'>
-                        <ArrowLeftCircleIcon size={18} />
-                        Back
-                    </Caption>
-                </a>
-                <div className='flex justify-center'>
-                    <Typography level='h1'>LOGO</Typography>
                 </div>
+            )}
+
+            {/* Error toast */}
+            {openErrorDialog && (
+                <div
+                    className="fixed bottom-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm"
+                    style={{ backgroundColor: 'rgba(252,97,97,0.1)', color: '#DC2626', border: '1px solid rgba(252,97,97,0.2)' }}
+                >
+                    {error}
+                    <button
+                        onClick={() => setOpenErrorDialog(false)}
+                        className="ml-2 font-medium hover:opacity-70"
+                        style={{ color: '#DC2626' }}
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
+
+            {/* Top bar */}
+            <div
+                className="w-full flex items-center px-5 py-4"
+                style={{ borderBottom: '1px solid var(--t-border)' }}
+            >
+                <Link
+                    href={`/${businessName}`}
+                    className="flex items-center gap-2 text-sm transition-opacity hover:opacity-70"
+                    style={{ color: 'var(--t-muted)' }}
+                >
+                    <ArrowLeftCircleIcon size={18} />
+                    Back
+                </Link>
             </div>
-            <Divider orientation='horizontal' className="px-10" />
-            {!isLoading ? <div className='md:w-3/4 w-full justify-center items-center mt-5  flex flex-col overflow-hidden'>
-                <div className='w-full flex-col p-5'>
-                    <div className='mb-5'>
-                        <CircularProgress size="md" determinate value={((activeStep + 1) / steps.length) * 100}>
-                            {`${activeStep + 1} / ${steps.length}`}
-                        </CircularProgress>
+
+            {isLoading ? (
+                <div className="w-full flex justify-center items-center" style={{ height: 'calc(100dvh - 57px)' }}>
+                    <Loader2 size={28} className="animate-spin" style={{ color: 'var(--t-primary)' }} />
+                </div>
+            ) : (
+                <div className="flex flex-col items-center px-4 py-6">
+                    <div className="w-full max-w-3xl">
+                        {bookingLimitReached ? (
+                            <BookingFullMessage businessData={businessData} />
+                        ) : (
+                            <>
+                                <BookingStepper steps={steps} activeStep={activeStep} />
+                                <div className="mb-6">{renderActiveStep()}</div>
+
+                                {/* Nav buttons */}
+                                <div className="flex items-center justify-between">
+                                    <button
+                                        disabled={activeStep === 0}
+                                        onClick={() => setActiveStep(activeStep - 1)}
+                                        className="text-sm font-medium px-5 py-2.5 transition-opacity hover:opacity-80 disabled:opacity-40"
+                                        style={{
+                                            border: '1px solid var(--t-border)',
+                                            borderRadius: 'var(--t-btn-r)',
+                                            color: 'var(--t-text)',
+                                            backgroundColor: 'var(--t-card)',
+                                        }}
+                                    >
+                                        Back
+                                    </button>
+
+                                    {activeStep < steps.length - 1 ? (
+                                        <button
+                                            disabled={!canGoNext}
+                                            onClick={handleNext}
+                                            className="text-sm font-medium px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-40"
+                                            style={{
+                                                backgroundColor: 'var(--t-primary)',
+                                                color: 'var(--t-primary-text)',
+                                                borderRadius: 'var(--t-btn-r)',
+                                                border: 'none',
+                                            }}
+                                        >
+                                            Next
+                                        </button>
+                                    ) : !data.booking_policy?.deposit?.enabled ? (
+                                        <button
+                                            disabled={!(agreedAfroAllure && agreedBusiness) || submitting}
+                                            onClick={async () => {
+                                                setSubmitting(true)
+                                                try {
+                                                    const res = await handleSubmit()
+                                                    if (res) router.push(`/${businessName}/book/complete`)
+                                                } catch (err: any) {
+                                                    if (err?.message?.includes('BOOKING_LIMIT_REACHED')) {
+                                                        setBookingLimitReached(true)
+                                                    } else {
+                                                        setError("Something went wrong. Please try again.")
+                                                        setOpenErrorDialog(true)
+                                                    }
+                                                } finally {
+                                                    setSubmitting(false)
+                                                }
+                                            }}
+                                            className="flex items-center gap-2 text-sm font-medium px-5 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-40"
+                                            style={{
+                                                backgroundColor: 'var(--t-primary)',
+                                                color: 'var(--t-primary-text)',
+                                                borderRadius: 'var(--t-btn-r)',
+                                                border: 'none',
+                                            }}
+                                        >
+                                            {submitting && <Loader2 size={14} className="animate-spin" />}
+                                            Book Appointment
+                                        </button>
+                                    ) : null}
+                                </div>
+                            </>
+                        )}
                     </div>
-
-                    {renderActiveStep()}
                 </div>
-                <div className='w-full flex justify-between pb-2 px-5'>
-                    <Button disabled={activeStep === 0} onClick={() => {
-                        setActiveStep(activeStep - 1)
-                    }}>
-                        Back
-                    </Button>
-                    {activeStep < steps.length - 1 ? <Button disabled={(activeStep === 0 && data.selectedService.length === 0) || (activeStep === 1 && Object.values(data.selectedDateTime).length === 0) || activeStep === 2 && (data.clientInfo.firstName.length === 0 || data.clientInfo.lastName.length === 0 || data.clientInfo.email.length === 0 || data.clientInfo.phoneNumber.length === 0)} onClick={handleNext}>
-
-                        Next
-                    </Button> : (!data.booking_policy.deposit.enabled ? <Button loading={submitting} disabled={!(agreedAfroAllure && agreedBusiness) || submitting} onClick={async () => {
-                        setSubmitting(true)
-                        try {
-                            const res = await handleSubmit()
-                            if (res) {
-                                router.push(`/${businessName}/book/complete`)
-                            }
-                        } catch {
-                            setError("Something went wrong. Please try again.")
-                            setOpenErrorDialog(true)
-                        } finally {
-                            setSubmitting(false)
-                        }
-                    }}>
-                        Book Appointment
-                    </Button> : <></>)}
-                </div>
-            </div> : <div className='w-full h-screen flex justify-center items-center'>
-                <CircularProgress /></div>}
-
+            )}
         </div>
     )
 }
-

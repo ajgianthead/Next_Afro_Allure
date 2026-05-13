@@ -1,107 +1,154 @@
 'use client'
 
-import Card from '@tailus-ui/Card';
-import Button from '@tailus-ui/Button';
-import { Text, Link, Caption, Title } from '@tailus-ui/typography';
-import Input from '@components/Input';
-import Label from '@components/Label';
-import Separator from '@tailus-ui/Separator';
-import { FcGoogle } from "react-icons/fc";
-import Aligner from '@components/Aligner';
-import Switch from '@components/Switch';
-import { useState } from 'react';
-import { AuthError } from '@supabase/supabase-js';
-import { Alert, CircularProgress } from '@mui/joy';
-import { useRouter } from 'next/navigation';
-import { loginBusinessUser } from '../actions';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Loader2, AlertCircle } from 'lucide-react'
+import { loginBusinessUser } from '../actions'
 
+const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 export default function Login() {
-    const [asBusiness, setAsBusiness] = useState(false);
-    const [error, setError] = useState<any>(null)
-    const [loading, setLoading] = useState<boolean>(false)
     const router = useRouter()
-    const [cred, setCred] = useState({
-        email: "",
-        password: ""
-    })
-    const handleSubmit = async () => {
+    const [cred, setCred] = useState({ email: '', password: '' })
+    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (loading) return
         setLoading(true)
-        const res = await loginBusinessUser(cred.email, cred.password)
-        if (res instanceof AuthError) {
-            setError(res.message)
-        }
-        else {
+        setError(null)
+        try {
+            const res = await loginBusinessUser(cred.email, cred.password)
+            if (res instanceof Error) {
+                setError(res.message)
+                setLoading(false)
+                return
+            }
             router.replace('/dashboard')
+        } catch {
+            setError('Something went wrong. Please try again.')
+            setLoading(false)
         }
     }
 
     return (
-        <main className="inset-0 z-10 m-auto h-fit max-w-xl px-6 py-12 lg:absolute">
-            <Card className="relative h-fit p-1 mt-6 shadow-xl shadow-gray-950/10" variant="mixed">
-                <div data-rounded="large" className="p-10">
-                    <div>
-                        <Title size="xl" className="mb-1">
-                            Sign In to Afro Allure
-                        </Title>
-                        <Text className="my-0" size="sm">
-                            Welcome back! Sign in to continue
-                        </Text>
-                    </div>
+        <main
+            className="min-h-screen flex items-center justify-center px-4 py-12"
+            style={{ backgroundColor: '#FAF7F2' }}
+        >
+            <div className="w-full max-w-md">
+                {/* Logo */}
+                <div className="text-center mb-8">
+                    <p style={{ fontFamily: SERIF, fontSize: 26, color: '#0F0E0E', letterSpacing: '-0.01em' }}>
+                        AfroAllure
+                    </p>
+                    <p className="mt-1 text-sm" style={{ color: '#6F6863' }}>
+                        Sign in to your account
+                    </p>
+                </div>
 
+                {/* Card */}
+                <div
+                    className="rounded-2xl p-8"
+                    style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D6' }}
+                >
+                    <h1 style={{ fontFamily: SERIF, fontSize: 22, color: '#1A1818', marginBottom: 24 }}>
+                        Welcome back
+                    </h1>
 
+                    {error && (
+                        <div
+                            className="flex items-center gap-2 text-sm rounded-xl px-3.5 py-3 mb-5"
+                            style={{ backgroundColor: 'rgba(252,97,97,0.08)', color: '#DC2626' }}
+                        >
+                            <AlertCircle size={14} className="shrink-0" />
+                            {error}
+                        </div>
+                    )}
 
-                    <form className="mx-auto mt-8 space-y-6">
-                        <div className="space-y-6 rounded-[--btn-radius] shadow-sm shadow-gray-500/5">
-                            {error ? <Alert variant='soft' color='danger' >Error: {error}</Alert>
-                                : <></>}
-                            <div className="space-y-6">
-                                <div className="space-y-2.5">
-                                    <Label size="sm" htmlFor="email">
-                                        Email
-                                    </Label>
-                                    <Input value={cred.email} onChange={(e) => {
-                                        setCred({
-                                            ...cred,
-                                            email: e.target.value
-                                        })
-                                    }} id="email" name="email" type="email" required variant="outlined" size="md" />
-                                </div>
-                                <div className="space-y-2.5">
-                                    <div className="flex items-center justify-between">
-                                        <Label size="sm" htmlFor="password">
-                                            Password
-                                        </Label>
-                                        {/* <Link href="#" size="sm">
-                                            Forgot your Password ?
-                                        </Link> */}
-                                    </div>
-                                    <Input value={cred.password} onChange={(e) => {
-                                        setCred({
-                                            ...cred,
-                                            password: e.target.value
-                                        })
-                                    }} id="password" name="password" type="password" required variant="outlined" size="md" />
-                                </div>
-                            </div>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                        <div className="flex flex-col gap-1.5">
+                            <label
+                                htmlFor="email"
+                                className="text-xs font-semibold uppercase tracking-widest"
+                                style={{ color: '#6F6863' }}
+                            >
+                                Email
+                            </label>
+                            <input
+                                id="email"
+                                type="email"
+                                required
+                                autoComplete="email"
+                                value={cred.email}
+                                onChange={e => setCred({ ...cred, email: e.target.value })}
+                                disabled={loading}
+                                className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors disabled:opacity-50"
+                                style={{
+                                    border: '1px solid #E8E2D6',
+                                    backgroundColor: '#FDFCFA',
+                                    color: '#1A1818',
+                                }}
+                                onFocus={e => (e.currentTarget.style.borderColor = '#FC6161')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E8E2D6')}
+                            />
                         </div>
 
+                        <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between">
+                                <label
+                                    htmlFor="password"
+                                    className="text-xs font-semibold uppercase tracking-widest"
+                                    style={{ color: '#6F6863' }}
+                                >
+                                    Password
+                                </label>
+                            </div>
+                            <input
+                                id="password"
+                                type="password"
+                                required
+                                autoComplete="current-password"
+                                value={cred.password}
+                                onChange={e => setCred({ ...cred, password: e.target.value })}
+                                disabled={loading}
+                                className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors disabled:opacity-50"
+                                style={{
+                                    border: '1px solid #E8E2D6',
+                                    backgroundColor: '#FDFCFA',
+                                    color: '#1A1818',
+                                }}
+                                onFocus={e => (e.currentTarget.style.borderColor = '#FC6161')}
+                                onBlur={e => (e.currentTarget.style.borderColor = '#E8E2D6')}
+                            />
+                        </div>
 
-                        <Button.Root disabled={loading} type='submit' onClick={handleSubmit} className="w-full">
-                            <Button.Label>{loading ? <CircularProgress size='sm' /> : "Sign In"}</Button.Label>
-                        </Button.Root>
+                        <button
+                            type="submit"
+                            disabled={loading || !cred.email || !cred.password}
+                            className="flex items-center justify-center gap-2 w-full rounded-xl py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+                            style={{ backgroundColor: '#FC6161', color: '#FFFFFF', marginTop: 4 }}
+                        >
+                            {loading && <Loader2 size={14} className="animate-spin" />}
+                            {loading ? 'Signing in…' : 'Sign In'}
+                        </button>
                     </form>
                 </div>
 
-                <Card variant="soft" data-shade="925" className="rounded-[calc(var(--card-radius)-0.25rem)] dark:bg-gray-925">
-                    <Caption className="my-0" size="sm" align="center">
-                        Don't have an account ?{' '}
-                        <Link intent="neutral" size="sm" variant="underlined" href="/register">
-                            Create account
-                        </Link>
-                    </Caption>
-                </Card>
-            </Card>
+                {/* Footer */}
+                <p className="text-center text-sm mt-5" style={{ color: '#6F6863' }}>
+                    Don't have an account?{' '}
+                    <Link
+                        href="/register"
+                        className="font-medium transition-opacity hover:opacity-70"
+                        style={{ color: '#FC6161' }}
+                    >
+                        Create one
+                    </Link>
+                </p>
+            </div>
         </main>
-    );
+    )
 }

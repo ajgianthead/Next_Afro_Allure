@@ -1,1 +1,1 @@
-export { createManualAppointmentAction, confirmAppointmentAction, rescheduleAppointmentAction, cancelAppointmentAction } from './actions'
+export { createManualAppointmentAction, confirmAppointmentAction, rescheduleAppointmentAction, cancelAppointmentAction, sendConfirmationLinkAction, sendPaymentLinkAction } from './actions'

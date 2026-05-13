@@ -1,32 +1,34 @@
+'use client'
+
 import { DateTime } from "luxon"
 import { useEffect, useState } from "react"
-import { CircularProgress, DialogActions, DialogContent, DialogTitle, Modal, ModalClose, ModalDialog } from "@mui/joy";
-import { Caption } from "@/components/tailus-ui/typography";
+import { Loader2, CalendarIcon } from "lucide-react"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
 import {
     Popover,
     PopoverContent,
-    PopoverDescription,
-    PopoverHeader,
-    PopoverTitle,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
+import { Button } from "@/components/ui/button"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
-import { useManualBooking } from "../../hooks/useManualBooking";
-import { rescheduleAppointmentAction } from "../../server";
+import { Input } from "@/components/ui/input"
+import { format } from "date-fns"
+import { useManualBooking } from "../../hooks/useManualBooking"
+import { rescheduleAppointmentAction } from "../../server"
 
+const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 export const RescheduleConfirmationModal = () => {
-    const { manualBookingData, setManualBookingData } = useManualBooking()
-    return (
-        <div>
-            {manualBookingData?.currSelectedEvent !== null ? <RescheduleConfirmation /> : <></>}
-        </div>
-    )
+    const { manualBookingData } = useManualBooking()
+    return manualBookingData?.currSelectedEvent !== null ? <RescheduleConfirmation /> : null
 }
+
 export const RescheduleConfirmation = () => {
     const { manualBookingData, setManualBookingData } = useManualBooking()
     const currDate = DateTime.fromJSDate(manualBookingData?.currSelectedEvent!.start!).toFormat('DDDD')
@@ -37,13 +39,8 @@ export const RescheduleConfirmation = () => {
         date: Date
         start: string
         end: string
-    }>({
-        date: new Date(),
-        start: "",
-        end: "",
-    })
+    }>({ date: new Date(), start: '', end: '' })
 
-    // U5: Fall back to currSelectedEvent when newAppointmentEvent is null (e.g. opened from table)
     useEffect(() => {
         const source = manualBookingData?.newAppointmentEvent ?? manualBookingData?.currSelectedEvent
         if (source?.start) {
@@ -53,124 +50,148 @@ export const RescheduleConfirmation = () => {
                 end: DateTime.fromJSDate(new Date(source.end)).toFormat('T'),
             })
         }
-    }, [manualBookingData?.newAppointmentEvent, manualBookingData?.currSelectedEvent]);
+    }, [manualBookingData?.newAppointmentEvent, manualBookingData?.currSelectedEvent])
 
-    const [reschedulingAppointment, setReschedulingAppointment] = useState<boolean>(false)
+    const [reschedulingAppointment, setReschedulingAppointment] = useState(false)
+    const [error, setError] = useState('')
 
-    const handleModalClose = () => {
-        setManualBookingData!({
-            ...manualBookingData!,
-            openRescheduleConfirmation: false
-        })
-        setEditedAppointmentData({ date: new Date(), start: "", end: "" })
+    const handleClose = () => {
+        setManualBookingData!({ ...manualBookingData!, openRescheduleConfirmation: false })
+        setEditedAppointmentData({ date: new Date(), start: '', end: '' })
+        setError('')
     }
 
-    const [error, setError] = useState<{ error: boolean, message: string }>({
-        error: false,
-        message: ''
-    })
-
-    // U4: Use the selected date, not today, for the time comparison
     const validateInputs = () => {
-        if (editedAppointmentData.start.length === 0 || editedAppointmentData.end.length === 0) {
-            setError({ error: true, message: 'Please enter an appointment start and end time' })
+        if (!editedAppointmentData.start || !editedAppointmentData.end) {
+            setError('Please enter a start and end time.')
             return false
         }
         const d = editedAppointmentData.date
-        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Number(editedAppointmentData.start.split(':')[0]), Number(editedAppointmentData.start.split(':')[1]))
-        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Number(editedAppointmentData.end.split(':')[0]), Number(editedAppointmentData.end.split(':')[1]))
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
+            Number(editedAppointmentData.start.split(':')[0]), Number(editedAppointmentData.start.split(':')[1]))
+        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
+            Number(editedAppointmentData.end.split(':')[0]), Number(editedAppointmentData.end.split(':')[1]))
         if (end <= start) {
-            setError({ error: true, message: 'End time must be after start time' })
+            setError('End time must be after start time.')
             return false
         }
         return true
     }
 
     return (
-        <div>
-            <Modal open={manualBookingData?.openRescheduleConfirmation!} onClose={() => { handleModalClose() }}>
-                <ModalDialog sx={{ width: 500 }}>
-                    <ModalClose />
-                    <DialogTitle className="flex flex-col">
-                        <p>Confirm Reschedule</p>
-                        <div>
-                            <Caption>{currDate}</Caption>
-                            <Caption>{`${currStart} - ${currEnd}`}</Caption>
-                        </div>
+        <Dialog open={manualBookingData?.openRescheduleConfirmation} onOpenChange={(open) => { if (!open) handleClose() }}>
+            <DialogContent style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D6', borderRadius: '16px', maxWidth: 480 }}>
+                <DialogHeader>
+                    <DialogTitle style={{ fontFamily: SERIF, color: '#1A1818', fontSize: '1.1rem' }}>
+                        Reschedule Appointment
                     </DialogTitle>
-                    <DialogContent>
-                        {error.error && <Caption size={'sm'} className="text-red-500 mb-2">{error.message}</Caption>}
-                        <div className="grid gap-2 grid-cols-2 grid-rows-2">
-                            <div className="flex col-span-2 flex-col gap-2">
-                                <Caption className="font-semibold">Date</Caption>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            size={'sm'}
-                                            variant="outline"
-                                            data-empty={!editedAppointmentData.date}
-                                            className="w-70 justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
-                                        >
-                                            <CalendarIcon />
-                                            {editedAppointmentData.date ? <p className="text-sm">{format(editedAppointmentData.date, "PPP")}</p> : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 z-9999">
-                                        <CalendarComponent disabled={(date) => date < new Date()} required mode="single" selected={editedAppointmentData.date} onSelect={(e) => setEditedAppointmentData({
-                                            ...editedAppointmentData,
-                                            date: e
-                                        })} />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <Caption className="font-semibold">Start Time</Caption>
-                                <Input data-testid='start-time' value={editedAppointmentData.start} onChange={(e) => {
-                                    setEditedAppointmentData({ ...editedAppointmentData, start: e.target.value })
-                                }} style={{ fontSize: 14 }} type='time' />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <Caption className="font-semibold">End Time</Caption>
-                                <Input data-testid='end-time' value={editedAppointmentData.end} onChange={(e) => {
-                                    setEditedAppointmentData({ ...editedAppointmentData, end: e.target.value })
-                                }} style={{ fontSize: 14 }} type='time' />
-                            </div>
-                        </div>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button data-testid={'submit-appointment'} disabled={reschedulingAppointment} onClick={async () => {
-                            if (!validateInputs()) return
+                    <div className="flex flex-col gap-0.5 mt-1">
+                        <p className="text-sm" style={{ color: '#6F6863' }}>{currDate}</p>
+                        <p className="text-sm" style={{ color: '#6F6863' }}>{currStart} – {currEnd}</p>
+                    </div>
+                </DialogHeader>
 
+                <div className="flex flex-col gap-4 py-2">
+                    {error && (
+                        <p className="text-sm" style={{ color: '#FC6161' }}>{error}</p>
+                    )}
+
+                    {/* Date */}
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6F6863' }}>Date</label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="justify-start text-left font-normal"
+                                    style={{ borderColor: '#E8E2D6', color: editedAppointmentData.date ? '#1A1818' : '#6F6863' }}
+                                >
+                                    <CalendarIcon size={14} style={{ color: '#6F6863' }} />
+                                    {editedAppointmentData.date
+                                        ? format(editedAppointmentData.date, 'PPP')
+                                        : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 z-[9999]" style={{ border: '1px solid #E8E2D6' }}>
+                                <CalendarComponent
+                                    mode="single"
+                                    required
+                                    selected={editedAppointmentData.date}
+                                    disabled={(date) => date < new Date()}
+                                    onSelect={(e) => setEditedAppointmentData({ ...editedAppointmentData, date: e! })}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+
+                    {/* Start / End time */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6F6863' }}>Start Time</label>
+                            <Input
+                                type="time"
+                                value={editedAppointmentData.start}
+                                onChange={(e) => setEditedAppointmentData({ ...editedAppointmentData, start: e.target.value })}
+                                style={{ borderColor: '#E8E2D6', fontSize: 14 }}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6F6863' }}>End Time</label>
+                            <Input
+                                type="time"
+                                value={editedAppointmentData.end}
+                                onChange={(e) => setEditedAppointmentData({ ...editedAppointmentData, end: e.target.value })}
+                                style={{ borderColor: '#E8E2D6', fontSize: 14 }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter className="gap-2">
+                    <Button
+                        variant="outline"
+                        disabled={reschedulingAppointment}
+                        onClick={handleClose}
+                        style={{ borderColor: '#E8E2D6', color: '#1A1818' }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        disabled={reschedulingAppointment}
+                        onClick={async () => {
+                            if (!validateInputs()) return
                             setReschedulingAppointment(true)
-                            // U6: try/finally so the spinner always clears even if the action throws
+                            setError('')
                             try {
                                 const appointment = await rescheduleAppointmentAction({
-                                    appointmentId: manualBookingData?.newAppointmentEvent!.id ?? manualBookingData?.currSelectedEvent!.id!,
+                                    appointmentId: manualBookingData?.newAppointmentEvent?.id ?? manualBookingData?.currSelectedEvent!.id!,
                                     start: editedAppointmentData.start,
                                     end: editedAppointmentData.end,
-                                    date: editedAppointmentData.date
+                                    date: editedAppointmentData.date,
                                 })
                                 if (appointment && !Array.isArray(appointment)) {
                                     setManualBookingData!({
                                         ...manualBookingData!,
-                                        appointmentEvents: manualBookingData?.appointmentEvents.map(e =>
+                                        appointmentEvents: manualBookingData!.appointmentEvents.map(e =>
                                             e.id === appointment.id
                                                 ? { ...e, start: new Date(appointment.start), end: new Date(appointment.end) }
                                                 : e
-                                        )!
+                                        ),
                                     })
                                 }
-                                handleModalClose()
+                                handleClose()
                             } catch (err: any) {
-                                setError({ error: true, message: err?.message ?? 'Failed to reschedule. Please try again.' })
+                                setError(err?.message ?? 'Failed to reschedule. Please try again.')
                             } finally {
                                 setReschedulingAppointment(false)
                             }
-                        }} style={{ fontSize: 14 }}>{reschedulingAppointment ? <CircularProgress size="sm" /> : "Reschedule Appointment"}</Button>
-                        <Button disabled={reschedulingAppointment} style={{ fontSize: 14 }} variant={'outline'} onClick={() => handleModalClose()}>Cancel</Button>
-                    </DialogActions>
-                </ModalDialog>
-            </Modal>
-        </div>
-    );
+                        }}
+                        style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF' }}
+                    >
+                        {reschedulingAppointment ? <Loader2 className="size-4 animate-spin" /> : 'Reschedule Appointment'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
 }

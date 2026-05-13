@@ -1,34 +1,26 @@
 'use client'
 
 import { BookingData } from "@/features/automatedBooking/context/BookingDataContext";
-import { Caption, Text, Title } from "@/components/tailus-ui/typography";
 import { ServiceType } from "@/lib/service/Service";
-import { Button, DialogActions, DialogContent, Modal, ModalClose, ModalDialog } from "@mui/joy";
 import Image from "next/image";
+import { Check, X } from "lucide-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useBooking } from "../hooks/useBookingData";
 
+const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 export const ServiceSelection = () => {
-    const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
+    const { data }: { data: BookingData } = useBooking();
     return (
-        <div className=''>
-            <div className='mb-5'>
-                <Title>Select Service</Title>
-                <Caption>Pick a service to start the booking process</Caption>
+        <div>
+            <div className="mb-5">
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>Select Service</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--t-muted)' }}>Pick a service to start the booking process</p>
             </div>
-            <div className='mt-8 overflow-y-scroll'>
-                <div className='grid lg:grid-cols-3 grid-cols-1 md:grid-cols-2 gap-2 mr-5 h-87.5'>
-                    {data.services.map((service, index: number) => {
-                        return (
-                            <div key={service.id} className="w-full col-span-1">
-                                <ServiceCard service={service} />
-                            </div>
-                        )
-                    })}
-                </div>
-
-
+            <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-3">
+                {data.services.map((service) => (
+                    <ServiceCard key={service.id} service={service} />
+                ))}
             </div>
         </div>
     )
@@ -38,18 +30,41 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set<string>([...data.selectedAddons]))
     const [openModal, setOpenModal] = useState<boolean>(false)
+    const selected = service.id === data.selectedService
+
+    const totalCents = service.price + Array.from(selectedAddons).reduce((sum, id) => {
+        const a = (service.addons as any[])?.find((a: any) => a.id === id)
+        return sum + (a?.price ?? 0)
+    }, 0)
 
     return (
-        <div>
-            <Modal open={openModal} onClose={() => {
-                setOpenModal(false)
-            }}>
-                <ModalDialog className="w-md rounded-2xl">
-                    <ModalClose />
+        <>
+            {/* Service detail modal */}
+            {openModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                    style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+                    onClick={() => setOpenModal(false)}
+                >
+                    <div
+                        className="w-full max-w-md overflow-hidden"
+                        style={{
+                            backgroundColor: 'var(--t-card)',
+                            border: '1px solid var(--t-border)',
+                            borderRadius: 'var(--t-card-r)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Close */}
+                        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--t-border)' }}>
+                            <h3 className="text-base font-semibold" style={{ color: 'var(--t-text)' }}>{service.name}</h3>
+                            <button onClick={() => setOpenModal(false)} style={{ color: 'var(--t-muted)' }} className="hover:opacity-70 transition-opacity">
+                                <X size={18} />
+                            </button>
+                        </div>
 
-                    <DialogContent className="p-0 overflow-hidden">
                         {/* Image */}
-                        {service?.photo_url && (
+                        {service.photo_url && (
                             <div className="w-full h-48 overflow-hidden">
                                 <Image
                                     src={service.photo_url}
@@ -63,96 +78,97 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
 
                         {/* Content */}
                         <div className="p-5 space-y-4">
-                            {/* Header */}
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h2 className="text-lg font-semibold">{service.name}</h2>
-                                    <p className="text-sm text-gray-500">
-                                        {service.description}
-                                    </p>
-                                </div>
-
-                                <span className="text-lg font-bold text-indigo-600">
+                            <div className="flex items-start justify-between gap-3">
+                                <p className="text-sm leading-relaxed" style={{ color: 'var(--t-muted)' }}>{service.description}</p>
+                                <span className="text-base font-bold shrink-0" style={{ color: 'var(--t-primary)', fontFamily: 'var(--font-fraunces, serif)' }}>
                                     ${service.price / 100}
                                 </span>
                             </div>
 
-                            {/* Divider */}
-                            <div className="border-t" />
+                            <div style={{ height: 1, backgroundColor: 'var(--t-border)' }} />
 
                             {/* Add-ons */}
-                            <div className="space-y-3">
-                                <h3 className="text-sm font-semibold">Add-ons</h3>
-
-                                {service.addons?.length ? (
-                                    service.addons.map((addon) => (
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--t-muted)' }}>Add-ons</p>
+                                {(service.addons as any[])?.length ? (
+                                    (service.addons as any[]).map((addon: any) => (
                                         <label
                                             key={addon.id}
-                                            className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-gray-50"
+                                            className="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors"
+                                            style={{
+                                                border: `1px solid ${selectedAddons.has(addon.id) ? 'var(--t-primary)' : 'var(--t-border)'}`,
+                                                backgroundColor: selectedAddons.has(addon.id) ? 'rgba(var(--t-primary), 0.04)' : 'transparent',
+                                            }}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <input
-                                                    type="checkbox"
-                                                    className="accent-indigo-600"
-                                                    checked={selectedAddons.has(addon.id)}
-                                                    onChange={(e) => {
+                                                {/* Custom checkbox */}
+                                                <div
+                                                    className="flex items-center justify-center rounded-md shrink-0 transition-colors"
+                                                    style={{
+                                                        width: 18, height: 18,
+                                                        border: selectedAddons.has(addon.id) ? 'none' : '1.5px solid var(--t-border)',
+                                                        backgroundColor: selectedAddons.has(addon.id) ? 'var(--t-primary)' : 'transparent',
+                                                    }}
+                                                    onClick={() => {
                                                         const next = new Set(selectedAddons)
-                                                        if (e.target.checked) next.add(addon.id)
-                                                        else next.delete(addon.id)
+                                                        if (selectedAddons.has(addon.id)) next.delete(addon.id)
+                                                        else next.add(addon.id)
                                                         setSelectedAddons(next)
                                                         setData((prev) => ({ ...prev, selectedAddons: Array.from(next) }))
                                                     }}
-                                                />
-                                                <div>
-                                                    <p className="text-sm font-medium">{addon.name}</p>
-                                                    {/* <p className="text-xs text-gray-500">
-                                                        {addon.description}
-                                                    </p> */}
+                                                >
+                                                    {selectedAddons.has(addon.id) && <Check size={11} color="var(--t-primary-text)" strokeWidth={3} />}
                                                 </div>
+                                                <p className="text-sm" style={{ color: 'var(--t-text)' }}>{addon.name}</p>
                                             </div>
-
-                                            <span className="text-sm font-semibold">
-                                                +${addon.price / 100}
-                                            </span>
+                                            <span className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>+${addon.price / 100}</span>
                                         </label>
                                     ))
                                 ) : (
-                                    <p className="text-sm text-gray-400">No add-ons available</p>
+                                    <p className="text-sm" style={{ color: 'var(--t-muted)' }}>No add-ons available</p>
                                 )}
                             </div>
                         </div>
-                    </DialogContent>
 
-                    {/* Footer */}
-                    <DialogActions className="p-4 border-t flex items-center justify-between">
-                        <div className="text-sm">
-                            <span className="text-gray-500">Total</span>
-                            <span className="ml-2 font-bold text-lg text-indigo-600">
-                                ${(service.price + Array.from(selectedAddons).reduce((sum, id) => {
-                                    const a = service.addons?.find((a: any) => a.id === id)
-                                    return sum + (a?.price ?? 0)
-                                }, 0)) / 100}
-                            </span>
+                        {/* Footer */}
+                        <div className="px-5 pb-5 flex items-center justify-between" style={{ borderTop: '1px solid var(--t-border)', paddingTop: 16 }}>
+                            <div>
+                                <span className="text-xs" style={{ color: 'var(--t-muted)' }}>Total</span>
+                                <span className="ml-2 text-lg font-bold" style={{ color: 'var(--t-primary)', fontFamily: 'var(--font-fraunces, serif)' }}>
+                                    ${totalCents / 100}
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setData((prev) => ({ ...prev, selectedService: service.id }))
+                                    setOpenModal(false)
+                                }}
+                                className="text-sm font-medium px-4 py-2 transition-opacity hover:opacity-90"
+                                style={{
+                                    backgroundColor: 'var(--t-primary)',
+                                    color: 'var(--t-primary-text)',
+                                    borderRadius: 'var(--t-btn-r)',
+                                    border: 'none',
+                                }}
+                            >
+                                Select Service
+                            </button>
                         </div>
+                    </div>
+                </div>
+            )}
 
-                        <Button onClick={() => {
-                            setData((prev) => ({ ...prev, selectedService: service.id }))
-                            setOpenModal(false)
-                        }} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-                            Continue
-                        </Button>
-                    </DialogActions>
-                </ModalDialog>
-            </Modal>
+            {/* Service card */}
             <div
-                onClick={() => { setOpenModal(true) }}
-                className={`group cursor-pointer rounded-2xl border transition-all duration-200 overflow-hidden
-    ${service.id === data.selectedService
-                        ? "border-indigo-500 shadow-md ring-2 ring-indigo-100"
-                        : "border-gray-200 hover:border-gray-300 hover:shadow-sm"}
-  `}
+                onClick={() => setOpenModal(true)}
+                className="cursor-pointer overflow-hidden transition-all duration-200"
+                style={{
+                    border: `${selected ? 2 : 1}px solid ${selected ? 'var(--t-primary)' : 'var(--t-border)'}`,
+                    borderRadius: 'var(--t-card-r)',
+                    backgroundColor: 'var(--t-card)',
+                    boxShadow: selected ? '0 0 0 3px rgba(252,97,97,0.12)' : undefined,
+                }}
             >
-                {/* Image */}
                 {service.photo_url?.length ? (
                     <div className="w-full h-32 overflow-hidden">
                         <Image
@@ -164,29 +180,21 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                         />
                     </div>
                 ) : (
-                    <div className="w-full h-32 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                    <div
+                        className="w-full h-32 flex items-center justify-center text-sm"
+                        style={{ backgroundColor: 'var(--t-bg)', color: 'var(--t-muted)' }}
+                    >
                         No Image
                     </div>
                 )}
-
-                {/* Content */}
-                <div className="p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                        <Title className="text-sm font-semibold">
-                            {service.name}
-                        </Title>
-
-                        <span className="text-sm font-bold text-indigo-600">
-                            ${service.price / 100}
-                        </span>
+                <div className="p-4 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>{service.name}</p>
+                        <span className="text-sm font-bold shrink-0" style={{ color: 'var(--t-primary)' }}>${service.price / 100}</span>
                     </div>
-
-                    <Caption className="text-xs text-gray-500 line-clamp-2">
-                        {service.description}
-                    </Caption>
+                    <p className="text-xs line-clamp-2" style={{ color: 'var(--t-muted)' }}>{service.description}</p>
                 </div>
             </div>
-        </div>
-
+        </>
     )
 }

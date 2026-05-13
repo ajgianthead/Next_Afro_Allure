@@ -1,12 +1,21 @@
-/* Brand Colors */
-$primary: #FC6161;
-$primary-soft: #ffe5e5;
+/* Brand palette */
+$primary:       #FC6161;
+$primary-soft:  rgba(252, 97, 97, 0.06);
+$primary-hover: rgba(252, 97, 97, 0.10);
+$bg:            #FAF7F2;
+$card:          #FFFFFF;
+$border:        #E8E2D6;
+$divider:       #F0EBE3;
+$text:          #1A1818;
+$muted:         #6F6863;
+$dark:          #0F0E0E;
+$serif:         var(--font-fraunces, 'Fraunces', 'Times New Roman', serif);
 
-/* Main Calendar Container */
+/* ── Container ─────────────────────────────────────── */
 .calendar-wrapper {
   position: relative;
   height: 100%;
-  overflow: hidden; /* Prevent parent scroll conflicts */
+  overflow: hidden;
 }
 
 .rbc-calendar {
@@ -14,250 +23,254 @@ $primary-soft: #ffe5e5;
   display: flex;
   flex-direction: column;
   font-size: 14px;
-  background: white;
+  font-family: 'Inter', sans-serif;
+  background: $card;
   border-radius: 16px;
+  border: 1px solid $border;
   height: 100%;
-  overflow: hidden; /* Let RBC manage scrolling */
-  touch-action: none; /* Prevent scroll+drag conflicts */
+  overflow: hidden;
+  touch-action: none;
 }
 
-/* Layout */
+/* ── Views ──────────────────────────────────────────── */
 .rbc-time-view,
 .rbc-month-view {
-  background: white;
-  border-radius: 14px;
+  background: $card;
 }
 
-/* Headers */
+/* ── Day/Week column headers ────────────────────────── */
 .rbc-header {
-  padding: 14px 10px;
-  font-size: 14px;
+  padding: 12px 10px;
+  font-size: 12px;
   font-weight: 600;
-  color: #111827;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $muted;
+  background: $bg;
+  border-bottom: 1px solid $border;
   text-align: center;
 }
 
-/* Time column */
+/* ── Time gutter (left side hour labels) ────────────── */
 .rbc-time-gutter {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
-  color: #6b7280;
-  background: #fafafa;
+  color: $muted;
+  background: $bg;
+  border-right: 1px solid $border;
 }
 
-/* Larger time slots */
+/* ── Time slot rows ─────────────────────────────────── */
 .rbc-timeslot-group {
-  min-height: 60px;
-  border-bottom: 1px solid #f1f5f9;
+  min-height: 56px;
+  border-bottom: 1px solid $divider;
 }
 
 .rbc-time-slot {
-  min-height: 24px;
+  min-height: 20px;
 }
 
-/* Time content scroll */
 .rbc-time-content {
-  overflow-y: auto; /* RBC manages scroll */
-  border-top: none;
-  will-change: transform; /* stabilizes drag/resizing */
+  overflow-y: auto;
+  border-top: 1px solid $border;
+  will-change: transform;
 }
 
-/* Day bg */
+/* ── Day column separators ──────────────────────────── */
 .rbc-day-bg + .rbc-day-bg {
-  border-left: 1px solid #f3f4f6;
+  border-left: 1px solid $divider;
 }
 
-/* Hover slot feedback */
+/* ── Slot hover ─────────────────────────────────────── */
 .rbc-day-slot .rbc-time-slot:hover {
-  background: rgba(252, 97, 97, 0.08);
+  background: $primary-soft;
   cursor: pointer;
 }
 
-/* Today highlight */
+/* ── Today highlight ────────────────────────────────── */
 .rbc-today {
   background: $primary-soft;
 }
 
-/* Selected slot */
-// .rbc-selected {
-//   background: rgba(252, 97, 97, 0.15) !important;
-// }
+/* ── Current time indicator ─────────────────────────── */
+.rbc-current-time-indicator {
+  background: $primary;
+  height: 2px;
+  opacity: 0.6;
+}
 
-/* Event Styling */
+/* ── Events ─────────────────────────────────────────── */
 .rbc-event {
-  padding: 6px;
-  border-radius: 14px;
-  box-shadow: 0 4px 10px rgba(252, 97, 97, 0.18);
-    background: linear-gradient(135deg, #FC6161, #ff7b7b);
-
+  padding: 5px 7px;
+  border-radius: 10px;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(252, 97, 97, 0.18);
+  background: linear-gradient(135deg, #FC6161 0%, #ff8484 100%);
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  min-height: 40px;       // ensures events are tall enough
-  max-height: 80px;       // prevents them from overflowing
-  height: auto;           // let the content decide
-  overflow: hidden;       // clip extra content if needed
+  min-height: 38px;
+  height: auto;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .rbc-event:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(252, 97, 97, 0.25);
+  box-shadow: 0 4px 12px rgba(252, 97, 97, 0.28);
 }
 
-/* Resize handle */
+.rbc-event.rbc-selected {
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px $primary;
+}
+
+/* ── Resize handle ──────────────────────────────────── */
 .rbc-addons-dnd-resize-ns-anchor {
-  height: 6px !important;
+  height: 5px !important;
   cursor: ns-resize;
+  background: rgba(255,255,255,0.3);
+  border-radius: 0 0 10px 10px;
 }
 
-/* Appointment status */
-.appointment-confirmed {
-  background: #22c55e !important;
-}
-
-.appointment-pending {
-  background: #f59e0b !important;
-}
-
-.appointment-cancelled {
-  background: #ef4444 !important;
-}
-
-/* Month view */
+/* ── Month view ─────────────────────────────────────── */
 .rbc-month-row {
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid $divider;
 }
 
 .rbc-date-cell {
-  padding: 6px 8px;
-  font-weight: 500;
-}
-
-/* Toolbar */
-.rbc-toolbar {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  background: white;
-}
-
-.rbc-toolbar button {
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: white;
   padding: 6px 10px;
+  font-size: 12px;
   font-weight: 500;
-  transition: all 0.15s ease;
+  color: $text;
 }
 
-.rbc-toolbar button:hover {
-  background: #fff5f5;
+.rbc-date-cell.rbc-now {
+  font-weight: 700;
+  color: $primary;
 }
 
-.rbc-toolbar button.rbc-active {
-  background: $primary;
-  color: white;
-  border-color: $primary;
+.rbc-off-range .rbc-date-cell {
+  color: $muted;
+  opacity: 0.5;
 }
 
-/* Event content text */
+/* ── Default toolbar (hidden — we use CalendarHeader) ── */
+.rbc-toolbar {
+  display: none;
+}
+
+/* ── Event content text ─────────────────────────────── */
 .rbc-event-content {
   white-space: normal;
   line-height: 1.3;
 }
 
-/* Appointment card layout */
+/* ── Appointment card layout ────────────────────────── */
 .appointment-card {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
   height: 100%;
+  width: 100%;
 }
 
 .appointment-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  background: white;
-  color: $primary;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
+  flex-shrink: 0;
 }
 
 .appointment-info {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  max-height: 100%; // prevent content from growing too tall
+  flex: 1;
 }
+
 .appointment-client {
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .appointment-service {
-  font-size: 12px;
-  opacity: 0.85;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .appointment-time {
-  font-size: 11px;
-  opacity: 0.7;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-/* Gloss header */
+/* ── Calendar header (CalendarHeader.tsx) ───────────── */
 .gloss-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: white;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 14px 20px;
+  background: $bg;
+  border-bottom: 1px solid $border;
   border-radius: 16px 16px 0 0;
-  font-family: 'Inter', sans-serif;
 
   .nav-left,
   .nav-right {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
   }
 
   .nav-left button,
   .nav-right button {
-    padding: 6px 12px;
+    padding: 5px 14px;
     border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    background: white;
+    border: 1px solid $border;
+    background: $card;
+    color: $text;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 
     &:hover {
-      background: #fff5f5;
+      background: $primary-hover;
+      border-color: rgba(252, 97, 97, 0.3);
     }
 
     &.active {
-      background: $primary;
-      color: white;
-      border-color: $primary;
+      background: $dark;
+      color: #FFFFFF;
+      border-color: $dark;
     }
   }
 
   .current-month {
     font-weight: 600;
-    font-size: 16px;
-    color: #111827;
+    font-size: 17px;
+    color: $text;
+    font-family: $serif;
+    letter-spacing: -0.01em;
   }
 
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 10px;
+    padding: 12px 16px;
 
     .nav-left,
     .nav-right {

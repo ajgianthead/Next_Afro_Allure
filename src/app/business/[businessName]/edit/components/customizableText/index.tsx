@@ -14,9 +14,12 @@ export const CustomizableTextComponent: ComponentConfig<RegularText> = {
     defaultProps: customTextProps,
     render: ({ text, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, sections, url, isLink, linkType, textTransform, maxWidth }) => {
         const { editorState } = useEditorContext()
+        const fluidFontSize = fontSize > 2
+            ? `clamp(1.5rem, calc(${(fontSize * 0.3).toFixed(3)}rem + ${(fontSize * 1.8).toFixed(3)}vw), ${fontSize}rem)`
+            : `${fontSize}rem`
         const textStyle: React.CSSProperties = {
             textWrap: 'wrap' as any,
-            fontSize: `${fontSize}rem`,
+            fontSize: fluidFontSize,
             fontFamily,
             fontWeight: style?.includes('bold') ? 'bold' : fontWeight,
             color,

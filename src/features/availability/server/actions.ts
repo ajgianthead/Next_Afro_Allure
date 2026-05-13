@@ -31,6 +31,16 @@ export const getAvailabilitiesAction = async (businessId: string) => {
 
 export const createAvailabilityAction = async (businessId: string, availabilityData: any) => {
     const supabase = await createClient()
+
+    const [{ data: planData }, { count }] = await Promise.all([
+        supabase.from('business_users').select('plan_type').eq('business_id', businessId).single(),
+        supabase.from('availabilities').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
+    ])
+
+    if (planData?.plan_type === 'STARTER' && (count ?? 0) >= 1) {
+        throw new Error('AVAILABILITY_LIMIT_REACHED')
+    }
+
     const { data, error } = await supabase
         .from('availabilities')
         .insert([{ availability_data: availabilityData, business_id: businessId, id: availabilityData.id }])

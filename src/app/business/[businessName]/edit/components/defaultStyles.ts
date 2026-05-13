@@ -51,23 +51,27 @@ export const containerDefaultProps: Container = {
     minHeight: 0,
     maxWidth: 0,
     gridTemplateColumns: '',
-    responsiveDirection: 'none',
+    responsiveDirection: 'col-to-row',
     hideBelow: 'none',
     hideAbove: 'none',
+    zIndex: 0,
+    spacing: 'normal',
 }
 // Column
 export const columnProps: ColumnLayout = {
     columns: [{ column: [] }, { column: [] }],
     numberOfColumns: 2,
     gap: 10,
-    alignItems: 'stretch'
+    alignItems: 'stretch',
+    mobileLayout: 'stack',
 }
 // Row
 export const rowProps: RowLayout = {
     rows: [{ row: [] }, { row: [] }],
     numberOfRows: 2,
     gap: 10,
-    justifyItems: 'stretch'
+    justifyItems: 'stretch',
+    mobileLayout: 'stack',
 }
 // Grid
 export const gridProps: GridLayout = {
@@ -79,6 +83,8 @@ export const gridProps: GridLayout = {
     justifyItems: 'stretch',
     alignItems: 'stretch',
     firstCellRowSpan: 1,
+    firstCellColumnSpan: 1,
+    mobileColumns: 1,
 }
 // Section
 export const sectionProps: Section = {
@@ -92,6 +98,7 @@ export const imageProps: ImageComponent = {
     objectFit: 'fill',
     height: 0,
     aspectRatio: '',
+    mobileVisibility: 'show',
     borderColor: '#000000',
     borderRadius: 8,
     borderWidth: 1,
@@ -119,6 +126,7 @@ export const videoProps: VideoComponent = {
     height: 250,
     objectFit: 'fill',
     aspectRatio: '',
+    mobileVisibility: 'show',
     borderColor: '#000000',
     borderRadius: 8,
     borderWidth: 1,
@@ -160,6 +168,7 @@ export const customTextProps: RegularText = {
     url: "",
     textTransform: 'none',
     maxWidth: 0,
+    size: 'md',
 }
 // Button
 export const buttonProps: ButtonContainer = {
@@ -225,6 +234,10 @@ export const buttonProps: ButtonContainer = {
     responsiveDirection: 'none',
     hideBelow: 'none',
     hideAbove: 'none',
+    zIndex: 0,
+    spacing: 'none',
+    mobileWidth: 'full',
+    size: 'md',
 }
 
 

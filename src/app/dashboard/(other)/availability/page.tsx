@@ -12,5 +12,14 @@ export default async function Page() {
     const business = await fetchBusinessUser(user.id)
     const { availabilities, defaultAvailability } = await getAvailabilitiesAction(business?.business_id!)
 
-    return <AvailabilityClient availabilitiesData={availabilities ?? []} defaultAvailabilityData={defaultAvailability ?? ''} />;
+    return (
+        <AvailabilityClient
+            availabilitiesData={availabilities ?? []}
+            defaultAvailabilityData={defaultAvailability ?? ''}
+            planType={business?.plan_type ?? 'STARTER'}
+            hadTrial={business?.had_trial ?? false}
+            businessId={business?.business_id ?? ''}
+            stripeCustomerId={business?.stripe_customer_id ?? null}
+        />
+    );
 }

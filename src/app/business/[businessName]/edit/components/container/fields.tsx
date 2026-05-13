@@ -5,6 +5,7 @@ import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, BorderAllIco
 import { Container } from "../types";
 import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives";
 import { Input } from "@/components/ui/input";
+import { SPACING_OPTIONS } from "@/features/editor/lib/responsive";
 
 const expandOpts = [{ label: 'All', value: 'false' }, { label: 'Various', value: 'true' }]
 const posOpts = [{ label: 'Relative', value: 'relative' }, { label: 'Absolute', value: 'absolute' }]
@@ -211,6 +212,16 @@ export const defaultFields: Fields<Container, {}> = {
         )
     },
     draggable: { type: 'number' },
+    zIndex: {
+        type: 'custom',
+        label: 'Z-Index',
+        render: ({ value, onChange, field }) => (
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p className="text-xs font-medium text-slate-400">{field.label}</p>
+                <NumInput value={value} onChange={onChange} icon={<DotIcon />} />
+            </div>
+        )
+    },
     responsiveDirection: {
         type: 'custom',
         label: 'Responsive Dir',
@@ -279,6 +290,24 @@ export const defaultFields: Fields<Container, {}> = {
             <div className="grid grid-cols-4 items-center gap-1.5">
                 <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
                 <Input className="col-span-2 h-6 text-xs" placeholder="e.g. 1fr 1fr 1fr" value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
+            </div>
+        )
+    },
+    spacing: {
+        type: 'custom',
+        label: 'Spacing',
+        render: ({ value, onChange, field }) => (
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                <select
+                    value={value ?? 'none'}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="col-span-2 col-start-3 h-6 border border-input rounded-md px-2 text-xs bg-background"
+                >
+                    {SPACING_OPTIONS.map(o => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                </select>
             </div>
         )
     },

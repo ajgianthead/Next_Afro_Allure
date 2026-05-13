@@ -6,33 +6,32 @@ import { DateTime } from "luxon";
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { getAvailability, getUnavailability } from "../../../app/business/[businessName]/actions";
 import { getSlots } from "slot-calculator";
-import { Caption, Title } from "@/components/tailus-ui/typography";
-import { Card, CircularProgress, Divider } from "@mui/joy";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider/LocalizationProvider";
-import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
-import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
+import { Loader2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import { useBooking } from "../hooks/useBookingData";
+
+const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 export const DateTimePicker = () => {
     const userZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
-    const [date, setDate] = useState<DateTime<true> | DateTime<false> | undefined>(
-        Object.values(data.selectedDateTime).length
-            ? DateTime.fromISO(data.selectedDateTime.start!).setZone(userZone).startOf('day')
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+        data.selectedDateTime.start
+            ? DateTime.fromISO(data.selectedDateTime.start).setZone(userZone).toJSDate()
             : undefined
     );
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [slotsLoading, setSlotsLoading] = useState<boolean>(false)
-    const [slots, setSlots] = useState<any>({})
-    const [currSlots, setCurrSlots] = useState<any[]>([]);
+    const [slots, setSlots] = useState<Record<string, string[][]>>({})
+    const [currSlots, setCurrSlots] = useState<DateTime[]>([]);
 
     const getServiceLength = () =>
         data.services.find((s: ServiceType) => s.id === data.selectedService)?.length ?? 60
 
     const getData = async (startDate: string, endDate: string) => {
         const serviceLength = getServiceLength()
-        let availability = data.services.find((s) => s.id === data.selectedService)?.availability
-        let currAvailability = data.availabilities?.find((el: any) => el.id === availability)
+        const availability = data.services.find((s) => s.id === data.selectedService)?.availability
+        const currAvailability = data.availabilities?.find((el: any) => el.id === availability)
         const formattedAvailability = await getAvailability(startDate, endDate, currAvailability, userZone)
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!, userZone)
         const { availableSlotsByDay } = getSlots({
@@ -46,24 +45,23 @@ export const DateTimePicker = () => {
         const days = Object.keys(availableSlotsByDay)
         const slotValues = Object.values(availableSlotsByDay)
 
-        let result: Record<string, string[][]> = {};
+        const result: Record<string, string[][]> = {}
         for (let i = 0; i < slotValues.length; i++) {
             if (!slotValues[i].length) continue
             result[days[i]] = [[slotValues[i][0].from]]
             for (let j = 0; j < slotValues[i].length; j++) {
                 if (j === slotValues[i].length - 1) {
-                    let temp = [...result[days[i]]]
+                    const temp = [...result[days[i]]]
                     temp[temp.length - 1].push(slotValues[i][j].to)
                     result[days[i]] = temp
                     continue
                 }
                 if (slotValues[i][j].to !== slotValues[i][j + 1].from) {
-                    let temp = [...result[days[i]]]
+                    const temp = [...result[days[i]]]
                     temp[temp.length - 1].push(slotValues[i][j].to)
                     temp.push([slotValues[i][j + 1].from])
                     result[days[i]] = temp
                 }
-                continue;
             }
         }
 
@@ -73,7 +71,7 @@ export const DateTimePicker = () => {
 
     const buildSlotsForDay = (fetchedSlots: string[][]): DateTime[] => {
         const serviceLength = getServiceLength()
-        let res: DateTime[] = []
+        const res: DateTime[] = []
         for (let i = 0; i < fetchedSlots.length; i++) {
             let timeStart = DateTime.fromISO(fetchedSlots[i][0]).setZone(userZone)
             let movingTime = timeStart
@@ -84,7 +82,7 @@ export const DateTimePicker = () => {
                     res.push(timeStart)
                     timeStart = timeStart.plus({ minutes: 10 })
                 } else {
-                    break;
+                    break
                 }
             }
         }
@@ -100,9 +98,7 @@ export const DateTimePicker = () => {
                 if (data.selectedDateTime.start) {
                     const key = DateTime.fromISO(data.selectedDateTime.start).setZone(userZone).toISODate()!
                     const fetchedSlots = result[key]
-                    if (fetchedSlots?.length) {
-                        setCurrSlots(buildSlotsForDay(fetchedSlots))
-                    }
+                    if (fetchedSlots?.length) setCurrSlots(buildSlotsForDay(fetchedSlots))
                 }
             }
             setIsLoading(false)
@@ -110,17 +106,18 @@ export const DateTimePicker = () => {
         initialize()
     }, [data.availabilities, data.appointments])
 
-    const handleMonthChange = async (month: DateTime<boolean>) => {
+    const handleMonthChange = async (month: Date) => {
         const bookAheadValue: string = data.booking_policy.bookAheadValue
         setIsLoading(true)
+        const luxonMonth = DateTime.fromJSDate(month).setZone(userZone)
         let startDate = ""
         let endDate = ""
-        if (month.month === DateTime.now().setZone(userZone).month) {
+        if (luxonMonth.month === DateTime.now().setZone(userZone).month) {
             startDate = DateTime.now().setZone(userZone).startOf("day").toISO()!
-            endDate = month.setZone(userZone).endOf("month").toISO()!
+            endDate = luxonMonth.endOf("month").toISO()!
         } else if (bookAheadValue !== '1 month' && bookAheadValue !== '28 day' && bookAheadValue !== '4 week') {
-            startDate = month.setZone(userZone).toISO()!
-            endDate = month.setZone(userZone).endOf("month").toISO()!
+            startDate = luxonMonth.toISO()!
+            endDate = luxonMonth.endOf("month").toISO()!
         } else {
             const splitValue = bookAheadValue.split(' ')
             const plusData = splitValue[1] === 'month' ? { month: Number(splitValue[0]) } : (splitValue[1] === 'week' ? { weeks: Number(splitValue[0]) } : { days: Number(splitValue[0]) })
@@ -131,10 +128,12 @@ export const DateTimePicker = () => {
         setIsLoading(false)
     }
 
-    const handleDateChange = async (value: DateTime) => {
-        setDate(value)
+    const handleDateSelect = async (day: Date | undefined) => {
+        if (!day) return
+        setSelectedDate(day)
         setSlotsLoading(true)
-        const key = value.toISODate()!
+        const luxonDay = DateTime.fromJSDate(day).setZone(userZone)
+        const key = luxonDay.toISODate()!
         const fetchedSlots = slots[key]
         if (!fetchedSlots || fetchedSlots.length === 0) {
             setCurrSlots([])
@@ -145,89 +144,95 @@ export const DateTimePicker = () => {
         setSlotsLoading(false)
     }
 
-    const handleDisabledDays = (day: DateTime<true> | DateTime<false>) => {
-        const bookAheadValue: string = data.booking_policy.bookAheadValue;
+    const isDisabled = (day: Date): boolean => {
+        const bookAheadValue: string = data.booking_policy.bookAheadValue
+        const luxon = DateTime.fromJSDate(day).setZone(userZone)
         const startDate = DateTime.now().setZone(userZone).startOf('month')
-        let endDate;
+        let endDate: DateTime
         if (bookAheadValue === '1 month' || bookAheadValue === '28 day' || bookAheadValue === '4 week') {
             endDate = DateTime.now().setZone(userZone).endOf('month')
         } else {
             const splitValue = bookAheadValue.split(' ')
             const plusData = splitValue[1] === 'month' ? { month: Number(splitValue[0]) } : (splitValue[1] === 'week' ? { weeks: Number(splitValue[0]) } : { days: Number(splitValue[0]) })
-            endDate = DateTime.now().setZone(userZone).startOf('month').plus(plusData);
+            endDate = DateTime.now().setZone(userZone).startOf('month').plus(plusData)
         }
-        return !(day >= startDate && day <= endDate)
+        return !(luxon >= startDate && luxon <= endDate)
     }
 
+    const selectedLuxon = selectedDate ? DateTime.fromJSDate(selectedDate).setZone(userZone) : null
+
     return (
-        <div className="flex flex-col md:p-4">
+        <div>
             <div className="mb-5">
-                <Title>Select Date & Time</Title>
-                <Caption>Pick a date and time from the available time slots</Caption>
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>Select Date & Time</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--t-muted)' }}>Pick a date and time from the available slots</p>
             </div>
-            <div className="flex-1 min-h-0">
-                <Card
-                    sx={{
-                        display: "grid",
-                        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                        height: "65%",
+
+            {isLoading ? (
+                <div className="flex justify-center items-center py-20">
+                    <Loader2 size={28} className="animate-spin" style={{ color: 'var(--t-primary)' }} />
+                </div>
+            ) : (
+                <div
+                    className="grid md:grid-cols-2 grid-cols-1 overflow-hidden"
+                    style={{
+                        border: '1px solid var(--t-border)',
+                        borderRadius: 'var(--t-card-r)',
+                        backgroundColor: 'var(--t-card)',
                     }}
                 >
+                    {/* Calendar */}
                     <div
-                        className="flex justify-center"
-                        style={{ borderRight: "1px solid #E0E0E0", padding: 16, height: "100%" }}
+                        className="flex justify-center py-4"
+                        style={{ borderRight: '1px solid var(--t-border)' }}
                     >
-                        <LocalizationProvider dateAdapter={AdapterLuxon}>
-                            <DateCalendar
-                                value={date}
-                                onChange={handleDateChange}
-                                onMonthChange={handleMonthChange}
-                                shouldDisableDate={handleDisabledDays}
-                                disablePast
-                                loading={isLoading}
-                                sx={{
-                                    height: "100%",
-                                    "& .MuiPickersDay-root": { height: 42, width: 42, fontSize: 14 },
-                                    "& .MuiDayCalendar-weekDayLabel": { fontSize: 12 },
-                                }}
-                            />
-                        </LocalizationProvider>
+                        <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={handleDateSelect}
+                            onMonthChange={handleMonthChange}
+                            disabled={isDisabled}
+                            fromDate={new Date()}
+                        />
                     </div>
-                    {date && (
-                        <div style={{ display: "flex", flexDirection: "column", padding: 16, height: "100%", overflowY: "auto" }}>
-                            <Title style={{ fontSize: 16, fontWeight: 600 }}>
-                                {date.toFormat("cccc, LLLL dd")}
-                            </Title>
-                            <Divider sx={{ my: 2 }} />
-                            <div style={{ flex: 1, minHeight: 0 }}>
+
+                    {/* Time slots */}
+                    <div className="flex flex-col p-4" style={{ maxHeight: 360, overflowY: 'auto' }}>
+                        {selectedLuxon ? (
+                            <>
+                                <p className="text-sm font-semibold mb-3" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>
+                                    {selectedLuxon.toFormat("cccc, LLLL dd")}
+                                </p>
+                                <div style={{ height: 1, backgroundColor: 'var(--t-border)', marginBottom: 12 }} />
                                 {slotsLoading ? (
-                                    <div className="flex justify-center items-center h-24">
-                                        <CircularProgress size="sm" />
+                                    <div className="flex justify-center items-center py-8">
+                                        <Loader2 size={20} className="animate-spin" style={{ color: 'var(--t-primary)' }} />
                                     </div>
                                 ) : currSlots.length === 0 ? (
-                                    <Caption className="text-center text-gray-400 mt-4">
+                                    <p className="text-sm text-center mt-6" style={{ color: 'var(--t-muted)' }}>
                                         No availability on this date. Please select another.
-                                    </Caption>
+                                    </p>
                                 ) : (
-                                    <div
-                                        className="grid-cols-1 md:grid-cols-2"
-                                        style={{ display: "grid", gap: 8, overflowY: 'scroll' }}
-                                    >
-                                        {currSlots.map((time: DateTime, index: number) => (
-                                            <TimeSlot key={index} startTime={time} userZone={userZone} />
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {currSlots.map((time, i) => (
+                                            <TimeSlot key={i} startTime={time} userZone={userZone} />
                                         ))}
                                     </div>
                                 )}
-                            </div>
-                        </div>
-                    )}
-                </Card>
-            </div>
+                            </>
+                        ) : (
+                            <p className="text-sm mt-6 text-center" style={{ color: 'var(--t-muted)' }}>
+                                Select a date to see available times
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
 
-const TimeSlot = ({ startTime, userZone }: { startTime: DateTime, userZone: string }) => {
+const TimeSlot = ({ startTime, userZone }: { startTime: DateTime; userZone: string }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const serviceLength = data.services.find((s) => s.id === data.selectedService)?.length ?? 60
     const start = startTime.setZone(userZone).toLocaleString(DateTime.TIME_SIMPLE)
@@ -235,15 +240,21 @@ const TimeSlot = ({ startTime, userZone }: { startTime: DateTime, userZone: stri
     const selected = startTime.toISO() === data.selectedDateTime.start && endTime === data.selectedDateTime.end
 
     return (
-        <div
+        <button
+            type="button"
             onClick={() => setData((prev) => ({
                 ...prev,
                 selectedDateTime: { start: startTime.toISO()!, end: endTime }
             }))}
-            style={{ borderWidth: selected ? 3 : 1 }}
-            className={`text-md font-medium text-center px-3 cursor-pointer py-3 rounded-md transition-colors ${selected ? 'border-indigo-500 bg-indigo-50' : 'border-[#ECECEC] bg-white hover:border-gray-300'}`}
+            className="text-sm font-medium text-center px-3 py-2.5 transition-colors"
+            style={{
+                borderRadius: 'var(--t-input-r)',
+                border: selected ? `2px solid var(--t-primary)` : '1px solid var(--t-border)',
+                backgroundColor: selected ? 'var(--t-primary)' : 'var(--t-card)',
+                color: selected ? 'var(--t-primary-text)' : 'var(--t-text)',
+            }}
         >
             {start}
-        </div>
+        </button>
     )
 }

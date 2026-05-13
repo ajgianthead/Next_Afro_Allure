@@ -1,7 +1,7 @@
 'use server'
 
 import { AppointmentData } from "../types"
-import { cancelAppointment, confirmAppointment, createNewManualAppointment, rescheduleAppointment } from "./domain"
+import { cancelAppointment, confirmAppointment, createNewManualAppointment, rescheduleAppointment, sendConfirmationLink, sendPaymentLink } from "./domain"
 
 export const createManualAppointmentAction = async (data: AppointmentData) => {
     return await createNewManualAppointment(data)
@@ -21,4 +21,12 @@ export const confirmAppointmentAction = async (appointmentId: string, depositCha
 
 export const cancelAppointmentAction = async (appointmentId: string) => {
     return await cancelAppointment(appointmentId)
+}
+
+export const sendConfirmationLinkAction = async (appointmentId: string) => {
+    return await sendConfirmationLink(appointmentId)
+}
+
+export const sendPaymentLinkAction = async (appointmentId: string) => {
+    return await sendPaymentLink(appointmentId)
 }

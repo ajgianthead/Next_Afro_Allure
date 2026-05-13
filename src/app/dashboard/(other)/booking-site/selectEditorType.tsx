@@ -7,12 +7,16 @@ import { createEditorState, createSectionEditorState } from './actions';
 import { PostgrestError } from '@supabase/supabase-js';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { PlanGateCard, GatableBusinessData } from '@/components/dashboard/PlanGate';
 
 interface PageProps {
     businessId: string
     urlName: string
     businessName: string
     switchType: string
+    planType: 'STARTER' | 'GROWTH'
+    gatableData: GatableBusinessData
 }
 
 const DRAG_DROP_FEATURES = [
@@ -27,14 +31,24 @@ const SECTIONS_FEATURES = [
     'Drag to reorder sections instantly',
 ]
 
-const SelectEditorType = ({ businessId, urlName, businessName, switchType }: PageProps) => {
+const SelectEditorType = ({ businessId, urlName, businessName, switchType, planType, gatableData }: PageProps) => {
     const [creatingSections, setCreatingSections] = useState(false)
     const [creatingEditor, setCreatingEditor] = useState(false)
+    const [showPlanGate, setShowPlanGate] = useState(false)
     const router = useRouter()
     const anyLoading = creatingSections || creatingEditor
 
     return (
         <div className="max-w-3xl mx-auto px-6 py-16">
+            <Dialog open={showPlanGate} onOpenChange={setShowPlanGate}>
+                <DialogContent className="max-w-sm">
+                    <PlanGateCard
+                        featureName="Drag & Drop Editor"
+                        description="Build a fully custom booking page with our visual editor — available on Growth."
+                        businessData={gatableData}
+                    />
+                </DialogContent>
+            </Dialog>
 
             {/* Header */}
             <div className="text-center mb-12">
@@ -53,6 +67,10 @@ const SelectEditorType = ({ businessId, urlName, businessName, switchType }: Pag
                 <button
                     disabled={anyLoading}
                     onClick={async () => {
+                        if (planType === 'STARTER') {
+                            setShowPlanGate(true)
+                            return
+                        }
                         setCreatingEditor(true)
                         const res = await createEditorState(businessId, switchType)
                         if (res instanceof PostgrestError) {

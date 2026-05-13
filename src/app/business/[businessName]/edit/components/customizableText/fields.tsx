@@ -266,6 +266,7 @@ export let customizableTextFields: Fields<RegularText, {}> = {
         label: 'Max Width (rem)',
         render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} step={0.5} />
     },
+    size: { visible: false, type: 'text' },
 }
 
 export const resolveCustomizableTextFields: (data: Omit<ComponentData<RegularText, string, Record<string, DefaultComponentProps>>, "type">) => Fields<RegularText, {}> | Promise<Fields<RegularText, {}>> = (data) => {

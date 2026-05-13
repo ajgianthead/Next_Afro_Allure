@@ -27,6 +27,35 @@ export const cancelClientAppointmentAction = async (
     reasons: string[]
 ) => {
     const supabase = await createClient()
+
+    // Enforce cancel_day_limit before proceeding
+    const { data: apptCheck } = await supabase
+        .from('appointments')
+        .select('status, policy_id')
+        .eq('id', id)
+        .single()
+
+    if (apptCheck?.status === 'CANCELLED') {
+        throw new Error('This appointment has already been cancelled.')
+    }
+
+    if (apptCheck?.policy_id) {
+        const { data: policy } = await supabase
+            .from('business_policies')
+            .select('cancel_day_limit')
+            .eq('id', apptCheck.policy_id)
+            .single()
+        const limit = policy?.cancel_day_limit ?? 0
+        if (limit > 0) {
+            const daysUntil = DateTime.fromISO(start).diff(DateTime.now(), 'days').days
+            if (daysUntil < limit) {
+                throw new Error(
+                    `Cancellations are not allowed within ${limit} day${limit !== 1 ? 's' : ''} of the appointment.`
+                )
+            }
+        }
+    }
+
     const { data, error } = await supabase
         .from('appointments')
         .update({ status: 'CANCELLED', cancellation_reason: reasons })
@@ -80,6 +109,7 @@ export const cancelClientAppointmentAction = async (
     if (reminders?.client?.day) runs.cancel(reminders.client.day).catch(console.error)
     if (data.payment_link_id) runs.cancel(data.payment_link_id).catch(console.error)
     if (reminders?.paymentCheck) runs.cancel(reminders.paymentCheck).catch(console.error)
+    if (reminders?.noShowCheck) runs.cancel(reminders.noShowCheck).catch(console.error)
 
     trackAppointmentCancelled({
         appointmentType: '',
@@ -188,6 +218,7 @@ export const createAppointmentAction = async (body: {
                     business: { hour: ids.business.hour, day: ids.business.day },
                     client: { hour: ids.client.hour, day: ids.client.day },
                     paymentCheck: ids.paymentCheck,
+                    noShowCheck: ids.noShowCheck,
                 },
                 payment_link_id: ids.paymentLink,
             }).eq('id', data.id)
@@ -209,8 +240,7 @@ export const createAppointmentAction = async (body: {
         last_name: client_metadata?.lastName,
         email: client_metadata?.email,
         phone_number: client_metadata?.phoneNumber,
-        business_id: data.business,
-    }).catch(console.error)
+    }, data.business).catch(console.error)
 
     return data
 }

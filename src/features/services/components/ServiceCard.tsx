@@ -9,8 +9,6 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ service, onClick }: ServiceCardProps) {
-    console.log(service);
-
     return (
         <div
             onClick={onClick}

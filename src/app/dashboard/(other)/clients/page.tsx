@@ -1,26 +1,41 @@
-import ClientsTable from '@components/clients/ClientsTable';
-import React from 'react';
-import { fetchBusinessUser, fetchUser } from '../actions';
-import { getBannedClients, getBusinessClients } from './actions';
-import { PostgrestError } from '@supabase/supabase-js';
+import { redirect } from 'next/navigation'
+import ClientsTable from '@components/clients/ClientsTable'
+import { fetchBusinessUser, fetchUser } from '../actions'
+import { getBannedClients, getBusinessClients } from './actions'
+import { PostgrestError } from '@supabase/supabase-js'
 
 export const metadata = {
     title: 'Clientele | AfroAllure',
-};
+}
 
 const Clients = async () => {
     const user = await fetchUser()
-    const business = await fetchBusinessUser(user?.id!)
-    const clients = await getBusinessClients(business.business_id)
-    const bannedClients = await getBannedClients(business.business_id)
+    if (!user) redirect('/login')
 
-    if (!(clients instanceof PostgrestError || bannedClients instanceof PostgrestError)) {
+    const business = await fetchBusinessUser(user.id)
+
+    const [clients, bannedClients] = await Promise.all([
+        getBusinessClients(business.business_id),
+        getBannedClients(business.business_id),
+    ])
+
+    if (clients instanceof PostgrestError || bannedClients instanceof PostgrestError) {
         return (
-            <div>
-                <ClientsTable bannedClients={bannedClients} clientData={clients} businessId={business.business_id} />
+            <div className="p-5">
+                <p className="text-sm" style={{ color: '#FC6161' }}>
+                    Failed to load client data. Please refresh the page.
+                </p>
             </div>
-        );
+        )
     }
+
+    return (
+        <ClientsTable
+            clientData={clients}
+            businessId={business.business_id}
+            bannedClients={bannedClients}
+        />
+    )
 }
 
-export default Clients;
+export default Clients

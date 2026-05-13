@@ -2,6 +2,7 @@
 
 import { ComponentConfig, ComponentData, DefaultComponentProps, Fields, useGetPuck } from "@puckeditor/core"
 import { Text } from "../types"
+import { TEXT_SIZE_MAP, TEXT_SIZE_OPTIONS } from "@/features/editor/lib/responsive"
 import { PaintBucket, Type } from "lucide-react"
 import { GoogleFont, loadGoogleFont } from "useGoogleFonts"
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext"
@@ -254,6 +255,24 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
                 </div>
             )
         },
+        size: {
+            type: 'custom',
+            label: 'Text size',
+            render: ({ value, onChange, field }) => (
+                <div className="grid grid-cols-4 items-center gap-1.5">
+                    <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                    <select
+                        value={value ?? 'md'}
+                        onChange={(e) => onChange(e.target.value)}
+                        className="col-span-2 col-start-3 h-6 border border-input rounded-md px-2 text-xs bg-background"
+                    >
+                        {TEXT_SIZE_OPTIONS.map(o => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                    </select>
+                </div>
+            )
+        },
     }
 
     if (data.props.isLink) {
@@ -339,95 +358,95 @@ const textStyle = (style: string[] | undefined, extra?: React.CSSProperties): Re
     ...extra,
 })
 
-const DEFAULT_TEXT_PROPS = { color: '#000000', fontFamily: 'Roboto', letterSpacing: 1.2, lineHeight: 1.5, align: 'start', style: [], isLink: false, sections: '', url: '', linkType: 'external', textTransform: 'none' }
+const DEFAULT_TEXT_PROPS = { color: '#000000', fontFamily: 'Roboto', letterSpacing: 1.2, lineHeight: 1.5, align: 'start', style: [], isLink: false, sections: '', url: '', linkType: 'external', textTransform: 'none', size: 'md' }
 
 export const textPresetsComponents: { [key: string]: ComponentConfig<Text> } = {
     HeadingOne: {
         label: 'Heading 1',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Heading 1' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <h1 style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</h1>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Heading 1', size: 'xl' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <h1 className={TEXT_SIZE_MAP[size ?? 'xl']} style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</h1>
         )
     },
     HeadingTwo: {
         label: 'Heading 2',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Heading 2' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <h2 style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</h2>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Heading 2', size: 'lg' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <h2 className={TEXT_SIZE_MAP[size ?? 'lg']} style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</h2>
         )
     },
     HeadingThree: {
         label: 'Heading 3',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Heading 3' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <h3 style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</h3>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Heading 3', size: 'md' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <h3 className={TEXT_SIZE_MAP[size ?? 'md']} style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</h3>
         )
     },
     HeadingFour: {
         label: 'Heading 4',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Heading 4' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <h4 style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</h4>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Heading 4', size: 'sm' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <h4 className={TEXT_SIZE_MAP[size ?? 'sm']} style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</h4>
         )
     },
     TitleLarge: {
         label: 'Title Large',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Title Large' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <p style={{ fontSize: '1.25rem', color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Title Large', size: 'lg' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <p className={TEXT_SIZE_MAP[size ?? 'lg']} style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
         )
     },
     TitleMedium: {
         label: 'Title Medium',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Title Medium' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <p style={{ fontSize: '1rem', fontWeight: 600, color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Title Medium', size: 'md' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <p className={TEXT_SIZE_MAP[size ?? 'md']} style={{ fontWeight: 600, color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
         )
     },
     TitleSmall: {
         label: 'Title Small',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Title Small' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <p style={{ fontSize: '0.875rem', fontWeight: 600, color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Title Small', size: 'sm' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <p className={TEXT_SIZE_MAP[size ?? 'sm']} style={{ fontWeight: 600, color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
         )
     },
     BodyLarge: {
         label: 'Body Large',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Body Large' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <p style={{ fontSize: '1.125rem', color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Body Large', size: 'md' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <p className={TEXT_SIZE_MAP[size ?? 'md']} style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
         )
     },
     BodyMedium: {
         label: 'Body Medium',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Body Medium' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <p style={{ fontSize: '1rem', color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Body Medium', size: 'sm' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <p className={TEXT_SIZE_MAP[size ?? 'sm']} style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
         )
     },
     BodySmall: {
         label: 'Body Small',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Body Small' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <p style={{ fontSize: '0.875rem', color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Body Small', size: 'sm' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <p className={TEXT_SIZE_MAP[size ?? 'sm']} style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
         )
     },
     BodyExtraSmall: {
         label: 'Body Extra-Small',
         resolveFields: resolveTemplateTextFields,
-        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Body Extra-Small' },
-        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform }: any) => (
-            <p style={{ fontSize: '0.75rem', color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
+        defaultProps: { ...DEFAULT_TEXT_PROPS, text: 'Body Extra-Small', size: 'sm' },
+        render: ({ text, color, fontFamily, letterSpacing, lineHeight, style, align, textTransform, size }: any) => (
+            <p className={TEXT_SIZE_MAP[size ?? 'sm']} style={{ color, fontFamily, letterSpacing, lineHeight, textAlign: align, textTransform: textTransform !== 'none' ? textTransform : undefined, ...textStyle(style) }}>{text}</p>
         )
     },
 }

@@ -9,6 +9,8 @@ import { createClient } from "@/app/utils/supabase/server";
 import { assignAddons } from "app/api/util/transformServices";
 import { trackAppointmentRescheduled } from "../../../../lib/analytics";
 import { formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails";
+import { runs } from "@trigger.dev/sdk/v3";
+import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -111,6 +113,23 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
         }
         const ogAppointment = appointments.filter((appointment: Appointment, index: number) => appointment.id === appointmentID)[0]
 
+        // Enforce reschedule_day_limit
+        if (ogAppointment.policy_id) {
+            const policyRes = await client.query(
+                `SELECT reschedule_day_limit FROM business_policies WHERE id = $1`,
+                [ogAppointment.policy_id]
+            )
+            const rescheduleDayLimit = policyRes.rows[0]?.reschedule_day_limit ?? 0
+            if (rescheduleDayLimit > 0) {
+                const daysUntil = DateTime.fromJSDate(ogAppointment.start).diff(DateTime.now(), 'days').days
+                if (daysUntil < rescheduleDayLimit) {
+                    throw new Error(
+                        `Rescheduling is not allowed within ${rescheduleDayLimit} day${rescheduleDayLimit !== 1 ? 's' : ''} of the appointment.`
+                    )
+                }
+            }
+        }
+
         // UPDATE appointment timeslot
         // FIXME: Update "updated_at" timestamp
         const appointment = (await client.query(`UPDATE appointments SET start = $1, "end" = $2, reschedules = $3 WHERE id = $4 RETURNING *`, [timeSlot.start, timeSlot.end, parseInt(ogAppointment.reschedules) - 1, appointmentID])).rows[0]
@@ -175,6 +194,63 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
             servicePrice: appointment.service_data.price,
             appointmentType: "",
         }).catch(console.error)
+
+        // Cancel old reminder jobs and schedule new ones — fire-and-forget, non-critical
+        ;(async () => {
+            try {
+                const reminders = ogAppointment.reminder_ids as any
+                if (reminders?.business?.hour) await runs.cancel(reminders.business.hour)
+                if (reminders?.business?.day) await runs.cancel(reminders.business.day)
+                if (reminders?.client?.hour) await runs.cancel(reminders.client.hour)
+                if (reminders?.client?.day) await runs.cancel(reminders.client.day)
+                if (ogAppointment.payment_link_id) await runs.cancel(ogAppointment.payment_link_id)
+                if (reminders?.paymentCheck) await runs.cancel(reminders.paymentCheck)
+                if (reminders?.noShowCheck) await runs.cancel(reminders.noShowCheck)
+
+                const settings = business.account_settings ?? {}
+                const ids = await AppointmentReminders.schedule({
+                    appointmentId: appointment.id,
+                    start: DateTime.fromJSDate(appointment.start).toISO()!,
+                    end: DateTime.fromJSDate(appointment.end).toISO()!,
+                    serviceName: appointment.service_data.name,
+                    businessData: {
+                        id: business.business_id,
+                        name: business.business_name,
+                        email: business.email,
+                        address: formatBusinessAddress(business.account_settings?.business_address ?? {}),
+                    },
+                    clientData: {
+                        firstName: appointment.client_metadata.firstName,
+                        lastName: appointment.client_metadata.lastName,
+                        email: appointment.client_metadata.email,
+                        phoneNumber: appointment.client_metadata.phoneNumber,
+                    },
+                    settings: {
+                        clientReminders: {
+                            email_1: settings.app_reminders?.email_1 ?? false,
+                            email_24: settings.app_reminders?.email_24 ?? false,
+                        },
+                        businessReminders: {
+                            enabled: settings.notifications?.email ?? false,
+                            email_1: settings.notifications?.email_1 ?? false,
+                            email_24: settings.notifications?.email_24 ?? false,
+                        },
+                    },
+                })
+                const supabase = await createClient()
+                await supabase.from('appointments').update({
+                    reminder_ids: {
+                        business: { hour: ids.business.hour, day: ids.business.day },
+                        client: { hour: ids.client.hour, day: ids.client.day },
+                        paymentCheck: ids.paymentCheck,
+                        noShowCheck: ids.noShowCheck,
+                    },
+                    payment_link_id: ids.paymentLink,
+                }).eq('id', appointment.id)
+            } catch (err) {
+                console.error('Failed to manage reminders after public reschedule:', err)
+            }
+        })()
 
         return appointment
     } catch (error: any) {

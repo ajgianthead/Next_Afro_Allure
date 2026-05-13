@@ -16,10 +16,13 @@ const Page = async ({ searchParams }: { searchParams?: { 'switch-editor': string
     const { 'switch-editor': switchEditor } = await searchParams!
     const businessUser: any = await fetchBusinessUser(user?.id!)
     const editorData: any = await getEditorData(businessUser.business_id)
+    const planType = (businessUser.plan_type ?? 'STARTER') as 'STARTER' | 'GROWTH'
+    const gatableData = { hadTrial: businessUser.had_trial, stripeCustomerId: businessUser.stripe_customer_id, businessId: businessUser.business_id }
+
     if (switchEditor === 'true') {
         return (
             <div>
-                <SelectEditorType switchType={switchEditor} businessId={businessUser.business_id} urlName={businessUser.url_name} businessName={businessUser.business_name} />
+                <SelectEditorType switchType={switchEditor} businessId={businessUser.business_id} urlName={businessUser.url_name} businessName={businessUser.business_name} planType={planType} gatableData={gatableData} />
             </div>
         );
     }
@@ -33,7 +36,7 @@ const Page = async ({ searchParams }: { searchParams?: { 'switch-editor': string
     } else {
         return (
             <div>
-                <SelectEditorType switchType={switchEditor} businessId={businessUser.business_id} urlName={businessUser.url_name} businessName={businessUser.business_name} />
+                <SelectEditorType switchType={switchEditor} businessId={businessUser.business_id} urlName={businessUser.url_name} businessName={businessUser.business_name} planType={planType} gatableData={gatableData} />
             </div>
         );
     }

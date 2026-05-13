@@ -7,9 +7,6 @@ import {
     ConnectTaxRegistrations,
     ConnectPaymentMethodSettings,
 } from '@stripe/react-connect-js'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
 
 type SettingsView = 'account' | 'tax' | 'payment-methods'
 
@@ -23,34 +20,46 @@ export function SettingsTab() {
     const [active, setActive] = useState<SettingsView>('account')
 
     return (
-        <div className="rounded-lg border bg-card p-6 mt-2">
-            <h2 className="text-base font-semibold">Settings</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-                Manage your monetization settings and preferences.
-            </p>
-            <Separator className="my-4" />
-            <div className="flex lg:flex-row flex-col gap-6">
-                <nav className="flex lg:flex-col flex-row gap-1 lg:w-44 w-full shrink-0">
-                    {NAV_ITEMS.map(({ key, label }) => (
-                        <Button
-                            key={key}
-                            variant="ghost"
-                            size="sm"
-                            className={cn(
-                                'justify-start font-normal',
-                                active === key && 'bg-accent text-accent-foreground font-medium'
-                            )}
-                            onClick={() => setActive(key)}
-                        >
-                            {label}
-                        </Button>
-                    ))}
+        <div
+            className="mt-3 mb-6 rounded-2xl overflow-hidden"
+            style={{ border: '1px solid #E8E2D6', backgroundColor: '#FFFFFF' }}
+        >
+            <div className="flex flex-col lg:flex-row">
+                {/* Sidebar nav — bottom border on mobile, right border on desktop */}
+                <nav
+                    className="flex flex-row lg:flex-col gap-1 p-3 shrink-0 lg:w-48 border-b lg:border-b-0 lg:border-r overflow-x-auto"
+                    style={{ borderColor: '#E8E2D6' }}
+                >
+                    {NAV_ITEMS.map(({ key, label }) => {
+                        const isActive = active === key
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setActive(key)}
+                                className="text-left rounded-xl px-3 py-2 transition-colors text-[13px] shrink-0 lg:w-full whitespace-nowrap"
+                                style={{
+                                    backgroundColor: isActive ? '#F0EBE3' : 'transparent',
+                                    color: isActive ? '#1A1818' : '#6F6863',
+                                    fontWeight: isActive ? 600 : 400,
+                                }}
+                                onMouseEnter={e => {
+                                    if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = '#FAF7F2'
+                                }}
+                                onMouseLeave={e => {
+                                    if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                                }}
+                            >
+                                {label}
+                            </button>
+                        )
+                    })}
                 </nav>
-                <Separator orientation="vertical" className="hidden lg:block self-stretch h-auto" />
-                <div className="flex-1">
+
+                {/* Content */}
+                <div className="flex-1 p-5 lg:p-6 min-w-0">
                     {active === 'account' && <ConnectAccountManagement />}
                     {active === 'tax' && (
-                        <div className="w-full flex flex-col gap-4">
+                        <div className="flex flex-col gap-4">
                             <ConnectTaxSettings />
                             <ConnectTaxRegistrations />
                         </div>

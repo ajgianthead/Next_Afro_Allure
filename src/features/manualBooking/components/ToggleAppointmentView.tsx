@@ -13,11 +13,11 @@ import { CreateAppointmentModal } from "./modals/CreateAppointmentModal";
 import { RescheduleConfirmation, RescheduleConfirmationModal } from "./modals/RescheduleAppointmentModal";
 import { ServiceData } from "@/features/services/types";
 
-export const ToggleAppointmentView = ({ events, services, policy, data }: { data: AppointmentTableData[], events: AppointmentEvent[], services: any[], policy: BusinessPolicyType }) => {
+export const ToggleAppointmentView = ({ events, services, policy, data, planType, monthlyBookingCount, hadTrial, stripeCustomerId, businessId }: { data: AppointmentTableData[], events: AppointmentEvent[], services: any[], policy: BusinessPolicyType, planType: 'STARTER' | 'GROWTH', monthlyBookingCount: number, hadTrial: boolean, stripeCustomerId: string | null, businessId: string }) => {
     return (
         <div>
             <ManualBookingWrapper appointmentEvents={events} services={services} policy={policy}>
-                <CreateAppointmentModal />
+                <CreateAppointmentModal planType={planType} monthlyBookingCount={monthlyBookingCount} hadTrial={hadTrial} stripeCustomerId={stripeCustomerId} businessId={businessId} />
                 <RescheduleConfirmationModal />
                 <Tabs defaultValue="calendar" className="w-full">
                     <div className="flex justify-end">
@@ -27,7 +27,7 @@ export const ToggleAppointmentView = ({ events, services, policy, data }: { data
                         </TabsList>
                     </div>
                     <TabsContent value="calendar">
-                        <ResponsiveCalendar events={events} services={services} policy={policy} />
+                        <ResponsiveCalendar />
                     </TabsContent>
                     <TabsContent value="table">
                         <AppointmentsTable columns={columns} data={data} />

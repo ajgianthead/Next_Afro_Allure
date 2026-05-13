@@ -69,3 +69,8 @@ export const getDashboardGrowth = async (businessId: string) => {
     );
     return { data }
 }
+
+export const dismissUpgradePromptAction = async (businessId: string) => {
+    const supabase = await createClient()
+    await supabase.from('business_users').update({ upgrade_prompt_dismissed_at: new Date().toISOString() }).eq('business_id', businessId)
+}

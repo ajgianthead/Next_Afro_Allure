@@ -163,11 +163,27 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
             end: DateTime.fromJSDate(eoaRes.end).toISO()!,
           },
           serviceName: eoaRes.service_data.name,
-          notifyBusiness: false,
+          notifyBusiness: eoaRes.account_settings?.notifications?.email ?? false,
           amountPaid: paymentIntent.amount,
         });
       } catch (emailErr) {
         console.error('Failed to send EOA receipt email:', emailErr);
+      }
+
+      // Notify business in-app that EOA payment was received
+      try {
+        const supabase = await createClient();
+        const cm = eoaRes.client_metadata;
+        await supabase.from('notifications').insert({
+          body: `${cm.firstName} ${cm.lastName} just paid for their ${eoaRes.service_data.name} appointment.`,
+          title: 'Payment Received',
+          read: false,
+          business_id: eoaRes.business,
+          type: 'payment-received',
+          appointment_id: eoaRes.id,
+        });
+      } catch (notifErr) {
+        console.error('Failed to send EOA payment notification:', notifErr);
       }
     }
     return;
@@ -181,7 +197,8 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
       `WITH updated AS (
         UPDATE appointments
         SET status = 'CONFIRMED', paid_deposit = $1, deposit_tax_transaction = $2,
-            paid_amount = coalesce(paid_amount, 0) + $3, amount_due = amount_due - $3
+            paid_amount = coalesce(paid_amount, 0) + $3,
+            amount_due = CASE WHEN substraction THEN amount_due - $3 ELSE amount_due END
         WHERE deposit_charge_id = $4
         RETURNING *
       )
@@ -250,8 +267,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
     last_name: res.client_metadata.lastName,
     email: res.client_metadata.email,
     phone_number: res.client_metadata.phoneNumber,
-    business_id: res.business,
-  }).catch(console.error);
+  }, res.business).catch(console.error);
 }
 
 async function scheduleReminders(res: any, appointmentId: string, client: any) {

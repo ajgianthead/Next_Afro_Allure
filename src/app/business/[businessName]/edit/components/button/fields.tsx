@@ -1,4 +1,5 @@
 import { ArrowRightLeft, ArrowUpDown, LocateFixed, PaintBucket, Signpost, Square, SquareDashedBottom, Type } from "lucide-react";
+import { MOBILE_WIDTH_OPTIONS } from "@/features/editor/lib/responsive";
 import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, BorderAllIcon, BorderBottomIcon, BorderLeftIcon, BorderRightIcon, BorderTopIcon, ColumnSpacingIcon, CornerBottomLeftIcon, CornerBottomRightIcon, CornersIcon, CornerTopLeftIcon, CornerTopRightIcon, DotIcon, FontBoldIcon, FontFamilyIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeightIcon, PaddingIcon, RowSpacingIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
 import { ButtonContainer } from "../types";
 import { Fields, useGetPuck } from "@puckeditor/core";
@@ -291,6 +292,24 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
             )
         },
         ...(sharedLayoutFields(data) as any),
+        mobileWidth: {
+            type: 'custom',
+            label: 'Width on mobile',
+            render: ({ value, onChange, field }) => (
+                <div className="grid grid-cols-4 items-center gap-1.5">
+                    <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                    <select
+                        value={value ?? 'full'}
+                        onChange={(e) => onChange(e.target.value)}
+                        className="col-span-2 col-start-3 h-6 border border-input rounded-md px-2 text-xs bg-background"
+                    >
+                        {MOBILE_WIDTH_OPTIONS.map(o => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                    </select>
+                </div>
+            )
+        },
     }
 
     if (data.props.borderExpanded === 'true') {

@@ -1,1 +1,1 @@
-export * from './ToggleAppointmentView'
+export * from './AppointmentsClient'

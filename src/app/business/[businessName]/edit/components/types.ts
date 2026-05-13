@@ -13,6 +13,7 @@ export interface Text {
     url: string
     sections: string
     textTransform: string
+    size: string
 }
 
 export interface PreBuiltComponents {
@@ -64,6 +65,7 @@ export interface ColumnLayout {
     alignItems: string
     numberOfColumns: number
     gap: number
+    mobileLayout: string
 }
 export interface RowLayout {
     rows: {
@@ -72,6 +74,7 @@ export interface RowLayout {
     justifyItems: string
     numberOfRows: number
     gap: number
+    mobileLayout: string
 }
 export interface GridLayout {
     alignItems: string // Aligns along the column
@@ -86,6 +89,8 @@ export interface GridLayout {
     gapX: number
     gapY: number
     firstCellRowSpan: number
+    firstCellColumnSpan: number
+    mobileColumns: number
 }
 
 export interface Section {
@@ -143,6 +148,8 @@ export interface Container {
     responsiveDirection: string
     hideBelow: string
     hideAbove: string
+    zIndex: number
+    spacing: string
 }
 
 export interface ImageComponent {
@@ -151,6 +158,7 @@ export interface ImageComponent {
     objectFit: string
     height: number
     aspectRatio: string
+    mobileVisibility: string
     borderExpanded: string
     borderWidth: number
     borderRadius: number
@@ -189,6 +197,7 @@ export interface ButtonContainer extends Omit<Container, 'content'>, Omit<Regula
     action: string
     link: string
     variant: string
+    mobileWidth: string
 }
 
 export interface LuxuryNavProps {

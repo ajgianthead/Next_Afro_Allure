@@ -8,6 +8,9 @@ import { Appointment, AppointmentType } from "@/features/manualBooking/server/mo
 import { Service, ServiceType } from "@/lib/service/Service";
 import { BookClient } from "@/features/automatedBooking/components";
 import { assignAddons } from "@/app/dashboard/(other)/appointments/actions";
+import { getBusinessPermissions } from "@/lib/permissions";
+import { DateTime } from "luxon";
+import type { BookingTheme } from "@/features/automatedBooking/types/theme";
 
 export const dynamic = 'force-dynamic'
 
@@ -48,6 +51,25 @@ export default async function Page({ params }: {
 
     const policy = (await BusinessPolicy.fetch(supabase, business.id)).toClient()
 
-    return <BookClient services={serviceClient} policy={policy} appointments={appointmentsClient} businessData={clientBusinessData} availabilities={availabilitiesClient} />;
+    const permissions = getBusinessPermissions(clientBusinessData.planType as 'STARTER' | 'GROWTH')
+    let bookingLimitReached = false
+    if (permissions.maxMonthlyBookings !== Infinity) {
+        const { count } = await supabase
+            .from('appointments')
+            .select('*', { count: 'exact', head: true })
+            .eq('business', business.id)
+            .neq('status', 'CANCELLED')
+            .gte('created_at', DateTime.now().startOf('month').toISO())
+        bookingLimitReached = (count ?? 0) >= permissions.maxMonthlyBookings
+    }
+
+    const { data: webEditorRow } = await supabase
+        .from('web_editors')
+        .select('theme_data')
+        .eq('business_id', business.id)
+        .single()
+    const themeData = (webEditorRow?.theme_data ?? null) as BookingTheme | null
+
+    return <BookClient services={serviceClient} policy={policy} appointments={appointmentsClient} businessData={clientBusinessData} availabilities={availabilitiesClient} bookingLimitReached={bookingLimitReached} themeData={themeData} />;
 
 }

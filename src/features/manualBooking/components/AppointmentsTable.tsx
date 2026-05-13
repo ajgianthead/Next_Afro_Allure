@@ -22,7 +22,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { DateTime } from "luxon"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
@@ -40,8 +40,10 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { cancelAppointmentAction } from "../server"
+import { cancelAppointmentAction, sendConfirmationLinkAction } from "../server"
 import { Spinner } from "@/components/ui/spinner"
+import { markAppointmentAs } from "@/app/dashboard/(other)/appointments/actions"
+import { CircleCheckBig, UserX, Mail, Check } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -58,20 +60,21 @@ export function AppointmentsTable<TData, TValue>({
     )
     const { manualBookingData, setManualBookingData } = useManualBooking()
 
-    // U10: Derive rows from context so the table reflects newly created/updated appointments
-    // without requiring a full page reload. Status values use raw DB enums (NO_SHOW not NO SHOW).
-    const tableData: AppointmentTableData[] = (manualBookingData?.appointmentEvents ?? []).map(event => ({
-        id: event.id,
-        serviceName: event.serviceData.name,
-        date: event.start,
-        startTime: DateTime.fromJSDate(event.start).toFormat('t'),
-        status: event.status ?? '',
-        client: `${event.clientData.firstName} ${event.clientData.lastName}`,
-        requiresDeposit: event.requiresDeposit,
-        depositPrice: event.depositPrice,
-        paidDeposit: event.paidDeposit,
-        amountDue: event.amountDue,
-    }))
+    const tableData = useMemo<AppointmentTableData[]>(
+        () => (manualBookingData?.appointmentEvents ?? []).map(event => ({
+            id: event.id,
+            serviceName: event.serviceData.name,
+            date: event.start,
+            startTime: DateTime.fromJSDate(event.start).toFormat('t'),
+            status: event.status ?? '',
+            client: `${event.clientData.firstName} ${event.clientData.lastName}`,
+            requiresDeposit: event.requiresDeposit,
+            depositPrice: event.depositPrice,
+            paidDeposit: event.paidDeposit,
+            amountDue: event.amountDue,
+        })),
+        [manualBookingData?.appointmentEvents]
+    )
 
     const [rowSelection, setRowSelection] = useState({})
     const table = useReactTable({
@@ -91,13 +94,63 @@ export function AppointmentsTable<TData, TValue>({
     })
     const [cancellingAppointment, setCancellingAppointment] = useState<boolean>(false)
     const [openCancelAlert, setOpenCancelAlert] = useState<boolean>(false)
+    const [updatingStatus, setUpdatingStatus] = useState(false)
+    const [sendingLink, setSendingLink] = useState(false)
+    const [linkSent, setLinkSent] = useState(false)
+
+    const selectedRows = table.getFilteredSelectedRowModel().rows
+    const selectedAppt = selectedRows.length === 1 ? selectedRows[0].original as AppointmentTableData : null
+    const isConfirmed = selectedAppt?.status === 'CONFIRMED'
+    const isPending = selectedAppt?.status === 'PENDING'
+
+    const handleMarkAs = async (newStatus: 'COMPLETED' | 'NO_SHOW') => {
+        if (!selectedAppt || updatingStatus) return
+        setUpdatingStatus(true)
+        try {
+            const result = await markAppointmentAs(newStatus, selectedAppt.amountDue, selectedAppt.id)
+            if (result) {
+                setManualBookingData!({
+                    ...manualBookingData!,
+                    appointmentEvents: manualBookingData!.appointmentEvents.map(ev =>
+                        ev.id === selectedAppt.id
+                            ? { ...ev, status: result.status, amountDue: result.amount_due ?? ev.amountDue }
+                            : ev
+                    )
+                })
+                setRowSelection({})
+            }
+        } catch {
+            // silent — user can retry
+        } finally {
+            setUpdatingStatus(false)
+        }
+    }
+
+    const handleSendConfirmationLink = async () => {
+        if (!selectedAppt || sendingLink) return
+        setSendingLink(true)
+        setLinkSent(false)
+        try {
+            await sendConfirmationLinkAction(selectedAppt.id)
+            setLinkSent(true)
+            setTimeout(() => setLinkSent(false), 3000)
+        } catch {
+            // silent — user can retry
+        } finally {
+            setSendingLink(false)
+        }
+    }
+
     return (
-        <div>
-            <div className="flex items-center justify-between w-full py-4">
+        <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><SlidersVertical size={16} /><p className="text-sm">Filter</p></Button>
+                            <Button variant="outline" style={{ borderColor: '#E8E2D6', color: '#1A1818' }}>
+                                <SlidersVertical size={14} />
+                                <p className="text-sm">Filter</p>
+                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-75 p-4 space-y-5">
 
@@ -256,78 +309,120 @@ export function AppointmentsTable<TData, TValue>({
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <div className=" text-xs text-muted-foreground">
+                    <div className="text-xs" style={{ color: '#6F6863' }}>
                         {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                        {table.getFilteredRowModel().rows.length} row(s) selected.
+                        {table.getFilteredRowModel().rows.length} selected
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={() => {
-                        const index = Number(Object.keys(rowSelection)[0])
-                        let currRow: AppointmentTableData
-                        table.getFilteredSelectedRowModel().rows.forEach((row) => {
-                            if (row.index === index) {
-                                currRow = { ...row.original } as AppointmentTableData
-                                const appointmentEvent = manualBookingData?.appointmentEvents.filter((event) => event.id === currRow.id)[0]!
-                                setManualBookingData!({
-                                    ...manualBookingData!,
-                                    currSelectedEvent: { ...appointmentEvent },
-                                    openRescheduleConfirmation: true
-                                })
-                            }
-                        })
-                    }} disabled={!(table.getFilteredSelectedRowModel().rows.length === 1)} variant={'outline'} size={'sm'} ><p className="text-sm">Reschedule Appointment</p></Button>
-                    <AlertDialog open={openCancelAlert} onOpenChange={(open) => {
-                        setOpenCancelAlert(open)
-                    }}>
+                    {/* Send Confirmation Link — PENDING only */}
+                    <Button
+                        onClick={handleSendConfirmationLink}
+                        disabled={!isPending || sendingLink}
+                        variant="outline"
+                        size="sm"
+                        style={{
+                            borderColor: '#E8E2D6',
+                            color: linkSent ? '#22c55e' : '#1A1818',
+                        }}
+                    >
+                        {sendingLink ? <Spinner /> : linkSent
+                            ? <Check size={14} style={{ color: '#22c55e' }} />
+                            : <Mail size={14} />}
+                        <p className="text-sm">{linkSent ? 'Sent!' : 'Send Confirmation'}</p>
+                    </Button>
+
+                    {/* Reschedule — CONFIRMED only */}
+                    <Button
+                        onClick={() => {
+                            if (!selectedAppt) return
+                            const appointmentEvent = manualBookingData?.appointmentEvents.find(ev => ev.id === selectedAppt.id)!
+                            setManualBookingData!({
+                                ...manualBookingData!,
+                                currSelectedEvent: { ...appointmentEvent },
+                                openRescheduleConfirmation: true
+                            })
+                        }}
+                        disabled={!isConfirmed}
+                        variant="outline"
+                        size="sm"
+                        style={{ borderColor: '#E8E2D6', color: '#1A1818' }}
+                    >
+                        <p className="text-sm">Reschedule</p>
+                    </Button>
+
+                    {/* Cancel — CONFIRMED only */}
+                    <AlertDialog open={openCancelAlert} onOpenChange={setOpenCancelAlert}>
                         <AlertDialogTrigger asChild>
-                            <Button disabled={!(table.getFilteredSelectedRowModel().rows.length === 1)} variant={'outline'} size={'sm'}><p className="text-sm">Cancel Appointment</p></Button>
+                            <Button disabled={!isConfirmed} variant="outline" size="sm"
+                                style={{ borderColor: '#E8E2D6', color: '#FC6161' }}>
+                                <p className="text-sm">Cancel</p>
+                            </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently cancel the appointment and will notify the client that the appointment was cancelled.
+                                    This action cannot be undone. This will permanently cancel the appointment and notify the client.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel onClick={() => {
-                                    setOpenCancelAlert(false)
-                                }}>Keep Appointment</AlertDialogCancel>
-                                <AlertDialogAction disabled={cancellingAppointment} onClick={async (e) => {
-                                    e.preventDefault()
-                                    setCancellingAppointment(true)
-                                    try {
-                                        const index = Number(Object.keys(rowSelection)[0])
-                                        let currRow: AppointmentTableData
-                                        table.getFilteredSelectedRowModel().rows.forEach((row) => {
-                                            if (row.index === index) {
-                                                currRow = { ...row.original } as AppointmentTableData
-                                            }
-                                        })
-                                        const appointmentEvent = manualBookingData?.appointmentEvents.filter((event) => event.id === currRow.id)[0]!
-                                        const cancelledAppointment = await cancelAppointmentAction(appointmentEvent.id)
-                                        setManualBookingData!({
-                                            ...manualBookingData!,
-                                            appointmentEvents: manualBookingData?.appointmentEvents.map(e =>
-                                                e.id === cancelledAppointment?.id
-                                                    ? { ...e, status: cancelledAppointment?.status }
-                                                    : e
-                                            )!
-                                        })
-                                        setOpenCancelAlert(false)
-                                    } catch {
-                                        // keep dialog open so the user can retry
-                                    } finally {
-                                        setCancellingAppointment(false)
-                                    }
-                                }}>{cancellingAppointment ? <Spinner /> : 'Cancel Appointment'}</AlertDialogAction>
+                                <AlertDialogCancel onClick={() => setOpenCancelAlert(false)}>Keep Appointment</AlertDialogCancel>
+                                <AlertDialogAction
+                                    disabled={cancellingAppointment}
+                                    onClick={async (e) => {
+                                        e.preventDefault()
+                                        if (!selectedAppt) return
+                                        setCancellingAppointment(true)
+                                        try {
+                                            const appointmentEvent = manualBookingData?.appointmentEvents.find(ev => ev.id === selectedAppt.id)!
+                                            const cancelled = await cancelAppointmentAction(appointmentEvent.id)
+                                            setManualBookingData!({
+                                                ...manualBookingData!,
+                                                appointmentEvents: manualBookingData!.appointmentEvents.map(ev =>
+                                                    ev.id === cancelled?.id ? { ...ev, status: cancelled.status } : ev
+                                                )
+                                            })
+                                            setOpenCancelAlert(false)
+                                            setRowSelection({})
+                                        } catch {
+                                            // keep dialog open
+                                        } finally {
+                                            setCancellingAppointment(false)
+                                        }
+                                    }}
+                                >
+                                    {cancellingAppointment ? <Spinner /> : 'Cancel Appointment'}
+                                </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
+
+                    {/* Mark As — CONFIRMED only */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button disabled={!isConfirmed} size="sm"
+                                style={{ backgroundColor: isConfirmed ? '#0F0E0E' : undefined, color: isConfirmed ? '#FFFFFF' : undefined }}>
+                                {updatingStatus ? <Spinner /> : <p className="text-sm">Mark As</p>}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">Update Status</DropdownMenuLabel>
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem onClick={() => handleMarkAs('COMPLETED')} className="font-medium">
+                                    <CircleCheckBig size={16} className="text-green-500" />
+                                    Completed — Cash
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleMarkAs('NO_SHOW')} className="font-medium">
+                                    <UserX size={16} className="text-red-500" />
+                                    No Show
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
-            <div className="overflow-hidden rounded-md border">
+            <div className="overflow-hidden rounded-xl" style={{ border: '1px solid #E8E2D6' }}>
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

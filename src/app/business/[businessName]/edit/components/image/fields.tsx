@@ -1,5 +1,6 @@
 import { Fields } from "@puckeditor/core"
 import { ImageComponent } from "../types"
+import { MOBILE_VISIBILITY_OPTIONS } from "@/features/editor/lib/responsive"
 import { useEffect, useRef, useState } from "react"
 import { fetchBusinessUser, fetchUser } from "app/dashboard/(other)/actions"
 import { getImages, uploadImage } from "@/app/utils/upload_editor_images"
@@ -206,6 +207,24 @@ export const imageResolvedFields: (data: any, params: any) => {} = (data, params
         bottom: { type: 'number', visible: false },
         left: { type: 'number', visible: false },
         right: { type: 'number', visible: false },
+        mobileVisibility: {
+            type: 'custom',
+            label: 'Show on mobile',
+            render: ({ value, onChange, field }) => (
+                <div className="grid grid-cols-4 items-center gap-1.5">
+                    <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                    <select
+                        value={value ?? 'show'}
+                        onChange={(e) => onChange(e.target.value)}
+                        className="col-span-2 col-start-3 h-6 border border-input rounded-md px-2 text-xs bg-background"
+                    >
+                        {MOBILE_VISIBILITY_OPTIONS.map(o => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                    </select>
+                </div>
+            )
+        },
     }
 
     if (data.props.borderExpanded === 'true') {

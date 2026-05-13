@@ -7,32 +7,50 @@ import {
     ConnectReportingChart,
 } from '@stripe/react-connect-js'
 
+function SectionCard({ label, children, className }: { label?: string; children: React.ReactNode; className?: string }) {
+    return (
+        <div
+            className={`w-full rounded-2xl overflow-hidden ${className ?? ''}`}
+            style={{ border: '1px solid #E8E2D6', backgroundColor: '#FFFFFF' }}
+        >
+            {label && (
+                <div className="px-5 pt-4 pb-3" style={{ borderBottom: '1px solid #F0EBE3' }}>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#6F6863' }}>
+                        {label}
+                    </p>
+                </div>
+            )}
+            <div className="p-4 sm:p-5">{children}</div>
+        </div>
+    )
+}
+
 export function EarningsTab() {
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
 
     return (
-        <div className="flex gap-2 flex-col pb-5 mt-2">
-            <div className="w-full border border-border rounded p-5">
+        <div className="flex gap-3 flex-col pb-6 mt-3">
+            <SectionCard>
                 <ConnectBalances />
-            </div>
-            <div className="w-full flex md:flex-row flex-col gap-2">
-                <div className="md:w-1/2 w-full p-5 border border-border rounded">
+            </SectionCard>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+                <SectionCard label="Net Volume (90 days)" className="sm:flex-1">
                     <ConnectReportingChart
                         reportName="net_volume"
                         intervalStart={ninetyDaysAgo}
                         intervalEnd={new Date()}
                         intervalType="day"
                     />
-                </div>
-                <div className="md:w-1/2 flex flex-col gap-5 w-full p-5 border border-border rounded">
-                    <p className="text-sm font-medium">Payments</p>
+                </SectionCard>
+                <SectionCard label="Recent Payments" className="sm:flex-1">
                     <ConnectPayments />
-                </div>
+                </SectionCard>
             </div>
-            <div className="w-full flex flex-col gap-5 p-5 border border-border rounded">
-                <p className="text-sm font-medium">Payouts</p>
+
+            <SectionCard label="Payout History">
                 <ConnectPayoutsList />
-            </div>
+            </SectionCard>
         </div>
     )
 }

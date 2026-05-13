@@ -1,3 +1,4 @@
+
 'use client'
 import Navbar from '@components/editor/pre-built/Navbar'
 import { Text } from '@components/editor/Text'

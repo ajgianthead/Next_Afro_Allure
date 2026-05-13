@@ -23,6 +23,16 @@ export const gridLayoutFields: Fields<GridLayout, {}> = {
         arrayFields: { cell: { type: 'slot' } },
         defaultItemProps: { cell: [] }
     },
+    mobileColumns: {
+        type: 'custom',
+        label: 'Mobile columns',
+        render: ({ value, onChange, field }) => (
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                <NumInput value={value ?? 1} onChange={onChange} className="col-span-2" />
+            </div>
+        )
+    },
     justifyItems: {
         label: 'Row Alignment',
         type: 'custom',
@@ -86,6 +96,16 @@ export const gridLayoutFields: Fields<GridLayout, {}> = {
     firstCellRowSpan: {
         type: 'custom',
         label: 'Cell 1 Row Span',
+        render: ({ value, onChange, field }) => (
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                <NumInput value={value} onChange={onChange} className="col-span-2" />
+            </div>
+        )
+    },
+    firstCellColumnSpan: {
+        type: 'custom',
+        label: 'Cell 1 Col Span',
         render: ({ value, onChange, field }) => (
             <div className="grid grid-cols-4 items-center gap-1.5">
                 <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>

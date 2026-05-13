@@ -11,6 +11,7 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
     let fields: Fields<VideoComponent, {}> = {
         objectFit: { visible: false, type: 'text' },
         aspectRatio: { visible: false, type: 'text' },
+        mobileVisibility: { visible: false, type: 'text' },
         url: {
             type: 'custom',
             label: 'URL',

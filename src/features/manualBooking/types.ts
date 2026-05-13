@@ -70,6 +70,10 @@ export interface AppointmentEvent {
     paidDeposit: boolean
     depositPrice: number
     amountDue: number
+    paidAmount: number
+    servicePaid: boolean
+    servicePaidType: Database['public']['Enums']['paid_type'] | null
+    selectedAddons: { id: string; name: string; price: number }[]
 }
 
 export interface AppointmentTableData {

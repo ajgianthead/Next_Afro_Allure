@@ -1,44 +1,27 @@
 'use client'
 
-import { Fab } from '@mui/material';
-import { Plus } from 'lucide-react';
-import { useManualBooking } from '../hooks/useManualBooking';
-
-
+import { Plus } from 'lucide-react'
+import { useManualBooking } from '../hooks/useManualBooking'
 
 export default function AddAppointmentFAB() {
     const { manualBookingData, setManualBookingData } = useManualBooking()
     return (
-        <Fab
-            data-testid='create-appointment-btn'
-            color="error"
-            variant="circular"
-            size="large"
-            onClick={() => {
-                setManualBookingData!(
-                    {
-                        ...manualBookingData!,
-                        openCreateAppointment: true
-                    }
-                )
+        <button
+            data-testid="create-appointment-btn"
+            onClick={() => setManualBookingData!({ ...manualBookingData!, openCreateAppointment: true })}
+            className="fixed flex items-center justify-center rounded-full transition-all duration-150 hover:-translate-y-0.5 z-50"
+            style={{
+                bottom: 24,
+                right: 24,
+                width: 56,
+                height: 56,
+                backgroundColor: '#FC6161',
+                boxShadow: '0 4px 12px rgba(252, 97, 97, 0.35)',
+                color: '#FFFFFF',
             }}
-            sx={{
-                position: 'fixed',
-                bottom: { xs: 16, sm: 24 },
-                right: { xs: 16, sm: 24 },
-                zIndex: 999,
-                boxShadow: '0 4px 12px rgba(252, 97, 97, 0.3)',
-                '&:hover': {
-                    backgroundColor: '#ff7b7b',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 16px rgba(252,97,97,0.35)',
-                },
-            }}
+            aria-label="Create appointment"
         >
-            <div >
-                <Plus className='font-bold' />
-
-            </div>
-        </Fab>
-    );
+            <Plus size={22} strokeWidth={2.5} />
+        </button>
+    )
 }

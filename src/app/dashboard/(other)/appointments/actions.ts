@@ -13,11 +13,40 @@ import { ServiceData } from "@/features/services/types";
 //TODO: Fix this to update when a user changes status from PAID WITH CASH to something else
 export const markAppointmentAs = async (status: Enums<'status'>, amount_due: number, id: string) => {
     const supabase = await createClient()
-    const { data, error } = await supabase.from('appointments').update({
-        status: status,
-        service_paid_type: status === 'COMPLETED' ? 'CASH' : null,
-        amount_due: status === 'COMPLETED' ? 0 : amount_due
-    }).eq('id', id).select("id, status, amount_due").single()
+
+    if (status === 'COMPLETED' && amount_due > 0) {
+        const { data: current } = await supabase
+            .from('appointments')
+            .select('paid_amount')
+            .eq('id', id)
+            .single()
+
+        const { data } = await supabase
+            .from('appointments')
+            .update({
+                status,
+                service_paid: true,
+                service_paid_type: 'CASH',
+                amount_due: 0,
+                paid_amount: (current?.paid_amount ?? 0) + amount_due,
+            })
+            .eq('id', id)
+            .select('id, status, amount_due')
+            .single()
+        return data
+    }
+
+    const { data } = await supabase
+        .from('appointments')
+        .update({
+            status,
+            service_paid: status === 'COMPLETED',
+            service_paid_type: status === 'COMPLETED' ? 'CASH' : null,
+            amount_due: status === 'COMPLETED' ? 0 : amount_due,
+        })
+        .eq('id', id)
+        .select('id, status, amount_due')
+        .single()
     return data
 }
 

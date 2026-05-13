@@ -26,6 +26,14 @@ export async function POST(request: NextRequest) {
         return apiError(`Webhook Error: ${err.message}`, 400);
     }
 
+    // Invoice events have a different data.object shape — handle before the subscription cast below.
+    if (event.type === 'invoice.payment_failed') {
+        const invoice = event.data.object as Stripe.Invoice;
+        const failedCustomerId = invoice.customer?.toString();
+        console.warn(`invoice.payment_failed: customer=${failedCustomerId} invoice=${invoice.id}`);
+        return webhookAck();
+    }
+
     const subscription = event.data.object as Stripe.Subscription;
     const customerId = subscription.customer.toString();
 
@@ -33,6 +41,19 @@ export async function POST(request: NextRequest) {
         switch (event.type) {
             case 'customer.subscription.created':
                 await handleSubscriptionCreated(customerId, subscription.status);
+                break;
+            case 'customer.subscription.updated':
+                // Handles trial→active (trial ends with payment), paused→active (payment added),
+                // and any other status transitions not covered by dedicated events.
+                if (subscription.status === 'active') {
+                    await handleSubscriptionActivated(customerId);
+                } else if (subscription.status === 'paused') {
+                    await handleSubscriptionPaused(customerId);
+                }
+                break;
+            case 'customer.subscription.resumed':
+                // Fires when a paused subscription is explicitly resumed
+                await handleSubscriptionActivated(customerId);
                 break;
             case 'customer.subscription.paused':
                 await handleSubscriptionPaused(customerId);
@@ -46,6 +67,15 @@ export async function POST(request: NextRequest) {
     }
 
     return webhookAck();
+}
+
+async function handleSubscriptionActivated(customerId: string) {
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from('business_users')
+        .update({ plan_type: 'GROWTH' })
+        .eq('stripe_customer_id', customerId);
+    if (error) throw error;
 }
 
 async function handleSubscriptionCreated(customerId: string, status: string) {
