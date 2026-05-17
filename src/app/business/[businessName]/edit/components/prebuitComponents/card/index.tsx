@@ -4,8 +4,7 @@
 import { ComponentConfig, Fields, SlotComponent } from "@puckeditor/core"
 import { resolveCardFields, defaultCardfields } from "./fields"
 import { Card } from "../../types"
-import { useRouter } from "next/navigation"
-import { useEditorContext } from "@/app/utils/context/EditorContext"
+import { useRouter, usePathname } from "next/navigation"
 
 
 export const CardComponent: ComponentConfig<Card> = {
@@ -13,11 +12,12 @@ export const CardComponent: ComponentConfig<Card> = {
     fields: defaultCardfields as Fields<Card, {}>,
     render: (({ cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service }) => {
         const router = useRouter()
-        const { editorState } = useEditorContext()
+        const pathname = usePathname()
+        const businessName = pathname?.split('/')[1] ?? ''
         return (
             <div className={`w-full${linkToService ? ' cursor-pointer' : ''}`} onClick={() => {
                 if (linkToService) {
-                    router.push(`/${editorState.businessName}/book?service=${service}`)
+                    router.push(`/${businessName}/book?service=${service}`)
                 }
             }}>
                 {variant === 'basic' ? (
