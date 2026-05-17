@@ -21,9 +21,7 @@ import { BookingStepper } from './BookingStepper'
 import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
 import { useRouter } from 'next/navigation'
 
-const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
-
-export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData }: {
+export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId }: {
     businessData: BusinessType,
     availabilities: AvailabilityType[],
     appointments: AppointmentType[],
@@ -31,10 +29,11 @@ export function BookClient({ businessData, availabilities, appointments, service
     policy: BusinessPolicyType,
     bookingLimitReached?: boolean
     themeData?: BookingTheme | null
+    preSelectedServiceId?: string
 }) {
     return (
         <BookingWrapper businessData={businessData} availabilities={availabilities} appointments={appointments} services={services} policy={policy}>
-            <Book businessName={businessData.urlName} businessData={businessData} bookingLimitReachedInitial={bookingLimitReached} themeData={themeData} />
+            <Book businessName={businessData.urlName} businessData={businessData} bookingLimitReachedInitial={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} />
         </BookingWrapper>
     )
 }
@@ -99,13 +98,70 @@ function BookingCheckbox({
     )
 }
 
-const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeData }: {
+function PreSelectionBar({ onChangeService }: { onChangeService: () => void }) {
+    const { data } = useBooking()
+    const service = data.services.find(s => s.id === data.selectedService)
+    if (!service) return null
+
+    const addonsTotal = (data.selectedAddons ?? []).reduce((sum: number, id: string) => {
+        const addon = (service as any).addons?.find((a: any) => a.id === id)
+        return sum + (addon?.price ?? 0)
+    }, 0)
+    const total = (service.price ?? 0) + addonsTotal
+
+    return (
+        <div
+            className="flex items-center justify-between px-4 py-3 mb-4"
+            style={{
+                backgroundColor: 'var(--t-card)',
+                border: '1px solid var(--t-border)',
+                borderRadius: 'var(--t-card-r)',
+            }}
+        >
+            <div>
+                <span className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>{service.name}</span>
+                <span className="text-sm" style={{ color: 'var(--t-muted)' }}> · ${total.toFixed(2)}</span>
+                {(data.selectedAddons ?? []).length > 0 && (
+                    <div style={{ color: 'var(--t-muted)', fontSize: 12, marginTop: 2 }}>
+                        {(data.selectedAddons ?? []).map((id: string) => {
+                            const addon = (service as any).addons?.find((a: any) => a.id === id)
+                            return addon ? <span key={id} style={{ marginRight: 8 }}>{addon.name}</span> : null
+                        })}
+                    </div>
+                )}
+            </div>
+            <button
+                onClick={onChangeService}
+                className="text-xs font-medium transition-opacity hover:opacity-70 ml-4 shrink-0"
+                style={{ color: 'var(--t-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+                ← Change service
+            </button>
+        </div>
+    )
+}
+
+const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeData, preSelectedServiceId }: {
     businessName: string
     businessData: BusinessType
     bookingLimitReachedInitial?: boolean
     themeData?: BookingTheme | null
+    preSelectedServiceId?: string
 }) => {
     const theme = { ...DEFAULT_BOOKING_THEME, ...themeData }
+
+    useEffect(() => {
+        const font = theme.fontFamily
+        if (!font) return
+        const id = `gfont-${font.replace(/\s+/g, '-').toLowerCase()}`
+        if (document.getElementById(id)) return
+        const link = document.createElement('link')
+        link.id = id
+        link.rel = 'stylesheet'
+        link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@400;500;600;700&display=swap`
+        document.head.appendChild(link)
+    }, [theme.fontFamily])
+
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [activeStep, setActiveStep] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -117,6 +173,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     const [openErrorDialog, setOpenErrorDialog] = useState<boolean>(false)
     const [rbbOpen, setRbbOpen] = useState(false)
     const [rbbAccepted, setRbbAccepted] = useState<boolean>(false)
+    const [preSelected, setPreSelected] = useState(false)
     const router = useRouter()
 
     const steps = !data.booking_policy ? [] : data.booking_policy.deposit.enabled
@@ -130,11 +187,40 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     useEffect(() => {
         const sessionId = typeof window !== 'undefined' ? localStorage.getItem('bookingSessionId') : null
         if (!sessionId) {
-            setData((prev) => ({ ...prev, bookingSession: null }))
+            if (preSelectedServiceId) {
+                createBookingSessionAction(data.business_id, preSelectedServiceId).then((session) => {
+                    localStorage.setItem('bookingSessionId', session.id!)
+                    setData((prev) => ({
+                        ...prev,
+                        selectedService: preSelectedServiceId,
+                        bookingSession: {
+                            id: session.id,
+                            businessId: session.business_id,
+                            serviceId: session.service_id,
+                            selectDateTime: session.selected_datetime,
+                            clientInfo: session.clientInfo as any,
+                            status: session.status,
+                            metaData: session.metadata as any,
+                            amountDue: session.amount,
+                            currency: session.currency!,
+                            expiresAt: session.expires_at,
+                            confirmedAt: session.confirmed_at,
+                            paymentIntentId: session.payment_intent_id,
+                            updatedAt: session.updated_at!,
+                        }
+                    }))
+                    setPreSelected(true)
+                    setActiveStep(1)
+                    setIsLoading(false)
+                })
+            } else {
+                setData((prev) => ({ ...prev, bookingSession: null }))
+                setIsLoading(false)
+            }
             return
         }
         getBookingSessionAction(sessionId).then((sessionData) => {
-            if (!sessionData) return
+            if (!sessionData) { setIsLoading(false); return }
             setData((prev) => ({
                 ...prev,
                 selectedService: sessionData.serviceId!,
@@ -152,12 +238,9 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
             else if (sessionData.status === 'date_selected') setActiveStep(2)
             else if (sessionData.status === 'details_completed') setActiveStep(data.booking_policy.deposit.enabled ? 3 : 2)
             else setActiveStep(0)
+            setIsLoading(false)
         })
     }, [])
-
-    useEffect(() => {
-        if (data.bookingSession) setIsLoading(false)
-    }, [data.bookingSession])
 
     const renderActiveStep = () => {
         const sharedProps = { setRbbOpen, setAgreedAfroAllure, setAgreedBusiness, agreedAfroAllure, agreedBusiness }
@@ -244,6 +327,13 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
         setActiveStep((prev) => Math.min(prev + 1, steps.length - 1))
     }
 
+    const handleChangeService = () => {
+        localStorage.removeItem('bookingSessionId')
+        setData((prev) => ({ ...prev, selectedService: '', selectedAddons: [], bookingSession: null }))
+        setPreSelected(false)
+        router.push(`/${businessName}/book`)
+    }
+
     const canGoNext =
         (activeStep === 0 && data.selectedService.length > 0) ||
         (activeStep === 1 && Object.values(data.selectedDateTime).filter(Boolean).length > 0) ||
@@ -257,10 +347,11 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
         '--t-primary-text': theme.primaryTextColor,
         '--t-text': theme.textColor,
         '--t-muted': theme.mutedColor,
-        '--t-accent': theme.accentColor,
+        '--t-accent': (themeData as any)?.secondaryColor ?? theme.accentColor,
         '--t-btn-r': theme.buttonRadius,
         '--t-input-r': theme.inputRadius,
         '--t-card-r': theme.cardRadius,
+        '--t-font': `'${theme.fontFamily}', sans-serif`,
     } as React.CSSProperties
 
     return (
@@ -280,7 +371,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                         }}
                     >
                         <div className="p-5" style={{ borderBottom: '1px solid var(--t-border)' }}>
-                            <h2 className="text-base font-semibold" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>
+                            <h2 className="text-base font-semibold" style={{ color: 'var(--t-text)', fontFamily: 'var(--t-font)' }}>
                                 Please Read Before Booking
                             </h2>
                             <p className="text-sm mt-1" style={{ color: 'var(--t-muted)' }}>
@@ -362,6 +453,9 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                         ) : (
                             <>
                                 <BookingStepper steps={steps} activeStep={activeStep} />
+                                {preSelected && activeStep >= 1 && (
+                                    <PreSelectionBar onChangeService={handleChangeService} />
+                                )}
                                 <div className="mb-6">{renderActiveStep()}</div>
 
                                 {/* Nav buttons */}

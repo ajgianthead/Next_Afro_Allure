@@ -18,13 +18,13 @@ export const metadata = {
     title: 'Schedule Appointment',
 };
 
-export default async function Page({ params }: {
-    params: {
-        businessName: string
-    }
+export default async function Page({ params, searchParams }: {
+    params: { businessName: string }
+    searchParams: Promise<{ service?: string }>
 }) {
 
-    const { businessName } = await params;
+    const { businessName } = await params
+    const { service: serviceParam } = await searchParams
     const supabase = await createClient();
 
     const business = await BusinessUser.fetchByURLName(supabase, businessName)
@@ -70,6 +70,12 @@ export default async function Page({ params }: {
         .single()
     const themeData = (webEditorRow?.theme_data ?? null) as BookingTheme | null
 
-    return <BookClient services={serviceClient} policy={policy} appointments={appointmentsClient} businessData={clientBusinessData} availabilities={availabilitiesClient} bookingLimitReached={bookingLimitReached} themeData={themeData} />;
+    // Validate ?service= against this business's already-fetched services.
+    // serviceClient is already scoped to this business, so a match is sufficient validation.
+    const preSelectedServiceId = serviceParam
+        ? (serviceClient.find(s => s.id === serviceParam)?.id)
+        : undefined
+
+    return <BookClient services={serviceClient} policy={policy} appointments={appointmentsClient} businessData={clientBusinessData} availabilities={availabilitiesClient} bookingLimitReached={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} />;
 
 }
