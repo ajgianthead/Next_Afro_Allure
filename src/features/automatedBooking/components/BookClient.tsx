@@ -100,7 +100,7 @@ function BookingCheckbox({
 
 function PreSelectionBar({ onChangeService }: { onChangeService: () => void }) {
     const { data } = useBooking()
-    const service = data.services.find(s => s.id === data.selectedService)
+    const service = data.services.find((s: any) => s.id === data.selectedService)
     if (!service) return null
 
     const addonsTotal = (data.selectedAddons ?? []).reduce((sum: number, id: string) => {

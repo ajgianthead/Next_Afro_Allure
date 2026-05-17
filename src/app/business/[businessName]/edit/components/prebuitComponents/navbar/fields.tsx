@@ -51,7 +51,6 @@ export const ButtonLinkDefaultProps = {
 }
 
 export const navbarFields = {
-    content: { type: 'slot' },
     logo: { type: 'slot' },
     menu: {
         label: 'Navigation Menu',
@@ -68,27 +67,10 @@ export const navbarFields = {
                 props: {
                     action: 'REDIRECT',
                     text: 'Link',
-                    link: "https://afroallure.co/",
+                    link: '/',
                     ...ButtonLinkDefaultProps
                 },
             }],
         },
     },
-    variants: {
-        type: 'custom',
-        render: ({ value, onChange }: any) => (
-            <div className="grid w-full grid-cols-2 gap-2">
-                <button
-                    type="button"
-                    onClick={() => onChange('default')}
-                    className={`py-2 rounded border text-xs transition-colors ${value === 'default' ? 'border-black' : 'border-input'}`}
-                />
-                <button
-                    type="button"
-                    onClick={() => onChange('alt')}
-                    className={`py-2 rounded border text-xs transition-colors ${value === 'alt' ? 'border-black' : 'border-input'}`}
-                />
-            </div>
-        )
-    }
 }

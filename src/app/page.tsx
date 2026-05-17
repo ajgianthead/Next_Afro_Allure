@@ -1,10 +1,11 @@
-import React from 'react';
 import AfroAllureLanding from './landingPage';
+import { getWaitlistCount } from '@/app/waitlist/actions';
 
-const Page = () => {
+const Page = async () => {
+  const waitlistCount = await getWaitlistCount()
   return (
     <div>
-      <AfroAllureLanding />
+      <AfroAllureLanding waitlistCount={waitlistCount} />
     </div>
   );
 }

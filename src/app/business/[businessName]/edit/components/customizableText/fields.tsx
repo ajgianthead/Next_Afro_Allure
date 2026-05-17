@@ -1,21 +1,20 @@
 import { PaintBucket, Type } from "lucide-react"
 import { ComponentData, DefaultComponentProps, Fields, useGetPuck } from "@puckeditor/core"
-import { FontBoldIcon, FontFamilyIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
+import { FontBoldIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
 import { RegularText } from "../types"
-import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext"
-import { GoogleFont, loadGoogleFont } from "useGoogleFonts"
+import { useEditorContext } from "@/app/utils/context/EditorContext"
 import { NumInput, StrSelect } from "../fieldPrimitives"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
-import { useEffect } from "react"
+import { FontSelector } from "../FontSelector"
+
+const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
 const ColorField = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => (
-    <div className="grid grid-cols-4 items-center gap-1.5">
-        <p className="text-xs font-medium text-slate-400">{label}</p>
-        <div className="col-span-3 flex items-center gap-2 border border-input rounded-md px-2 py-1 bg-background cursor-pointer">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ ...lbl, minWidth: 40 }}>{label}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, height: 26, borderRadius: 3, padding: '0 8px', background: '#F4F1EC', flex: 1, cursor: 'pointer' }}>
             <div className="relative shrink-0">
-                <div className="size-4 rounded-sm border shadow-sm" style={{ backgroundColor: value }} />
+                <div style={{ width: 14, height: 14, borderRadius: 2, border: '1px solid rgba(0,0,0,0.1)', backgroundColor: value }} />
                 <input
                     type="color"
                     value={value ?? '#000000'}
@@ -23,7 +22,7 @@ const ColorField = ({ value, onChange, label }: { value: string, onChange: (v: s
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
             </div>
-            <span className="text-xs font-mono text-muted-foreground truncate">{value}</span>
+            <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#A09790', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>
         </div>
     </div>
 )
@@ -35,7 +34,7 @@ const StyleToggle = ({ value, onChange }: { value: string[], onChange: (v: strin
         onChange(next)
     }
     return (
-        <div className="flex gap-1 w-full">
+        <div style={{ display: 'flex', gap: 2, padding: 2, borderRadius: 4, background: '#EEEBE4' }}>
             {([
                 { v: 'bold', icon: <FontBoldIcon /> },
                 { v: 'italic', icon: <FontItalicIcon /> },
@@ -45,12 +44,13 @@ const StyleToggle = ({ value, onChange }: { value: string[], onChange: (v: strin
                     key={v}
                     type="button"
                     onClick={() => toggle(v)}
-                    className={cn(
-                        'flex-1 flex items-center justify-center py-1 rounded border text-sm transition-colors',
-                        current.includes(v)
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-background border-input hover:bg-accent'
-                    )}
+                    style={{
+                        flex: 1, height: 22, borderRadius: 3, fontSize: 12,
+                        background: current.includes(v) ? '#FC6161' : 'transparent',
+                        color: current.includes(v) ? '#fff' : '#A09790',
+                        border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
                 >
                     {icon}
                 </button>
@@ -60,9 +60,9 @@ const StyleToggle = ({ value, onChange }: { value: string[], onChange: (v: strin
 }
 
 const AlignField = ({ value, onChange }: { value: string, onChange: (v: string) => void }) => (
-    <div className="grid grid-cols-4 items-center gap-1.5">
-        <p className="text-xs font-medium text-slate-400">Align</p>
-        <div className="col-span-3 flex gap-1">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ ...lbl, minWidth: 40 }}>Align</span>
+        <div style={{ display: 'flex', gap: 2, flex: 1 }}>
             {([
                 { v: 'start', icon: <TextAlignLeftIcon /> },
                 { v: 'center', icon: <TextAlignCenterIcon /> },
@@ -73,12 +73,13 @@ const AlignField = ({ value, onChange }: { value: string, onChange: (v: string) 
                     key={v}
                     type="button"
                     onClick={() => onChange(v)}
-                    className={cn(
-                        'flex-1 flex items-center justify-center py-1 rounded border text-xs transition-colors',
-                        value === v
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-background border-input hover:bg-accent'
-                    )}
+                    style={{
+                        flex: 1, height: 26, borderRadius: 3, fontSize: 12,
+                        background: value === v ? '#FC6161' : '#F4F1EC',
+                        color: value === v ? '#fff' : '#A09790',
+                        border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
                 >
                     {icon}
                 </button>
@@ -95,16 +96,16 @@ const SectionsField = ({ value, onChange, label }: { value: string, onChange: (v
         .filter(c => c.type === 'Section' && editorState.sections.has(c.props.id))
         .map(c => ({ value: c.props.sectionName, label: c.props.sectionName }))
     return (
-        <div className="grid grid-cols-4 items-center gap-1.5">
-            <p className="text-xs font-medium text-slate-400">{label}</p>
-            <div className="col-span-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const, minWidth: 40 }}>{label}</span>
+            <div style={{ flex: 1 }}>
                 <Select value={value} onValueChange={(v) => onChange(v)}>
-                    <SelectTrigger className="h-6 text-xs">
+                    <SelectTrigger className="h-[26px] text-[11px] !bg-[#F4F1EC] !border-0 !shadow-none rounded-[3px] !text-[#1A1818]">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                         {sectionData.map(s => (
-                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                            <SelectItem key={s.value} value={s.value} className="text-[11px]">{s.label}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -113,50 +114,32 @@ const SectionsField = ({ value, onChange, label }: { value: string, onChange: (v
     )
 }
 
-export let customizableTextFields: Fields<RegularText, {}> = {
+export let customizableTextFields: Partial<Fields<RegularText, {}>> = {
     text: {
         type: 'custom',
         label: 'Text',
         contentEditable: true,
         labelIcon: <Type size={16} className="mr-1" />,
         render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                <Input className="col-span-3 h-6 text-xs" value={value} onChange={(e) => onChange(e.target.value)} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 40 }}>{field.label}</span>
+                <input
+                    style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
+                    value={value ?? ''}
+                    onChange={(e) => onChange(e.target.value)}
+                />
             </div>
         )
     },
     fontFamily: {
         type: 'custom',
         label: 'Font Family',
-        labelIcon: <Type size={16} className="mr-1" />,
-        render: ({ onChange, value, id }) => {
-            const { editorState }: { editorState: EditorConxtextProps } = useEditorContext()
-            useEffect(() => {
-                if (value) loadGoogleFont(value)
-            }, [value])
-            return (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="text-xs font-medium text-slate-400">Font</p>
-                    <div className="col-span-3">
-                        <input
-                            list={`font-list-${id}`}
-                            className="w-full h-6 border border-input rounded-md px-2 text-xs bg-background"
-                            value={value ?? ''}
-                            onChange={(e) => {
-                                onChange(e.target.value)
-                                loadGoogleFont(e.target.value)
-                            }}
-                        />
-                        <datalist id={`font-list-${id}`}>
-                            {editorState.fonts?.map((font: GoogleFont) => (
-                                <option key={font.family} value={font.family} />
-                            ))}
-                        </datalist>
-                    </div>
-                </div>
-            )
-        }
+        render: ({ onChange, value }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 40 }}>Font</span>
+                <FontSelector value={value ?? ''} onChange={onChange} />
+            </div>
+        )
     },
     fontWeight: {
         type: 'custom',
@@ -201,76 +184,36 @@ export let customizableTextFields: Fields<RegularText, {}> = {
         type: 'custom',
         label: 'Hyperlink',
         render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                <label className="col-span-3 flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={!!value}
-                        onChange={(e) => onChange(e.target.checked)}
-                        className="h-3.5 w-3.5"
-                    />
-                    <span className="text-xs text-muted-foreground">Enable link</span>
-                </label>
-            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
+                <span style={lbl}>{field.label}</span>
+            </label>
         )
-    },
-    linkType: {
-        type: 'custom',
-        label: 'Link Type',
-        visible: false,
-        render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                <div className="col-span-3">
-                    <Select value={value} onValueChange={(v) => onChange(v)}>
-                        <SelectTrigger className="h-6 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="external">External</SelectItem>
-                            <SelectItem value="internal">Internal</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-        )
-    },
-    url: {
-        type: 'custom',
-        label: 'URL',
-        visible: false,
-        render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                <Input className="col-span-3 h-6 text-xs" placeholder="https://example.com" value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
-            </div>
-        )
-    },
-    sections: {
-        type: 'custom',
-        label: 'Section',
-        visible: false,
-        render: ({ value, onChange, field }) => <SectionsField value={value} onChange={onChange} label={field.label!} />
     },
     textTransform: {
         type: 'custom',
         label: 'Transform',
         render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                <StrSelect value={value ?? 'none'} onChange={onChange} options={['none', 'uppercase', 'lowercase', 'capitalize']} className="col-span-2 col-start-3" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                <StrSelect value={value ?? 'none'} onChange={onChange} options={['none', 'uppercase', 'lowercase', 'capitalize']} className="flex-1" />
             </div>
         )
     },
     maxWidth: {
         type: 'custom',
         label: 'Max Width (rem)',
-        render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} step={0.5} />
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>Max W (rem)</span>
+                <NumInput value={value} onChange={onChange} step={0.5} className="flex-1" />
+            </div>
+        )
     },
-    size: { visible: false, type: 'text' },
 }
 
 export const resolveCustomizableTextFields: (data: Omit<ComponentData<RegularText, string, Record<string, DefaultComponentProps>>, "type">) => Fields<RegularText, {}> | Promise<Fields<RegularText, {}>> = (data) => {
-    let fields: Fields<RegularText, {}> = { ...customizableTextFields }
+    let fields = { ...customizableTextFields } as Fields<RegularText, {}>
 
     if (data.props.isLink) {
         fields.linkType = {
@@ -278,14 +221,14 @@ export const resolveCustomizableTextFields: (data: Omit<ComponentData<RegularTex
             label: 'Link Type',
             visible: true,
             render: ({ value, onChange, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <div className="col-span-3">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ ...lbl, minWidth: 40 }}>{field.label}</span>
+                    <div style={{ flex: 1 }}>
                         <Select value={value} onValueChange={(v) => onChange(v)}>
-                            <SelectTrigger className="h-6 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-[26px] text-[11px] !bg-[#F4F1EC] !border-0 !shadow-none rounded-[3px] !text-[#1A1818]"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="external">External</SelectItem>
-                                <SelectItem value="internal">Internal</SelectItem>
+                                <SelectItem value="external" className="text-[11px]">External</SelectItem>
+                                <SelectItem value="internal" className="text-[11px]">Internal</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -298,9 +241,14 @@ export const resolveCustomizableTextFields: (data: Omit<ComponentData<RegularTex
                 label: 'URL',
                 visible: true,
                 render: ({ onChange, value, field }) => (
-                    <div className="grid grid-cols-4 items-center gap-1.5">
-                        <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                        <Input className="col-span-3 h-6 text-xs" placeholder="https://example.com" value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ ...lbl, minWidth: 40 }}>{field.label}</span>
+                        <input
+                            style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
+                            placeholder="https://example.com"
+                            value={value ?? ''}
+                            onChange={(e) => onChange(e.target.value)}
+                        />
                     </div>
                 )
             }

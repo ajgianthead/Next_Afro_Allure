@@ -6,14 +6,13 @@ import { PostgrestError } from '@supabase/supabase-js';
 import { EditorWrapper } from '@/app/utils/context/EditorContext';
 import { createClient } from '@/app/utils/supabase/server';
 import { redirect } from 'next/navigation';
-import { DEFAULT_BOOKING_THEME } from '@/features/automatedBooking/types/theme';
-import type { BookingTheme } from '@/features/automatedBooking/types/theme';
 
-const Page = async ({ params }: { params: { businessName: string } }) => {
+const Page = async ({ params, searchParams }: { params: Promise<{ businessName: string }>; searchParams: Promise<{ template?: string }> }) => {
     const user = await fetchUser();
     if (!user) redirect('/login')
 
     const { businessName } = await params
+    const { template } = await searchParams
     const supabase = await createClient()
     const business = await fetchBusinessUser(user.id)
 
@@ -28,15 +27,10 @@ const Page = async ({ params }: { params: { businessName: string } }) => {
         redirect('/dashboard')
     }
 
-    const initialTheme: BookingTheme = {
-        ...DEFAULT_BOOKING_THEME,
-        ...((editorData.theme_data as BookingTheme | null) ?? {}),
-    }
-
     return (
         <div>
             <EditorWrapper>
-                <Editor isPublished={business.published_site} services={services.data!} businessName={business.url_name} businessId={business.business_id} editorData={editorData.editor_data!} initialTheme={initialTheme} />
+                <Editor isPublished={business.published_site} services={services.data!} businessName={business.url_name} businessId={business.business_id} editorData={editorData.editor_data!} preloadedTemplateId={template} />
             </EditorWrapper>
         </div>
     );

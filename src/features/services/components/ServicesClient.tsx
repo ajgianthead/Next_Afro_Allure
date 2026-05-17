@@ -9,6 +9,8 @@ import { AddonManager } from './AddonManager'
 import { AddonEditor } from './AddonEditor'
 import { ServiceData, AddonData } from '../types'
 import { createDefaultService } from '../utils'
+import { ServicesTour } from '@/features/tour/tours/ServicesTour'
+import { AddonsTour } from '@/features/tour/tours/AddonsTour'
 
 interface ServicesClientProps {
     servicesData: any[]
@@ -115,38 +117,46 @@ export default function ServicesClient({
 
     return (
         <div className="px-6">
+            <ServicesTour />
+            <AddonsTour />
             {/* Header */}
-            <div className="w-full mt-5 flex justify-between items-center gap-6">
+            <div data-tour="services-header" className="w-full mt-5 flex justify-between items-center gap-6">
                 <h2 className="text-lg font-semibold">Services</h2>
                 <div className="flex items-center gap-2">
-                    <AddonManager
-                        addons={addons}
-                        onCreateAddon={openCreateAddon}
-                        onEditAddon={openEditAddon}
-                    />
-                    <Button onClick={openCreate}>+ Create Service</Button>
+                    <div data-tour="addons-create">
+                        <AddonManager
+                            addons={addons}
+                            onCreateAddon={openCreateAddon}
+                            onEditAddon={openEditAddon}
+                        />
+                    </div>
+                    <div data-tour="services-add">
+                        <Button onClick={openCreate}>+ Create Service</Button>
+                    </div>
                 </div>
             </div>
 
             <Separator className="my-3" />
 
             {/* Grid */}
-            {services.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-                    <p className="text-sm">No services yet.</p>
-                    <p className="text-xs mt-1">Create your first service to get started.</p>
-                </div>
-            ) : (
-                <div className="flex flex-wrap gap-3">
-                    {services.map((service) => (
-                        <ServiceCard
-                            key={service.id}
-                            service={service}
-                            onClick={() => openEdit(service)}
-                        />
-                    ))}
-                </div>
-            )}
+            <div data-tour="services-list">
+                {services.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+                        <p className="text-sm">No services yet.</p>
+                        <p className="text-xs mt-1">Create your first service to get started.</p>
+                    </div>
+                ) : (
+                    <div className="flex flex-wrap gap-3">
+                        {services.map((service) => (
+                            <ServiceCard
+                                key={service.id}
+                                service={service}
+                                onClick={() => openEdit(service)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {/* Service editor Sheet */}
             {editorOpen && editingService && (

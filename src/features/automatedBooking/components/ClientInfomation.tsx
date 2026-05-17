@@ -5,7 +5,6 @@ import { Check } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { useBooking } from "../hooks/useBookingData";
 
-const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 function BookingCheckbox({
     id, checked, onChange, children,
@@ -45,7 +44,7 @@ export const ClientInfo = ({
     return (
         <div className="flex flex-col items-center w-full">
             <div className="w-full md:w-2/3 mb-4">
-                <h2 className="text-xl font-semibold" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>Contact Information</h2>
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--t-text)', fontFamily: 'var(--t-font)' }}>Contact Information</h2>
                 <p className="text-sm mt-1" style={{ color: 'var(--t-muted)' }}>Enter your information below</p>
             </div>
 

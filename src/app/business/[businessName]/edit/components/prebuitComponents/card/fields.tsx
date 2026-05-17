@@ -22,60 +22,15 @@ const ServiceField = ({ value, onChange }: { value: string; onChange: (v: string
     )
 }
 
-export const defaultCardfields: Fields<Card, {}> = {
+export const defaultCardfields: Partial<Fields<Card, {}>> = {
     cardContent: { type: 'slot' },
     variant: {
         type: 'custom',
         label: 'Variant',
         render: ({ value, onChange, field }) => (
             <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                <p className="col-span-2 text-[11px] text-[#A09790]">{field.label}</p>
                 <KVSelect value={value} onChange={onChange} options={[{ label: 'Basic', value: 'basic' }, { label: 'Media', value: 'media' }]} className="col-span-2 col-start-3" />
-            </div>
-        )
-    },
-    cardCover: {
-        type: 'custom',
-        label: 'Media Type',
-        visible: false,
-        render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                <KVSelect value={value} onChange={onChange} options={[{ label: 'Image', value: 'image' }, { label: 'Video', value: 'video' }]} className="col-span-2 col-start-3" />
-            </div>
-        )
-    },
-    imageSource: {
-        type: 'custom',
-        label: 'Source',
-        visible: false,
-        labelIcon: <ImageIcon size={16} className="mr-1" />,
-        render: ({ value, onChange, field }) => {
-            const [open, setOpen] = useState<boolean>(false)
-            return (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <ImageModal open={open} onClose={() => setOpen(false)} onChange={onChange} value={value} />
-                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="col-span-3 h-6 text-xs">
-                        Select Image
-                    </Button>
-                </div>
-            )
-        }
-    },
-    videoSource: {
-        type: 'custom',
-        label: 'Video Source',
-        visible: false,
-        labelIcon: <VideoIcon size={16} className="mr-1" />,
-        render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                <input
-                    className="col-span-2 col-start-3 h-6 border border-input rounded-md px-2 text-xs bg-background"
-                    value={value ?? ''}
-                    onChange={(e) => onChange(e.target.value)}
-                />
             </div>
         )
     },
@@ -84,7 +39,7 @@ export const defaultCardfields: Fields<Card, {}> = {
         label: 'Link to Service',
         render: ({ value, onChange, field }) => (
             <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                <p className="col-span-2 text-[11px] text-[#A09790]">{field.label}</p>
                 <label className="col-span-2 flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} className="h-3.5 w-3.5" />
                     <span className="text-xs text-muted-foreground">Enabled</span>
@@ -92,21 +47,10 @@ export const defaultCardfields: Fields<Card, {}> = {
             </div>
         )
     },
-    service: {
-        type: 'custom',
-        label: 'Service',
-        visible: false,
-        render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                <ServiceField value={value} onChange={onChange} />
-            </div>
-        )
-    }
 }
 
 export const resolveCardFields: (data: Omit<ComponentData<Card, string, Record<string, DefaultComponentProps>>, "type">) => Fields<Card, {}> | Promise<Fields<Card, {}>> = (data) => {
-    let fields: Fields<Card, {}> = { ...defaultCardfields }
+    let fields = { ...defaultCardfields } as Fields<Card, {}>
 
     if (data.props.variant === 'media') {
         fields.cardCover = {
@@ -115,7 +59,7 @@ export const resolveCardFields: (data: Omit<ComponentData<Card, string, Record<s
             visible: true,
             render: ({ value, onChange, field }) => (
                 <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                    <p className="col-span-2 text-[11px] text-[#A09790]">{field.label}</p>
                     <KVSelect value={value} onChange={onChange} options={[{ label: 'Image', value: 'image' }, { label: 'Video', value: 'video' }]} className="col-span-2 col-start-3" />
                 </div>
             )
@@ -131,7 +75,7 @@ export const resolveCardFields: (data: Omit<ComponentData<Card, string, Record<s
                     return (
                         <div className="grid grid-cols-4 items-center gap-1.5">
                             <ImageModal open={open} onClose={() => setOpen(false)} onChange={onChange} value={value} />
-                            <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                            <p className="col-span-2 text-[11px] text-[#A09790]">{field.label}</p>
                             <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="col-span-2 col-start-3 h-6 text-xs">
                                 Select Image
                             </Button>
@@ -147,9 +91,9 @@ export const resolveCardFields: (data: Omit<ComponentData<Card, string, Record<s
                 labelIcon: <VideoIcon size={16} className="mr-1" />,
                 render: ({ onChange, value, field }) => (
                     <div className="grid grid-cols-4 items-center gap-1.5">
-                        <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                        <p className="col-span-2 text-[11px] text-[#A09790]">{field.label}</p>
                         <input
-                            className="col-span-2 col-start-3 h-6 border border-input rounded-md px-2 text-xs bg-background"
+                            style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
                             value={value ?? ''}
                             onChange={(e) => onChange(e.target.value)}
                         />
@@ -166,7 +110,7 @@ export const resolveCardFields: (data: Omit<ComponentData<Card, string, Record<s
             visible: true,
             render: ({ value, onChange, field }) => (
                 <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
+                    <p className="text-[11px] text-[#A09790]">{field.label}</p>
                     <ServiceField value={value} onChange={onChange} />
                 </div>
             )

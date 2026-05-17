@@ -14,6 +14,5 @@ export interface PaymentIntentMetadata extends MetadataParam {
     checkoutType: CheckoutType,
     appointment_id: string,
     businessId: string,
-    tax_calculation: string,
     appointmentType: AppointmentType
 }

@@ -1,8 +1,23 @@
 'use client'
 
-
 import { SlotComponent } from "@puckeditor/core";
 import { footerFields } from "./fields";
+import { buttonProps, containerDefaultProps, customTextProps } from "../../defaultStyles";
+
+const footerBtnProps = {
+    ...buttonProps,
+    action: 'REDIRECT',
+    link: '/',
+    backgroundColor: 'transparent',
+    color: '#ffffff',
+    borderWidth: 0,
+    borderRadius: 0,
+    padding: 0,
+    paddingExpanded: 'false',
+    fontSize: 0.85,
+    fontFamily: 'Roboto',
+    grow: false,
+}
 
 export const FooterComponent: any = {
     fields: footerFields,
@@ -10,447 +25,230 @@ export const FooterComponent: any = {
         footer: [{
             type: 'Container',
             props: {
+                ...containerDefaultProps,
+                flexDirection: 'flex-col',
+                mainAxisLayout: 'start',
+                altAxisLayout: 'stretch',
+                gapX: 0,
+                gapY: 0,
+                padding: 0,
+                paddingExpanded: 'true',
+                paddingTop: 4,
+                paddingBottom: 3,
+                paddingLeft: 5,
+                paddingRight: 5,
+                backgroundColor: '#1A1818',
+                borderWidth: 0,
+                grow: true,
                 content: [
                     {
-                        type: "Container",
+                        type: 'Container',
                         props: {
+                            ...containerDefaultProps,
+                            flexDirection: 'flex-row',
+                            mainAxisLayout: 'space-between',
+                            altAxisLayout: 'start',
+                            gapX: 0,
+                            gapY: 0,
+                            padding: 0,
+                            paddingExpanded: 'true',
+                            paddingBottom: 4,
+                            paddingTop: 0,
+                            paddingLeft: 0,
+                            paddingRight: 0,
+                            backgroundColor: 'transparent',
+                            borderWidth: 0,
+                            grow: true,
                             content: [
                                 {
-                                    type: "Container",
+                                    type: 'Container',
                                     props: {
+                                        ...containerDefaultProps,
+                                        flexDirection: 'flex-col',
+                                        mainAxisLayout: 'start',
+                                        altAxisLayout: 'start',
+                                        gapX: 0,
+                                        gapY: 1,
+                                        padding: 0,
+                                        paddingExpanded: 'false',
+                                        backgroundColor: 'transparent',
+                                        borderWidth: 0,
+                                        grow: false,
                                         content: [
                                             {
-                                                type: "Image",
+                                                type: 'HeadingThree',
                                                 props: {
-                                                    url: "https://jappbqntqogmnoluifzx.supabase.co/storage/v1/object/public/editor-media-pool/placeholder_photo.jpg",
-                                                    width: 200,
-                                                    borderColor: "#000000",
-                                                    borderRadius: 8,
-                                                    borderWidth: 0,
-                                                    borderType: "solid",
-                                                    positionType: "relative",
-                                                    left: 0,
-                                                    right: 0,
-                                                    top: 0,
-                                                    bottom: 0,
-                                                    borderRadiusTopLeft: 0,
-                                                    borderRadiusTopRight: 0,
-                                                    borderRadiusBottomLeft: 0,
-                                                    borderRadiusBottomRight: 0,
-                                                    borderBottom: 0,
-                                                    borderExpanded: "false",
-                                                    borderLeft: 0,
-                                                    borderRadiusExpanded: "false",
-                                                    borderRight: 0,
-                                                    borderTop: 0
+                                                    text: 'BRAND',
+                                                    color: '#ffffff',
+                                                    fontFamily: 'Roboto',
+                                                    letterSpacing: 3,
+                                                    lineHeight: 1,
+                                                    align: 'start',
+                                                    style: [],
+                                                    isLink: false,
+                                                    linkType: 'external',
+                                                    url: '',
+                                                    sections: '',
+                                                    textTransform: 'uppercase',
+                                                    size: 'md',
+                                                }
+                                            },
+                                            {
+                                                type: 'BodySmall',
+                                                props: {
+                                                    text: 'Styled for you.',
+                                                    color: 'rgba(255,255,255,0.45)',
+                                                    fontFamily: 'Roboto',
+                                                    letterSpacing: 0,
+                                                    lineHeight: 1.5,
+                                                    align: 'start',
+                                                    style: [],
+                                                    isLink: false,
+                                                    linkType: 'external',
+                                                    url: '',
+                                                    sections: '',
+                                                    textTransform: 'none',
+                                                    size: 'md',
                                                 }
                                             }
-                                        ],
-                                        rotation: 0,
-                                        gapX: 0,
-                                        grow: false,
-                                        gapY: 0,
-                                        draggable: true,
-                                        padding: 2,
-                                        borderRadiusExpanded: "false",
-                                        borderRadiusTopLeft: 0,
-                                        borderRadiusTopRight: 0,
-                                        borderRadiusBottomLeft: 0,
-                                        borderRadiusBottomRight: 0,
-                                        paddingExpanded: "false",
-                                        marginExpanded: "false",
-                                        marginBottom: 0,
-                                        marginLeft: 0,
-                                        marginRight: 0,
-                                        marginTop: 0,
-                                        margin: 0,
-                                        paddingBottom: 2,
-                                        paddingLeft: 2,
-                                        paddingRight: 2,
-                                        paddingTop: 2,
-                                        backgroundColor: "#ffffff",
-                                        borderColor: "#000000",
-                                        borderRadius: 0,
-                                        borderWidth: 0,
-                                        borderBottom: 0,
-                                        borderExpanded: "false",
-                                        borderLeft: 0,
-                                        borderRight: 0,
-                                        borderTop: 0,
-                                        borderType: "solid",
-                                        positionType: "relative",
-                                        left: 0,
-                                        right: 0,
-                                        top: 0,
-                                        bottom: 0,
-                                        responsiv: true,
-                                        flexDirectio: "flex-row",
-                                        mainAxisLayou: "start",
-                                        altAxisLayou: "start"
+                                        ]
                                     }
                                 },
                                 {
-                                    type: "Container",
+                                    type: 'Container',
                                     props: {
+                                        ...containerDefaultProps,
+                                        flexDirection: 'flex-row',
+                                        mainAxisLayout: 'start',
+                                        altAxisLayout: 'start',
+                                        gapX: 6,
+                                        gapY: 0,
+                                        padding: 0,
+                                        paddingExpanded: 'false',
+                                        backgroundColor: 'transparent',
+                                        borderWidth: 0,
+                                        grow: false,
                                         content: [
                                             {
-                                                type: "Column",
+                                                type: 'Container',
                                                 props: {
-                                                    columns: [
+                                                    ...containerDefaultProps,
+                                                    flexDirection: 'flex-col',
+                                                    mainAxisLayout: 'start',
+                                                    altAxisLayout: 'start',
+                                                    gapX: 0,
+                                                    gapY: 1.5,
+                                                    padding: 0,
+                                                    paddingExpanded: 'false',
+                                                    backgroundColor: 'transparent',
+                                                    borderWidth: 0,
+                                                    grow: false,
+                                                    content: [
                                                         {
-                                                            column: [
-                                                                {
-                                                                    type: "Row",
-                                                                    props: {
-                                                                        rows: [
-                                                                            {
-                                                                                row: [
-                                                                                    {
-                                                                                        type: "HeadingFour",
-                                                                                        props: {
-                                                                                            text: "Navigation",
-                                                                                            color: "#000000",
-                                                                                            fontFamily: "Roboto",
-                                                                                            letterSpacing: 1.2,
-                                                                                            lineHeight: 1.5,
-                                                                                            align: "start",
-                                                                                            style: []
-                                                                                        }
-                                                                                    }
-                                                                                ]
-                                                                            },
-                                                                            {
-                                                                                row: [
-                                                                                    {
-                                                                                        type: "CustomizableText",
-                                                                                        props: {
-                                                                                            text: "About Stylist",
-                                                                                            fontSize: 1,
-                                                                                            fontWeight: 400,
-                                                                                            letterSpacing: 1.2,
-                                                                                            lineHeight: 1.5,
-                                                                                            align: "start",
-                                                                                            style: [],
-                                                                                            color: "#000000",
-                                                                                            fontFamily: "Roboto"
-                                                                                        }
-                                                                                    }
-                                                                                ]
-                                                                            },
-                                                                            {
-                                                                                row: [
-                                                                                    {
-                                                                                        type: "CustomizableText",
-                                                                                        props: {
-                                                                                            text: "Terms and Conditions",
-                                                                                            fontSize: 1,
-                                                                                            fontWeight: 400,
-                                                                                            letterSpacing: 1.2,
-                                                                                            lineHeight: 1.5,
-                                                                                            align: "start",
-                                                                                            style: [],
-                                                                                            color: "#000000",
-                                                                                            fontFamily: "Roboto"
-                                                                                        }
-                                                                                    }
-                                                                                ]
-                                                                            },
-                                                                            {
-                                                                                row: [
-                                                                                    {
-                                                                                        type: "CustomizableText",
-                                                                                        props: {
-                                                                                            text: "Services",
-                                                                                            fontSize: 1,
-                                                                                            fontWeight: 400,
-                                                                                            letterSpacing: 1.2,
-                                                                                            lineHeight: 1.5,
-                                                                                            align: "start",
-                                                                                            style: [],
-                                                                                            color: "#000000",
-                                                                                            fontFamily: "Roboto"
-                                                                                        }
-                                                                                    }
-                                                                                ]
-                                                                            }
-                                                                        ],
-                                                                        numberOfRows: 4,
-                                                                        gap: 10,
-                                                                        justifyItems: "stretch"
-                                                                    }
-                                                                }
-                                                            ]
+                                                            type: 'CustomizableText',
+                                                            props: {
+                                                                ...customTextProps,
+                                                                text: 'Navigate',
+                                                                fontSize: 0.65,
+                                                                fontWeight: 700,
+                                                                letterSpacing: 2.5,
+                                                                color: 'rgba(255,255,255,0.4)',
+                                                                textTransform: 'uppercase',
+                                                            }
                                                         },
+                                                        { type: 'Button', props: { ...footerBtnProps, text: 'About' } },
+                                                        { type: 'Button', props: { ...footerBtnProps, text: 'Services' } },
+                                                        { type: 'Button', props: { ...footerBtnProps, text: 'Policies' } },
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                type: 'Container',
+                                                props: {
+                                                    ...containerDefaultProps,
+                                                    flexDirection: 'flex-col',
+                                                    mainAxisLayout: 'start',
+                                                    altAxisLayout: 'start',
+                                                    gapX: 0,
+                                                    gapY: 1.5,
+                                                    padding: 0,
+                                                    paddingExpanded: 'false',
+                                                    backgroundColor: 'transparent',
+                                                    borderWidth: 0,
+                                                    grow: false,
+                                                    content: [
                                                         {
-                                                            column: [
-                                                                {
-                                                                    type: "Row",
-                                                                    props: {
-                                                                        rows: [
-                                                                            {
-                                                                                row: [
-                                                                                    {
-                                                                                        type: "HeadingFour",
-                                                                                        props: {
-                                                                                            text: "Socials",
-                                                                                            color: "#000000",
-                                                                                            fontFamily: "Roboto",
-                                                                                            letterSpacing: 1.2,
-                                                                                            lineHeight: 1.5,
-                                                                                            align: "start",
-                                                                                            style: []
-                                                                                        }
-                                                                                    }
-                                                                                ]
-                                                                            },
-                                                                            {
-                                                                                row: [
-                                                                                    {
-                                                                                        type: "CustomizableText",
-                                                                                        props: {
-                                                                                            text: "Instagram",
-                                                                                            fontSize: 1,
-                                                                                            fontWeight: 400,
-                                                                                            letterSpacing: 1.2,
-                                                                                            lineHeight: 1.5,
-                                                                                            align: "start",
-                                                                                            style: [],
-                                                                                            color: "#000000",
-                                                                                            fontFamily: "Roboto"
-                                                                                        }
-                                                                                    }
-                                                                                ]
-                                                                            },
-                                                                            {
-                                                                                row: [
-                                                                                    {
-                                                                                        type: "CustomizableText",
-                                                                                        props: {
-                                                                                            text: "Facebook",
-                                                                                            fontSize: 1,
-                                                                                            fontWeight: 400,
-                                                                                            letterSpacing: 1.2,
-                                                                                            lineHeight: 1.5,
-                                                                                            align: "start",
-                                                                                            style: [],
-                                                                                            color: "#000000",
-                                                                                            fontFamily: "Roboto"
-                                                                                        }
-                                                                                    }
-                                                                                ]
-                                                                            }
-                                                                        ],
-                                                                        numberOfRows: 3,
-                                                                        gap: 10,
-                                                                        justifyItems: "stretch"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        }
-                                                    ],
-                                                    numberOfColumns: 2,
-                                                    gap: 100,
-                                                    alignItems: "stretch"
+                                                            type: 'CustomizableText',
+                                                            props: {
+                                                                ...customTextProps,
+                                                                text: 'Connect',
+                                                                fontSize: 0.65,
+                                                                fontWeight: 700,
+                                                                letterSpacing: 2.5,
+                                                                color: 'rgba(255,255,255,0.4)',
+                                                                textTransform: 'uppercase',
+                                                            }
+                                                        },
+                                                        { type: 'Button', props: { ...footerBtnProps, text: 'Instagram' } },
+                                                        { type: 'Button', props: { ...footerBtnProps, text: 'Facebook' } },
+                                                        { type: 'Button', props: { ...footerBtnProps, text: 'TikTok' } },
+                                                    ]
                                                 }
                                             }
-                                        ],
-                                        rotation: 0,
-                                        gapX: 0,
-                                        grow: false,
-                                        gapY: 0,
-                                        draggable: true,
-                                        padding: 2,
-                                        borderRadiusExpanded: "false",
-                                        borderRadiusTopLeft: 0,
-                                        borderRadiusTopRight: 0,
-                                        borderRadiusBottomLeft: 0,
-                                        borderRadiusBottomRight: 0,
-                                        paddingExpanded: "false",
-                                        marginExpanded: "false",
-                                        marginBottom: 0,
-                                        marginLeft: 0,
-                                        marginRight: 0,
-                                        marginTop: 0,
-                                        margin: 0,
-                                        paddingBottom: 2,
-                                        paddingLeft: 2,
-                                        paddingRight: 2,
-                                        paddingTop: 2,
-                                        backgroundColor: "#ffffff",
-                                        borderColor: "#000000",
-                                        borderRadius: 0,
-                                        borderWidth: 0,
-                                        borderBottom: 0,
-                                        borderExpanded: "false",
-                                        borderLeft: 0,
-                                        borderRight: 0,
-                                        borderTop: 0,
-                                        borderType: "solid",
-                                        positionType: "relative",
-                                        left: 0,
-                                        right: 0,
-                                        top: 0,
-                                        bottom: 0,
-                                        responsive: true,
-                                        flexDirection: "flex-row",
-                                        mainAxisLayout: "start",
-                                        altAxisLayout: "start"
+                                        ]
                                     }
                                 }
-                            ],
-                            rotation: 0,
-                            gapX: 0,
-                            grow: true,
-                            gapY: 0,
-                            draggable: true,
-                            padding: 2,
-                            borderRadiusExpanded: "false",
-                            borderRadiusTopLeft: 0,
-                            borderRadiusTopRight: 0,
-                            borderRadiusBottomLeft: 0,
-                            borderRadiusBottomRight: 0,
-                            paddingExpanded: "false",
-                            marginExpanded: "false",
-                            marginBottom: 0,
-                            marginLeft: 0,
-                            marginRight: 0,
-                            marginTop: 0,
-                            margin: 0,
-                            paddingBottom: 2,
-                            paddingLeft: 2,
-                            paddingRight: 2,
-                            paddingTop: 2,
-                            backgroundColor: "#ffffff",
-                            borderColor: "#000000",
-                            borderRadius: 0,
-                            borderWidth: 0,
-                            borderBottom: 0,
-                            borderExpanded: "false",
-                            borderLeft: 0,
-                            borderRight: 0,
-                            borderTop: 0,
-                            borderType: "solid",
-                            positionType: "relative",
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            responsive: true,
-                            flexDirection: "flex-row",
-                            mainAxisLayout: "space-evenly",
-                            altAxisLayout: "center"
+                            ]
                         }
                     },
                     {
-                        type: "Container",
+                        type: 'Container',
                         props: {
-                            content: [
-                                {
-                                    type: "CustomizableText",
-                                    props: {
-                                        text: "©Copyright 2026",
-                                        fontSize: 1,
-                                        fontWeight: 400,
-                                        letterSpacing: 1.2,
-                                        lineHeight: 1.5,
-                                        align: "start",
-                                        style: [],
-                                        color: "#00000059",
-                                        fontFamily: "Roboto"
-                                    }
-                                }
-                            ],
-                            rotation: 0,
+                            ...containerDefaultProps,
+                            flexDirection: 'flex-row',
+                            mainAxisLayout: 'center',
+                            altAxisLayout: 'center',
                             gapX: 0,
-                            grow: true,
                             gapY: 0,
-                            draggable: true,
-                            padding: 2,
-                            borderRadiusExpanded: "false",
-                            borderRadiusTopLeft: 0,
-                            borderRadiusTopRight: 0,
-                            borderRadiusBottomLeft: 0,
-                            borderRadiusBottomRight: 0,
-                            paddingExpanded: "true",
-                            marginExpanded: "false",
-                            marginBottom: 0,
-                            marginLeft: 0,
-                            marginRight: 0,
-                            marginTop: 0,
-                            margin: 0,
-                            paddingBottom: 1,
-                            paddingLeft: 2,
-                            paddingRight: 2,
-                            paddingTop: 1,
-                            backgroundColor: "#ffffff",
-                            borderColor: "#000000",
-                            borderRadius: 0,
-                            borderWidth: 0,
+                            padding: 0,
+                            paddingExpanded: 'true',
+                            paddingTop: 3,
+                            paddingBottom: 0,
+                            paddingLeft: 0,
+                            paddingRight: 0,
+                            backgroundColor: 'transparent',
+                            borderTop: 1,
+                            borderExpanded: 'true',
                             borderBottom: 0,
-                            borderExpanded: "false",
                             borderLeft: 0,
                             borderRight: 0,
-                            borderTop: 0,
-                            borderType: "solid",
-                            positionType: "relative",
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            responsive: true,
-                            flexDirection: "flex-row",
-                            mainAxisLayout: "center",
-                            altAxisLayout: "start"
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderType: 'solid',
+                            borderWidth: 0,
+                            grow: true,
+                            content: [{
+                                type: 'CustomizableText',
+                                props: {
+                                    ...customTextProps,
+                                    text: '© 2025 Your Brand. All rights reserved.',
+                                    fontSize: 0.8,
+                                    fontWeight: 400,
+                                    letterSpacing: 0,
+                                    color: 'rgba(255,255,255,0.3)',
+                                    align: 'center',
+                                }
+                            }]
                         }
                     }
-                ],
-                rotation: 0,
-                gapX: 0,
-                gapY: 0,
-                draggable: true,
-                padding: 2,
-                borderRadiusExpanded: "false",
-                borderRadiusTopLeft: 0,
-                borderRadiusTopRight: 0,
-                borderRadiusBottomLeft: 0,
-                borderRadiusBottomRight: 0,
-                paddingExpanded: "true",
-                marginExpanded: "true",
-                marginBottom: 0,
-                marginLeft: 0,
-                marginRight: 0,
-                marginTop: 0,
-                margin: 0,
-                paddingBottom: 1,
-                paddingLeft: 2,
-                paddingRight: 2,
-                paddingTop: 1,
-                backgroundColor: "#ffffff",
-                borderColor: "#000000",
-                borderRadius: 0,
-                borderWidth: 0,
-                borderBottom: 0,
-                borderExpanded: "false",
-                borderLeft: 0,
-                borderRight: 0,
-                borderTop: 0,
-                borderType: "solid",
-                positionType: "relative",
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 0,
-                responsive: true,
-                flexDirection: "flex-col",
-                mainAxisLayout: "start",
-                altAxisLayout: "start",
-                grow: true
+                ]
             }
         }]
     },
-    render: (({ footer: Footer }: { footer: SlotComponent }) => {
-        return <div>
-            <Footer />
-        </div>
-    })
+    render: ({ footer: Footer }: { footer: SlotComponent }) => {
+        return (
+            <div style={{ width: '100%' }}>
+                <Footer />
+            </div>
+        )
+    }
 }

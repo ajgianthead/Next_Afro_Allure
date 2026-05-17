@@ -1,1 +1,56 @@
- 
+/* ── Sidebar widths (Puck's own CSS custom properties) ───────────────── */
+/* These cascade into Puck's layout grid — no class name guessing needed  */
+:root {
+  --puck-user-left-side-bar-width: 220px;
+  --puck-user-right-side-bar-width: 280px;
+}
+
+/* ── Canvas background ───────────────────────────────────────────────── */
+/* Puck canvas class: _PuckCanvas_t6s9b_1 — "PuckCanvas" is always in it */
+/* Warm grey surround so the white preview iframe stands out clearly       */
+[class*="PuckCanvas"] {
+  background-color: #F0EDE8 !important;
+}
+
+/* ── Mobile preview frame ────────────────────────────────────────────── */
+/* Puck preview frame class: _PuckPreview-frame_z2rgu_6                  */
+[class*="PuckPreview-frame"] {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18) !important;
+}
+
+/* ── Strip Puck's default field padding — we own all spacing ────────── */
+/* The wrapFields form is always the parent of our overrides.fields,     */
+/* so _PuckFields-field_ still gets 16px padding without this override.  */
+[class*="PuckFields--wrapFields"] [class*="PuckFields-field"] {
+  padding: 0 !important;
+  border-top: none !important;
+  margin-top: 0 !important;
+}
+
+/* ── Editor header — responsive ──────────────────────────────────────── */
+/* Default: show long save label, hide short */
+.aa-header-save-short { display: none; }
+
+/* Below 768px: hide brand prefix + last-saved timestamp                 */
+@media (max-width: 768px) {
+  .aa-header-brand,
+  .aa-header-sep,
+  .aa-header-lastsaved { display: none; }
+}
+
+/* Below 540px: hide Templates text, shorten save button label           */
+@media (max-width: 540px) {
+  .aa-header-templates-label { display: none; }
+  .aa-header-save-label { display: none; }
+  .aa-header-save-short { display: inline; }
+  .aa-editor-header { padding: 0 8px !important; gap: 6px !important; }
+}
+
+/* Strip number-input spinners from editor panel inputs */
+[class*="PuckFields"] input[type=number]::-webkit-inner-spin-button,
+[class*="PuckFields"] input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+[class*="PuckFields"] input[type=number] { -moz-appearance: textfield; }

@@ -33,8 +33,12 @@ import {
     IconCurrencyDollar,
     IconBell,
     IconSettings,
+    IconHelpCircle,
     type Icon,
 } from '@tabler/icons-react'
+import { useState } from 'react'
+import { TourProvider } from '@/features/tour/TourProvider'
+import { HelpSheet } from '@/features/tour/HelpSheet'
 
 interface NavItem {
     title: string
@@ -81,11 +85,17 @@ const BOTTOM_ITEMS: NavItem[] = [
 export default function LayoutComp({ children, businessData }: { children: React.ReactNode; businessData: any }) {
     const pathname = usePathname()
     const router = useRouter()
+    const [helpOpen, setHelpOpen] = useState(false)
 
     const isActive = (url: string) =>
         url === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(url)
 
     return (
+        <TourProvider
+            toursCompleted={(businessData?.tours_completed as Record<string, boolean>) ?? {}}
+            businessId={businessData?.business_id ?? ''}
+            isOnboarded={businessData?.is_onboarded ?? true}
+        >
         <div lang="en" className="w-full">
             <SidebarProvider
                 style={{
@@ -165,6 +175,17 @@ export default function LayoutComp({ children, businessData }: { children: React
                                         </SidebarMenuItem>
                                     )
                                 })}
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        tooltip="Help & Tours"
+                                        onClick={() => setHelpOpen(true)}
+                                        className="rounded-xl transition-colors"
+                                        style={{ color: '#1A1818' }}
+                                    >
+                                        <IconHelpCircle size={16} />
+                                        <span className="text-sm">Help & Tours</span>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
                             </SidebarMenu>
                         </SidebarFooter>
                     </Sidebar>
@@ -183,5 +204,7 @@ export default function LayoutComp({ children, businessData }: { children: React
             </SidebarProvider>
             <Toaster />
         </div>
+        <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
+        </TourProvider>
     )
 }

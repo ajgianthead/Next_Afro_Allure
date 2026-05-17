@@ -16,6 +16,8 @@ import { WeekView } from './appointments/WeekView'
 import { ClientView } from './appointments/ClientView'
 import { CalendarView } from './appointments/CalendarView'
 import AddAppointmentFAB from './AddAppointmentFAB'
+import { AppointmentsTour } from '@/features/tour/tours/AppointmentsTour'
+import { useTour } from '@/features/tour/useTour'
 
 const DATE_NAV_VIEWS: AppointmentView[] = ['day', 'week']
 const STORAGE_KEY = 'aa_appointments_view'
@@ -41,6 +43,7 @@ export function AppointmentsClient({
     const [currentDate, setCurrentDate] = useState(new Date())
     const [selectedEvent, setSelectedEvent] = useState<AppointmentEvent | null>(null)
     const [mounted, setMounted] = useState(false)
+    const { registerStepSetup, unregisterStepSetup } = useTour()
 
     useEffect(() => {
         setMounted(true)
@@ -48,6 +51,15 @@ export function AppointmentsClient({
         if (saved) { setView(saved); return }
         if (window.innerWidth >= 1024) setView('day')
     }, [])
+
+    // When the tour needs to highlight the list view but a different view is active,
+    // switch to list so the target element is in the DOM.
+    useEffect(() => {
+        registerStepSetup('appointments-list', () => {
+            handleViewChange('list')
+        })
+        return () => unregisterStepSetup('appointments-list')
+    }, [registerStepSetup, unregisterStepSetup])
 
     const handleViewChange = (v: AppointmentView) => {
         setView(v)
@@ -79,9 +91,10 @@ export function AppointmentsClient({
                 onClose={() => setSelectedEvent(null)}
             />
 
+            <AppointmentsTour />
             <div className="flex flex-col gap-4">
                 {/* Header: view switcher + date nav */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div data-tour="appointments-view-switcher" className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <ViewSwitcher active={view} onChange={handleViewChange} />
                     {showDateNav && mounted && (
                         <DateNavBar
@@ -96,7 +109,9 @@ export function AppointmentsClient({
 
                 {/* View content */}
                 {view === 'list' && (
-                    <ListView onSelectEvent={setSelectedEvent} />
+                    <div data-tour="appointments-list">
+                        <ListView onSelectEvent={setSelectedEvent} />
+                    </div>
                 )}
                 {view === 'day' && (
                     <DayView currentDate={currentDate} onSelectEvent={setSelectedEvent} />

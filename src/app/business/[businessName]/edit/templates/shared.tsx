@@ -82,7 +82,7 @@ export function BookingModal({ open, onClose, theme, services = [], stylistName 
         <div onClick={onClose} style={{
             position: 'absolute', inset: 0, background: 'rgba(0,0,0,.55)',
             display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 100,
-            backdropFilter: 'blur(3px)',
+            backdropFilter: 'blur(3px)', cursor: 'pointer',
         }}>
             <div onClick={(e) => e.stopPropagation()} style={{
                 width: '100%', maxHeight: '92%', background: t.bg, color: t.fg,
@@ -282,6 +282,7 @@ export function Lightbox({ open, items, idx, onClose, onPrev, onNext, theme }: a
         <div onClick={onClose} style={{
             position: 'absolute', inset: 0, background: 'rgba(0,0,0,.92)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 110, padding: 14,
+            cursor: 'pointer',
         }}>
             <button onClick={(e) => { e.stopPropagation(); onClose(); }} style={{
                 position: 'absolute', top: 14, right: 14, background: 'rgba(255,255,255,.1)',

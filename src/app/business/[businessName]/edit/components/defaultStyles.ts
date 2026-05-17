@@ -94,9 +94,10 @@ export const sectionProps: Section = {
 // Image
 export const imageProps: ImageComponent = {
     url: 'https://jappbqntqogmnoluifzx.supabase.co/storage/v1/object/public/editor-media-pool/placeholder_photo.jpg',
-    width: 100,
-    objectFit: 'fill',
-    height: 0,
+    alt: '',
+    width: 'full',
+    objectFit: 'cover',
+    height: 'auto',
     aspectRatio: '',
     mobileVisibility: 'show',
     borderColor: '#000000',
@@ -149,7 +150,7 @@ export const videoProps: VideoComponent = {
     autoPlay: true,
     controls: true,
     speed: 1,
-    loop: false
+    loop: false,
 }
 // CustomText
 export const customTextProps: RegularText = {
@@ -245,31 +246,36 @@ export const buttonProps: ButtonContainer = {
 
 // Navbar
 export const navbarProps: Navbar = {
-    variants: 'default',
     logo: [{
         type: 'Container',
         props: {
+            ...containerDefaultProps,
+            grow: false,
+            backgroundColor: 'transparent',
             borderWidth: 0,
-            backgroundColor: '#fff',
             padding: 0,
-            content: [
-                {
-                    type: 'HeadingOne',
-                    props: {
-                        text: "LOGO",
-                        color: '#000000',
-                        fontFamily: 'Roboto',
-                        letterSpacing: 1.2,
-                        lineHeight: 1.5,
-                        align: 'start',
-                        style: [],
-                        isLink: false,
-                        sections: "",
-                        url: "",
-                        linkType: 'external'
-                    }
+            paddingExpanded: 'false',
+            paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0,
+            flexDirection: 'flex-row',
+            altAxisLayout: 'center',
+            content: [{
+                type: 'HeadingThree',
+                props: {
+                    text: 'BRAND',
+                    color: '#1A1818',
+                    fontFamily: 'Roboto',
+                    letterSpacing: 3,
+                    lineHeight: 1,
+                    align: 'start',
+                    style: [],
+                    isLink: false,
+                    linkType: 'external',
+                    url: '',
+                    sections: '',
+                    textTransform: 'uppercase',
+                    size: 'md',
                 }
-            ]
+            }]
         }
     }],
     menu: [
@@ -279,70 +285,36 @@ export const navbarProps: Navbar = {
                 props: {
                     ...buttonProps,
                     action: 'REDIRECT',
-                    text: 'About Business',
-                    link: "https://beta.afroallure.co/",
-                    padding: 0,
-                    paddingExpanded: 'false',
-                    backgroundColor: '#fff',
+                    text: 'Home',
+                    link: '/',
+                    backgroundColor: 'transparent',
+                    color: '#1A1818',
                     borderWidth: 0,
                     borderRadius: 0,
-                    fontSize: 1,
-                },
+                    padding: 0,
+                    paddingExpanded: 'false',
+                    fontSize: 0.9,
+                    fontFamily: 'Roboto',
+                }
             }]
         },
         {
             item: [{
-
-                type: 'Button',
-                props: {
-                    ...buttonProps,
-                    action: 'REDIRECT',
-                    text: 'Gallery',
-                    link: "https://beta.afroallure.co/",
-                    padding: 0,
-                    paddingExpanded: 'false',
-                    backgroundColor: '#fff',
-                    borderWidth: 0,
-                    borderRadius: 0,
-                    fontSize: 1,
-                },
-            }]
-        },
-        {
-            item: [{
-
                 type: 'Button',
                 props: {
                     ...buttonProps,
                     action: 'REDIRECT',
                     text: 'Services',
-                    link: "https://beta.afroallure.co/",
-                    padding: 0,
-                    paddingExpanded: 'false',
-                    backgroundColor: '#fff',
+                    link: '/',
+                    backgroundColor: 'transparent',
+                    color: '#1A1818',
                     borderWidth: 0,
                     borderRadius: 0,
-                    fontSize: 1,
-                },
-            }]
-        },
-        {
-            item: [{
-
-                type: 'Button',
-                props: {
-                    ...buttonProps,
-                    action: 'REDIRECT',
-                    text: 'Policies and Conditions',
-                    link: "https://beta.afroallure.co/",
                     padding: 0,
                     paddingExpanded: 'false',
-                    backgroundColor: '#fff',
-                    borderWidth: 0,
-                    borderRadius: 0,
-                    fontSize: 1,
-
-                },
+                    fontSize: 0.9,
+                    fontFamily: 'Roboto',
+                }
             }]
         },
         {
@@ -351,102 +323,201 @@ export const navbarProps: Navbar = {
                 props: {
                     ...buttonProps,
                     action: 'REDIRECT',
-                    text: 'Contact',
-                    link: "https://beta.afroallure.co/",
-                    padding: 0,
-                    paddingExpanded: 'false',
-                    backgroundColor: '#fff',
+                    text: 'Book Now',
+                    link: '/',
+                    backgroundColor: '#1A1818',
+                    color: '#ffffff',
                     borderWidth: 0,
-                    borderRadius: 0,
-                    fontSize: 1,
-
-                },
-
-            }
-            ]
+                    borderRadius: 6,
+                    padding: 0,
+                    paddingExpanded: 'true',
+                    paddingTop: 0.6,
+                    paddingBottom: 0.6,
+                    paddingLeft: 1.5,
+                    paddingRight: 1.5,
+                    fontSize: 0.9,
+                    fontFamily: 'Roboto',
+                }
+            }]
         },
-
     ],
-
-    content: [
-        {
-            type: 'Container',
-            props: {
-                padding: 0,
-                margin: 0,
-                marginExpanded: false,
-                marginTop: 0,
-                marginBottom: 0,
-                marginLeft: 0,
-                marginRight: 0,
-                paddingExpanded: true,
-                paddingRight: 2,
-                paddingLeft: 2,
-                paddingTop: 1.5,
-                paddingBottom: 1.5,
-                mainAxisLayout: 'space-between',
-                altAxisLayout: 'center',
-                borderWidth: 0,
-                backgroundColor: '#fff',
-                content: [
-
-                    {
-                        type: 'Container',
-                        props: {
-
-                            content: []
-                        }
-                    }
-                ]
-            }
-        }
-    ]
 }
 // Hero Section
 export const heroSectionProps: HeroSection = {
-    sectionOne: [{
+    content: [{
         type: 'Container',
         props: {
             ...containerDefaultProps,
-            padding: 2,
-            margin: 0,
-            marginExpanded: false,
-            marginTop: 0,
-            marginBottom: 0,
-            marginLeft: 0,
-            marginRight: 0,
-            paddingExpanded: false,
-            paddingRight: 2,
-            paddingLeft: 2,
-            paddingTop: 2,
-            paddingBottom: 2,
-            flexDirection: 'flex-col',
-            mainAxisLayout: 'center',
-            altAxisLayout: 'start',
+            flexDirection: 'flex-row',
+            mainAxisLayout: 'start',
+            altAxisLayout: 'stretch',
+            gapX: 0,
+            gapY: 0,
+            padding: 0,
+            paddingExpanded: 'false',
+            backgroundColor: '#ffffff',
             borderWidth: 0,
-            gap: 10,
-            backgroundColor: '#fff',
-            content: [{
-                type: 'HeadingOne',
-                props: {
-                    text: 'Title',
-
+            grow: true,
+            minHeight: 28,
+            content: [
+                {
+                    type: 'Container',
+                    props: {
+                        ...containerDefaultProps,
+                        flexDirection: 'flex-col',
+                        mainAxisLayout: 'center',
+                        altAxisLayout: 'start',
+                        gapX: 0,
+                        gapY: 3,
+                        padding: 0,
+                        paddingExpanded: 'true',
+                        paddingTop: 6,
+                        paddingBottom: 6,
+                        paddingLeft: 4,
+                        paddingRight: 4,
+                        backgroundColor: '#ffffff',
+                        borderWidth: 0,
+                        grow: true,
+                        content: [
+                            {
+                                type: 'CustomizableText',
+                                props: {
+                                    ...customTextProps,
+                                    text: 'Your Story',
+                                    fontSize: 0.7,
+                                    fontWeight: 700,
+                                    letterSpacing: 3,
+                                    color: '#C9974A',
+                                    textTransform: 'uppercase',
+                                }
+                            },
+                            {
+                                type: 'HeadingOne',
+                                props: {
+                                    text: 'Crafted For You.',
+                                    color: '#1A1818',
+                                    fontFamily: 'Roboto',
+                                    letterSpacing: 0,
+                                    lineHeight: 1.1,
+                                    align: 'start',
+                                    style: [],
+                                    isLink: false,
+                                    linkType: 'external',
+                                    url: '',
+                                    sections: '',
+                                    textTransform: 'none',
+                                    size: 'md',
+                                }
+                            },
+                            {
+                                type: 'BodyMedium',
+                                props: {
+                                    text: 'Step into luxury. Every appointment is tailored to bring your vision to life.',
+                                    color: '#6F6863',
+                                    fontFamily: 'Roboto',
+                                    letterSpacing: 0,
+                                    lineHeight: 1.6,
+                                    align: 'start',
+                                    style: [],
+                                    isLink: false,
+                                    linkType: 'external',
+                                    url: '',
+                                    sections: '',
+                                    textTransform: 'none',
+                                    size: 'md',
+                                }
+                            },
+                            {
+                                type: 'Container',
+                                props: {
+                                    ...containerDefaultProps,
+                                    flexDirection: 'flex-row',
+                                    mainAxisLayout: 'start',
+                                    altAxisLayout: 'center',
+                                    gapX: 2,
+                                    gapY: 0,
+                                    padding: 0,
+                                    paddingExpanded: 'false',
+                                    backgroundColor: 'transparent',
+                                    borderWidth: 0,
+                                    grow: false,
+                                    content: [
+                                        {
+                                            type: 'Button',
+                                            props: {
+                                                ...buttonProps,
+                                                text: 'Book Now',
+                                                action: 'REDIRECT',
+                                                link: '/',
+                                                backgroundColor: '#1A1818',
+                                                color: '#ffffff',
+                                                borderWidth: 0,
+                                                borderRadius: 6,
+                                                padding: 0,
+                                                paddingExpanded: 'true',
+                                                paddingTop: 0.8,
+                                                paddingBottom: 0.8,
+                                                paddingLeft: 2,
+                                                paddingRight: 2,
+                                                fontSize: 0.95,
+                                                fontFamily: 'Roboto',
+                                            }
+                                        },
+                                        {
+                                            type: 'Button',
+                                            props: {
+                                                ...buttonProps,
+                                                text: 'Learn More',
+                                                action: 'REDIRECT',
+                                                link: '/',
+                                                backgroundColor: 'transparent',
+                                                color: '#1A1818',
+                                                borderWidth: 1,
+                                                borderColor: '#1A1818',
+                                                borderRadius: 6,
+                                                padding: 0,
+                                                paddingExpanded: 'true',
+                                                paddingTop: 0.8,
+                                                paddingBottom: 0.8,
+                                                paddingLeft: 2,
+                                                paddingRight: 2,
+                                                fontSize: 0.95,
+                                                fontFamily: 'Roboto',
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    type: 'Container',
+                    props: {
+                        ...containerDefaultProps,
+                        grow: true,
+                        padding: 0,
+                        paddingExpanded: 'false',
+                        backgroundColor: '#F5F0EA',
+                        borderWidth: 0,
+                        minHeight: 28,
+                        overflow: 'hidden',
+                        content: [{
+                            type: 'Image',
+                            props: {
+                                ...imageProps,
+                                width: 'full',
+                                height: 'auto',
+                                objectFit: 'cover',
+                                aspectRatio: '4/5',
+                                borderWidth: 0,
+                            }
+                        }]
+                    }
                 }
-            }, {
-                type: 'BodyMedium',
-                props: {
-                    text: 'In ullamco cupidatat ea reprehenderit. Nisi esse commodo esse dolore veniam elit. Nisi elit eu proident ea pariatur est. Amet do amet sint aliquip eu aute velit esse mollit non. Ut quis dolor non adipisicing.'
-                }
-            },
-            {
-                type: 'Button',
-                props: {
-                    text: 'Call to Action'
-                }
-            }]
+            ]
         }
-    }],
-    sectionTwo: []
+    }]
 }
 // About Section
 // Card

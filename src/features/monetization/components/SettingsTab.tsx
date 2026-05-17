@@ -3,16 +3,13 @@
 import { useState } from 'react'
 import {
     ConnectAccountManagement,
-    ConnectTaxSettings,
-    ConnectTaxRegistrations,
     ConnectPaymentMethodSettings,
 } from '@stripe/react-connect-js'
 
-type SettingsView = 'account' | 'tax' | 'payment-methods'
+type SettingsView = 'account' | 'payment-methods'
 
 const NAV_ITEMS: { key: SettingsView; label: string }[] = [
     { key: 'account', label: 'Manage Account' },
-    { key: 'tax', label: 'Tax Settings' },
     { key: 'payment-methods', label: 'Payment Methods' },
 ]
 
@@ -58,12 +55,6 @@ export function SettingsTab() {
                 {/* Content */}
                 <div className="flex-1 p-5 lg:p-6 min-w-0">
                     {active === 'account' && <ConnectAccountManagement />}
-                    {active === 'tax' && (
-                        <div className="flex flex-col gap-4">
-                            <ConnectTaxSettings />
-                            <ConnectTaxRegistrations />
-                        </div>
-                    )}
                     {active === 'payment-methods' && <ConnectPaymentMethodSettings />}
                 </div>
             </div>

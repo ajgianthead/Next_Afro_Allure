@@ -141,4 +141,10 @@
   body {
     @apply bg-background text-foreground;
   }
+  button:not(:disabled), a, [role="button"], label, summary {
+    cursor: pointer;
+  }
+  button:disabled, [disabled] {
+    cursor: not-allowed;
+  }
 }

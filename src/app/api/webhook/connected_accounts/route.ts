@@ -27,9 +27,6 @@ export async function POST(request: NextRequest) {
   const client = await pool.connect();
   try {
     switch (event.type) {
-      case 'refund.created':
-        await handleRefund(event.data.object as Stripe.Refund);
-        break;
       case 'payment_intent.canceled':
         await handlePaymentCanceled(event.data.object as Stripe.PaymentIntent, client);
         break;
@@ -47,35 +44,6 @@ export async function POST(request: NextRequest) {
 
   client.release();
   return webhookAck();
-}
-
-async function handleRefund(refund: Stripe.Refund) {
-  try {
-    const supabase = await createClient();
-    const { data: appointment } = await supabase
-      .from('appointments')
-      .select("*, business_users(business_id, stripe_acc_id)")
-      .or(`deposit_charge_id.eq.${refund.payment_intent},service_charge_id.eq.${refund.payment_intent}`)
-      .single();
-
-    const paymentIntent = await stripe.paymentIntents.retrieve(
-      refund.payment_intent?.toString()!,
-      { stripeAccount: appointment?.business_users.stripe_acc_id! }
-    );
-
-    const originalTransaction = paymentIntent.metadata.purpose === 'EOA'
-      ? appointment?.eoa_tax_transaction!
-      : appointment?.deposit_tax_transaction!;
-
-    await stripe.tax.transactions.createReversal({
-      mode: 'full',
-      original_transaction: originalTransaction,
-      reference: refund.id,
-      expand: ['line_items'],
-    });
-  } catch (error) {
-    console.error('handleRefund failed:', error);
-  }
 }
 
 async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent, client: any) {
@@ -115,11 +83,6 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, client: 
 async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, client: any) {
   const { purpose, appointment_id: appointmentID } = paymentIntent.metadata;
 
-  const transaction = await stripe.tax.transactions.createFromCalculation({
-    calculation: paymentIntent.metadata.tax_calculation,
-    reference: paymentIntent.id,
-  });
-
   if (purpose === 'EOA') {
     let eoaRes: any;
     try {
@@ -128,13 +91,13 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
         `WITH updated AS (
           UPDATE appointments
           SET service_paid = $1, service_paid_type = 'PLATFORM', service_charge_id = $2,
-              eoa_tax_transaction = $3, status = 'COMPLETED', paid_amount = coalesce(paid_amount, 0) + $4
-          WHERE id = $5
+              status = 'COMPLETED', paid_amount = coalesce(paid_amount, 0) + $3
+          WHERE id = $4
           RETURNING *
         )
         SELECT updated.*, business_users.business_name, business_users.email, business_users.account_settings
         FROM updated JOIN business_users ON updated.business = business_users.business_id`,
-        [true, paymentIntent.id, transaction.id, paymentIntent.amount, appointmentID]
+        [true, paymentIntent.id, paymentIntent.amount, appointmentID]
       );
       await client.query('COMMIT');
       eoaRes = result.rows[0];
@@ -196,15 +159,15 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
     const result = await client.query(
       `WITH updated AS (
         UPDATE appointments
-        SET status = 'CONFIRMED', paid_deposit = $1, deposit_tax_transaction = $2,
-            paid_amount = coalesce(paid_amount, 0) + $3,
-            amount_due = CASE WHEN substraction THEN amount_due - $3 ELSE amount_due END
-        WHERE deposit_charge_id = $4
+        SET status = 'CONFIRMED', paid_deposit = $1,
+            paid_amount = coalesce(paid_amount, 0) + $2,
+            amount_due = CASE WHEN substraction THEN amount_due - $2 ELSE amount_due END
+        WHERE deposit_charge_id = $3
         RETURNING *
       )
       SELECT updated.*, business_users.business_name, business_users.email, business_users.account_settings
       FROM updated JOIN business_users ON updated.business = business_users.business_id`,
-      [true, transaction.id, paymentIntent.amount, paymentIntent.id]
+      [true, paymentIntent.amount, paymentIntent.id]
     );
     await client.query('COMMIT');
     res = result.rows[0];

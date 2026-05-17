@@ -6,7 +6,9 @@
       "Bash(mkdir -p \"c:\\\\Users\\\\abija\\\\Documents\\\\afroallure\\\\Next_Afro_Allure\\\\src\\\\features\\\\availability\\\\server\\\\models\")",
       "Bash(mkdir -p \"c:\\\\Users\\\\abija\\\\Documents\\\\afroallure\\\\Next_Afro_Allure\\\\src\\\\features\\\\availability\\\\components\")",
       "Bash(npx tsc *)",
-      "Bash(npx next *)"
+      "Bash(npx next *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(node -e \"const t = require\\('@tabler/icons-react'\\); console.log\\(Object.keys\\(t\\).filter\\(k => k.toLowerCase\\(\\).includes\\('help'\\)\\)\\)\")"
     ]
   }
 }

@@ -9,6 +9,7 @@ import { AvailabilityEditor } from './AvailabilityEditor'
 import { createDefaultAvailability, AvailabilityData } from '../utils'
 import { useUserContext } from '@/app/utils/context/UserContext'
 import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
+import { AvailabilityTour } from '@/features/tour/tours/AvailabilityTour'
 
 interface AvailabilityClientProps {
     availabilitiesData: any[]
@@ -82,7 +83,8 @@ export default function AvailabilityClient({
 
     return (
         <div className="px-6">
-            <div className="w-full mt-5 flex justify-between items-center gap-6">
+            <AvailabilityTour />
+            <div data-tour="availability-default" className="w-full mt-5 flex justify-between items-center gap-6">
                 <h2 className="text-lg font-semibold">Availability</h2>
 
                 {planType === 'STARTER' ? (
@@ -90,12 +92,16 @@ export default function AvailabilityClient({
                         <span className="text-xs text-muted-foreground font-mono">
                             {availabilities.length} / 1 used
                         </span>
-                        <Button onClick={openCreate} disabled={atLimit}>
-                            + Create New
-                        </Button>
+                        <div data-tour="availability-multiple">
+                            <Button onClick={openCreate} disabled={atLimit}>
+                                + Create New
+                            </Button>
+                        </div>
                     </div>
                 ) : (
-                    <Button onClick={openCreate}>+ Create New</Button>
+                    <div data-tour="availability-multiple">
+                        <Button onClick={openCreate}>+ Create New</Button>
+                    </div>
                 )}
             </div>
 
@@ -120,7 +126,7 @@ export default function AvailabilityClient({
 
             <Separator className="my-3" />
 
-            <div className="flex flex-wrap gap-3 w-full">
+            <div data-tour="availability-list" className="flex flex-wrap gap-3 w-full">
                 {availabilities.map((element) => (
                     <AvailabilityCard
                         key={element.id}

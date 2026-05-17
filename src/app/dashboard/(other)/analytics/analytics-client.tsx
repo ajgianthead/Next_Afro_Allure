@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTour } from '@/features/tour/useTour'
 import { ChevronDown } from 'lucide-react'
 import { AnalyticsData } from './actions'
+import { AnalyticsTour } from '@/features/tour/tours/AnalyticsTour'
 import { RevenueOverviewSection } from './components/RevenueOverview'
 import { BookingPerformanceSection } from './components/BookingPerformance'
 import { ServiceAnalyticsSection } from './components/ServiceAnalytics'
@@ -34,18 +36,25 @@ function SectionCard({
     title,
     children,
     defaultOpen,
+    tourTarget,
+    forceOpen = false,
 }: {
     id: string
     title: string
     children: React.ReactNode
     defaultOpen: boolean
+    tourTarget?: string
+    forceOpen?: boolean
 }) {
     const [open, setOpen] = useState(defaultOpen)
     useEffect(() => { setOpen(defaultOpen) }, [defaultOpen])
+    // When the tour proactively requests this section to expand, honour it.
+    useEffect(() => { if (forceOpen) setOpen(true) }, [forceOpen])
 
     return (
         <div
             id={id}
+            data-tour={tourTarget}
             className="rounded-2xl overflow-hidden"
             style={{ border: '1px solid #E8E2D6', backgroundColor: '#FFFFFF' }}
         >
@@ -79,6 +88,10 @@ interface AnalyticsClientProps {
 export function AnalyticsClient({ data, business }: AnalyticsClientProps) {
     const [isDesktop, setIsDesktop] = useState(true)
     const [activeSection, setActiveSection] = useState('revenue')
+    // Tracks which sections the tour has requested to be force-expanded
+    const [tourExpanded, setTourExpanded] = useState<Set<string>>(new Set())
+
+    const { registerStepSetup, unregisterStepSetup } = useTour()
 
     useEffect(() => {
         const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -86,6 +99,21 @@ export function AnalyticsClient({ data, business }: AnalyticsClientProps) {
         window.addEventListener('resize', check)
         return () => window.removeEventListener('resize', check)
     }, [])
+
+    useEffect(() => {
+        const expand = (id: string) =>
+            setTourExpanded(prev => new Set([...prev, id]))
+
+        registerStepSetup('analytics-services', () => expand('services'))
+        registerStepSetup('analytics-clients', () => expand('clients'))
+        registerStepSetup('analytics-due',      () => expand('insights'))
+
+        return () => {
+            unregisterStepSetup('analytics-services')
+            unregisterStepSetup('analytics-clients')
+            unregisterStepSetup('analytics-due')
+        }
+    }, [registerStepSetup, unregisterStepSetup])
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -146,7 +174,8 @@ export function AnalyticsClient({ data, business }: AnalyticsClientProps) {
                     </p>
                 </div>
 
-                <SectionCard id="revenue" title="Revenue Overview" defaultOpen={true}>
+                <AnalyticsTour />
+                <SectionCard id="revenue" title="Revenue Overview" defaultOpen={true} tourTarget="analytics-revenue">
                     <RevenueOverviewSection overview={data.overview} byMonth={data.byMonth} financial={data.financial} />
                 </SectionCard>
 
@@ -154,15 +183,15 @@ export function AnalyticsClient({ data, business }: AnalyticsClientProps) {
                     <BookingPerformanceSection booking={data.booking} />
                 </SectionCard>
 
-                <SectionCard id="services" title="Service Analytics" defaultOpen={isDesktop}>
+                <SectionCard id="services" title="Service Analytics" defaultOpen={isDesktop} tourTarget="analytics-services" forceOpen={tourExpanded.has('services')}>
                     <ServiceAnalyticsSection services={data.service} />
                 </SectionCard>
 
-                <SectionCard id="clients" title="Client Analytics" defaultOpen={isDesktop}>
+                <SectionCard id="clients" title="Client Analytics" defaultOpen={isDesktop} tourTarget="analytics-clients" forceOpen={tourExpanded.has('clients')}>
                     <ClientAnalyticsSection client={data.client} />
                 </SectionCard>
 
-                <SectionCard id="insights" title="Client Insights" defaultOpen={isDesktop}>
+                <SectionCard id="insights" title="Client Insights" defaultOpen={isDesktop} tourTarget="analytics-due" forceOpen={tourExpanded.has('insights')}>
                     <ClientInsightsSection clientList={data.clientList} />
                 </SectionCard>
 

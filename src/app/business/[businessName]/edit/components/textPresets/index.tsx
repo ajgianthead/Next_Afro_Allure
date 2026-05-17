@@ -4,17 +4,16 @@ import { ComponentConfig, ComponentData, DefaultComponentProps, Fields, useGetPu
 import { Text } from "../types"
 import { TEXT_SIZE_MAP, TEXT_SIZE_OPTIONS } from "@/features/editor/lib/responsive"
 import { PaintBucket, Type } from "lucide-react"
-import { GoogleFont, loadGoogleFont } from "useGoogleFonts"
-import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext"
-import { FontBoldIcon, FontFamilyIcon, FontItalicIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
+import { useEditorContext } from "@/app/utils/context/EditorContext"
+import { FontBoldIcon, FontItalicIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
 import { NumInput, StrSelect } from "../fieldPrimitives"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { useEffect } from "react"
+import { FontSelector } from "../FontSelector"
 
 export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, Record<string, DefaultComponentProps>>, "type">) => Fields<Text, {}> | Promise<Fields<Text, {}>> = (data) => {
-    let templateTextFields: Fields<Text, {}> = {
+    let templateTextFields: Partial<Fields<Text, {}>> = {
         text: {
             type: 'custom',
             label: 'Text',
@@ -34,33 +33,12 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
         fontFamily: {
             type: 'custom',
             label: 'Font Family',
-            render: ({ onChange, value, id }) => {
-                const { editorState }: { editorState: EditorConxtextProps } = useEditorContext()
-                useEffect(() => {
-                    if (value) loadGoogleFont(value)
-                }, [value])
-                return (
-                    <div className="grid grid-cols-4 items-center gap-1.5">
-                        <p className="text-xs font-medium text-slate-400">Font</p>
-                        <div className="col-span-3">
-                            <input
-                                list={`font-list-${id}`}
-                                className="w-full h-6 border border-input rounded-md px-2 text-xs bg-background"
-                                value={value ?? ''}
-                                onChange={(e) => {
-                                    onChange(e.target.value)
-                                    loadGoogleFont(e.target.value)
-                                }}
-                            />
-                            <datalist id={`font-list-${id}`}>
-                                {editorState.fonts?.map((font: GoogleFont) => (
-                                    <option key={font.family} value={font.family} />
-                                ))}
-                            </datalist>
-                        </div>
-                    </div>
-                )
-            }
+            render: ({ onChange, value }) => (
+                <div className="grid grid-cols-4 items-center gap-1.5">
+                    <p className="text-xs font-medium text-slate-400">Font</p>
+                    <FontSelector value={value ?? ''} onChange={onChange} />
+                </div>
+            )
         },
         style: {
             type: 'custom',
@@ -178,73 +156,6 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
                 </div>
             )
         },
-        linkType: {
-            type: 'custom',
-            label: 'Link Type',
-            visible: false,
-            render: ({ value, onChange, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <div className="col-span-3">
-                        <Select value={value} onValueChange={(v) => onChange(v)}>
-                            <SelectTrigger className="h-6 text-xs">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="external">External</SelectItem>
-                                <SelectItem value="internal">Internal</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-            )
-        },
-        url: {
-            type: 'custom',
-            label: 'URL',
-            visible: false,
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <Input
-                        className="col-span-3 h-6 text-xs"
-                        placeholder="https://example.com"
-                        value={value ?? ''}
-                        onChange={(e) => onChange(e.target.value)}
-                    />
-                </div>
-            )
-        },
-        sections: {
-            type: 'custom',
-            label: 'Section',
-            visible: false,
-            render: ({ value, onChange, field }) => {
-                const { editorState } = useEditorContext()
-                const getPuck = useGetPuck()
-                const { appState } = getPuck()
-                const sectionData = appState.data.content
-                    .filter(c => c.type === 'Section' && editorState.sections.has(c.props.id))
-                    .map(c => ({ value: c.props.sectionName, label: c.props.sectionName }))
-                return (
-                    <div className="grid grid-cols-4 items-center gap-1.5">
-                        <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                        <div className="col-span-3">
-                            <Select value={value} onValueChange={(v) => onChange(v)}>
-                                <SelectTrigger className="h-6 text-xs">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {sectionData.map(s => (
-                                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                )
-            }
-        },
         textTransform: {
             type: 'custom',
             label: 'Transform',
@@ -348,7 +259,7 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
         }
     }
 
-    return templateTextFields
+    return templateTextFields as unknown as Fields<Text, {}>
 }
 
 const textStyle = (style: string[] | undefined, extra?: React.CSSProperties): React.CSSProperties => ({

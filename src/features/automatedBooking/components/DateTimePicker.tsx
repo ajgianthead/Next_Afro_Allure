@@ -10,7 +10,6 @@ import { Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { useBooking } from "../hooks/useBookingData";
 
-const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 export const DateTimePicker = () => {
     const userZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -164,7 +163,7 @@ export const DateTimePicker = () => {
     return (
         <div>
             <div className="mb-5">
-                <h2 className="text-xl font-semibold" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>Select Date & Time</h2>
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--t-text)', fontFamily: 'var(--t-font)' }}>Select Date & Time</h2>
                 <p className="text-sm mt-1" style={{ color: 'var(--t-muted)' }}>Pick a date and time from the available slots</p>
             </div>
 
@@ -200,7 +199,7 @@ export const DateTimePicker = () => {
                     <div className="flex flex-col p-4" style={{ maxHeight: 360, overflowY: 'auto' }}>
                         {selectedLuxon ? (
                             <>
-                                <p className="text-sm font-semibold mb-3" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>
+                                <p className="text-sm font-semibold mb-3" style={{ color: 'var(--t-text)', fontFamily: 'var(--t-font)' }}>
                                     {selectedLuxon.toFormat("cccc, LLLL dd")}
                                 </p>
                                 <div style={{ height: 1, backgroundColor: 'var(--t-border)', marginBottom: 12 }} />

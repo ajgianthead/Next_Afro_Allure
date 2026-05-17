@@ -4,7 +4,6 @@ import { createClient } from "@/app/utils/supabase/server"
 import { BusinessUser } from "../businessUser/BusinessUser"
 import { Appointment } from "../../features/manualBooking/server/models/Appointment"
 import { stripe } from "./stripeClient"
-import { calculateTax, buildTaxAddress } from "./calculateTax"
 import Stripe from "stripe"
 import { AppointmentType, CheckoutType } from "../../features/shared/appointments/types"
 import { getBookingSession, updateBookingSession } from "@/features/automatedBooking/server/domain"
@@ -37,22 +36,20 @@ export const createCheckout = async (
             }
 
             const clientEmail = (session.clientInfo as any)?.email as string | undefined
-            const taxCalc = await calculateTax(business.stripeAccountId, price, buildTaxAddress(business.accountSettings.business_address))
 
             const paymentIntent = await stripe.paymentIntents.create({
-                amount: taxCalc.amount_total,
+                amount: price,
                 currency: 'usd',
                 receipt_email: clientEmail,
                 metadata: {
                     checkoutType,
                     bookingSessionId: sessionId,
                     businessId,
-                    tax_calculation: taxCalc.id,
                     appointmentType,
                     purpose: checkoutType === CheckoutType.EOA ? 'EOA' : 'DEPOSIT',
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
-                application_fee_amount: Math.round(0.03 * taxCalc.amount_total),
+                application_fee_amount: Math.round(0.03 * price),
             }, {
                 stripeAccount: business.stripeAccountId,
             })
@@ -90,21 +87,19 @@ export const createCheckout = async (
                 if (existing.status !== 'canceled') return existing
             }
 
-            const taxCalc = await calculateTax(business.stripeAccountId, price, buildTaxAddress(business.accountSettings.business_address))
             const paymentIntent = await stripe.paymentIntents.create({
-                amount: taxCalc.amount_total,
+                amount: price,
                 currency: 'usd',
                 receipt_email: appointment.clientMetadata.email,
                 metadata: {
                     checkoutType,
                     appointment_id: appointment.id,
                     businessId,
-                    tax_calculation: taxCalc.id,
                     appointmentType,
                     purpose: 'DEPOSIT',
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
-                application_fee_amount: Math.round(0.03 * taxCalc.amount_total),
+                application_fee_amount: Math.round(0.03 * price),
             }, {
                 stripeAccount: business.stripeAccountId,
             })
@@ -134,21 +129,19 @@ export const createCheckout = async (
                 if (existing.status !== 'canceled') return existing
             }
 
-            const taxCalc = await calculateTax(business.stripeAccountId, price, buildTaxAddress(business.accountSettings.business_address))
             const paymentIntent = await stripe.paymentIntents.create({
-                amount: taxCalc.amount_total,
+                amount: price,
                 currency: 'usd',
                 receipt_email: appointment.clientMetadata.email,
                 metadata: {
                     checkoutType,
                     appointment_id: appointment.id,
                     businessId,
-                    tax_calculation: taxCalc.id,
                     appointmentType,
                     purpose: 'EOA',
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
-                application_fee_amount: Math.round(0.03 * taxCalc.amount_total),
+                application_fee_amount: Math.round(0.03 * price),
             }, {
                 stripeAccount: business.stripeAccountId,
             })

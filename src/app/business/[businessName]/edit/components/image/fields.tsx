@@ -8,12 +8,10 @@ import { Button } from "@/components/ui/button"
 import { ImageIcon, Loader2, Upload } from "lucide-react"
 import Image from "next/image"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives"
-import { LocateFixed, Square } from "lucide-react"
-import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, BorderAllIcon, BorderBottomIcon, BorderLeftIcon, BorderRightIcon, BorderTopIcon, CornerBottomLeftIcon, CornerBottomRightIcon, CornersIcon, CornerTopLeftIcon, CornerTopRightIcon } from "@radix-ui/react-icons"
+import { NumInput, KVSelect, StrSelect } from "../fieldPrimitives"
+import { BorderField, PositionField, RadiusField } from "../compoundFields"
 
-const expandOpts = [{ label: 'All', value: 'false' }, { label: 'Various', value: 'true' }]
-const posOpts = [{ label: 'Relative', value: 'relative' }, { label: 'Absolute', value: 'absolute' }]
+const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
 export const ImageModal = ({ open, onClose, onChange, value }: {
     open: boolean
@@ -87,54 +85,110 @@ export const imageResolvedFields: (data: any, params: any) => {} = (data, params
         url: {
             type: 'custom',
             label: 'Source',
-            labelIcon: <ImageIcon size={16} className="mr-1" />,
             render: ({ value, onChange, field }) => {
                 const [open, setOpen] = useState<boolean>(false)
                 return (
-                    <div className="grid grid-cols-4 items-center gap-1.5">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <ImageModal open={open} onClose={() => setOpen(false)} onChange={onChange} value={value} />
-                        <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                        <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="col-span-3 h-6 text-xs">
+                        <span style={lbl}>{field.label}</span>
+                        <Button size="sm" variant="outline" onClick={() => setOpen(true)} style={{ flex: 1, height: 26, fontSize: 11 }}>
                             Select Image
                         </Button>
                     </div>
                 )
             }
         },
-        width: {
+        alt: {
             type: 'custom',
-            label: 'Width (%)',
-            labelIcon: <ImageIcon size={16} className="mr-1" />,
+            label: 'Alt Text',
             render: ({ value, onChange, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <NumInput value={value} onChange={onChange} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={lbl}>{field.label}</span>
+                    <input
+                        style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
+                        placeholder="Describe the image…"
+                        value={value ?? ''}
+                        onChange={(e) => onChange(e.target.value)}
+                    />
                 </div>
             )
+        },
+        width: {
+            type: 'custom',
+            label: 'Width',
+            render: ({ value, onChange, field }) => {
+                const widthKeys = ['full', 'three-quarter', 'half', 'one-third']
+                const safeWidth = widthKeys.includes(value) ? value : 'full'
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={lbl}>{field.label}</span>
+                        <KVSelect
+                            value={safeWidth}
+                            onChange={onChange}
+                            className="flex-1"
+                            options={[
+                                { label: 'Full width', value: 'full' },
+                                { label: '3/4 width', value: 'three-quarter' },
+                                { label: 'Half', value: 'half' },
+                                { label: '1/3 width', value: 'one-third' },
+                            ]}
+                        />
+                    </div>
+                )
+            }
         },
         objectFit: {
             type: 'custom',
             label: 'Object Fit',
             render: ({ value, onChange, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                    <StrSelect value={value ?? 'fill'} onChange={onChange} options={['fill', 'cover', 'contain', 'none']} className="col-span-2 col-start-3" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                    <KVSelect
+                        value={value ?? 'cover'}
+                        onChange={onChange}
+                        className="flex-1"
+                        options={[
+                            { label: 'Cover (fill & crop)', value: 'cover' },
+                            { label: 'Contain (show full)', value: 'contain' },
+                            { label: 'Fill (stretch)', value: 'fill' },
+                        ]}
+                    />
                 </div>
             )
         },
         height: {
             type: 'custom',
-            label: 'Height (%)',
-            render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} />
+            label: 'Height',
+            render: ({ value, onChange, field }) => {
+                const heightKeys = ['auto', 'sm', 'md', 'lg', 'vh']
+                const safeHeight = heightKeys.includes(value) ? value : 'auto'
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={lbl}>{field.label}</span>
+                        <KVSelect
+                            value={safeHeight}
+                            onChange={onChange}
+                            className="flex-1"
+                            options={[
+                                { label: 'Auto', value: 'auto' },
+                                { label: 'Small (200px)', value: 'sm' },
+                                { label: 'Medium (320px)', value: 'md' },
+                                { label: 'Large (480px)', value: 'lg' },
+                                { label: 'Full screen (100vh)', value: 'vh' },
+                            ]}
+                        />
+                    </div>
+                )
+            }
         },
         aspectRatio: {
             type: 'custom',
             label: 'Aspect Ratio',
             render: ({ value, onChange, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
                     <input
-                        className="col-span-2 h-6 border border-input rounded-md px-2 text-xs bg-background"
+                        style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
                         placeholder="4/5"
                         value={value ?? ''}
                         onChange={(e) => onChange(e.target.value)}
@@ -142,81 +196,54 @@ export const imageResolvedFields: (data: any, params: any) => {} = (data, params
                 </div>
             )
         },
+
+        // ── Border (compound) ─────────────────────────────────────────────────
         borderExpanded: {
             type: 'custom',
             label: 'Border',
-            labelIcon: <Square size={16} className="mr-1" />,
-            render: ({ value, onChange, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <SegToggle value={value} onChange={onChange} options={expandOpts} />
-                </div>
-            )
+            render: ({ value, onChange }) => <BorderField value={value ?? 'false'} onChange={onChange} />
         },
-        borderWidth: {
-            label: undefined,
-            type: 'custom',
-            render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<BorderAllIcon />} />,
-        },
+        borderWidth: { visible: false, type: 'number' },
         borderTop: { visible: false, type: 'number' },
         borderBottom: { visible: false, type: 'number' },
         borderLeft: { visible: false, type: 'number' },
         borderRight: { visible: false, type: 'number' },
-        borderColor: {
-            type: 'custom',
-            label: undefined,
-            render: ({ onChange, value }) => <ColorPicker value={value} onChange={onChange} />,
-        },
-        borderType: {
-            type: 'custom',
-            label: undefined,
-            render: ({ onChange, value }) => <StrSelect value={value} onChange={onChange} options={['solid', 'dashed', 'dotted']} />,
-        },
+        borderColor: { visible: false, type: 'text' },
+        borderType: { visible: false, type: 'text' },
+
+        // ── Radius (compound) ─────────────────────────────────────────────────
         borderRadiusExpanded: {
             type: 'custom',
             label: 'Radius',
-            labelIcon: <Square size={16} className="mr-1" />,
-            render: ({ value, onChange, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <SegToggle value={value} onChange={onChange} options={expandOpts} />
-                </div>
-            )
+            render: ({ value, onChange }) => <RadiusField value={value ?? 'false'} onChange={onChange} />
         },
-        borderRadius: {
-            label: undefined,
-            type: 'custom',
-            render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<CornersIcon />} />,
-        },
+        borderRadius: { visible: false, type: 'number' },
         borderRadiusTopLeft: { visible: false, type: 'number' },
         borderRadiusTopRight: { visible: false, type: 'number' },
         borderRadiusBottomLeft: { visible: false, type: 'number' },
         borderRadiusBottomRight: { visible: false, type: 'number' },
+
+        // ── Position (compound) ───────────────────────────────────────────────
         positionType: {
             type: 'custom',
             label: 'Position',
-            labelIcon: <LocateFixed size={16} className="mr-1" />,
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <SegToggle value={value} onChange={onChange} options={posOpts} />
-                </div>
-            )
+            render: ({ value, onChange }) => <PositionField value={value ?? 'relative'} onChange={onChange as (v: string) => void} />
         },
-        top: { type: 'number', visible: false },
-        bottom: { type: 'number', visible: false },
-        left: { type: 'number', visible: false },
-        right: { type: 'number', visible: false },
+        top: { visible: false, type: 'number' },
+        bottom: { visible: false, type: 'number' },
+        left: { visible: false, type: 'number' },
+        right: { visible: false, type: 'number' },
+
         mobileVisibility: {
             type: 'custom',
             label: 'Show on mobile',
-            render: ({ value, onChange, field }) => (
-                <div className="grid grid-cols-4 items-center gap-1.5">
-                    <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
+            render: ({ value, onChange }) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ ...lbl, minWidth: 56 }}>Visibility</span>
                     <select
                         value={value ?? 'show'}
                         onChange={(e) => onChange(e.target.value)}
-                        className="col-span-2 col-start-3 h-6 border border-input rounded-md px-2 text-xs bg-background"
+                        style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
                     >
                         {MOBILE_VISIBILITY_OPTIONS.map(o => (
                             <option key={o.value} value={o.value}>{o.label}</option>
@@ -227,25 +254,5 @@ export const imageResolvedFields: (data: any, params: any) => {} = (data, params
         },
     }
 
-    if (data.props.borderExpanded === 'true') {
-        fields.borderWidth = { visible: false, type: 'text' }
-        fields.borderTop = { type: 'custom', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<BorderTopIcon />} className="w-full" /> }
-        fields.borderBottom = { type: 'custom', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<BorderBottomIcon />} className="w-full" /> }
-        fields.borderLeft = { type: 'custom', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<BorderLeftIcon />} className="w-full" /> }
-        fields.borderRight = { type: 'custom', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<BorderRightIcon />} className="w-full" /> }
-    }
-    if (data.props.borderRadiusExpanded === 'true') {
-        fields.borderRadius = { visible: false, type: 'text' }
-        fields.borderRadiusTopLeft = { type: 'custom', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<CornerTopLeftIcon />} className="w-full" /> }
-        fields.borderRadiusBottomLeft = { type: 'custom', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<CornerBottomLeftIcon />} className="w-full" /> }
-        fields.borderRadiusBottomRight = { type: 'custom', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<CornerBottomRightIcon />} className="w-full" /> }
-        fields.borderRadiusTopRight = { type: 'custom', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<CornerTopRightIcon />} className="w-full" /> }
-    }
-    if (data.props.positionType === 'absolute') {
-        fields.top = { type: 'custom', label: 'Top', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<ArrowUpIcon />} className="w-full" /> }
-        fields.bottom = { type: 'custom', label: 'Bottom', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<ArrowDownIcon />} className="w-full" /> }
-        fields.left = { type: 'custom', label: 'Left', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<ArrowLeftIcon />} className="w-full" /> }
-        fields.right = { type: 'custom', label: 'Right', visible: true, render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<ArrowRightIcon />} className="w-full" /> }
-    }
     return fields
 }

@@ -370,6 +370,7 @@ export type Database = {
           published_site: boolean
           stripe_acc_id: string | null
           stripe_customer_id: string | null
+          tours_completed: Json | null
           updated_at: string
           upgrade_prompt_dismissed_at: string | null
           url_name: string
@@ -397,6 +398,7 @@ export type Database = {
           published_site?: boolean
           stripe_acc_id?: string | null
           stripe_customer_id?: string | null
+          tours_completed?: Json | null
           updated_at?: string
           upgrade_prompt_dismissed_at?: string | null
           url_name?: string
@@ -424,6 +426,7 @@ export type Database = {
           published_site?: boolean
           stripe_acc_id?: string | null
           stripe_customer_id?: string | null
+          tours_completed?: Json | null
           updated_at?: string
           upgrade_prompt_dismissed_at?: string | null
           url_name?: string
@@ -473,6 +476,27 @@ export type Database = {
           last_name?: string
           phone_number?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      client_waitlist: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
         }
         Relationships: []
       }

@@ -2,6 +2,7 @@
 
 import { CircularProgress, CssVarsProvider, Divider, FormControl, FormHelperText, Input as JoyInput, Option, Select } from '@mui/joy'
 import { Info, Check, Lock } from 'lucide-react'
+import { BookingSettingsTour } from '@/features/tour/tours/BookingSettingsTour'
 import React, { useState } from 'react'
 import { handleBookingSettings } from './actions'
 import Stripe from 'stripe'
@@ -142,6 +143,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
 
     return (
         <div className="p-6 max-w-2xl space-y-8">
+            <BookingSettingsTour />
 
             {/* Upgrade Dialog */}
             <Dialog open={open} onOpenChange={setOpen}>
@@ -183,6 +185,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
             </div>
 
             {/* Deposits */}
+            <div data-tour="settings-deposit">
             <Section label="Deposits">
                 {!isOnboarded && (
                     <a href={businessUser.current_onboarding_link!} target="_blank" className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3" style={{ backgroundColor: 'rgba(201,151,74,0.08)', color: BRAND.gold }}>
@@ -245,6 +248,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                     </div>
                 )}
             </Section>
+            </div>
 
             {/* Payment Methods */}
             <Section label="Payment Methods">
@@ -299,6 +303,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
             </Section>
 
             {/* Appointments */}
+            <div data-tour="settings-reschedule">
             <Section label="Appointments">
                 <div className="space-y-4">
                     <InlineNumberRule
@@ -313,16 +318,20 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         value={bookingPolicy.rescheduleDayLimit}
                         onChange={(v) => setBookingPolicy({ ...bookingPolicy, rescheduleDayLimit: v })}
                     />
+                    <div data-tour="settings-cancellation">
                     <InlineNumberRule
                         prefix="Clients can't cancel within"
                         suffix="days of their appointment"
                         value={bookingPolicy.cancelDayLimit}
                         onChange={(v) => setBookingPolicy({ ...bookingPolicy, cancelDayLimit: v })}
                     />
+                    </div>
                 </div>
             </Section>
+            </div>
 
             {/* Booking Site */}
+            <div data-tour="settings-booking-window">
             <Section label="Booking Site">
                 <div className="space-y-6">
                     <div>
@@ -390,6 +399,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                     </div>
                 </div>
             </Section>
+            </div>
 
             {/* Save */}
             <button

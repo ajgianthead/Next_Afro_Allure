@@ -34,7 +34,8 @@ const EditableText: UserComponent = ({ text, fontFamily = 'Open Sans', textAlign
         <div ref={(ref: any) => connect(drag(ref))} onClick={(e: any) => setActiveEdit(true)} style={{
             width: 'auto',
             height: 'auto',
-            maxHeight: 'min-content'
+            maxHeight: 'min-content',
+            cursor: 'pointer',
         }}>
             <Text margin={margin} padding={padding} hasSelectedNode={hasSelectedNode} isHovering={isHovering} className={className} fontFamily={fontFamily} textAlign={textAlign} activeEdit={activeEdit} fontStyle={fontStyle} textDecorationLine={textDecorationLine} setActiveEdit={setActiveEdit} isEditable={true} text={text} setProp={setProp} fontSize={fontSize} fontColor={fontColor} fontWeight={fontWeight} lineHeight={lineHeight} letterSpacing={letterSpacing} />
         </div>

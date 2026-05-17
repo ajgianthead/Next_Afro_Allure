@@ -7,14 +7,13 @@ import { Check, X } from "lucide-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useBooking } from "../hooks/useBookingData";
 
-const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 export const ServiceSelection = () => {
     const { data }: { data: BookingData } = useBooking();
     return (
         <div>
             <div className="mb-5">
-                <h2 className="text-xl font-semibold" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>Select Service</h2>
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--t-text)', fontFamily: 'var(--t-font)' }}>Select Service</h2>
                 <p className="text-sm mt-1" style={{ color: 'var(--t-muted)' }}>Pick a service to start the booking process</p>
             </div>
             <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-3">
@@ -80,7 +79,7 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                         <div className="p-5 space-y-4">
                             <div className="flex items-start justify-between gap-3">
                                 <p className="text-sm leading-relaxed" style={{ color: 'var(--t-muted)' }}>{service.description}</p>
-                                <span className="text-base font-bold shrink-0" style={{ color: 'var(--t-primary)', fontFamily: 'var(--font-fraunces, serif)' }}>
+                                <span className="text-base font-bold shrink-0" style={{ color: 'var(--t-primary)', fontFamily: 'var(--t-font)' }}>
                                     ${service.price / 100}
                                 </span>
                             </div>
@@ -134,7 +133,7 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                         <div className="px-5 pb-5 flex items-center justify-between" style={{ borderTop: '1px solid var(--t-border)', paddingTop: 16 }}>
                             <div>
                                 <span className="text-xs" style={{ color: 'var(--t-muted)' }}>Total</span>
-                                <span className="ml-2 text-lg font-bold" style={{ color: 'var(--t-primary)', fontFamily: 'var(--font-fraunces, serif)' }}>
+                                <span className="ml-2 text-lg font-bold" style={{ color: 'var(--t-primary)', fontFamily: 'var(--t-font)' }}>
                                     ${totalCents / 100}
                                 </span>
                             </div>

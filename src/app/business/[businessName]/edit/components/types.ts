@@ -20,20 +20,17 @@ export interface PreBuiltComponents {
     content: Slot
 }
 
-export interface Navbar extends PreBuiltComponents {
+export interface Navbar {
     logo: Slot
     menu: {
         item: Slot
     }[]
-    variants: string
 }
 export interface HeroSection {
-    sectionOne: Slot
-    sectionTwo: Slot
+    content: Slot
 }
 export interface About {
-    sectionOne: Slot,
-    sectionTwo: Slot
+    content: Slot
 }
 export interface Gallery {
     gallery: Slot
@@ -154,9 +151,10 @@ export interface Container {
 
 export interface ImageComponent {
     url: string | null
-    width: number
+    alt: string
+    width: string
     objectFit: string
-    height: number
+    height: string
     aspectRatio: string
     mobileVisibility: string
     borderExpanded: string
@@ -180,11 +178,12 @@ export interface ImageComponent {
     borderRadiusBottomRight: number
 }
 
-export interface VideoComponent extends ImageComponent {
+export interface VideoComponent extends Omit<ImageComponent, 'width' | 'height' | 'alt'> {
     controls: boolean
     autoPlay: boolean
     speed: number
     loop: boolean
+    width: number
     height: number
 }
 

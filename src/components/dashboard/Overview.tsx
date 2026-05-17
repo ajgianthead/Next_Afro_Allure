@@ -11,6 +11,7 @@ import { sendPaymentLink } from 'app/dashboard/(other)/actions'
 import QRCode from 'react-qr-code'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
+import { DashboardTour } from '@/features/tour/tours/DashboardTour'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -50,7 +51,6 @@ export const StackedCards = ({ weekAppointments, upcomingAppointments, businessD
   const params = useSearchParams()
   const subscriptionSuccess = params.get('success')
   const [successDismissed, setSuccessDismissed] = useState(false)
-
   const today = DateTime.now()
   const todayAppointments = weekAppointments.filter(a =>
     DateTime.fromISO(a.start).hasSame(today, 'day')
@@ -60,6 +60,7 @@ export const StackedCards = ({ weekAppointments, upcomingAppointments, businessD
 
   return (
     <div className="space-y-6 max-w-5xl">
+      <DashboardTour />
       {subscriptionSuccess === 'true' && !successDismissed && (
         <div className="flex items-center justify-between px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a' }}>
           <span>Subscribed successfully.</span>
@@ -106,7 +107,7 @@ function BookingLinkBar({ url }: { url: string }) {
     setTimeout(() => setCopied(false), 2000)
   }
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm" style={{ borderColor: BRAND.sand, backgroundColor: BRAND.cream }}>
+    <div data-tour="dashboard-booking-link" className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm" style={{ borderColor: BRAND.sand, backgroundColor: BRAND.cream }}>
       <span className="flex-1 truncate" style={{ color: BRAND.warm }}>{url}</span>
       <button
         onClick={copy}
@@ -173,7 +174,7 @@ function StatRow({ dashboardAnalytics, growth }: Pick<PageProps, 'dashboardAnaly
   const newClients = dashboardAnalytics.newClients.data ?? 0
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div data-tour="dashboard-stats" className="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div className="col-span-2 rounded-2xl p-5 my-first-step" style={{ backgroundColor: BRAND.black, color: 'white' }}>
         <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>Revenue this month</p>
         <p className="text-4xl font-bold" style={{ fontFamily: SERIF }}>${revenue.toLocaleString()}</p>
@@ -346,7 +347,7 @@ function WeekStrip({ weekAppointments }: { weekAppointments: Appointment[] }) {
   const days = Array.from({ length: 7 }, (_, i) => weekStart.plus({ days: i }))
 
   return (
-    <div>
+    <div data-tour="dashboard-week-strip">
       <p className="text-xs font-medium mb-2" style={{ color: BRAND.warm }}>This week</p>
       <div className="flex gap-1">
         {days.map(day => {
@@ -406,7 +407,7 @@ function TodaySchedule({ appointments, businessData }: { appointments: Appointme
   const [selected, setSelected] = useState<Appointment | null>(null)
 
   return (
-    <div>
+    <div data-tour="dashboard-today">
       <p className="text-xs font-medium mb-3" style={{ color: BRAND.warm }}>Today's schedule</p>
       {appointments.length === 0 ? (
         <p className="text-sm py-4 text-center" style={{ color: BRAND.warm }}>Nothing scheduled for today</p>

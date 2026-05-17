@@ -1,22 +1,27 @@
 'use client'
 
-import { Check, LayoutPanelTop, Loader2, PencilRuler } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
-import { createEditorState, createSectionEditorState } from './actions';
-import { PostgrestError } from '@supabase/supabase-js';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { PlanGateCard, GatableBusinessData } from '@/components/dashboard/PlanGate';
+import { Check, LayoutPanelTop, Loader2, PencilRuler } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import React, { useState } from 'react'
+import { createEditorState, createSectionEditorState } from './actions'
+import { PostgrestError } from '@supabase/supabase-js'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { PlanGateCard, GatableBusinessData } from '@/components/dashboard/PlanGate'
+import { WebBuilderTour } from '@/features/tour/tours/WebBuilderTour'
+import { cn } from '@/lib/utils'
 
-interface PageProps {
-    businessId: string
-    urlName: string
-    businessName: string
-    switchType: string
-    planType: 'STARTER' | 'GROWTH'
-    gatableData: GatableBusinessData
+const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
+
+const B = {
+    bg: '#FAF7F2',
+    white: '#FFFFFF',
+    border: '#E8E2D6',
+    primary: '#FC6161',
+    gold: '#C9974A',
+    dark: '#1A1818',
+    muted: '#6F6863',
+    black: '#0F0E0E',
+    cream: '#F0EBE3',
 }
 
 const DRAG_DROP_FEATURES = [
@@ -31,6 +36,15 @@ const SECTIONS_FEATURES = [
     'Drag to reorder sections instantly',
 ]
 
+interface PageProps {
+    businessId: string
+    urlName: string
+    businessName: string
+    switchType: string
+    planType: 'STARTER' | 'GROWTH'
+    gatableData: GatableBusinessData
+}
+
 const SelectEditorType = ({ businessId, urlName, businessName, switchType, planType, gatableData }: PageProps) => {
     const [creatingSections, setCreatingSections] = useState(false)
     const [creatingEditor, setCreatingEditor] = useState(false)
@@ -39,7 +53,9 @@ const SelectEditorType = ({ businessId, urlName, businessName, switchType, planT
     const anyLoading = creatingSections || creatingEditor
 
     return (
-        <div className="max-w-3xl mx-auto px-6 py-16">
+        <div style={{ minHeight: '100vh', backgroundColor: B.bg }} className="px-4 py-12 sm:py-16">
+            <WebBuilderTour />
+
             <Dialog open={showPlanGate} onOpenChange={setShowPlanGate}>
                 <DialogContent className="max-w-sm">
                     <PlanGateCard
@@ -50,147 +66,171 @@ const SelectEditorType = ({ businessId, urlName, businessName, switchType, planT
                 </DialogContent>
             </Dialog>
 
-            {/* Header */}
-            <div className="text-center mb-12">
-                <h1 className="text-2xl font-semibold tracking-tight mb-2">
-                    How would you like to build your booking page?
-                </h1>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    Choose the editor that fits your style. You can always switch later from your booking site settings.
-                </p>
-            </div>
+            <div className="max-w-2xl mx-auto">
+                {/* Header */}
+                <div data-tour="builder-type" className="text-center mb-10">
+                    <h1
+                        className="text-3xl font-medium mb-3"
+                        style={{ fontFamily: SERIF, color: B.dark }}
+                    >
+                        How would you like to build your booking page?
+                    </h1>
+                    <p className="text-sm leading-relaxed" style={{ color: B.muted }}>
+                        Choose the editor that fits your style. You can always switch later from your booking site settings.
+                    </p>
+                </div>
 
-            {/* Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Cards */}
+                <div data-tour="builder-templates" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                {/* Drag & Drop */}
-                <button
-                    disabled={anyLoading}
-                    onClick={async () => {
-                        if (planType === 'STARTER') {
-                            setShowPlanGate(true)
-                            return
-                        }
-                        setCreatingEditor(true)
-                        const res = await createEditorState(businessId, switchType)
-                        if (res instanceof PostgrestError) {
-                            setCreatingEditor(false)
-                            return
-                        }
-                        if (res) router.push(`/${urlName}/edit`)
-                    }}
-                    className={cn(
-                        'relative flex flex-col text-left rounded-xl border bg-card p-7 gap-5 transition-all duration-200',
-                        'hover:border-primary hover:shadow-md',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                        creatingEditor && 'opacity-60 pointer-events-none',
-                        anyLoading && !creatingEditor && 'opacity-40 pointer-events-none'
-                    )}
-                >
-                    <div className="absolute top-5 right-5">
-                        <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border border-primary/20 text-xs font-medium px-2 py-0.5">
+                    {/* Drag & Drop — recommended */}
+                    <button
+                        disabled={anyLoading}
+                        onClick={async () => {
+                            if (planType === 'STARTER') {
+                                setShowPlanGate(true)
+                                return
+                            }
+                            setCreatingEditor(true)
+                            const res = await createEditorState(businessId, switchType)
+                            if (res instanceof PostgrestError) {
+                                setCreatingEditor(false)
+                                return
+                            }
+                            if (res) router.push(`/${urlName}/edit`)
+                        }}
+                        className={cn(
+                            'relative flex flex-col text-left rounded-2xl p-6 gap-5 transition-all duration-200',
+                            creatingEditor && 'opacity-60 pointer-events-none',
+                            anyLoading && !creatingEditor && 'opacity-40 pointer-events-none'
+                        )}
+                        style={{
+                            backgroundColor: B.white,
+                            border: `1.5px solid ${B.primary}`,
+                            boxShadow: '0 4px 24px -8px rgba(252,97,97,0.15)',
+                        }}
+                    >
+                        {/* Recommended badge */}
+                        <div
+                            className="absolute top-4 right-4 text-[10px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full"
+                            style={{ backgroundColor: 'rgba(252,97,97,0.1)', color: B.primary }}
+                        >
                             Recommended
-                        </Badge>
-                    </div>
+                        </div>
 
-                    <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <PencilRuler className="size-5 text-primary" />
-                    </div>
+                        <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center"
+                            style={{ backgroundColor: 'rgba(252,97,97,0.1)' }}
+                        >
+                            <PencilRuler size={18} style={{ color: B.primary }} />
+                        </div>
 
-                    <div className="flex flex-col gap-1">
-                        <h2 className="text-base font-semibold">Drag &amp; Drop Editor</h2>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                            Best for a custom, professional look
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                            Build a fully custom page using a palette of pre-built components. Drag, drop, and style everything to match your brand.
-                        </p>
-                    </div>
+                        <div>
+                            <h2 className="text-base font-semibold mb-1" style={{ color: B.dark }}>
+                                Drag &amp; Drop Editor
+                            </h2>
+                            <p className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: B.muted }}>
+                                Best for a custom, professional look
+                            </p>
+                            <p className="text-sm leading-relaxed" style={{ color: B.muted }}>
+                                Build a fully custom page using a palette of pre-built components. Drag, drop, and style everything to match your brand.
+                            </p>
+                        </div>
 
-                    <ul className="flex flex-col gap-2.5 flex-1">
-                        {DRAG_DROP_FEATURES.map((f) => (
-                            <li key={f} className="flex items-start gap-2 text-sm">
-                                <Check className="size-4 text-primary mt-0.5 shrink-0" />
-                                <span>{f}</span>
-                            </li>
-                        ))}
-                    </ul>
+                        <ul className="flex flex-col gap-2 flex-1">
+                            {DRAG_DROP_FEATURES.map(f => (
+                                <li key={f} className="flex items-start gap-2 text-sm" style={{ color: B.dark }}>
+                                    <Check size={13} className="mt-0.5 shrink-0" style={{ color: B.primary }} />
+                                    {f}
+                                </li>
+                            ))}
+                        </ul>
 
-                    <div className="mt-auto pt-1">
-                        <div className="w-full inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium text-primary-foreground bg-primary transition-colors hover:bg-primary/90">
-                            {creatingEditor && <Loader2 className="size-4 animate-spin" />}
+                        <div
+                            className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold mt-auto"
+                            style={{ backgroundColor: B.primary, color: B.white }}
+                        >
+                            {creatingEditor && <Loader2 size={14} className="animate-spin" />}
                             {creatingEditor ? 'Setting up…' : 'Get started'}
                         </div>
-                    </div>
-                </button>
+                    </button>
 
-                {/* Section Editor */}
-                <button
-                    disabled={anyLoading}
-                    onClick={async () => {
-                        setCreatingSections(true)
-                        const res = await createSectionEditorState(businessName, businessId, switchType)
-                        if (res instanceof PostgrestError) {
-                            setCreatingSections(false)
-                            return
-                        }
-                        router.push(`/dashboard/booking-site/upload-sections`)
-                    }}
-                    className={cn(
-                        'relative flex flex-col text-left rounded-xl border bg-card p-7 gap-5 transition-all duration-200',
-                        'hover:border-foreground/30 hover:shadow-md',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                        creatingSections && 'opacity-60 pointer-events-none',
-                        anyLoading && !creatingSections && 'opacity-40 pointer-events-none'
-                    )}
-                >
-                    <div className="absolute top-5 right-5">
-                        <Badge variant="secondary" className="text-xs font-medium px-2 py-0.5">
+                    {/* Section Editor */}
+                    <button
+                        disabled={anyLoading}
+                        onClick={async () => {
+                            setCreatingSections(true)
+                            const res = await createSectionEditorState(businessName, businessId, switchType)
+                            if (res instanceof PostgrestError) {
+                                setCreatingSections(false)
+                                return
+                            }
+                            router.push(`/dashboard/booking-site/upload-sections`)
+                        }}
+                        className={cn(
+                            'relative flex flex-col text-left rounded-2xl p-6 gap-5 transition-all duration-200',
+                            creatingSections && 'opacity-60 pointer-events-none',
+                            anyLoading && !creatingSections && 'opacity-40 pointer-events-none'
+                        )}
+                        style={{
+                            backgroundColor: B.white,
+                            border: `1.5px solid ${B.border}`,
+                        }}
+                    >
+                        {/* Simpler badge */}
+                        <div
+                            className="absolute top-4 right-4 text-[10px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full"
+                            style={{ backgroundColor: B.cream, color: B.muted }}
+                        >
                             Simpler option
-                        </Badge>
-                    </div>
+                        </div>
 
-                    <div className="w-11 h-11 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <LayoutPanelTop className="size-5 text-muted-foreground" />
-                    </div>
+                        <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center"
+                            style={{ backgroundColor: B.cream }}
+                        >
+                            <LayoutPanelTop size={18} style={{ color: B.muted }} />
+                        </div>
 
-                    <div className="flex flex-col gap-1">
-                        <h2 className="text-base font-semibold">Section Editor</h2>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                            Best for getting up and running fast
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                            Stack text and image blocks in a clean, structured layout. Familiar if you&apos;ve used tools like Acuity or similar booking platforms.
-                        </p>
-                    </div>
+                        <div>
+                            <h2 className="text-base font-semibold mb-1" style={{ color: B.dark }}>
+                                Section Editor
+                            </h2>
+                            <p className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: B.muted }}>
+                                Best for getting up and running fast
+                            </p>
+                            <p className="text-sm leading-relaxed" style={{ color: B.muted }}>
+                                Stack text and image blocks in a clean, structured layout. Familiar if you&apos;ve used tools like Acuity or similar platforms.
+                            </p>
+                        </div>
 
-                    <ul className="flex flex-col gap-2.5 flex-1">
-                        {SECTIONS_FEATURES.map((f) => (
-                            <li key={f} className="flex items-start gap-2 text-sm">
-                                <Check className="size-4 text-muted-foreground mt-0.5 shrink-0" />
-                                <span>{f}</span>
-                            </li>
-                        ))}
-                    </ul>
+                        <ul className="flex flex-col gap-2 flex-1">
+                            {SECTIONS_FEATURES.map(f => (
+                                <li key={f} className="flex items-start gap-2 text-sm" style={{ color: B.dark }}>
+                                    <Check size={13} className="mt-0.5 shrink-0" style={{ color: B.muted }} />
+                                    {f}
+                                </li>
+                            ))}
+                        </ul>
 
-                    <div className="mt-auto pt-1">
-                        <div className="w-full inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium bg-background transition-colors hover:bg-accent">
-                            {creatingSections && <Loader2 className="size-4 animate-spin" />}
+                        <div
+                            className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold mt-auto border"
+                            style={{ backgroundColor: B.bg, borderColor: B.border, color: B.dark }}
+                        >
+                            {creatingSections && <Loader2 size={14} className="animate-spin" />}
                             {creatingSections ? 'Setting up…' : 'Get started'}
                         </div>
-                    </div>
-                </button>
+                    </button>
 
+                </div>
+
+                <p className="text-center text-xs mt-6" style={{ color: B.muted }}>
+                    Not sure?{' '}
+                    <span style={{ color: B.dark, fontWeight: 500 }}>Section Editor</span> is the quickest way to get live — you can always switch to Drag &amp; Drop later.
+                </p>
             </div>
-
-            {/* Footer nudge */}
-            <p className="text-center text-xs text-muted-foreground mt-8">
-                Not sure where to start?{' '}
-                <strong className="font-medium text-foreground">Section Editor</strong> is the quickest way to get your page live — you can always upgrade to Drag &amp; Drop later.
-            </p>
-
         </div>
     )
 }
 
-export default SelectEditorType;
+export default SelectEditorType

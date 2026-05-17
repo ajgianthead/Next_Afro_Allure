@@ -10,7 +10,6 @@ import { Check, Loader2 } from "lucide-react";
 import { useBooking } from "../hooks/useBookingData";
 import { useParams, useRouter } from "next/navigation";
 
-const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 function BookingCheckbox({
     id, checked, onChange, children,
@@ -116,7 +115,7 @@ export const CheckoutForm = ({
                 }}
             >
                 <div>
-                    <h3 className="text-lg font-semibold" style={{ color: 'var(--t-text)', fontFamily: SERIF }}>Appointment Summary</h3>
+                    <h3 className="text-lg font-semibold" style={{ color: 'var(--t-text)', fontFamily: 'var(--t-font)' }}>Appointment Summary</h3>
                     <p className="text-sm mt-0.5" style={{ color: 'var(--t-muted)' }}>This amount is the deposit needed to confirm your appointment</p>
                 </div>
 
@@ -165,7 +164,7 @@ export const CheckoutForm = ({
 
                 <div className="flex items-center justify-between">
                     <p className="text-sm" style={{ color: 'var(--t-muted)' }}>Due now</p>
-                    <p className="text-xl font-bold" style={{ color: 'var(--t-primary)', fontFamily: SERIF }}>
+                    <p className="text-xl font-bold" style={{ color: 'var(--t-primary)', fontFamily: 'var(--t-font)' }}>
                         ${dueNow}
                     </p>
                 </div>

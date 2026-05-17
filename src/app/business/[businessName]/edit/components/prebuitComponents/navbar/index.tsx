@@ -14,7 +14,7 @@ import { navbarProps } from "../../defaultStyles";
 export const NavbarComponent: any = {
     fields: navbarFields,
     defaultProps: navbarProps,
-    render: ({ content: Navbar, logo: Logo, menu, puck }: any) => {
+    render: ({ logo: Logo, menu, puck }: any) => {
         const [open, setOpen] = useState<boolean>(false)
         const ref = useRef<HTMLDivElement>(null);
 

@@ -3,6 +3,8 @@ import { GridLayout } from "../types"
 import { NumInput, StrSelect } from "../fieldPrimitives"
 import { ColumnsIcon, ColumnSpacingIcon, RowsIcon, RowSpacingIcon } from "@radix-ui/react-icons"
 
+const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
+
 export const resolvedGridData = async ({ props }: any) => {
     const { numberOfRows = 1, numberOfColumns = 1, cells = [] } = props;
     const totalCells = numberOfRows * numberOfColumns;
@@ -27,9 +29,9 @@ export const gridLayoutFields: Fields<GridLayout, {}> = {
         type: 'custom',
         label: 'Mobile columns',
         render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                <NumInput value={value ?? 1} onChange={onChange} className="col-span-2" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                <NumInput value={value ?? 1} onChange={onChange} className="flex-1" />
             </div>
         )
     },
@@ -37,9 +39,9 @@ export const gridLayoutFields: Fields<GridLayout, {}> = {
         label: 'Row Alignment',
         type: 'custom',
         render: ({ field, onChange, value }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                <StrSelect value={value} onChange={onChange} options={['start', 'end', 'center', 'stretch']} className="col-span-2 col-start-3" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                <StrSelect value={value} onChange={onChange} options={['start', 'end', 'center', 'stretch']} className="flex-1" />
             </div>
         )
     },
@@ -47,59 +49,43 @@ export const gridLayoutFields: Fields<GridLayout, {}> = {
         label: 'Column Alignment',
         type: 'custom',
         render: ({ field, onChange, value }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                <StrSelect value={value} onChange={onChange} options={['start', 'end', 'center', 'stretch']} className="col-span-2 col-start-3" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                <StrSelect value={value} onChange={onChange} options={['start', 'end', 'center', 'stretch']} className="flex-1" />
             </div>
         )
     },
     numberOfColumns: {
         type: 'custom',
         label: 'Columns',
-        render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                <NumInput value={value} onChange={onChange} icon={<ColumnsIcon />} />
-            </div>
+        render: ({ value, onChange }) => (
+            <NumInput value={value} onChange={onChange} icon={<ColumnsIcon />} />
         )
     },
     gapX: {
         type: 'custom',
         label: 'Spacing X',
-        render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                <NumInput value={value} onChange={onChange} icon={<ColumnSpacingIcon />} />
-            </div>
-        )
+        render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<ColumnSpacingIcon />} />,
     },
     gapY: {
         type: 'custom',
         label: 'Spacing Y',
-        render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                <NumInput value={value} onChange={onChange} icon={<RowSpacingIcon />} />
-            </div>
-        )
+        render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<RowSpacingIcon />} />,
     },
     numberOfRows: {
         type: 'custom',
         label: 'Rows',
-        render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                <NumInput value={value} onChange={onChange} icon={<RowsIcon />} />
-            </div>
+        render: ({ value, onChange }) => (
+            <NumInput value={value} onChange={onChange} icon={<RowsIcon />} />
         )
     },
     firstCellRowSpan: {
         type: 'custom',
         label: 'Cell 1 Row Span',
         render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                <NumInput value={value} onChange={onChange} className="col-span-2" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                <NumInput value={value} onChange={onChange} className="flex-1" />
             </div>
         )
     },
@@ -107,9 +93,9 @@ export const gridLayoutFields: Fields<GridLayout, {}> = {
         type: 'custom',
         label: 'Cell 1 Col Span',
         render: ({ value, onChange, field }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                <NumInput value={value} onChange={onChange} className="col-span-2" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                <NumInput value={value} onChange={onChange} className="flex-1" />
             </div>
         )
     },

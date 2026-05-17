@@ -1,9 +1,13 @@
 // AfroAllure — Main Landing Page
 // Editorial, warm, confident. Lead with operational pain, identity second.
 'use client'
-import { useEffect } from "react";
+import './landingPage.css'
+import { useState, useEffect, useRef } from "react";
 import LOGO from '../../public/images/logo_transparent_background.png'
 import Image from "next/image";
+import { Menu, Loader2 } from "lucide-react";
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { joinClientWaitlist } from '@/app/waitlist/actions';
 
 
 
@@ -19,57 +23,8 @@ const SERIF = "'Fraunces', 'Times New Roman', serif";
 const SANS = "'Inter', system-ui, sans-serif";
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace";
 
-// ─────────────────────────────────────────────────────────────
-// RESPONSIVE CSS — injected once, scoped to .aa-landing-root
-// ─────────────────────────────────────────────────────────────
-const RESPONSIVE_CSS = `
-    .aa-landing-root, .aa-landing-root * { box-sizing: border-box; }
 
-    @media (max-width: 1024px) {
-      .aa-landing-root .aa-section { padding-left: 36px !important; padding-right: 36px !important; }
-      .aa-landing-root .aa-nav { padding-left: 36px !important; padding-right: 36px !important; }
-      .aa-landing-root .aa-features-grid { grid-template-columns: repeat(2, 1fr) !important; }
-      .aa-landing-root .aa-features-cell:nth-child(2n) { border-right: none !important; }
-      .aa-landing-root .aa-features-cell:nth-child(odd) { border-right: 1px solid #E8E2D6 !important; }
-      .aa-landing-root .aa-features-cell:nth-child(-n+4) { border-bottom: 1px solid #E8E2D6 !important; }
-      .aa-landing-root .aa-marketplace-grid { grid-template-columns: 1fr !important; gap: 56px !important; }
-      .aa-landing-root .aa-problem-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-      .aa-landing-root .aa-dashboard { grid-template-columns: 1fr 1fr !important; }
-      .aa-landing-root .aa-dashboard-earnings { grid-column: span 2 !important; }
-      .aa-landing-root .aa-footer-grid { grid-template-columns: 1.4fr 1fr 1fr !important; }
-    }
 
-    @media (max-width: 720px) {
-      .aa-landing-root .aa-section { padding-left: 22px !important; padding-right: 22px !important; padding-top: 72px !important; padding-bottom: 72px !important; }
-      .aa-landing-root .aa-nav { padding: 16px 22px !important; flex-wrap: wrap !important; gap: 12px !important; }
-      .aa-landing-root .aa-nav-links { display: none !important; }
-      .aa-landing-root .aa-hero { padding: 48px 22px 64px !important; }
-      .aa-landing-root .aa-hero-stats { gap: 18px !important; flex-direction: column !important; align-items: flex-start !important; }
-      .aa-landing-root .aa-hero-cta { flex-direction: column !important; align-items: stretch !important; }
-      .aa-landing-root .aa-hero-cta button { width: 100% !important; }
-      .aa-landing-root .aa-features-grid { grid-template-columns: 1fr !important; }
-      .aa-landing-root .aa-features-cell { border-right: none !important; border-bottom: 1px solid #E8E2D6 !important; }
-      .aa-landing-root .aa-features-cell:last-child { border-bottom: none !important; }
-      .aa-landing-root .aa-marketplace-mock { grid-template-columns: 1fr !important; gap: 16px !important; padding: 16px !important; }
-      .aa-landing-root .aa-marketplace-coming { right: 8px !important; top: -14px !important; }
-      .aa-landing-root .aa-dashboard { grid-template-columns: 1fr !important; padding: 16px !important; gap: 14px !important; }
-      .aa-landing-root .aa-dashboard-earnings { grid-column: span 1 !important; }
-      .aa-landing-root .aa-cta-form { flex-direction: column !important; border-radius: 18px !important; padding: 8px !important; gap: 6px !important; }
-      .aa-landing-root .aa-cta-form input { padding: 10px 14px !important; }
-      .aa-landing-root .aa-cta-form button { width: 100% !important; }
-      .aa-landing-root .aa-footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-      .aa-landing-root .aa-footer-bottom { flex-direction: column !important; gap: 8px !important; }
-      .aa-landing-root .aa-features-header { flex-direction: column !important; align-items: flex-start !important; }
-    }
-  `;
-
-function injectCss(id: any, css: any) {
-    if (typeof document === 'undefined' || document.getElementById(id)) return;
-    const el = document.createElement('style');
-    el.id = id;
-    el.textContent = css;
-    document.head.appendChild(el);
-}
 
 
 // ─────────────────────────────────────────────────────────────
@@ -144,6 +99,56 @@ const Placeholder = ({ label, h = 200, tone = 'warm', radius = 16, style = {} }:
 };
 
 // ─────────────────────────────────────────────────────────────
+// MOBILE NAV
+// ─────────────────────────────────────────────────────────────
+function MobileNav() {
+    const [open, setOpen] = useState(false)
+    const ref = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!open) return
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [open])
+
+    return (
+        <div ref={ref} className="aa-mobile-nav" style={{
+            position: 'sticky', top: 0, zIndex: 100,
+            backgroundColor: WARM, borderBottom: `1px solid ${LINE}`,
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 22px' }}>
+                <Image src={LOGO} alt="AfroAllure" width={130} />
+                <button onClick={() => setOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: INK, display: 'flex' }}>
+                    <Menu size={24} />
+                </button>
+            </div>
+            {open && (
+                <div style={{ background: '#fff', borderBottom: `1px solid ${LINE}` }}>
+                    {[{ label: 'Marketplace', href: '#marketplace' }, { label: 'For Businesses', href: '/for-businesses' }].map(({ label, href }) => (
+                        <a key={label} href={href} onClick={() => setOpen(false)} style={{
+                            display: 'block', padding: '16px 24px',
+                            fontFamily: SANS, fontSize: 15, color: INK,
+                            borderBottom: `1px solid ${LINE}`, textDecoration: 'none',
+                        }}>{label}</a>
+                    ))}
+                    <div style={{ padding: '16px 24px' }}>
+                        <a href="/register" onClick={() => setOpen(false)} style={{
+                            display: 'block', textAlign: 'center',
+                            background: RED, color: '#fff',
+                            fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                            padding: '14px', borderRadius: 999, textDecoration: 'none',
+                        }}>Join Beta — Free</a>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+// ─────────────────────────────────────────────────────────────
 // NAV
 // ─────────────────────────────────────────────────────────────
 function Nav({ dark = false }) {
@@ -179,7 +184,7 @@ function Nav({ dark = false }) {
 // ─────────────────────────────────────────────────────────────
 // HERO
 // ─────────────────────────────────────────────────────────────
-function Hero() {
+function Hero({ openWaitlist }: { openWaitlist: () => void }) {
     return (
         <section className="aa-hero aa-section" style={{ padding: '80px 56px 96px', background: WARM, position: 'relative' }}>
             <div style={{ maxWidth: 1240, margin: '0 auto' }}>
@@ -190,7 +195,7 @@ function Hero() {
                     color: MUTED, marginBottom: 28,
                 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED }} />
-                    Now in beta · invitation open
+                    For clients · for stylists · one platform
                 </div>
 
                 {/* Headline */}
@@ -200,8 +205,8 @@ function Hero() {
                     letterSpacing: '-.035em', margin: 0, color: INK,
                     maxWidth: 1100, textWrap: 'balance',
                 }}>
-                    The platform Black<br />
-                    beauty was <em style={{ fontStyle: 'italic', color: RED }}>waiting for.</em>
+                    Find your stylist.<br />
+                    <em style={{ fontStyle: 'italic', color: RED }}>Get discovered.</em>
                 </h1>
 
                 {/* Subheadline */}
@@ -209,15 +214,33 @@ function Hero() {
                     fontFamily: SANS, fontSize: 19, lineHeight: 1.5, color: '#3A3532',
                     margin: '32px 0 40px', maxWidth: 600, fontWeight: 400,
                 }}>
-                    Stop managing your business from your DMs. AfroAllure gives Black stylists,
-                    barbers, and beauty pros a complete booking and business system —
-                    built for how you actually work.
+                    AfroAllure is building the first marketplace dedicated to Black beauty professionals.
+                    Clients find the right stylist. Stylists get the visibility they deserve.
+                    Be part of it from the beginning.
                 </p>
 
                 {/* CTAs */}
                 <div className="aa-hero-cta" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 36 }}>
-                    <Btn primary>Claim Your Spot</Btn>
-                    <Btn outline onLight>See How It Works</Btn>
+                    <a href="/register" style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                        padding: '14px 22px', borderRadius: 999, border: '1.5px solid transparent',
+                        cursor: 'pointer', textDecoration: 'none', whiteSpace: 'nowrap',
+                        background: RED, color: '#fff',
+                    }}>
+                        I&apos;m a Stylist — Join Free
+                        <Icon d={ICONS.arrow} size={16} stroke={2} />
+                    </a>
+                    <button onClick={openWaitlist} style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                        padding: '14px 22px', borderRadius: 999,
+                        border: `1.5px solid ${INK}`,
+                        cursor: 'pointer', background: 'transparent', color: INK,
+                    }}>
+                        I&apos;m Looking for a Stylist — Get Notified
+                        <Icon d={ICONS.arrow} size={16} stroke={2} />
+                    </button>
                 </div>
 
                 {/* Stats row */}
@@ -226,9 +249,9 @@ function Hero() {
                     borderTop: `1px solid ${LINE}`, maxWidth: 720, marginBottom: 80,
                 }}>
                     {[
-                        ['100%', 'Free during beta'],
+                        ['250', 'Founding stylist spots'],
                         ['$0', 'Setup fees'],
-                        ['1', 'Platform for all of it'],
+                        ['2', 'Communities we serve'],
                     ].map(([n, l], i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                             <span style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 500, color: INK, letterSpacing: '-.02em' }}>{n}</span>
@@ -577,7 +600,7 @@ function Features() {
 // ─────────────────────────────────────────────────────────────
 // MARKETPLACE — search-result list with filters
 // ─────────────────────────────────────────────────────────────
-function Marketplace() {
+function Marketplace({ openWaitlist }: { openWaitlist: () => void }) {
     return (
         <section className="aa-section" style={{ background: '#fff', padding: '120px 56px' }}>
             <div className="aa-marketplace-grid" style={{
@@ -610,18 +633,37 @@ function Marketplace() {
                         marginTop: 28, fontWeight: 400, maxWidth: 500,
                     }}>
                         <p style={{ margin: '0 0 18px' }}>
-                            We're building the first discovery marketplace designed around Black
-                            beauty professionals. Real specialty filters — locs, color, silk press,
-                            tape-ins. Real distance from real clients in real towns.
+                            Stop settling for whoever shows up on StyleSeat. AfroAllure is building a directory of
+                            Black beauty professionals with real specialty filters — locs, knotless, silk press,
+                            color, barbering. Find exactly who you&apos;re looking for, exactly where you are.
                         </p>
                         <p style={{ margin: 0 }}>
-                            Beta members become <strong style={{ color: INK }}>founding members</strong>.
-                            When the marketplace opens, your profile is already there — and listed first.
+                            When the marketplace launches, founding members are listed first. Join free during beta
+                            and claim your spot before anyone else.
                         </p>
                     </div>
 
-                    <div style={{ marginTop: 36 }}>
-                        <Btn primary>Join Now — Get Listed First</Btn>
+                    <div style={{ marginTop: 36, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                        <a href="/register" style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                            padding: '14px 22px', borderRadius: 999, border: '1.5px solid transparent',
+                            cursor: 'pointer', textDecoration: 'none',
+                            background: RED, color: '#fff',
+                        }}>
+                            I&apos;m a Stylist — Claim My Spot
+                            <Icon d={ICONS.arrow} size={16} stroke={2} />
+                        </a>
+                        <button onClick={openWaitlist} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                            padding: '14px 22px', borderRadius: 999,
+                            border: `1.5px solid ${INK}`,
+                            cursor: 'pointer', background: 'transparent', color: INK,
+                        }}>
+                            Notify Me When It Launches
+                            <Icon d={ICONS.arrow} size={16} stroke={2} />
+                        </button>
                     </div>
 
                     <div style={{
@@ -922,19 +964,149 @@ function Footer() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// WAITLIST FORM
+// ─────────────────────────────────────────────────────────────
+function WaitlistForm({ onClose }: { onClose: () => void }) {
+    const [email, setEmail] = useState('')
+    const [city, setCity] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [result, setResult] = useState<'idle' | 'success' | 'duplicate' | 'error'>('idle')
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!email || loading) return
+        setLoading(true)
+        try {
+            const res = await joinClientWaitlist(email, city || undefined)
+            setResult(res.duplicate ? 'duplicate' : 'success')
+        } catch {
+            setResult('error')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div style={{ padding: '8px 0' }}>
+            <div style={{
+                fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
+                color: RED, marginBottom: 16, fontWeight: 700,
+            }}>Client Waitlist</div>
+            <h3 style={{
+                fontFamily: SERIF, fontWeight: 400, fontSize: 26, lineHeight: 1.1,
+                letterSpacing: '-.02em', margin: '0 0 10px', color: INK,
+            }}>
+                Be first to find Black beauty professionals near you
+            </h3>
+            <p style={{ fontFamily: SANS, fontSize: 14, lineHeight: 1.6, color: MUTED, margin: '0 0 24px' }}>
+                We'll notify you when the AfroAllure marketplace launches in your area.
+            </p>
+
+            {result === 'success' ? (
+                <div style={{
+                    background: 'rgba(201,151,74,.1)', border: `1px solid ${GOLD}`,
+                    borderRadius: 12, padding: '18px 20px',
+                    fontFamily: SANS, fontSize: 14, color: INK,
+                }}>
+                    You&apos;re on the list! We&apos;ll reach out when AfroAllure launches in your area.
+                </div>
+            ) : result === 'duplicate' ? (
+                <div style={{
+                    background: 'rgba(201,151,74,.1)', border: `1px solid ${GOLD}`,
+                    borderRadius: 12, padding: '18px 20px',
+                    fontFamily: SANS, fontSize: 14, color: INK,
+                }}>
+                    You&apos;re already on the list — we&apos;ll let you know when we launch near you.
+                </div>
+            ) : (
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <input
+                        type="email" required
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        style={{
+                            width: '100%', padding: '12px 16px',
+                            border: `1px solid ${LINE}`, borderRadius: 10,
+                            fontFamily: SANS, fontSize: 14, color: INK,
+                            background: '#fff', outline: 'none',
+                        }}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Your city (optional)"
+                        value={city}
+                        onChange={e => setCity(e.target.value)}
+                        style={{
+                            width: '100%', padding: '12px 16px',
+                            border: `1px solid ${LINE}`, borderRadius: 10,
+                            fontFamily: SANS, fontSize: 14, color: INK,
+                            background: '#fff', outline: 'none',
+                        }}
+                    />
+                    {result === 'error' && (
+                        <p style={{ fontFamily: SANS, fontSize: 13, color: RED, margin: 0 }}>
+                            Something went wrong. Please try again.
+                        </p>
+                    )}
+                    <button type="submit" disabled={loading} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        background: RED, color: '#fff', border: 'none',
+                        padding: '14px', borderRadius: 10, cursor: loading ? 'not-allowed' : 'pointer',
+                        fontFamily: SANS, fontWeight: 600, fontSize: 15, opacity: loading ? 0.7 : 1,
+                    }}>
+                        {loading && <Loader2 size={16} className="animate-spin" />}
+                        Notify Me
+                    </button>
+                </form>
+            )}
+        </div>
+    )
+}
+
+// ─────────────────────────────────────────────────────────────
 // PAGE EXPORT
 // ─────────────────────────────────────────────────────────────
-function AfroAllureLanding() {
-    useEffect(() => { injectCss('aa-landing-css', RESPONSIVE_CSS); }, []);
+function AfroAllureLanding({ waitlistCount = 0 }: { waitlistCount?: number }) {
+    const [waitlistOpen, setWaitlistOpen] = useState(false)
+    const openWaitlist = () => setWaitlistOpen(true)
+
+    useEffect(() => {
+        const cleanup = () => {
+            document.body.style.pointerEvents = ''
+            document.body.removeAttribute('data-scroll-locked')
+            document.body.removeAttribute('aria-hidden')
+            setWaitlistOpen(false)
+        }
+        const handlePageShow = (e: PageTransitionEvent) => { if (e.persisted) window.location.reload() }
+        window.addEventListener('pageshow', handlePageShow)
+        cleanup()
+        return () => window.removeEventListener('pageshow', handlePageShow)
+    }, [])
+
     return (
         <div className="aa-landing-root" style={{ background: WARM, color: INK, fontFamily: SANS, width: '100%' }}>
-            <Nav />
-            <Hero />
+            <MobileNav />
+            <div className="aa-desktop-nav"><Nav /></div>
+            <Hero openWaitlist={openWaitlist} />
             <Problem />
             <Features />
-            <Marketplace />
+            <Marketplace openWaitlist={openWaitlist} />
             <BetaCTA />
+            {waitlistCount > 0 && (
+                <div style={{ textAlign: 'center', padding: '32px', background: WARM }}>
+                    <span style={{ fontFamily: MONO, fontSize: 12, color: MUTED, letterSpacing: '.14em', textTransform: 'uppercase' }}>
+                        {waitlistCount.toLocaleString()} clients waiting to find their stylist
+                    </span>
+                </div>
+            )}
             <Footer />
+
+            <Dialog open={waitlistOpen} onOpenChange={setWaitlistOpen}>
+                <DialogContent style={{ maxWidth: 440 }}>
+                    <WaitlistForm onClose={() => setWaitlistOpen(false)} />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

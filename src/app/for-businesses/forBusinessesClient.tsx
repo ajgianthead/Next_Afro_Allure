@@ -1,10 +1,11 @@
 // AfroAllure — For Businesses Page
 // Confident, detailed. Bento features, dark "why" section, premium pricing, gold founding section.
 'use client'
-
-import { useEffect } from "react";
+import './forBusinesses.css'
+import { useState, useEffect, useRef } from "react";
 import LOGO from '../../../public/images/logo_transparent_background.png'
 import Image from "next/image";
+import { Menu } from "lucide-react";
 
 
 const RED = '#FC6161';
@@ -20,57 +21,8 @@ const SERIF = "'Fraunces', 'Times New Roman', serif";
 const SANS = "'Inter', system-ui, sans-serif";
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace";
 
-// ─────────────────────────────────────────────────────────────
-// RESPONSIVE CSS — injected once, scoped to .aa-business-root
-// ─────────────────────────────────────────────────────────────
-const RESPONSIVE_CSS = `
-    .aa-business-root, .aa-business-root * { box-sizing: border-box; }
 
-    @media (max-width: 1024px) {
-      .aa-business-root .aa-section { padding-left: 36px !important; padding-right: 36px !important; }
-      .aa-business-root .aa-nav { padding-left: 36px !important; padding-right: 36px !important; }
-      .aa-business-root .aa-hero-inner { padding-left: 36px !important; padding-right: 36px !important; }
-      .aa-business-root .aa-bento { grid-template-columns: repeat(2, 1fr) !important; }
-      .aa-business-root .aa-bento > * { grid-column: span 2 !important; grid-row: auto !important; }
-      .aa-business-root .aa-why-row { grid-template-columns: 80px 1fr !important; }
-      .aa-business-root .aa-why-desc { grid-column: 1 / -1 !important; padding-top: 8px !important; }
-      .aa-business-root .aa-pricing-grid { grid-template-columns: 1fr !important; }
-      .aa-business-root .aa-founding-grid { grid-template-columns: 1fr !important; gap: 36px !important; }
-      .aa-business-root .aa-founding-card { padding: 56px 40px !important; }
-      .aa-business-root .aa-footer-grid { grid-template-columns: 1.4fr 1fr 1fr !important; }
-    }
 
-    @media (max-width: 720px) {
-      .aa-business-root .aa-section { padding-left: 22px !important; padding-right: 22px !important; padding-top: 72px !important; padding-bottom: 72px !important; }
-      .aa-business-root .aa-nav { padding: 16px 22px !important; flex-wrap: wrap !important; gap: 12px !important; }
-      .aa-business-root .aa-nav-links { display: none !important; }
-      .aa-business-root .aa-hero-inner { padding: 48px 22px 80px !important; }
-      .aa-business-root .aa-hero-cta { flex-direction: column !important; align-items: stretch !important; }
-      .aa-business-root .aa-hero-cta button { width: 100% !important; }
-      .aa-business-root .aa-hero-cta .aa-rating { margin-left: 0 !important; margin-top: 6px !important; }
-      .aa-business-root .aa-bento { grid-template-columns: 1fr !important; }
-      .aa-business-root .aa-bento > * { grid-column: span 1 !important; min-height: auto !important; }
-      .aa-business-root .aa-analytics { grid-template-columns: 1fr !important; }
-      .aa-business-root .aa-features-header { flex-direction: column !important; align-items: flex-start !important; }
-      .aa-business-root .aa-why-row { grid-template-columns: 1fr !important; gap: 12px !important; padding: 28px 0 !important; }
-      .aa-business-root .aa-why-desc { padding-top: 0 !important; }
-      .aa-business-root .aa-pricing-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-      .aa-business-root .aa-pricing-card { padding: 32px 24px !important; }
-      .aa-business-root .aa-founding-card { padding: 40px 24px !important; }
-      .aa-business-root .aa-founding-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-      .aa-business-root .aa-founding-cta { flex-direction: column !important; align-items: stretch !important; }
-      .aa-business-root .aa-footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-      .aa-business-root .aa-footer-bottom { flex-direction: column !important; gap: 8px !important; }
-    }
-  `;
-
-function injectCss(id: any, css: any) {
-    if (typeof document === 'undefined' || document.getElementById(id)) return;
-    const el = document.createElement('style');
-    el.id = id;
-    el.textContent = css;
-    document.head.appendChild(el);
-}
 
 
 const Icon = ({ d, size = 22, stroke = 1.6, fill = 'none' }: any) => (
@@ -91,10 +43,78 @@ const ICONS = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// MOBILE NAV
+// ─────────────────────────────────────────────────────────────
+function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
+    const [open, setOpen] = useState(false)
+    const ref = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!open) return
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [open])
+
+    return (
+        <div ref={ref} className="aa-mobile-nav" style={{
+            position: 'sticky', top: 0, zIndex: 100,
+            backgroundColor: DARK, borderBottom: '1px solid rgba(250,247,242,.08)',
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 22px' }}>
+                <Image src={LOGO} alt="AfroAllure" width={130} style={{ filter: 'brightness(0) invert(1)' }} />
+                <button onClick={() => setOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: WARM, display: 'flex' }}>
+                    <Menu size={24} />
+                </button>
+            </div>
+            {open && (
+                <div style={{ background: '#1A1818', borderBottom: '1px solid rgba(250,247,242,.08)' }}>
+                    {[{ label: 'Features', href: '#features' }, { label: 'Pricing', href: '#pricing' }].map(({ label, href }) => (
+                        <a key={label} href={href} onClick={() => setOpen(false)} style={{
+                            display: 'block', padding: '16px 24px',
+                            fontFamily: SANS, fontSize: 15, color: 'rgba(250,247,242,.85)',
+                            borderBottom: '1px solid rgba(250,247,242,.08)', textDecoration: 'none',
+                        }}>{label}</a>
+                    ))}
+                    {isLoggedIn ? (
+                        <div style={{ padding: '16px 24px' }}>
+                            <a href="/dashboard" onClick={() => setOpen(false)} style={{
+                                display: 'block', textAlign: 'center',
+                                background: 'rgba(250,247,242,.1)', color: WARM,
+                                border: '1.5px solid rgba(250,247,242,.2)',
+                                fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                                padding: '14px', borderRadius: 999, textDecoration: 'none',
+                            }}>Dashboard →</a>
+                        </div>
+                    ) : (
+                        <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <a href="/login" onClick={() => setOpen(false)} style={{
+                                display: 'block', textAlign: 'center',
+                                background: 'transparent', color: WARM,
+                                border: '1.5px solid rgba(250,247,242,.3)',
+                                fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                                padding: '13px', borderRadius: 999, textDecoration: 'none',
+                            }}>Login</a>
+                            <a href="/register" onClick={() => setOpen(false)} style={{
+                                display: 'block', textAlign: 'center',
+                                background: RED, color: '#fff',
+                                fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                                padding: '14px', borderRadius: 999, textDecoration: 'none',
+                            }}>Register</a>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    )
+}
+
+// ─────────────────────────────────────────────────────────────
 // NAV
 // ─────────────────────────────────────────────────────────────
-function Nav({ dark = false }) {
-    const fg = dark ? WARM : INK;
+function Nav({ dark = false, isLoggedIn = false }: { dark?: boolean; isLoggedIn?: boolean }) {
     const muted = dark ? 'rgba(250,247,242,.7)' : MUTED;
     return (
         <nav className="aa-nav" style={{
@@ -112,15 +132,34 @@ function Nav({ dark = false }) {
             </a>
             <div className="aa-nav-links" style={{ display: 'flex', gap: 36, fontFamily: SANS, fontSize: 14, color: muted, fontWeight: 500 }}>
                 <a href="#features">Features</a>
-                <a>Marketplace</a>
-                <a style={{ color: fg }} href="/for-businesses">For Businesses</a>
+                <a href="#pricing">Pricing</a>
             </div>
-            <a style={{
-                fontFamily: SANS, fontWeight: 600, fontSize: 13,
-                background: RED, color: '#fff', padding: '11px 18px', borderRadius: 999,
-            }}>
-                Join Beta — Free
-            </a>
+            {isLoggedIn ? (
+                <a href="/dashboard" style={{
+                    fontFamily: SANS, fontWeight: 600, fontSize: 13,
+                    color: WARM, border: `1.5px solid rgba(250,247,242,.5)`,
+                    padding: '9px 18px', borderRadius: 999, background: 'transparent', textDecoration: 'none',
+                }}>
+                    Dashboard →
+                </a>
+            ) : (
+                <div style={{ display: 'flex', gap: 10 }}>
+                    <a href="/login" style={{
+                        fontFamily: SANS, fontWeight: 600, fontSize: 13,
+                        color: WARM, border: `1.5px solid rgba(250,247,242,.5)`,
+                        padding: '9px 18px', borderRadius: 999, background: 'transparent', textDecoration: 'none',
+                    }}>
+                        Login
+                    </a>
+                    <a href="/register" style={{
+                        fontFamily: SANS, fontWeight: 600, fontSize: 13,
+                        color: '#fff', background: RED,
+                        padding: '11px 18px', borderRadius: 999, textDecoration: 'none',
+                    }}>
+                        Register
+                    </a>
+                </div>
+            )}
         </nav>
     );
 }
@@ -128,7 +167,7 @@ function Nav({ dark = false }) {
 // ─────────────────────────────────────────────────────────────
 // HERO — confident, direct, dark with hair-texture vibe
 // ─────────────────────────────────────────────────────────────
-function Hero() {
+function Hero({ isLoggedIn }: { isLoggedIn: boolean }) {
     return (
         <section style={{
             background: DARK, color: WARM, position: 'relative', overflow: 'hidden',
@@ -154,7 +193,7 @@ function Hero() {
                 ))}
             </svg>
 
-            <Nav dark />
+            <div className="aa-desktop-nav"><Nav dark isLoggedIn={isLoggedIn} /></div>
 
             <div className="aa-hero-inner" style={{
                 maxWidth: 1240, margin: '0 auto', padding: '88px 56px 120px',
@@ -188,23 +227,25 @@ function Hero() {
                 </p>
 
                 <div className="aa-hero-cta" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <button style={{
+                    <a href="/register" style={{
                         fontFamily: SANS, fontWeight: 600, fontSize: 15,
                         background: RED, color: '#fff', border: 'none',
                         padding: '15px 24px', borderRadius: 999, cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: 8,
+                        textDecoration: 'none',
                     }}>
                         Start Free — No Credit Card
                         <Icon d={ICONS.arrow} size={16} stroke={2} />
-                    </button>
-                    <button style={{
+                    </a>
+                    <a href="#pricing" style={{
                         fontFamily: SANS, fontWeight: 600, fontSize: 15,
                         background: 'transparent', color: WARM,
                         border: '1.5px solid rgba(250,247,242,.4)',
                         padding: '13.5px 22px', borderRadius: 999, cursor: 'pointer',
+                        textDecoration: 'none',
                     }}>
                         See Pricing
-                    </button>
+                    </a>
 
                     <span style={{
                         marginLeft: 12, fontFamily: SANS, fontSize: 13,
@@ -648,7 +689,7 @@ function Pricing() {
     ];
 
     return (
-        <section className="aa-section" style={{ background: WARM, padding: '120px 56px' }}>
+        <section id="pricing" className="aa-section" style={{ background: WARM, padding: '120px 56px' }}>
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
                 <div style={{ textAlign: 'center', marginBottom: 64 }}>
                     <div style={{
@@ -690,11 +731,12 @@ function Pricing() {
                             Free Forever · for trying things out
                         </div>
 
-                        <button style={{
+                        <a href="/register" style={{
                             marginTop: 28, fontFamily: SANS, fontWeight: 600, fontSize: 14,
                             background: WARM, color: INK, border: `1.5px solid ${INK}`,
                             padding: '14px 22px', borderRadius: 999, cursor: 'pointer',
-                        }}>Join for Free</button>
+                            display: 'inline-block', textDecoration: 'none', textAlign: 'center',
+                        }}>Join for Free</a>
 
                         <div style={{
                             fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
@@ -756,15 +798,16 @@ function Pricing() {
                             14-day free trial · no credit card required
                         </div>
 
-                        <button style={{
+                        <a href="/register" style={{
                             marginTop: 28, fontFamily: SANS, fontWeight: 600, fontSize: 14,
                             background: RED, color: '#fff', border: 'none',
                             padding: '14px 22px', borderRadius: 999, cursor: 'pointer',
                             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                            textDecoration: 'none',
                         }}>
                             Start 14-day Free Trial
                             <Icon d={ICONS.arrow} size={14} stroke={2} />
-                        </button>
+                        </a>
 
                         <div style={{
                             fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
@@ -859,15 +902,16 @@ function Founding() {
                         </div>
 
                         <div className="aa-founding-cta" style={{ marginTop: 36, display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-                            <button style={{
+                            <a href="/register" style={{
                                 fontFamily: SANS, fontWeight: 600, fontSize: 15,
                                 background: INK, color: WARM, border: 'none',
                                 padding: '15px 24px', borderRadius: 999, cursor: 'pointer',
                                 display: 'inline-flex', alignItems: 'center', gap: 8,
+                                textDecoration: 'none',
                             }}>
                                 Become a Founding Member
                                 <Icon d={ICONS.arrow} size={16} stroke={2} />
-                            </button>
+                            </a>
                             <span style={{
                                 fontFamily: MONO, fontSize: 11, letterSpacing: '.14em',
                                 textTransform: 'uppercase', color: MUTED,
@@ -953,15 +997,16 @@ function FinalCTA() {
                     Direct line to the team. No card required.
                 </p>
 
-                <button style={{
+                <a href="/register" style={{
                     fontFamily: SANS, fontWeight: 600, fontSize: 16,
                     background: RED, color: '#fff', border: 'none',
                     padding: '17px 30px', borderRadius: 999, cursor: 'pointer',
                     display: 'inline-flex', alignItems: 'center', gap: 10,
+                    textDecoration: 'none',
                 }}>
                     Start Booking with AfroAllure
                     <Icon d={ICONS.arrow} size={16} stroke={2} />
-                </button>
+                </a>
 
                 <div style={{
                     marginTop: 24, fontFamily: SANS, fontSize: 13,
@@ -1047,11 +1092,23 @@ function Footer() {
 // ─────────────────────────────────────────────────────────────
 // PAGE EXPORT
 // ─────────────────────────────────────────────────────────────
-function AfroAllureBusiness() {
-    useEffect(() => { injectCss('aa-business-css', RESPONSIVE_CSS); }, []);
+function AfroAllureBusiness({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
+    useEffect(() => {
+        const cleanup = () => {
+            document.body.style.pointerEvents = ''
+            document.body.removeAttribute('data-scroll-locked')
+            document.body.removeAttribute('aria-hidden')
+        }
+        const handlePageShow = (e: PageTransitionEvent) => { if (e.persisted) window.location.reload() }
+        window.addEventListener('pageshow', handlePageShow)
+        cleanup()
+        return () => window.removeEventListener('pageshow', handlePageShow)
+    }, [])
+
     return (
         <div className="aa-business-root" style={{ background: WARM, color: INK, fontFamily: SANS, width: '100%' }}>
-            <Hero />
+            <MobileNav isLoggedIn={isLoggedIn} />
+            <Hero isLoggedIn={isLoggedIn} />
             <Features />
             <WhyAfroAllure />
             <Pricing />

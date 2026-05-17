@@ -2,7 +2,6 @@
 
 import { stripe } from "@/lib/stripe/stripeClient"
 import { createClient } from "@/app/utils/supabase/server"
-import { buildTaxAddress, calculateTax } from "@/lib/stripe/calculateTax"
 
 export const createCheckoutAction = async (params: {
     connectedAccountId: string
@@ -29,24 +28,17 @@ export const createCheckoutAction = async (params: {
         .eq('stripe_acc_id', connectedAccountId)
         .maybeSingle()
 
-    const taxCalc = await calculateTax(
-        connectedAccountId,
-        price,
-        buildTaxAddress((data?.account_settings as any)?.business_address)
-    )
-
     const intent = await stripe.paymentIntents.create({
-        amount: taxCalc.amount_total,
+        amount: price,
         currency: 'usd',
         receipt_email: client_email,
         metadata: {
             appointment_id: appointmentID,
             purpose,
             type: appointmentType ?? '',
-            tax_calculation: taxCalc.id,
         },
         payment_method_configuration: data?.payment_method_config_id ?? undefined,
-        application_fee_amount: Math.round(0.03 * taxCalc.amount_total),
+        application_fee_amount: Math.round(0.03 * price),
     }, { stripeAccount: connectedAccountId })
 
     if (purpose === 'EOA') {
@@ -83,8 +75,6 @@ export const createAccountSessionAction = async (accountId: string) => {
         account: accountId,
         components: {
             account_management: { enabled: true, features: { external_account_collection: true } },
-            tax_settings: { enabled: true },
-            tax_registrations: { enabled: true },
             payments: {
                 enabled: true,
                 features: {
