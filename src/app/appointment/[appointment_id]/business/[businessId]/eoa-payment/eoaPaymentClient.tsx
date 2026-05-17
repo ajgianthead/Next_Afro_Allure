@@ -55,9 +55,13 @@ export default function EOAClient() {
             setStripePromise(stripePromise)
 
             const meta = appointment.client_metadata as any
+            const eoaAmount = (appointment.paid_deposit && !appointment.substraction)
+                ? appointment.amount_due - (appointment.deposit_price ?? 0)
+                : appointment.amount_due
+
             const { clientSecret } = await createCheckoutAction({
                 connectedAccountId: business.stripe_acc_id!,
-                price: appointment.amount_due,
+                price: eoaAmount,
                 purpose: 'EOA',
                 client_email: meta.email,
                 paymentIntent: appointment.service_charge_id ?? undefined,
