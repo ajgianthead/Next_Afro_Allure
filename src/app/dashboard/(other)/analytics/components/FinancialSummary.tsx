@@ -3,6 +3,7 @@
 import { FinancialSummary } from '../actions'
 import { fmt } from '../analytics-client'
 import { InfoTooltip } from './InfoTooltip'
+import { PLATFORM_FEE_PERCENT } from '@/lib/fees'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -53,7 +54,7 @@ export function FinancialSummarySection({ financial }: Props) {
                     tip="Sum of all deposit amounts collected at booking this year."
                 />
                 <StatRow
-                    label="Platform Fees (3%)"
+                    label={`Platform Fees (${PLATFORM_FEE_PERCENT * 100}%)`}
                     value={fmt(financial.total_platform_fees_this_year)}
                     highlight="muted"
                     tip="Estimated AfroAllure platform fee of 3% on gross earnings this year."
@@ -89,7 +90,7 @@ export function FinancialSummarySection({ financial }: Props) {
                     tip="Sum of all deposit amounts collected at booking across all time."
                 />
                 <StatRow
-                    label="Platform Fees (3%)"
+                    label={`Platform Fees (${PLATFORM_FEE_PERCENT * 100}%)`}
                     value={fmt(financial.total_platform_fees_all_time)}
                     highlight="muted"
                     tip="Estimated AfroAllure platform fee of 3% on all-time gross earnings."
