@@ -1,31 +1,28 @@
 'use client'
 
 
-import { ComponentConfig, SlotComponent } from "@puckeditor/core"
+import { ComponentConfig, Fields, SlotComponent } from "@puckeditor/core"
 import { resolveCardFields, defaultCardfields } from "./fields"
 import { Card } from "../../types"
 import { useRouter } from "next/navigation"
 import { useEditorContext } from "@/app/utils/context/EditorContext"
-import CryptoJS from "crypto-js";
 
 
 export const CardComponent: ComponentConfig<Card> = {
     resolveFields: resolveCardFields,
-    fields: defaultCardfields,
+    fields: defaultCardfields as Fields<Card, {}>,
     render: (({ cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service }) => {
         const router = useRouter()
         const { editorState } = useEditorContext()
         return (
-            <div onClick={() => {
+            <div className={`w-full${linkToService ? ' cursor-pointer' : ''}`} onClick={() => {
                 if (linkToService) {
-                    router.push(`/${editorState.businessName}/book?service=${CryptoJS.AES.encrypt(service, process.env.NEXT_PUBLIC_SECRET!).toString()}`)
+                    router.push(`/${editorState.businessName}/book?service=${service}`)
                 }
             }}>
                 {variant === 'basic' ? (
-                    <div className="min-w-[300px] flex-grow rounded-md border bg-card shadow-sm">
-                        <div className="p-4">
-                            <Content />
-                        </div>
+                    <div className="w-full">
+                        <Content />
                     </div>
                 ) : (
                     <div className="min-w-[300px] flex-grow rounded-md overflow-hidden relative">
@@ -68,82 +65,81 @@ export const CardComponent: ComponentConfig<Card> = {
         cardContent: [{
             type: 'Container',
             props: {
+                flexDirection: 'flex-col',
+                mainAxisLayout: 'start',
+                altAxisLayout: 'start',
                 gapX: 0,
-                gapY: 3,
-                draggable: true,
+                gapY: 2,
                 padding: 0,
-                borderRadiusExpanded: 'false',
-                borderRadiusTopLeft: 0,
-                borderRadiusTopRight: 0,
-                borderRadiusBottomLeft: 0,
-                borderRadiusBottomRight: 0,
-                paddingExpanded: "false",
-                marginExpanded: "false",
+                paddingExpanded: 'false',
+                marginExpanded: 'false',
+                margin: 0,
+                marginTop: 0,
                 marginBottom: 0,
                 marginLeft: 0,
                 marginRight: 0,
-                marginTop: 0,
-                margin: 0,
+                paddingTop: 0,
                 paddingBottom: 0,
                 paddingLeft: 0,
                 paddingRight: 0,
-                paddingTop: 0,
-                backgroundColor: '#f0000006b',
-                borderColor: '#eee',
-                borderRadius: 8,
+                backgroundColor: 'transparent',
+                borderColor: '#000000',
+                borderRadius: 0,
                 borderWidth: 0,
                 borderBottom: 0,
                 borderExpanded: 'false',
                 borderLeft: 0,
                 borderRight: 0,
                 borderTop: 0,
-                numOfCols: 3,
-                numOfRows: 3,
                 borderType: 'solid',
+                borderRadiusExpanded: 'false',
+                borderRadiusTopLeft: 0,
+                borderRadiusTopRight: 0,
+                borderRadiusBottomLeft: 0,
+                borderRadiusBottomRight: 0,
                 positionType: 'relative',
                 left: 0,
                 right: 0,
                 top: 0,
                 bottom: 0,
+                grow: true,
+                draggable: true,
                 responsive: true,
-                flexDirection: 'flex-col',
-                mainAxisLayout: 'start',
-                altAxisLayout: 'start',
                 content: [
                     {
-                        type: 'HeadingOne',
+                        type: 'HeadingTwo',
                         props: {
-                            color: '#fff',
+                            text: 'Service Name',
+                            color: '#1A1818',
                             fontFamily: 'Roboto',
-                            letterSpacing: 1.2,
-                            lineHeight: 1.5,
+                            letterSpacing: 0,
+                            lineHeight: 1.2,
                             align: 'start',
                             style: [],
-                            text: 'Heading'
-                        }
-                    },
-                    {
-                        type: 'TitleLarge',
-                        props: {
-                            color: '#fff',
-                            fontFamily: 'Roboto',
-                            letterSpacing: 1.2,
-                            lineHeight: 1.5,
-                            align: 'start',
-                            style: [],
-                            text: 'Title'
+                            isLink: false,
+                            linkType: 'external',
+                            url: '',
+                            sections: '',
+                            textTransform: 'none',
+                            size: 'md',
                         }
                     },
                     {
                         type: 'BodyMedium',
                         props: {
-                            color: '#fff',
+                            text: 'A short description of this service.',
+                            color: '#6F6863',
                             fontFamily: 'Roboto',
-                            letterSpacing: 1.2,
+                            letterSpacing: 0,
                             lineHeight: 1.5,
                             align: 'start',
                             style: [],
-                            text: 'Body'
+                            isLink: false,
+                            linkType: 'external',
+                            url: '',
+                            sections: '',
+                            textTransform: 'none',
+                            size: 'md',
                         }
                     },
                 ]

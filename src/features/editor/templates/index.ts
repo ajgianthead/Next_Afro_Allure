@@ -202,8 +202,22 @@ const img = (ov: Record<string, any> = {}) => ({
 
 // ─── Template data ─────────────────────────────────────────────────────────────
 
+const wrapInCard = (content: ReturnType<typeof box>, cardId: string) => ({
+    type: 'Card' as const,
+    props: {
+        id: cardId,
+        cardContent: [content],
+        variant: 'basic',
+        cardCover: 'image',
+        imageSource: PH_IMG,
+        videoSource: '',
+        linkToService: true,
+        service: '',
+    },
+})
+
 const serviceRow = (num: string, name: string, duration: string, price: string, id: string) =>
-    box({
+    wrapInCard(box({
         id: `mt-svc-${id}`,
         flexDirection: 'flex-row',
         mainAxisLayout: 'start',
@@ -240,7 +254,7 @@ const serviceRow = (num: string, name: string, duration: string, price: string, 
                 ],
             }),
         ],
-    })
+    }), `mt-card-${id}`)
 
 const reviewCard = (stars: string, quote: string, name: string, id: string) =>
     box({
@@ -876,7 +890,7 @@ const FH_DISPLAY = '"Anton", "Oswald", Impact, sans-serif'
 const FH_BODY = '"Inter", system-ui, sans-serif'
 
 const fhSvcRow = (num: string, name: string, price: string, id: string) =>
-    box({
+    wrapInCard(box({
         id: `fh-svc-${id}`,
         flexDirection: 'flex-row',
         mainAxisLayout: 'space-between',
@@ -895,7 +909,7 @@ const fhSvcRow = (num: string, name: string, price: string, id: string) =>
             box({ id: `fh-svc-${id}-nm`, grow: true, content: [ct(name, { id: `fh-svc-${id}-t`, fontFamily: FH_DISPLAY, fontSize: 2.25, lineHeight: 1, color: FH_FG })] }),
             ct(price, { id: `fh-svc-${id}-p`, fontFamily: FH_DISPLAY, fontSize: 2.25, lineHeight: 1, color: FH_FG }),
         ],
-    })
+    }), `fh-card-${id}`)
 
 const fadeHouseData: Data = {
     content: [
@@ -1239,7 +1253,7 @@ const AC_FONT = '"Manrope", "Inter", system-ui, sans-serif'
 const AC_FIELD = 'rgba(44,40,38,.05)'
 
 const acSvcCard = (name: string, duration: string, price: string, id: string) =>
-    box({
+    wrapInCard(box({
         id: `ac-svc-${id}`,
         flexDirection: 'flex-row',
         mainAxisLayout: 'space-between',
@@ -1261,7 +1275,7 @@ const acSvcCard = (name: string, duration: string, price: string, id: string) =>
                 ct('→', { id: `ac-svc-${id}-arr`, fontSize: 1.125, lineHeight: 1, color: AC_FG }),
             ] }),
         ],
-    })
+    }), `ac-card-${id}`)
 
 const atelierClairData: Data = {
     content: [
@@ -1554,7 +1568,7 @@ const RM_SERIF = '"Playfair Display", Georgia, serif'
 const RM_BODY = '"DM Sans", "Inter", system-ui, sans-serif'
 
 const rmSvcRow = (num: string, name: string, desc: string, price: string, id: string) =>
-    box({
+    wrapInCard(box({
         id: `rm-svc-${id}`,
         flexDirection: 'flex-row',
         mainAxisLayout: 'start',
@@ -1576,7 +1590,7 @@ const rmSvcRow = (num: string, name: string, desc: string, price: string, id: st
                 ct(desc, { id: `rm-svc-${id}-d`, fontSize: 0.75, color: 'rgba(244,217,212,.6)', lineHeight: 1, letterSpacing: 1 }),
             ] }),
         ],
-    })
+    }), `rm-card-${id}`)
 
 const rougeMaisonData: Data = {
     content: [
@@ -1865,7 +1879,7 @@ const CC_SERIF = '"DM Serif Display", Georgia, serif'
 const CC_BODY = '"Inter", system-ui, sans-serif'
 
 const ccSvcCard = (num: string, name: string, desc: string, price: string, bg: string, id: string) =>
-    box({
+    wrapInCard(box({
         id: `cc-svc-${id}`,
         flexDirection: 'flex-col',
         mainAxisLayout: 'space-between',
@@ -1889,7 +1903,7 @@ const ccSvcCard = (num: string, name: string, desc: string, price: string, bg: s
                 ct('→', { id: `cc-svc-${id}-arr`, fontFamily: CC_BODY, fontSize: 0.875, lineHeight: 1, color: CC_FG }),
             ] }),
         ],
-    })
+    }), `cc-card-${id}`)
 
 const coilCrownData: Data = {
     content: [
@@ -2142,7 +2156,7 @@ const QS_FIELD = 'rgba(23,23,23,.04)'
 const QS_FONT = '"Inter", system-ui, sans-serif'
 
 const qsSvcRow = (name: string, duration: string, price: string, id: string) =>
-    box({
+    wrapInCard(box({
         id: `qs-svc-${id}`,
         flexDirection: 'flex-row',
         mainAxisLayout: 'space-between',
@@ -2167,7 +2181,7 @@ const qsSvcRow = (name: string, duration: string, price: string, id: string) =>
                 btn('Book', { id: `qs-svc-${id}-btn`, backgroundColor: QS_ACCENT, color: '#ffffff', fontFamily: QS_FONT, borderRadius: 8, fontSize: 0.8125, fontWeight: 600, paddingExpanded: 'true', paddingTop: 0.5, paddingBottom: 0.5, paddingLeft: 0.875, paddingRight: 0.875 }),
             ] }),
         ],
-    })
+    }), `qs-card-${id}`)
 
 const quickstartData: Data = {
     content: [
