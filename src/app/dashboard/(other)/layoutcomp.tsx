@@ -33,8 +33,10 @@ import {
     IconCurrencyDollar,
     IconSettings,
     IconHelpCircle,
+    IconLogout,
     type Icon,
 } from '@tabler/icons-react'
+import { signOutAction } from '@/app/(auth)/actions'
 import { useState } from 'react'
 import { TourProvider } from '@/features/tour/TourProvider'
 import { HelpSheet } from '@/features/tour/HelpSheet'
@@ -182,6 +184,17 @@ export default function LayoutComp({ children, businessData }: { children: React
                                     >
                                         <IconHelpCircle size={16} />
                                         <span className="text-sm">Help & Tours</span>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        tooltip="Sign Out"
+                                        onClick={() => signOutAction()}
+                                        className="rounded-xl transition-colors"
+                                        style={{ color: '#6F6863' }}
+                                    >
+                                        <IconLogout size={16} />
+                                        <span className="text-sm">Sign Out</span>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             </SidebarMenu>
