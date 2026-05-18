@@ -1,123 +1,147 @@
-import { Button, Container, Font, Head, Heading, Hr, Html, Img, Link, Preview, Tailwind, Text } from "@react-email/components";
-import * as React from "react";
-import { DateTime } from "luxon";
+import * as React from 'react'
+import { Html, Head, Body, Container, Section, Row, Column, Text, Link, Preview } from '@react-email/components'
+import { DateTime } from 'luxon'
+import { EmailHeader } from './components/EmailHeader'
+import { EmailFooter } from './components/EmailFooter'
+import { AppointmentDetailBlock } from './components/AppointmentDetailBlock'
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co'
 
 export interface EmailTemplate {
     socials: {
-        instagram: string;
+        instagram: string
     }
-    serviceName: string;
+    serviceName: string
     clientData: {
-        firstName: string;
-        lastName: string;
+        firstName: string
+        lastName: string
     }
     businessData: {
-        id: string;
-        name: string;
-        businessAddress: string;
+        id: string
+        name: string
+        businessAddress: string
     }
     appointmentData: {
-        id: string;
-        start: string;
-        end: string;
+        id: string
+        start: string
+        end: string
     }
 }
 
-export default function ReminderClient({ socials, serviceName, clientData, businessData, appointmentData }: EmailTemplate) {
+export default function ReminderClient({ serviceName, clientData, businessData, appointmentData }: EmailTemplate) {
+    const date = DateTime.fromISO(appointmentData.start).toFormat('cccc, LLLL d, yyyy')
+    const time = DateTime.fromISO(appointmentData.start).toFormat('h:mm a')
+    const rescheduleUrl = `${BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/reschedule`
+    const cancelUrl = `${BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/cancel`
+
     return (
-        <Tailwind config={{
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Helvetica', 'sans-serif'],
+        <Html lang="en">
+            <Head />
+            <Preview>{`Reminder: your appointment with ${businessData.name} is ${date} at ${time}.`}</Preview>
+            <Body style={{ backgroundColor: '#FAF7F2', margin: 0, padding: '40px 0' }}>
+                <Container style={{ maxWidth: 600, margin: '0 auto' }}>
 
-                    },
-                },
-            },
-        }}>
-            <Html className="px-5 font-sans">
-                <Preview>{`You have an appointment with ${clientData.firstName}`}</Preview>
-                <table align="center" role="presentation" style={{ margin: '0 auto' }}>
-                    <tr>
-                        <td align="center">
-                            <Img src='https://res.cloudinary.com/dr5ztqpd3/image/upload/v1749588842/logo_transparent_background_single_lyghlm.png' alt="Logo" width="50" height="60" style={{
-                                display: 'block'
-                            }}
-                            />
-                        </td>
-                    </tr>
-                </table>
-                <Container className="font-sans w-full text-center">
-                    <Heading as="h2" className="text-center">‼️Appointment Reminder‼️</Heading>
-                    <Text>{`You have an appointment with ${businessData.name} on ${DateTime.fromISO(appointmentData.start).toFormat('LLLL dd, yyyy')} @ ${DateTime.fromISO(appointmentData.start).toLocaleString(DateTime.TIME_SIMPLE)}`}</Text>
-                </Container>
-                <Hr />
-                <Container className="font-sans">
-                    <ul>
-                        <li>{`📆 Date: ${DateTime.fromISO(appointmentData.start).toFormat('LLLL dd, yyyy')}`}</li>
-                        <li>{`⏰ Time: ${DateTime.fromISO(appointmentData.start).toLocaleString(DateTime.TIME_SIMPLE)}`}</li>
-                        <li>{`📍 Location: ${businessData.businessAddress}`}</li>
-                        <li>{`💇 Service(s): ${serviceName}`}</li>
-                    </ul>
-                </Container>
-                <Hr />
-                <Container className="font-sans mt-5">
-                    <Text>{`Please arrive on time to ensure the best possible experience. If you have any questions or need to make changes, follow the links below or contact ${businessData.name}`}</Text>
-                </Container>
-                <Container className="w-full">
-                    <Text>🔄 Need to Make Changes?</Text>
-                    <ul className="mt-0 list-none">
-                        <li><Link href={`${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/reschedule`}>Reschedule your appointment</Link></li>
-                        <li><Link href={`${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/cancel`}>Cancel your appointment</Link></li>
-                    </ul>
-                </Container>
-                <Container className=" flex flex-col">
-                    <Text className="">Stay connected with us!</Text>
-                    <Container className="flex flex-col">
-                        <ul className="list-none mt-0">
-                            <li><Link href={socials.instagram}>📸 Instagram</Link></li>
-                        </ul>
-                    </Container>
-                </Container>
-                <Container className="mt-5">
-                    <Text className="m-0">Warm regards,</Text>
-                    <Text className="m-0">The AfroAllure Team</Text>
-                </Container>
-                <Container className="text-center my-5 font-thin">
-                    <Container className="mt-5">
-                        <Text className="m-0">{`Copyright (C) ${new Date().getFullYear()} AfroAllure. All rights reserved.`}</Text>
-                    </Container>
-                    <Container className="mt-5">
-                        <Text className="m-0">Want to change how you receive these emails?</Text>
-                        <Text className="m-0">You can update your preferences or unsubscribe</Text>
-                    </Container>
-                </Container>
+                    <EmailHeader />
 
-            </Html>
-        </Tailwind>
+                    <Section style={{ backgroundColor: '#FFFFFF', borderRadius: '0 0 16px 16px' }}>
+                        <Row>
+                            <Column style={{ padding: '40px' }}>
 
-    );
+                                <Text
+                                    style={{
+                                        fontFamily: "Georgia, 'Times New Roman', serif",
+                                        fontSize: 32,
+                                        color: '#1A1818',
+                                        fontWeight: 'normal',
+                                        margin: '0 0 12px 0',
+                                        lineHeight: 1.2,
+                                    }}
+                                >
+                                    Your appointment is coming up.
+                                </Text>
+                                <Text
+                                    style={{
+                                        fontFamily: 'Arial, Helvetica, sans-serif',
+                                        fontSize: 15,
+                                        color: '#3A3532',
+                                        margin: '0 0 8px 0',
+                                        lineHeight: 1.6,
+                                    }}
+                                >
+                                    Hi {clientData.firstName}, just a reminder that you have an appointment with {businessData.name} coming up. We'll see you soon.
+                                </Text>
+
+                                <AppointmentDetailBlock
+                                    date={date}
+                                    time={time}
+                                    service={serviceName}
+                                    location={businessData.businessAddress}
+                                />
+
+                                <Row style={{ marginTop: 8 }}>
+                                    <Column style={{ textAlign: 'center' }}>
+                                        <Text
+                                            style={{
+                                                fontFamily: 'Arial, Helvetica, sans-serif',
+                                                fontSize: 11,
+                                                color: '#6F6863',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.1em',
+                                                margin: '0 0 14px 0',
+                                            }}
+                                        >
+                                            Need to make changes?
+                                        </Text>
+                                        <Link
+                                            href={rescheduleUrl}
+                                            style={{
+                                                fontFamily: 'Arial, Helvetica, sans-serif',
+                                                fontSize: 14,
+                                                color: '#1A1818',
+                                                textDecoration: 'underline',
+                                                marginRight: 24,
+                                            }}
+                                        >
+                                            Reschedule
+                                        </Link>
+                                        <Link
+                                            href={cancelUrl}
+                                            style={{
+                                                fontFamily: 'Arial, Helvetica, sans-serif',
+                                                fontSize: 14,
+                                                color: '#6F6863',
+                                                textDecoration: 'underline',
+                                            }}
+                                        >
+                                            Cancel
+                                        </Link>
+                                    </Column>
+                                </Row>
+
+                            </Column>
+                        </Row>
+                    </Section>
+
+                    <EmailFooter showUnsubscribe />
+
+                </Container>
+            </Body>
+        </Html>
+    )
 }
 
 ReminderClient.PreviewProps = {
-    socials: {
-        facebook: 'https://facebook.com',
-        instagram: 'https://instagram.com',
-        twitter: 'https://x.com'
-    },
-    serviceName: "Loc Retwist",
-    clientData: {
-        firstName: "Abijah",
-        lastName: "Nesbitt",
-    },
+    socials: { instagram: 'https://instagram.com/afroallure_' },
+    serviceName: 'Loc Retwist',
+    clientData: { firstName: 'Abijah', lastName: 'Nesbitt' },
     businessData: {
-        id: "a2c9f0d8-35b8-4eea-81ed-e1926ae2cf90",
-        name: "LadyPlutoLooks",
-        businessAddress: "2800 SW 35th Place, Apt 1508A, Gainesville, FL, 32608",
+        id: 'a2c9f0d8-35b8-4eea-81ed-e1926ae2cf90',
+        name: 'LadyPlutoLooks',
+        businessAddress: '2800 SW 35th Place, Gainesville, FL 32608',
     },
     appointmentData: {
-        id: "4561ec13-2406-4823-86fd-db3a188f7aa8",
-        start: "2025-06-11T03:37:37.400Z",
-        end: "2025-06-12T05:37:37.400Z",
+        id: '4561ec13-2406-4823-86fd-db3a188f7aa8',
+        start: '2025-09-18T15:00:00.000Z',
+        end: '2025-09-18T17:00:00.000Z',
     },
-}
+} satisfies EmailTemplate
