@@ -17,7 +17,6 @@ export interface AvailabilityType {
 }
 
 const defaultAvailability = {
-    id: crypto.randomUUID(),
     name: "Default",
     week: [{
         isChecked: true,
@@ -110,9 +109,11 @@ export class Availability {
     }
 
     static async createDefault(supabase: SupabaseClient<Database>, businessId: string) {
+        const id = crypto.randomUUID()
+        const availabilityData = { ...defaultAvailability, id }
         const { availability: row, error } = await supabase.from('availabilities').insert({
-            id: defaultAvailability.id,
-            availability_data: defaultAvailability as any,
+            id,
+            availability_data: availabilityData as any,
             business_id: businessId
         }).select().single().then(async (res) => {
             const { data: availability, error } = await supabase.from('business_users').update({
