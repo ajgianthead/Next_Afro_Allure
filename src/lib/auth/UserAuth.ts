@@ -7,21 +7,17 @@ export class UserAuth {
     ) { }
 
     static async register(supabase: SupabaseClient<Database>, email: string, password: string) {
-        try {
-            const { data: user, error } = await supabase.auth.signUp({
-                email: email,
-                password: password,
-                options: {
-                    data: {
-                        account_type: 'business'
-                    }
+        const { data: user, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    account_type: 'business'
                 }
-            })
-            if (error) throw Error(error.message)
-            return new UserAuth(user.user?.id!)
-        } catch (error) {
-
-        }
+            }
+        })
+        if (error) throw Error(error.message)
+        return new UserAuth(user.user?.id!)
     }
     static async login(supabase: SupabaseClient<Database>, email: string, password: string) {
         try {

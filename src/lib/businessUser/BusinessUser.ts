@@ -184,9 +184,8 @@ export class BusinessUser {
             return BusinessUser.fromRow(business)
 
         } catch (error: any) {
-            throw Error(error)
+            throw Error(error.message ?? error)
         }
-
 
     }
     static async fetch(supabase: SupabaseClient<Database>, businessId: string) {
