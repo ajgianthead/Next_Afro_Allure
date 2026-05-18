@@ -23,6 +23,21 @@ export const updateNotificationState = async (notiId: string) => {
     return updatedNoti
 }
 
+export const markAllAsRead = async () => {
+    const supabase = await createClient<Database>()
+    const user = await fetchUser()
+    if (!user) throw new Error('Unauthorized')
+    const business = await fetchBusinessUser(user.id)
+    if (!business) throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('business_id', business.business_id)
+        .eq('read', false)
+    if (error) console.error('Failed to mark all as read:', error)
+}
+
 export const deleteNotification = async (notiIds: Set<string>) => {
     const notiArray = Array.from(notiIds)
     const supabase = await createClient<Database>()
