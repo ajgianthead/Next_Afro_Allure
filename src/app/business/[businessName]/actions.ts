@@ -301,9 +301,9 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
         }
 
         // Check slot availability
-        const availabilities = (await client.query(`SELECT availability_data FROM availabilities av WHERE av.business_id = $1`, [businessId])).rows
+        const availabilities = (await client.query(`SELECT id, availability_data FROM availabilities av WHERE av.business_id = $1`, [businessId])).rows
         const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1 AND app.status != 'CANCELLED'`, [businessId])).rows
-        const availabilityRow = availabilities.find((av: any) => av.availability_data.id === serviceData.availability)
+        const availabilityRow = availabilities.find((av: any) => av.id === serviceData.availability)
         if (!availabilityRow) throw new Error('No availability configuration found for this service')
         const availability = availabilityRow.availability_data
 
