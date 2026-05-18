@@ -1,4 +1,4 @@
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Resend } from "resend";
 import { Database } from "./database.types";
 import NewAppointment from "../emails/new-appointment";
@@ -8,8 +8,8 @@ import AppointmentConfirmed from "../emails/appointment-confirmed";
 import AppointmentRescheduled from "../emails/appointment-rescheduled";
 import AppointmentCancelled from "../emails/appointment-cancelled";
 
-const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
-const supabase = createClient<Database>();
+const resend = new Resend(process.env.RESEND_API_KEY);
+const supabase = await createClient<Database>();
 
 export type AppointmentNotiData = {
     serviceName: string;

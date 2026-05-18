@@ -1,10 +1,15 @@
-import React from 'react';
-import LandingPage from './landingPage';
+import AfroAllureLanding from './landingPage';
+import { getWaitlistCount } from '@/app/waitlist/actions';
+import { getFoundingMemberCount } from '@/lib/foundingMember';
 
-const Page = () => {
+const Page = async () => {
+  const [waitlistCount, foundingMemberCount] = await Promise.all([
+    getWaitlistCount(),
+    getFoundingMemberCount(),
+  ])
   return (
     <div>
-      <LandingPage />
+      <AfroAllureLanding waitlistCount={waitlistCount} foundingMemberCount={foundingMemberCount} />
     </div>
   );
 }

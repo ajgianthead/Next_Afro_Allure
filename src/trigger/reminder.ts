@@ -1,5 +1,5 @@
 import { configure, task } from "@trigger.dev/sdk/v3";
-import { createClient } from "@utils/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { Database } from "../../lib/database.types";
 import ReminderBusiness from "../../emails/reminder-business";
@@ -7,11 +7,10 @@ import ReminderClient from "../../emails/reminder-client";
 import PaymentLinkEmail from "../../emails/payment-link";
 
 configure({
-  // this is the default and if the `TRIGGER_SECRET_KEY` environment variable is set, can omit calling configure
-  secretKey: process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_TRIGGER_API_KEY : process.env.NEXT_PUBLIC_TRIGGER_PROD_KEY,
+  secretKey: process.env.NEXT_PUBLIC_TRIGGER_API_KEY,
 });
 
-const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export type AppointmentReminderData = {
   serviceName: string;
@@ -232,16 +231,66 @@ export const sendLink = async (props: PaymentLinkProps) => {
   }
 }
 
-const checkPaymentStatus = async (appointmentId: string) => {
-  const supabase = createClient<Database>()
-  const { data } = await supabase.from('appointments').select().eq('id', appointmentId).single()
-  if (data?.service_paid) {
-    // IDK Something
-    return
-  } else {
-    await supabase.from('appointments').update({
-      status: 'INCOMPLETE'
+const checkNoShow = async (appointmentId: string) => {
+  const supabase = createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_ROLE_SECRET_KEY!
+  )
+  const { data: appt } = await supabase
+    .from('appointments')
+    .select('id, business, status, service_paid, service_data, client_metadata')
+    .eq('id', appointmentId)
+    .single()
+
+  if (!appt || appt.status !== 'CONFIRMED' || appt.service_paid) return
+
+  await supabase.from('appointments').update({ status: 'NO_SHOW' }).eq('id', appointmentId)
+
+  const cm = appt.client_metadata as any
+  const sd = appt.service_data as any
+  try {
+    await supabase.from('notifications').insert({
+      body: `${cm?.firstName ?? ''} ${cm?.lastName ?? ''} may not have shown up for their ${sd?.name ?? 'appointment'}.`,
+      title: 'Possible No-Show',
+      read: false,
+      business_id: appt.business,
+      type: 'no-show',
+      appointment_id: appt.id,
     })
+  } catch (err) {
+    console.error('Failed to send no-show notification:', err)
+  }
+}
+
+const checkPaymentStatus = async (appointmentId: string) => {
+  const supabase = createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_ROLE_SECRET_KEY!
+  )
+  const { data: appt } = await supabase
+    .from('appointments')
+    .select('id, business, status, service_paid, service_data, client_metadata')
+    .eq('id', appointmentId)
+    .single()
+
+  if (!appt || appt.service_paid) return
+  if (appt.status === 'NO_SHOW' || appt.status === 'CANCELLED' || appt.status === 'COMPLETED') return
+
+  await supabase.from('appointments').update({ status: 'INCOMPLETE' }).eq('id', appointmentId)
+
+  try {
+    const cm = appt.client_metadata as any
+    const sd = appt.service_data as any
+    await supabase.from('notifications').insert({
+      body: `Payment for ${sd?.name ?? 'an appointment'} with ${cm?.firstName ?? ''} ${cm?.lastName ?? ''} is still outstanding.`,
+      title: 'Payment Incomplete',
+      read: false,
+      business_id: appt.business,
+      type: 'payment-incomplete',
+      appointment_id: appt.id,
+    })
+  } catch (err) {
+    console.error('Failed to send incomplete payment notification:', err)
   }
 }
 
@@ -266,5 +315,13 @@ export const checkAppointmentStatus = task({
   maxDuration: 300,
   run: async (payload: { appointment_id: string }) => {
     await checkPaymentStatus(payload.appointment_id)
+  }
+})
+
+export const checkNoShowTask = task({
+  id: 'checkNoShow',
+  maxDuration: 300,
+  run: async (payload: { appointment_id: string }) => {
+    await checkNoShow(payload.appointment_id)
   }
 })

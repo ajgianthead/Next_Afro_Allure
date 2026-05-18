@@ -7,11 +7,10 @@
 .pnp.js
 .yarn/install-state.gz
 config/
-supabase/
+
 tests/
 src/trigger/
 
-middleware.ts
 # testing
 /coverage
 

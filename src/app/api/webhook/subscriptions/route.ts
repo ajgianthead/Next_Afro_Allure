@@ -1,127 +1,164 @@
-import { stripe } from "../../../../lib/utils";
-import pool from "@utils/dbPool";
-import { NextRequest, NextResponse } from "next/server";
-import mailchimp from '@mailchimp/mailchimp_transactional'
-import { checkAppointmentStatus, reminderTask, sendPaymentLink } from "trigger/reminder";
-import { DateTime } from "luxon";
-import NewAppointment from "../../../../../emails/new-appointment";
+import { stripe } from "@/lib/stripe/stripeClient";
+import { NextRequest } from "next/server";
+import { apiError, webhookAck } from "@/lib/api/response";
 import { Resend } from "resend";
-import AppointmentConfirmed from "../../../../../emails/appointment-confirmed";
 import Stripe from "stripe";
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import PausedSubscription from "../../../../../emails/subscription-paused";
 import CancelledSubscription from "../../../../../emails/subscription-cancelled";
 import NewSubscription from "../../../../../emails/subscription-welcome";
 
-
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM = 'AfroAllure <noreply@reminder.afroallure.co>';
+const SOCIALS = { instagram: 'https://instagram.com/afroallure_' };
 
 export async function POST(request: NextRequest) {
-
-    const endpointSecret = process.env.NEXT_PUBLIC_SUB_WEBHOOK_SECRET!;
-    const rawBody = await request.arrayBuffer(); // ⬅️ equivalent to express.raw()
+    const endpointSecret = process.env.SUB_WEBHOOK_SECRET!;
+    const rawBody = await request.arrayBuffer();
     const bodyBuffer = Buffer.from(rawBody);
     const sig = request.headers.get('stripe-signature');
-    const supabase = createClient<Database>()
 
-    let event;
-
+    let event: Stripe.Event;
     try {
         event = stripe.webhooks.constructEvent(bodyBuffer, sig!, endpointSecret);
     } catch (err: any) {
-        return new NextResponse(JSON.stringify({ message: `Webhook Error: ${err.message}` }), {
-            status: 400
-        })
+        return apiError(`Webhook Error: ${err.message}`, 400);
     }
 
-    const data = event.data.object as any;
-    const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
-
-    // Handle the event
-    switch (event.type) {
-        case 'customer.subscription.created':
-            // If subscription is created without trial
-            if (data.status === 'active') {
-                // Change value in database and notify user
-                const { data: businessDataSub } = await supabase.from('business_users').update({
-                    'plan_type': 'GROWTH',
-                }).eq('stripe_customer_id', event.data.object.customer.toString()).select().maybeSingle()
-                await resend.emails.send({
-                    from: 'AfroAllure <noreply@reminder.afroallure.co>',
-                    to: businessDataSub?.email!,
-                    subject: 'Your AfroAllure Growth Plan is Paused ⏸️',
-                    react: NewSubscription({
-                        socials: {
-                            instagram: "https://instagram.com/afroallure_",
-                        },
-                        businessData: {
-                            id: businessDataSub?.business_id!,
-                            name: businessDataSub?.business_name!
-                        }
-                    })
-
-                })
-            }
-            // If subscription is created with a trial
-            else if (event.data.object.status === 'trialing') {
-                // Change had_trial value in database to TRUE, and notify user that trial is active
-                await supabase.from('business_users').update({
-                    'plan_type': 'GROWTH',
-                    'had_trial': true
-                }).eq('stripe_customer_id', event.data.object.customer.toString())
-            }
-            break;
-        case 'customer.subscription.paused':
-            // Update business plan from GROWTH to starter
-            const { data: businessDataPaused } = await supabase.from('business_users').update({
-                'plan_type': 'STARTER',
-            }).eq('stripe_customer_id', event.data.object.customer.toString()).select().maybeSingle()
-            // Notify the user
-            await resend.emails.send({
-                from: 'AfroAllure <noreply@reminder.afroallure.co>',
-                to: businessDataPaused?.email!,
-                subject: 'Your AfroAllure Growth Plan is Paused ⏸️',
-                react: PausedSubscription({
-                    socials: {
-                        instagram: "https://instagram.com/afroallure_",
-                    },
-                    businessData: {
-                        id: businessDataPaused?.business_id!,
-                        name: businessDataPaused?.business_name!
-                    }
-                })
-
-            })
-            break;
-
-        case 'customer.subscription.deleted':
-            // Hate to see you go, sad face
-            const { data: businessDataCancelled } = await supabase.from('business_users').update({
-                'plan_type': 'STARTER',
-            }).eq('stripe_customer_id', event.data.object.customer.toString()).select().maybeSingle()
-            // Notify the user
-            await resend.emails.send({
-                from: 'AfroAllure <noreply@reminder.afroallure.co>',
-                to: businessDataCancelled?.email!,
-                subject: 'Your AfroAllure Growth Plan is Paused ⏸️',
-                react: CancelledSubscription({
-                    socials: {
-                        instagram: "https://instagram.com/afroallure_",
-                    },
-                    customerID: businessDataCancelled?.stripe_customer_id!,
-                    businessData: {
-                        id: businessDataCancelled?.business_id!,
-                        name: businessDataCancelled?.business_name!
-                    }
-                })
-
-            })
-            break;
-        default:
-
+    // Invoice events have a different data.object shape — handle before the subscription cast below.
+    if (event.type === 'invoice.payment_failed') {
+        const invoice = event.data.object as Stripe.Invoice;
+        const failedCustomerId = invoice.customer?.toString();
+        console.warn(`invoice.payment_failed: customer=${failedCustomerId} invoice=${invoice.id}`);
+        return webhookAck();
     }
-    // Return a 200 response to acknowledge receipt of the event
-    return new NextResponse(null, {
-        status: 200
-    })
+
+    const subscription = event.data.object as Stripe.Subscription;
+    const customerId = subscription.customer.toString();
+
+    try {
+        switch (event.type) {
+            case 'customer.subscription.created':
+                await handleSubscriptionCreated(customerId, subscription.status);
+                break;
+            case 'customer.subscription.updated':
+                // Handles trial→active (trial ends with payment), paused→active (payment added),
+                // and any other status transitions not covered by dedicated events.
+                if (subscription.status === 'active') {
+                    await handleSubscriptionActivated(customerId);
+                } else if (subscription.status === 'paused') {
+                    await handleSubscriptionPaused(customerId);
+                }
+                break;
+            case 'customer.subscription.resumed':
+                // Fires when a paused subscription is explicitly resumed
+                await handleSubscriptionActivated(customerId);
+                break;
+            case 'customer.subscription.paused':
+                await handleSubscriptionPaused(customerId);
+                break;
+            case 'customer.subscription.deleted':
+                await handleSubscriptionDeleted(customerId);
+                break;
+        }
+    } catch (error: any) {
+        return apiError(error.message ?? 'Webhook handler failed', 500);
+    }
+
+    return webhookAck();
+}
+
+async function handleSubscriptionActivated(customerId: string) {
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from('business_users')
+        .update({ plan_type: 'GROWTH' })
+        .eq('stripe_customer_id', customerId);
+    if (error) throw error;
+}
+
+async function handleSubscriptionCreated(customerId: string, status: string) {
+    if (status === 'active') {
+        const supabase = await createClient();
+        const { data: business, error } = await supabase
+            .from('business_users')
+            .update({ plan_type: 'GROWTH' })
+            .eq('stripe_customer_id', customerId)
+            .select()
+            .maybeSingle();
+        if (error) throw error;
+
+        try {
+            await resend.emails.send({
+                from: FROM,
+                to: business?.email!,
+                subject: 'Welcome to AfroAllure Growth! 🎉',
+                react: NewSubscription({
+                    socials: SOCIALS,
+                    businessData: { id: business?.business_id!, name: business?.business_name! },
+                }),
+            });
+        } catch (e) {
+            console.error('Failed to send subscription welcome email:', e);
+        }
+    } else if (status === 'trialing') {
+        const supabase = await createClient();
+        const { error } = await supabase
+            .from('business_users')
+            .update({ plan_type: 'GROWTH', had_trial: true })
+            .eq('stripe_customer_id', customerId);
+        if (error) throw error;
+    }
+}
+
+async function handleSubscriptionPaused(customerId: string) {
+    const supabase = await createClient();
+    const { data: business, error } = await supabase
+        .from('business_users')
+        .update({ plan_type: 'STARTER' })
+        .eq('stripe_customer_id', customerId)
+        .select()
+        .maybeSingle();
+    if (error) throw error;
+
+    try {
+        await resend.emails.send({
+            from: FROM,
+            to: business?.email!,
+            subject: 'Your AfroAllure Growth Plan is Paused ⏸️',
+            react: PausedSubscription({
+                socials: SOCIALS,
+                businessData: { id: business?.business_id!, name: business?.business_name! },
+            }),
+        });
+    } catch (e) {
+        console.error('Failed to send subscription paused email:', e);
+    }
+}
+
+async function handleSubscriptionDeleted(customerId: string) {
+    const supabase = await createClient();
+    const { data: business, error } = await supabase
+        .from('business_users')
+        .update({ plan_type: 'STARTER' })
+        .eq('stripe_customer_id', customerId)
+        .select()
+        .maybeSingle();
+    if (error) throw error;
+
+    try {
+        await resend.emails.send({
+            from: FROM,
+            to: business?.email!,
+            subject: 'Your AfroAllure Growth Plan has been Cancelled',
+            react: CancelledSubscription({
+                socials: SOCIALS,
+                customerID: business?.stripe_customer_id!,
+                businessData: { id: business?.business_id!, name: business?.business_name! },
+            }),
+        });
+    } catch (e) {
+        console.error('Failed to send subscription cancelled email:', e);
+    }
 }

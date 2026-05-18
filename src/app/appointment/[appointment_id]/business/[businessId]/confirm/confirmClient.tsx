@@ -1,298 +1,260 @@
-"use client"
+'use client'
 
 import { loadStripe, Stripe } from '@stripe/stripe-js'
-import { Caption, Text, Title } from '@tailus-ui/typography'
 import React, { useEffect, useState } from 'react'
 import {
-    EmbeddedCheckoutProvider,
-    EmbeddedCheckout,
     Elements,
     PaymentElement,
     useElements,
-    useStripe
-} from '@stripe/react-stripe-js';
-import { CircleCheckBig } from 'lucide-react'
-import { useParams } from 'next/navigation'
-import CircularProgress from '@mui/joy/CircularProgress'
-import Button from '@tailus-ui/Button'
-import { AppointmentReminderData, appointmentReminders } from '@utils/bull_mq'
-import { Card } from '@mui/joy';
-import Head from 'next/head';
-import { DateTime } from 'luxon';
+    useStripe,
+} from '@stripe/react-stripe-js'
+import { CircleCheckBig, Loader2 } from 'lucide-react'
+import { DateTime } from 'luxon'
+import { Button } from '@/components/ui/button'
+import { createCheckout } from '@/lib/stripe/createCheckout'
+import { AppointmentType, CheckoutType } from '@/features/shared/appointments/types'
+import { Appointment } from '@/features/manualBooking/server/models/Appointment'
+import { confirmAppointment } from '../actions'
+import { BusinessUser } from '@/lib/businessUser/BusinessUser'
 
+const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 interface PageProps {
-    appointment: any,
+    appointment: InstanceType<typeof Appointment>
+    business: InstanceType<typeof BusinessUser>
 }
 
-export default function ConfirmAppClient({ appointment }: PageProps) {
-    const [options, setOptions] = useState<{
-        clientSecret: any,
-        onComplete?: any
-    }>();
-    const [appointmentData, setAppointmentData] = useState<any>({ ...appointment })
+export default function ConfirmAppClient({ appointment, business }: PageProps) {
+    const [options, setOptions] = useState<{ clientSecret: any }>()
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [stripeID, setStripeID] = useState<string | null>(null)
-    const [businessData, setBusinessData] = useState<any>({ ...appointment.business_users })
     const [amountDue, setAmountDue] = useState<number>()
+    const [completed, setCompleted] = useState<boolean | null>(
+        appointment.status === 'CONFIRMED' ? true : null
+    )
+    const [confirming, setConfirming] = useState(false)
+    const [confirmError, setConfirmError] = useState('')
+
     useEffect(() => {
-        const fetchSession = async (stripeID: string, appointment: Appointment) => {
-            const stripePromise = loadStripe(process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY! : process.env.NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY!, {
-                stripeAccount: stripeID,
-            });
-            setStripePromise(stripePromise)
-            const response = await fetch("/api/checkout", {
-                method: "POST",
-                body: JSON.stringify({
-                    connectedAccountId: stripeID,
-                    price: appointment.deposit_price,
-                    appointmentID: appointment.id,
-                    client_email: appointment.client_metadata.email,
-                    paymentIntent: appointment.deposit_charge_id,
-                    purpose: 'DEPOSIT',
-                    appointmentType: 'manual'
-                }),
-            });
-            if (!response.ok) {
-                // Handle errors on the client side here
-                const { error } = await response.json();
-                throw new Error("An error occurred: ", error.message);
-            } else {
-                const val = await response.json();
-                setAmountDue(val.amountDue)
-                const clientSecret = val.clientSecret;
-                const opt = { clientSecret }
-                setOptions({
-                    ...options,
-                    clientSecret: opt.clientSecret,
-                    onComplete: handleCompleted
-                })
-                setCompleted(false)
-            }
+        if (appointment.status === 'CONFIRMED') return
+
+        if (!appointment.requireDeposit) {
+            setCompleted(false)
+            return
         }
-        if (appointment.status === "CONFIRMED") {
-            setCompleted(true)
-        } else {
-            if (appointment.require_deposit) {
-                fetchSession(businessData.stripe_acc_id, appointment);
-            } else {
-                setCompleted(false)
-                // Updates the appointment status and change the completed state
-                // handleCompleted()
-            }
-        }
-    }, []);
-    const [completed, setCompleted] = useState<boolean | null>(null);
-    const handleCompleted = async () => {
-        // Update the appointment status, then change the completed state
-        const response = await fetch(`/api/appointments`, {
-            method: "PUT",
-            body: JSON.stringify({
-                id: appointment.id,
-                start: appointmentData.start,
-                end: appointmentData.end,
-                status: "CONFIRMED",
+
+        const initStripe = async () => {
+            const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
+                stripeAccount: business.stripeAccountId,
             })
-        });
-        if (!response.ok) {
-            // Handle errors on the client side here
-            const { error } = await response.json();
-            throw new Error("An error occurred: ", error);
-        } else {
-            setCompleted(true)
+            setStripePromise(stripePromise)
+            setStripeID(business.stripeAccountId)
+            const res = await createCheckout(
+                CheckoutType.DEPOSIT,
+                AppointmentType.MANUAL,
+                appointment.depositPrice,
+                appointment.businessId,
+                appointment.id
+            )
+            setAmountDue(res?.amount)
+            setOptions({ clientSecret: res?.client_secret })
+            setCompleted(false)
+        }
+        initStripe()
+    }, [])
+
+    const handleConfirm = async () => {
+        setConfirming(true)
+        setConfirmError('')
+        try {
+            const result = await confirmAppointment(appointment.id, appointment.businessId)
+            if (!Array.isArray(result)) setCompleted(true)
+        } catch (err: any) {
+            setConfirmError(err?.message ?? 'Something went wrong. Please try again.')
+        } finally {
+            setConfirming(false)
         }
     }
-    return (
-        <div>
-            <Head>
-                <title>My page title</title>
-                <meta property="og:title" content="My page title" key="title" />
-            </Head>
-            {completed !== null ? <div>
-                {Object.keys(appointmentData).length ? <div className='w-full h-screen overflow-x-hidden overflow-scroll flex py-10 justify-center'>
-                    {!completed && options && promise ? <Elements
-                        stripe={promise}
-                        options={options}
-                    >
-                        <div className='flex lg:flex-row flex-col gap-2 justify-between w-full  max-w-[1280px]'>
-                            <div className='lg:w-1/2 w-full m-2'>
-                                <Card sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    padding: 3
-                                }}>
-                                    <div className='flex flex-col justify-between h-full'>
-                                        <div>
-                                            <div className='text-center lg:text-left'>
-                                                <Title>Appointment Summary</Title>
-                                                <Caption>This amount is the deposit price needed to confirm your appointment</Caption>
-                                            </div>
-                                            <div className='flex gap-2 w-full mt-5'>
-                                                <div className='w-full flex flex-col gap-5'>
-                                                    <div className='flex lg:flex-row flex-col gap-2'>
-                                                        <div className='w-full lg:w-1/2 lg:text-left justify-center text-center'>
-                                                            <Text className='font-medium'>Date:</Text>
-                                                            <Caption>{DateTime.fromISO(appointmentData.start).toFormat('DDDD')}</Caption>
-                                                        </div>
-                                                        <div className='w-full lg:w-1/2 lg:text-left text-center' >
-                                                            <Text className='font-medium'>Time:</Text>
-                                                            <Caption>{`${DateTime.fromISO(appointmentData.start).toFormat('t')} ~ ${DateTime.fromISO(appointmentData.end).toFormat('t')}`}</Caption>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex lg:flex-row flex-col gap-5">
-                                                        <div className='w-full lg:w-1/2 lg:text-left text-center'>
-                                                            <Text className='font-medium'>Service Information:</Text>
-                                                            <Caption>Name: {appointmentData.service_data.name}</Caption>
-                                                            <Caption>Price: ${appointmentData.service_data.price / 100}</Caption>
-                                                            <Caption>Deposit Required: <strong>{appointmentData.require_deposit ? 'YES' : 'NO'}</strong></Caption>
-                                                            <Caption>Deposit Amount: ${appointmentData.deposit_price / 100}</Caption>
-                                                        </div>
-                                                        <div className='w-full lg:w-1/2 lg:text-left text-center'>
-                                                            <Text className='font-medium'>Client Information:</Text>
-                                                            <div className='w-full flex flex-col gap-1'>
-                                                                <Caption>Name: {appointmentData.client_metadata.firstName + " " + appointmentData.client_metadata.lastName}</Caption>
-                                                                <Caption>Email: {appointmentData.client_metadata.email}</Caption>
-                                                                <Caption>Phone Number: ({appointmentData.client_metadata.phoneNumber.slice(0, 3)}) {appointmentData.client_metadata.phoneNumber.slice(3, 6)}-{appointmentData.client_metadata.phoneNumber.slice(6)}</Caption>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className='w-full lg:w-1/2 lg:text-left text-center'>
-                                                        <Text className='font-medium'>Add-ons:</Text>
-                                                        {appointmentData.selected_addons.map((addon: any, index: number) => {
-                                                            return (
-                                                                <Caption key={index}>{addon.name}: ${addon.price}</Caption>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                </div>
 
-                                            </div>
-                                        </div>
-                                        <div className='flex w-full lg:justify-end justify-center mt-5'>
-                                            {amountDue ? <Title>Due Now: ${amountDue! / 100}</Title> : <CircularProgress size='sm' />}
-                                        </div>
-                                    </div>
-                                </Card>
-                            </div>
-                            <div className='w-full lg:w-1/2 h-full m-2'>
-                                <Card sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    padding: 3
-                                }}>
-                                    <Caption><i>*You are required to pay a deposit to confirm this appointment</i></Caption>
-                                    <PaymentForm promise={promise} appointmentID={appointment.id} stripeID={stripeID!} />
-                                </Card>
-                            </div>
+    if (completed === null) {
+        return (
+            <div className="w-full h-screen flex justify-center items-center" style={{ backgroundColor: '#FAF7F2' }}>
+                <Loader2 className="size-8 animate-spin" style={{ color: '#6F6863' }} />
+            </div>
+        )
+    }
+
+    if (completed) {
+        return (
+            <div className="w-full h-screen flex flex-col justify-center items-center gap-3 px-5" style={{ backgroundColor: '#FAF7F2' }}>
+                <div className="flex items-center gap-3">
+                    <CircleCheckBig size={24} style={{ color: '#16a34a' }} />
+                    <h2 className="text-lg font-semibold" style={{ color: '#1A1818' }}>Appointment Confirmed</h2>
+                </div>
+                <p className="text-sm text-center" style={{ color: '#6F6863' }}>
+                    If you have any questions, please contact {business.name}.
+                </p>
+            </div>
+        )
+    }
+
+    if (appointment.requireDeposit && options?.clientSecret && promise) {
+        return (
+            <div className="w-full min-h-screen py-10 px-4" style={{ backgroundColor: '#FAF7F2' }}>
+                <Elements stripe={promise} options={options}>
+                    <div className="max-w-4xl mx-auto flex flex-col lg:flex-row gap-4">
+                        <AppointmentSummary appointment={appointment} amountDue={amountDue} />
+                        <div className="flex-1 rounded-xl p-6 flex flex-col gap-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D6' }}>
+                            <p className="text-sm" style={{ color: '#6F6863' }}>
+                                A deposit is required to confirm your appointment.
+                            </p>
+                            <PaymentForm appointmentID={appointment.id} stripeID={stripeID!} />
                         </div>
-                    </Elements> : <div>
-                        {!completed ? <div>
-                            <div className='w-full m-2'>
-                                <Card sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    padding: 3
-                                }}>
-                                    <div className='flex flex-col justify-between h-full'>
-                                        <div>
-                                            <div className='text-center lg:text-left'>
-                                                <Title>Appointment Summary</Title>
-                                                <Caption>This amount is the deposit price needed to confirm your appointment</Caption>
-                                            </div>
-                                            <div className='flex gap-2 w-full mt-5'>
-                                                <div className='w-full flex flex-col gap-5'>
-                                                    <div className='flex lg:flex-row flex-col gap-2'>
-                                                        <div className='w-full lg:w-1/2 lg:text-left justify-center text-center'>
-                                                            <Text className='font-medium'>Date:</Text>
-                                                            <Caption>{DateTime.fromISO(appointmentData.start).toFormat('DDDD')}</Caption>
-                                                        </div>
-                                                        <div className='w-full lg:w-1/2 lg:text-left text-center' >
-                                                            <Text className='font-medium'>Time:</Text>
-                                                            <Caption>{`${DateTime.fromISO(appointmentData.start).toFormat('t')} ~ ${DateTime.fromISO(appointmentData.end).toFormat('t')}`}</Caption>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex lg:flex-row flex-col gap-5">
-                                                        <div className='w-full lg:w-1/2 lg:text-left text-center'>
-                                                            <Text className='font-medium'>Service Information:</Text>
-                                                            <Caption>Name: {appointmentData.service_data.name}</Caption>
-                                                            <Caption>Price: ${appointmentData.service_data.price / 100}</Caption>
-                                                            <Caption>Deposit Required: <strong>{appointmentData.require_deposit ? 'YES' : 'NO'}</strong></Caption>
-                                                            <Caption>Deposit Amount: ${appointmentData.deposit_price / 100}</Caption>
-                                                        </div>
-                                                        <div className='w-full lg:w-1/2 lg:text-left text-center'>
-                                                            <Text className='font-medium'>Client Information:</Text>
-                                                            <div className='w-full flex flex-col gap-1'>
-                                                                <Caption>Name: {appointmentData.client_metadata.firstName + " " + appointmentData.client_metadata.lastName}</Caption>
-                                                                <Caption>Email: {appointmentData.client_metadata.email}</Caption>
-                                                                <Caption>Phone Number: ({appointmentData.client_metadata.phoneNumber.slice(0, 3)}) {appointmentData.client_metadata.phoneNumber.slice(3, 6)}-{appointmentData.client_metadata.phoneNumber.slice(6)}</Caption>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className='w-full lg:w-1/2 lg:text-left text-center'>
-                                                        <Text className='font-medium'>Add-ons:</Text>
-                                                        {appointmentData.selected_addons.map((addon: any, index: number) => {
-                                                            return (
-                                                                <Caption key={index}>{addon.name}: ${addon.price}</Caption>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                </div>
+                    </div>
+                </Elements>
+            </div>
+        )
+    }
 
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <Button.Root onClick={async () => {
-                                        await handleCompleted()
-                                    }}>
-                                        <Button.Label>Confirm Appointment</Button.Label>
-                                    </Button.Root>
-                                </Card>
-                            </div>
-                        </div> : <div className='flex h-[500px] gap-2 px-5 flex-col w-screen justify-center items-center'>
-                            <div className='flex gap-3'>
-                                <CircleCheckBig color='green' />
-                                <Title>Appointment Confirmed</Title></div>
-                            <div className='text-center'>
-                                <Caption>If you have any questions regarding your appointment, please contact {businessData.business_name}</Caption>
-                            </div>
-                        </div>}</div>}
-                </div> : <div>
-                    <Text>Something went wrong :(</Text>
-                </div>}
-            </div> : <div className='w-full h-screen flex justify-center items-center'>
-                <CircularProgress />
-            </div>}
+    return (
+        <div className="w-full min-h-screen flex justify-center items-start px-4 py-16" style={{ backgroundColor: '#FAF7F2' }}>
+            <div className="w-full max-w-xl flex flex-col gap-4">
+                <AppointmentSummary appointment={appointment} amountDue={undefined} />
+                {confirmError && (
+                    <p className="text-sm" style={{ color: '#FC6161' }}>{confirmError}</p>
+                )}
+                <div className="flex justify-end">
+                    <Button
+                        onClick={handleConfirm}
+                        disabled={confirming}
+                        style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF' }}
+                    >
+                        {confirming ? <Loader2 className="size-4 animate-spin" /> : 'Confirm Appointment'}
+                    </Button>
+                </div>
+            </div>
         </div>
     )
 }
 
-const PaymentForm = ({ promise, appointmentID, stripeID }: { promise: Promise<Stripe | null>, appointmentID: string, stripeID: string }) => {
+function AppointmentSummary({
+    appointment,
+    amountDue,
+}: {
+    appointment: InstanceType<typeof Appointment>
+    amountDue?: number
+}) {
+    const fmt = (cents: number) =>
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100)
+
+    return (
+        <div
+            className="flex-1 rounded-xl p-6 flex flex-col gap-5"
+            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D6' }}
+        >
+            <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#6F6863' }}>
+                    Appointment Summary
+                </p>
+                <h2 className="text-xl font-semibold" style={{ fontFamily: SERIF, color: '#1A1818' }}>
+                    {appointment.serviceData.name}
+                </h2>
+            </div>
+
+            <div className="flex flex-col gap-3" style={{ borderTop: '1px solid #F0EBE3', paddingTop: '1rem' }}>
+                <Row label="Date" value={DateTime.fromISO(appointment.start).toFormat('DDDD')} />
+                <Row
+                    label="Time"
+                    value={`${DateTime.fromISO(appointment.start).toFormat('t')} – ${DateTime.fromISO(appointment.end).toFormat('t')}`}
+                />
+                <Row label="Price" value={fmt(appointment.serviceData.price)} />
+                {appointment.requireDeposit && (
+                    <Row label="Deposit" value={fmt(appointment.depositPrice)} />
+                )}
+            </div>
+
+            <div className="flex flex-col gap-1" style={{ borderTop: '1px solid #F0EBE3', paddingTop: '1rem' }}>
+                <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#6F6863' }}>
+                    Client
+                </p>
+                <p className="text-sm font-medium" style={{ color: '#1A1818' }}>
+                    {appointment.clientMetadata.firstName} {appointment.clientMetadata.lastName}
+                </p>
+                <p className="text-sm" style={{ color: '#6F6863' }}>{appointment.clientMetadata.email}</p>
+            </div>
+
+            {(appointment.selectedAddons?.length ?? 0) > 0 && (
+                <div className="flex flex-col gap-2" style={{ borderTop: '1px solid #F0EBE3', paddingTop: '1rem' }}>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#6F6863' }}>
+                        Add-ons
+                    </p>
+                    {appointment.selectedAddons.map((addon: any, i: number) => (
+                        <div key={i} className="flex justify-between">
+                            <p className="text-sm" style={{ color: '#1A1818' }}>{addon.name}</p>
+                            <p className="text-sm" style={{ color: '#6F6863' }}>{fmt(addon.price)}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {amountDue !== undefined && (
+                <div
+                    className="rounded-lg px-4 py-3"
+                    style={{ backgroundColor: '#FAF7F2', border: '1px solid #E8E2D6' }}
+                >
+                    <div className="flex justify-between items-center">
+                        <p className="text-sm font-medium" style={{ color: '#6F6863' }}>Due Now</p>
+                        <p className="text-xl font-semibold" style={{ fontFamily: SERIF, color: '#1A1818' }}>
+                            {fmt(amountDue)}
+                        </p>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="flex justify-between items-start gap-4">
+            <p className="text-sm" style={{ color: '#6F6863' }}>{label}</p>
+            <p className="text-sm font-medium text-right" style={{ color: '#1A1818' }}>{value}</p>
+        </div>
+    )
+}
+
+function PaymentForm({ appointmentID, stripeID }: { appointmentID: string; stripeID: string }) {
     const elements = useElements()
-    const stripe = useStripe();
+    const stripe = useStripe()
+    const [submitting, setSubmitting] = useState(false)
+    const [payError, setPayError] = useState('')
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        //TODO: Stripe confirmPayment
-        if (!promise || !elements) {
-            return;
-        }
-        const { error } = await stripe?.confirmPayment({
-            //`Elements` instance that was used to create the Payment Element
+        if (!stripe || !elements) return
+        setSubmitting(true)
+        setPayError('')
+        const { error } = await stripe.confirmPayment({
             elements,
             confirmParams: {
-                return_url: `https://beta.afroallure.co/appointment/${appointmentID}/${stripeID}/complete`,
-
+                return_url: `${window.location.origin}/appointment/${appointmentID}/${stripeID}/complete`,
             },
-        })!;
-        if (error) {
-            throw Error(error.message)
-        }
+        })
+        if (error) setPayError(error.message ?? 'Payment failed. Please try again.')
+        setSubmitting(false)
     }
+
     return (
-        <form onSubmit={(e) => handleSubmit(e)} className='flex flex-col gap-5 justify-between h-full'>
-            <PaymentElement className='w-full' />
-            <Button.Root type='submit' disabled={!promise}>
-                <Button.Label>Pay Deposit and Confirm Appointment</Button.Label>
-            </Button.Root>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <PaymentElement className="w-full" />
+            {payError && <p className="text-sm" style={{ color: '#FC6161' }}>{payError}</p>}
+            <Button
+                type="submit"
+                disabled={!stripe || !elements || submitting}
+                style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF' }}
+            >
+                {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Pay Deposit & Confirm'}
+            </Button>
         </form>
     )
 }

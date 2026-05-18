@@ -1,24 +1,19 @@
 import { Fields } from "@puckeditor/core";
-import { ColumnLayout, RowLayout } from "../types";
-import { NumberInput, Select } from "@mantine/core";
-import { ColumnsIcon, ColumnSpacingIcon, RowsIcon, RowSpacingIcon } from "@radix-ui/react-icons";
+import { RowLayout } from "../types";
+import { NumInput, KVSelect } from "../fieldPrimitives";
+import { RowsIcon, RowSpacingIcon } from "@radix-ui/react-icons";
+import { MOBILE_LAYOUT_OPTIONS } from "@/features/editor/lib/responsive";
+
+const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
 export const resolvedRowData: ({ props }: any) => {} = async ({ props }) => {
     let newArr = [...props.rows]
     if (props.numberOfRows > props.rows.length) {
         newArr.push({ row: [] })
-        return {
-            props: {
-                rows: newArr,
-            }
-        }
+        return { props: { rows: newArr } }
     } else if (props.numberOfRows < props.rows.length) {
         newArr.pop()
-        return {
-            props: {
-                rows: newArr
-            }
-        }
+        return { props: { rows: newArr } }
     }
     return props
 }
@@ -27,72 +22,54 @@ export const rowLayoutFields: Fields<RowLayout, {}> = {
     gap: {
         type: 'custom',
         label: 'Spacing',
-        render: (({ value, onChange, field }) => {
-            return <div className="grid grid-cols-4 items-center gap-2">
-                <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                <NumberInput
-                    leftSection={<RowSpacingIcon />}
-                    className=" col-span-3"
-                    size="xs"
-                    radius="md"
-                    value={value}
-                    onChange={(e) => onChange(Number(e))}
-                />
-            </div>
-        })
+        render: ({ value, onChange }) => (
+            <NumInput value={value} onChange={onChange} icon={<RowSpacingIcon />} />
+        )
     },
     justifyItems: {
-        label: 'Row Alignment',
+        label: 'Alignment',
         type: 'custom',
-        render: (({ field, onChange, value }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className=" col-span-2 text-sm font-medium text-slate-400">{field.label}</p>
-                    <Select
-                        checkIconPosition="right"
-                        onChange={(e: any) => { onChange(e) }}
-                        className="col-span-2 col-start-3"
-                        size="xs"
-                        value={value}
-                        radius={'md'}
-                        data={['start', 'end', 'center', 'stretch']}
-                    />
-                </div>
-            )
-        })
-
+        render: ({ field, onChange, value }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                <KVSelect value={value} onChange={onChange} options={[
+                    { label: 'Start', value: 'start' },
+                    { label: 'End', value: 'end' },
+                    { label: 'Center', value: 'center' },
+                    { label: 'Stretch', value: 'stretch' },
+                ]} className="flex-1" />
+            </div>
+        )
     },
     numberOfRows: {
         type: 'custom',
         label: 'Rows',
-        render: (({ value, onChange, field }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <NumberInput
-                        leftSection={<RowsIcon />}
-                        className=" col-span-3"
-                        size="xs"
-                        radius="md"
-                        value={value}
-                        onChange={(e) => onChange(Number(e))}
-                    />
-                </div>
-            )
-        })
+        render: ({ value, onChange }) => (
+            <NumInput value={value} onChange={onChange} icon={<RowsIcon />} />
+        )
     },
-
     rows: {
         type: "array",
         visible: false,
-        arrayFields: {
-            row: {
-                type: 'slot'
-            }
-        },
-        defaultItemProps: {
-            row: []
-        }
+        arrayFields: { row: { type: 'slot' } },
+        defaultItemProps: { row: [] }
     },
-
+    mobileLayout: {
+        type: 'custom',
+        label: 'Mobile',
+        render: ({ value, onChange, field }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                <select
+                    value={value ?? 'stack'}
+                    onChange={(e) => onChange(e.target.value)}
+                    style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
+                >
+                    {MOBILE_LAYOUT_OPTIONS.map(o => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                </select>
+            </div>
+        )
+    },
 }

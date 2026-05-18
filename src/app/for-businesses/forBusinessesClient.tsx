@@ -1,381 +1,1321 @@
-// Assume you're using Tailwind CSS or similar
+// AfroAllure — For Businesses Page
+// Confident, detailed. Bento features, dark "why" section, premium pricing, gold founding section.
 'use client'
-import { Button, Card, CardContent, CardCover, Chip, Divider, IconButton, Link, List, ListItem, ListItemDecorator, Tooltip, Typography } from "@mui/joy";
-import Image, { StaticImageData } from "next/image";
+import './forBusinesses.css'
+import { useState, useEffect, useRef } from "react";
 import LOGO from '../../../public/images/logo_transparent_background.png'
-import { BadgeDollarSign, Calendar, Check, Globe, Lightbulb, Menu, MessageCircleMore, TrendingUp } from "lucide-react";
-import { CssVarsProvider, extendTheme } from '@mui/joy/styles';
-import HERO_BACKGROUND from '../../../public/images/magicpattern-grid-pattern-1753632850729.png'
-import HAIR_BACKGROUND from '../../../public/images/hairbackground.jpg'
+import Image from "next/image";
+import { Menu, Sparkles } from "lucide-react";
 
-import HERO_IMAGE from '../../../public/images/localhost_3000_dashboard_appointments.png'
-import MONEY_IMG from '../../../public/images/localhost_3000_dashboard_monetization.png'
 
-import LandingPageNavDrawer from "../landingPageNavDrawer";
-import { motion } from "motion/react"
-import { Caption } from "@tailus-ui/typography";
-import { ArrowRightIcon } from "@radix-ui/react-icons";
-import { fetchBusinessUser, fetchUser } from "app/dashboard/(other)/actions";
-import { User } from "@supabase/supabase-js";
-import { createSubscriptionCheckout } from "./actions";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { FaApplePay, FaGooglePay } from "react-icons/fa";
-import { SiCashapp } from "react-icons/si";
-import { FooterCentered } from "app/landingPage";
+const RED = '#FC6161';
+const DARK = '#0F0E0E';
+const DARKER = '#272635';
+const WARM = '#FAF7F2';
+const GOLD = '#C9974A';
+const INK = '#1A1818';
+const MUTED = '#6F6863';
+const LINE = '#E8E2D6';
+
+const SERIF = "'Fraunces', 'Times New Roman', serif";
+const SANS = "'Inter', system-ui, sans-serif";
+const MONO = "ui-monospace, 'SF Mono', Menlo, monospace";
 
 
 
-export const theme = extendTheme({
-    "colorSchemes": {
-        "light": {
-            "palette": {
-                "primary": {
-                    "50": "#FFEBEB",
-                    "100": "#FECFCF",
-                    "200": "#FEB4B4",
-                    "300": "#FD9898",
-                    "400": "#FD7D7D",
-                    "500": "#FC6161",
-                    "600": "#D54949",
-                    "700": "#AF3131",
-                    "800": "#881818",
-                    "900": "#610000"
-                }
-            }
-        },
-        "dark": {
-            "palette": {}
+
+
+const Icon = ({ d, size = 22, stroke = 1.6, fill = 'none' }: any) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor"
+        strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
+        {typeof d === 'string' ? <path d={d} /> : d}
+    </svg>
+);
+
+const ICONS = {
+    arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+    check: <path d="M5 12l5 5L20 7" />,
+    star: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z" fill="currentColor" />,
+    spark: <path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3z" fill="currentColor" />,
+    shield: <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z" />,
+    crown: <path d="M3 9l3 8h12l3-8-5 3-4-6-4 6-5-3z" />,
+    lock: <><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
+};
+
+// ─────────────────────────────────────────────────────────────
+// MOBILE NAV
+// ─────────────────────────────────────────────────────────────
+function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
+    const [open, setOpen] = useState(false)
+    const ref = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!open) return
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
         }
-    }
-})
-
-interface PageProps {
-    user: User | null
-    business: Business | null
-}
-
-export default function ForBusinesses({ user, business }: PageProps) {
-    const router = useRouter()
-    const [isLoading, setIsLoading] = useState<boolean>(false)
-    const [isLoadingFree, setIsLoadingFree] = useState<boolean>(false)
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [open])
 
     return (
-        <CssVarsProvider theme={theme}>
-            <div className="bg-white text-gray-900 font-sans">
-                <nav className="w-full py-2 hidden md:flex justify-center bg-white sticky top-0 z-50">
-                    <div className="w-[1280px]  flex justify-between">
-                        <div>
-                            <Image src={LOGO} alt="logo-img" width={150} />
-                        </div>
-                        <div className="flex gap-20">
-                            <div className="flex gap-10">
-                                <Link href="/" color="neutral" fontSize={12}>Home</Link>
-
-                                <Link href="#features" color="neutral" fontSize={12}>Features</Link>
-                                <Link color="neutral" href='#pricing' fontSize={12}>Pricing</Link>
-                            </div>
-                            {!user ? <div className="flex items-center gap-5">
-                                <Button component='a' role="link" href="/register">Register your Business</Button>
-                                <Button component='a' role="link" href="/login" variant="outlined">Login</Button>
-                            </div> : <div className="flex items-center gap-5">
-                                <Button component='a' role="link" href="/dashboard">Business Dashboard <ArrowRightIcon /></Button>
-                            </div>}
-                        </div>
-
-                    </div>
-                </nav>
-                <div className="md:hidden sticky top-0 z-50">
-                    <LandingPageNavDrawer forBusinesses={true} />
-                </div>
-                <header className="relative bg-white flex flex-col z-10 items-center justify-center text-center w-full gap-5">
-                    <div className="w-full h-[430px]">
-                        <Image className="absolute z-[0] lg:object-cover object-fit  top-0" width={1600} src={HAIR_BACKGROUND} alt="background" />
-                        <div className="w-full h-full bg-[linear-gradient(45deg,_var(--tw-gradient-stops))] from-white to-[#ffffff60] absolute ">
-                            <div className=" pt-24 grid lg:grid-cols-3 grid-cols-1">
-                                <div className="text-start lg:ml-32 ml-10 flex flex-col gap-6 col-span-2">
-                                    <div>
-                                        <p className="text-5xl font-bold">
-                                            Get <span className="text-[#FC6161]">Discovered.</span>
-                                        </p>
-                                        <p className="text-5xl font-bold">
-                                            Get <span className="text-[#FC6161]">Booked.</span>
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-lg font-normal">AfroAllure gives Black stylists the tools to create a professional online presence, accept bookings, and manage their services — all in one place.</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button component='a' role="link" href="/register" className="flex items-center gap-1">Join for Free<ArrowRightIcon /></Button>
-                                    </div></div>
-
-                            </div>
-                        </div>
-
-                    </div>
-
-
-                </header>
-                <section className="py-16 px-6 bg-white md:px-16 z-20 relative" id="features">
-                    <div className="bg-white">
-                        <div className="flex flex-col gap-4">
-                            <p className="text-sm font-medium font-[Inter] lg:px-32 text-center justify-self-end text-[#FC6161]">Features</p>
-                            <div className="mb-10">
-                                <p className="text-6xl font-normal font-[Inter] mb-2  lg:px-32 text-center">Everything You Need to Run & Automate Your Business</p>
-                                <p className="text-center text-lg lg:px-32">Everything you need to run a modern beauty business—booking, payments, branding, and client management—without unnecessary complexity.</p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-rows-2 md:grid-cols-6 gap-2">
-                            <div className="col-span-3">
-                                <Feature
-
-                                    title="Smart Booking Calendar"
-                                    desc="Automated, conflict-free scheduling that lets clients book only when you're available"
-                                    image={HERO_IMAGE}
-                                />
-                            </div>
-                            <div className="col-span-3">
-                                <Feature
-                                    title="Integrated Payments"
-                                    desc="Get paid fast and securely. Accept deposits and/or full payments online"
-                                    image={MONEY_IMG}
-                                /></div>
-                            <div className="col-span-4">
-                                <Feature
-                                    title="Business & Earnings Analytics"
-                                    desc="Track your income, appointments, and top-performing services at a glance"
-                                    image={MONEY_IMG}
-                                />
-                            </div>
-                            <div className="col-span-2">
-                                <Feature
-                                    title="Free Public Booking Page"
-                                    desc="Showcase your services, pricing, and availability with a beautiful, mobile-ready booking page"
-                                    image={MONEY_IMG}
-                                />
-                            </div>
-                        </div></div>
-
-                </section>
-
-                <section id="about" className="flex w-full justify-center z-20 relative py-24  text-white bg-[#272635]">
-                    <div className="w-[1280px] gap-5 flex items-center text-center flex-col">
-                        <Typography level="h4"></Typography>
-                        <div className="lg:px-48">
-                            <Typography sx={{ color: 'white' }} level="h2">Why AfroAllure?</Typography>
-                        </div>
-                        <div className="flex justify-center px-20 items-center flex-col gap-2">
-                            <Typography sx={{ color: 'white' }}>AfroAllure was created for stylists, barbers, braiders, and beauty pros who are tired of being overlooked. We know how hard it is to grow a business when you're hidden by the algorithm, underbooked, or working in a city where your work isn’t seen or understood. Most platforms prioritize scale over people—owning your clients, locking features behind fees, and forcing you into systems that don’t fit how beauty businesses actually work.
-                            </Typography>
-                            <Typography sx={{ color: 'white' }}>That’s why AfroAllure gives you the tools to run your business your way — from booking and payments to client management and visibility. And the best part? It’s made specifically with Black beauty in mind, so you're not just another listing — you're part of a movement.
-                            </Typography>
-                            <Typography sx={{ color: 'white', marginTop: 3 }} className="font-bold">AfroAllure flips that.
-                            </Typography>
-                        </div>
-                    </div>
-                </section>
-                <section className="py-16 px-6 bg-white md:px-16 z-20 relative" id="pricing">
-                    <div className="bg-white">
-                        <div className="flex flex-col gap-4">
-                            <p className="text-sm font-medium font-[Inter] lg:px-32 text-center justify-self-end text-[#FC6161]">Pricing</p>
-                            <div className="mb-10">
-                                <p className="text-6xl font-normal font-[Inter] mb-2  lg:px-32 text-center">Plans & Pricing</p>
-                                <p className="text-center text-lg lg:px-32">Select a plan and start growing your business</p>
-                            </div>
-                        </div>
-                        <div className=" lg:px-48 grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <Card variant="outlined">
-                                <CardContent>
-                                    <Card variant="soft">
-                                        <CardContent>
-                                            <Chip size="sm" variant="outlined" color="neutral">
-                                                Starter
-                                            </Chip>
-                                            <div className="flex flex-col gap-3">
-                                                <Typography level="h2">Free</Typography>
-                                                <Caption>Free Forever</Caption>
-                                                <Button disabled={isLoading} loading={isLoadingFree} onClick={() => {
-                                                    setIsLoadingFree(true)
-                                                    router.push('/register')
-                                                    setIsLoadingFree(false)
-
-                                                }}>Join for free <ArrowRightIcon /></Button>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                    <Caption>Starter Plan includes:</Caption>
-                                    <List size="sm" sx={{ mx: 'calc(-1 * var(--ListItem-paddingX))' }}>
-                                        <ListItem>
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Limit of 10 monthly bookings
-                                        </ListItem>
-                                        <ListItem>
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Basic Webpage Builder
-                                        </ListItem>
-                                        <ListItem>
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Appointment Comfirmation Emails
-                                        </ListItem>
-                                        <ListItem>
-
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Clientele Management
-                                        </ListItem>
-                                        <ListItem>
-
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Booking Notifications
-                                        </ListItem>
-                                        <ListItem>
-
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Debit & Credit Card Payment Processing
-                                        </ListItem>
-                                    </List>
-                                </CardContent>
-                            </Card>
-                            <Card variant="outlined">
-                                <CardContent>
-                                    <Card variant="soft">
-                                        <CardContent>
-                                            <div className="flex gap-1">
-                                                <Chip size="sm" variant="outlined" color="neutral">
-                                                    Growth
-                                                </Chip>
-                                                <Chip size="sm" variant="solid" color="primary">
-                                                    Recommended
-                                                </Chip>
-                                            </div>
-                                            <div className="flex flex-col gap-3">
-                                                <Typography level="h2" sx={{ mr: 'auto' }}>
-                                                    $25{' '}
-                                                    <Typography textColor="text.tertiary" sx={{ fontSize: 'sm' }}>
-                                                        / month
-                                                    </Typography>
-                                                </Typography>
-                                                <div><Caption>14-Day free trial included. No credit card required</Caption>
-                                                </div>
-
-                                                <Button loading={isLoading} disabled={isLoadingFree} onClick={async () => {
-                                                    setIsLoading(true)
-                                                    if (business === null) {
-                                                        router.push('/register?subscription=true')
-                                                    } else {
-                                                        const customerId = business?.stripe_customer_id
-                                                        const session = await createSubscriptionCheckout(business.had_trial, business?.business_id!, customerId?.length ? customerId : undefined)
-                                                        router.push(session.url!)
-                                                    }
-                                                    setIsLoading(false)
-                                                }}>Start 14-day free trial <ArrowRightIcon /></Button>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                    <Caption>Growth Plan includes:</Caption>
-                                    <List size="sm" sx={{ mx: 'calc(-1 * var(--ListItem-paddingX))' }}>
-                                        <ListItem>
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            <b className="text-[#FC6161]">Everything in Starter Plan</b>
-                                        </ListItem>
-                                        <ListItem>
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Unlimited Monthly Bookings
-                                        </ListItem>
-                                        <ListItem>
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Customizable Drag & Drop Webpage Builder
-                                        </ListItem>
-                                        <ListItem>
-                                            <div className="flex items-start gap-2">
-                                                <ListItemDecorator>
-                                                    <Check />
-                                                </ListItemDecorator>
-                                                <div className="flex flex-col items-start">
-                                                    Multiple Payment Processing Methods, including:
-                                                    <div className="flex gap-3 items-center">
-                                                        <FaGooglePay size={40} />
-                                                        <FaApplePay size={40} />
-                                                        <SiCashapp size={25} />
-
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </ListItem>
-                                        <ListItem>
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Email Appointment Reminders
-                                        </ListItem>
-                                        <ListItem>
-                                            <ListItemDecorator>
-                                                <Check />
-                                            </ListItemDecorator>
-                                            Booking Analytics
-                                        </ListItem>
-                                    </List>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-
-                </section>
-                <section className="flex w-full justify-center z-20 relative py-24 bg-[#272635]">
-                    <div className="w-[1280px] gap-5 flex items-center text-center flex-col">
-                        <div className="lg:px-48">
-                            <Typography sx={{ color: 'white' }} level="h2">Now in Open Beta — Finally, a Booking Platform That Gets It</Typography>
-                        </div>
-                        <div className="lg:px-48">
-                            <Typography sx={{ color: 'white' }}>We're publicly beta testing AfroAllure to build the best possible platform for Black stylists.
-                                During this phase, you get early access to core features and can help shape the platform. All for <strong>FREE </strong>
-                                This is your chance to grow with us — and stay ahead of the curve.</Typography>
-                        </div>
-                        <Button sx={{ color: 'white' }} variant="outlined" component='a' role="link" href="/register">Start Booking with AfroAllure</Button>
-                    </div>
-                </section>
-
-                <FooterCentered />
-            </div >
-        </CssVarsProvider>
-
-    );
-}
-
-const AnimatedImage = motion.create(Image)
-
-function Feature({ title, desc, image }: { title: string, desc: string, image: StaticImageData }) {
-    return (
-        <Card variant="soft" sx={{
-            boxShadow: 10,
-            height: '100%'
+        <div ref={ref} className="aa-mobile-nav" style={{
+            position: 'sticky', top: 0, zIndex: 100,
+            backgroundColor: DARK, borderBottom: '1px solid rgba(250,247,242,.08)',
         }}>
-            <div>
-                <Image src={image} alt="image" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 22px' }}>
+                <Image src={LOGO} alt="AfroAllure" width={130} style={{ filter: 'brightness(0) invert(1)' }} />
+                <button onClick={() => setOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: WARM, display: 'flex' }}>
+                    <Menu size={24} />
+                </button>
             </div>
-            <CardContent className='text-center flex justify-end'>
-                <div>
-                    <p className="text-xl font-semibold">{title}</p>
-                    <p className="text-md text-slate-400 font-normal">{desc}</p>
+            {open && (
+                <div style={{ background: '#1A1818', borderBottom: '1px solid rgba(250,247,242,.08)' }}>
+                    {[{ label: 'Features', href: '#features' }, { label: 'Pricing', href: '#pricing' }].map(({ label, href }) => (
+                        <a key={label} href={href} onClick={() => setOpen(false)} style={{
+                            display: 'block', padding: '16px 24px',
+                            fontFamily: SANS, fontSize: 15, color: 'rgba(250,247,242,.85)',
+                            borderBottom: '1px solid rgba(250,247,242,.08)', textDecoration: 'none',
+                        }}>{label}</a>
+                    ))}
+                    {isLoggedIn ? (
+                        <div style={{ padding: '16px 24px' }}>
+                            <a href="/dashboard" onClick={() => setOpen(false)} style={{
+                                display: 'block', textAlign: 'center',
+                                background: 'rgba(250,247,242,.1)', color: WARM,
+                                border: '1.5px solid rgba(250,247,242,.2)',
+                                fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                                padding: '14px', borderRadius: 999, textDecoration: 'none',
+                            }}>Dashboard →</a>
+                        </div>
+                    ) : (
+                        <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <a href="/login" onClick={() => setOpen(false)} style={{
+                                display: 'block', textAlign: 'center',
+                                background: 'transparent', color: WARM,
+                                border: '1.5px solid rgba(250,247,242,.3)',
+                                fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                                padding: '13px', borderRadius: 999, textDecoration: 'none',
+                            }}>Login</a>
+                            <a href="/register" onClick={() => setOpen(false)} style={{
+                                display: 'block', textAlign: 'center',
+                                background: RED, color: '#fff',
+                                fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                                padding: '14px', borderRadius: 999, textDecoration: 'none',
+                            }}>Register</a>
+                        </div>
+                    )}
                 </div>
-            </CardContent>
-        </Card>
+            )}
+        </div>
+    )
+}
+
+// ─────────────────────────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────────────────────────
+function Nav({ dark = false, isLoggedIn = false }: { dark?: boolean; isLoggedIn?: boolean }) {
+    const muted = dark ? 'rgba(250,247,242,.7)' : MUTED;
+    return (
+        <nav className="aa-nav" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '22px 56px',
+            borderBottom: `1px solid ${dark ? 'rgba(250,247,242,.08)' : LINE}`,
+            background: dark ? 'transparent' : WARM,
+            position: 'relative', zIndex: 5,
+        }}>
+            <a style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                <div>
+                    <Image style={{ filter: 'brightness(0) invert(1)' }}
+                        src={LOGO} alt="logo-img" width={150} />
+                </div>
+            </a>
+            <div className="aa-nav-links" style={{ display: 'flex', gap: 36, fontFamily: SANS, fontSize: 14, color: muted, fontWeight: 500 }}>
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+            </div>
+            {isLoggedIn ? (
+                <a href="/dashboard" style={{
+                    fontFamily: SANS, fontWeight: 600, fontSize: 13,
+                    color: WARM, border: `1.5px solid rgba(250,247,242,.5)`,
+                    padding: '9px 18px', borderRadius: 999, background: 'transparent', textDecoration: 'none',
+                }}>
+                    Dashboard →
+                </a>
+            ) : (
+                <div style={{ display: 'flex', gap: 10 }}>
+                    <a href="/login" style={{
+                        fontFamily: SANS, fontWeight: 600, fontSize: 13,
+                        color: WARM, border: `1.5px solid rgba(250,247,242,.5)`,
+                        padding: '9px 18px', borderRadius: 999, background: 'transparent', textDecoration: 'none',
+                    }}>
+                        Login
+                    </a>
+                    <a href="/register" style={{
+                        fontFamily: SANS, fontWeight: 600, fontSize: 13,
+                        color: '#fff', background: RED,
+                        padding: '11px 18px', borderRadius: 999, textDecoration: 'none',
+                    }}>
+                        Register
+                    </a>
+                </div>
+            )}
+        </nav>
     );
 }
+
+// ─────────────────────────────────────────────────────────────
+// HERO — confident, direct, dark with hair-texture vibe
+// ─────────────────────────────────────────────────────────────
+function Hero({ isLoggedIn, foundingMemberCount }: { isLoggedIn: boolean; foundingMemberCount: number }) {
+    return (
+        <section style={{
+            background: DARK, color: WARM, position: 'relative', overflow: 'hidden',
+        }}>
+            {/* Texture suggestion: large radial + concentric arcs */}
+            <div style={{
+                position: 'absolute', inset: 0,
+                background: `
+            radial-gradient(ellipse 60% 80% at 85% 30%, rgba(252,97,97,.18), transparent 60%),
+            radial-gradient(ellipse 80% 60% at 10% 90%, rgba(201,151,74,.14), transparent 55%)
+          `,
+                pointerEvents: 'none',
+            }} />
+            {/* Coil pattern lines */}
+            <svg viewBox="0 0 1200 600" preserveAspectRatio="xMaxYMid slice"
+                style={{
+                    position: 'absolute', right: -100, top: 60, width: 800, height: 600,
+                    opacity: .15, pointerEvents: 'none'
+                }}>
+                {[...Array(14)].map((_, i) => (
+                    <circle key={i} cx="900" cy="320" r={40 + i * 22}
+                        fill="none" stroke={i % 3 === 0 ? GOLD : WARM} strokeWidth={i % 3 === 0 ? 1.2 : .6} />
+                ))}
+            </svg>
+
+            <div className="aa-desktop-nav"><Nav dark isLoggedIn={isLoggedIn} /></div>
+
+            <div className="aa-hero-inner" style={{
+                maxWidth: 1240, margin: '0 auto', padding: '88px 56px 120px',
+                position: 'relative', zIndex: 2,
+            }}>
+                <div style={{
+                    fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                    color: 'rgba(250,247,242,.6)', marginBottom: 28,
+                }}>
+                    <span style={{ color: GOLD }}>For independent</span> · stylists · barbers · braiders
+                </div>
+
+                <h1 style={{
+                    fontFamily: SERIF, fontWeight: 400,
+                    fontSize: 'clamp(56px, 8vw, 112px)', lineHeight: .95,
+                    letterSpacing: '-.04em', margin: 0, color: WARM,
+                    maxWidth: 1100, textWrap: 'balance',
+                }}>
+                    Get discovered.<br />
+                    Get booked.<br />
+                    Get <em style={{ fontStyle: 'italic', color: RED }}>paid.</em>
+                </h1>
+
+                <p style={{
+                    fontFamily: SANS, fontSize: 19, lineHeight: 1.5,
+                    color: 'rgba(250,247,242,.78)',
+                    margin: '36px 0 44px', maxWidth: 580, fontWeight: 400,
+                }}>
+                    AfroAllure gives Black beauty professionals a complete business system —
+                    booking, payments, branding, and a community built around you.
+                </p>
+
+                <div className="aa-hero-cta" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <a href="/register" style={{
+                        fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                        background: RED, color: '#fff', border: 'none',
+                        padding: '15px 24px', borderRadius: 999, cursor: 'pointer',
+                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                        textDecoration: 'none',
+                    }}>
+                        Start Free — No Credit Card
+                        <Icon d={ICONS.arrow} size={16} stroke={2} />
+                    </a>
+                    <a href="#pricing" style={{
+                        fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                        background: 'transparent', color: WARM,
+                        border: '1.5px solid rgba(250,247,242,.4)',
+                        padding: '13.5px 22px', borderRadius: 999, cursor: 'pointer',
+                        textDecoration: 'none',
+                    }}>
+                        See Pricing
+                    </a>
+
+                    <span style={{
+                        marginLeft: 12, fontFamily: SANS, fontSize: 13,
+                        color: 'rgba(250,247,242,.6)',
+                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                    }} className="aa-rating">
+                        <span style={{ color: GOLD, display: 'inline-flex' }}>
+                            {[...Array(5)].map((_, i) => <Icon key={i} d={ICONS.star} size={11} fill="currentColor" />)}
+                        </span>
+                        {foundingMemberCount}+ founding members
+                    </span>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// FEATURES — bento layout, mini mockups in code
+// ─────────────────────────────────────────────────────────────
+function Features() {
+    return (
+        <section className="aa-section" style={{ background: WARM, padding: '120px 56px' }}>
+            <div style={{ maxWidth: 1240, margin: '0 auto' }}>
+                <div className="aa-features-header" style={{
+                    display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+                    gap: 48, marginBottom: 56, flexWrap: 'wrap',
+                }}>
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                            color: RED, marginBottom: 24, fontWeight: 600,
+                        }}>Features</div>
+                        <h2 style={{
+                            fontFamily: SERIF, fontWeight: 400,
+                            fontSize: 'clamp(38px, 4.8vw, 60px)', lineHeight: 1.02,
+                            letterSpacing: '-.025em', margin: 0, color: INK,
+                            maxWidth: 720, textWrap: 'balance',
+                        }}>
+                            Everything you need to run a<br />
+                            <em style={{ fontStyle: 'italic' }}>modern beauty business.</em>
+                        </h2>
+                    </div>
+                    <p style={{
+                        fontFamily: SANS, fontSize: 15, lineHeight: 1.6, color: MUTED,
+                        maxWidth: 360, margin: 0, fontWeight: 400,
+                    }}>
+                        Without the complexity, the fees, or the platforms that weren't built for you.
+                    </p>
+                </div>
+
+                {/* Bento grid */}
+                <div className="aa-bento" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(6, 1fr)',
+                    gridAutoRows: 'min-content',
+                    gap: 14,
+                }}>
+                    {/* Smart Booking — large left */}
+                    <BentoCard span={3} rowSpan={2} h={460}>
+                        <BentoHeader
+                            eyebrow="01 · Calendar"
+                            title="Smart Booking Calendar"
+                            desc="Hours, services, buffers, blackouts. Set it once. Clients book themselves — never another DM thread."
+                        />
+                        <CalendarMock />
+                    </BentoCard>
+
+                    {/* Payments — large right */}
+                    <BentoCard span={3} rowSpan={2} h={460} dark>
+                        <BentoHeader
+                            dark
+                            eyebrow="02 · Payments"
+                            title="Integrated Payments"
+                            desc="Take deposits at booking. Cards, Apple Pay, Google Pay, Cash App. Cancellation policies enforced automatically."
+                        />
+                        <PaymentsMock />
+                    </BentoCard>
+
+                    {/* Analytics — wide */}
+                    <BentoCard span={4} h={300}>
+                        <BentoHeader
+                            eyebrow="03 · Analytics"
+                            title="Business Analytics"
+                            desc="What pays best, who returns, what to raise prices on."
+                        />
+                        <AnalyticsMock />
+                    </BentoCard>
+
+                    {/* Booking page — narrow */}
+                    <BentoCard span={2} h={300}>
+                        <BentoHeader
+                            eyebrow="04 · Page"
+                            title="Custom Booking Page"
+                            desc="Your URL. Your brand."
+                        />
+                        <PageMock />
+                    </BentoCard>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function BentoCard({ children, span, rowSpan, h, dark }: any) {
+    return (
+        <div style={{
+            gridColumn: `span ${span}`,
+            gridRow: rowSpan ? `span ${rowSpan}` : undefined,
+            background: dark ? INK : '#fff',
+            color: dark ? WARM : INK,
+            borderRadius: 24, padding: 28,
+            border: `1px solid ${dark ? 'rgba(250,247,242,.08)' : LINE}`,
+            minHeight: h, position: 'relative', overflow: 'hidden',
+            display: 'flex', flexDirection: 'column',
+        }}>{children}</div>
+    );
+}
+
+function BentoHeader({ eyebrow, title, desc, dark }: any) {
+    return (
+        <div style={{ marginBottom: 22 }}>
+            <div style={{
+                fontFamily: MONO, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+                color: dark ? 'rgba(250,247,242,.5)' : MUTED, marginBottom: 12, fontWeight: 600,
+            }}>{eyebrow}</div>
+            <div style={{
+                fontFamily: SERIF, fontSize: 26, fontWeight: 500, letterSpacing: '-.015em',
+                marginBottom: 8, color: dark ? WARM : INK,
+            }}>{title}</div>
+            <div style={{
+                fontFamily: SANS, fontSize: 13, lineHeight: 1.55, fontWeight: 400,
+                color: dark ? 'rgba(250,247,242,.65)' : MUTED, maxWidth: 380,
+            }}>{desc}</div>
+        </div>
+    );
+}
+
+function CalendarMock() {
+    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    const today = 2;
+    return (
+        <div style={{
+            background: WARM, borderRadius: 16, padding: 18,
+            flex: 1, display: 'flex', flexDirection: 'column', gap: 12,
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: INK }}>September</span>
+                <span style={{ fontFamily: MONO, fontSize: 10, color: MUTED }}>WK 38</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+                {days.map((d, i) => (
+                    <div key={i} style={{
+                        textAlign: 'center', fontFamily: SANS, fontSize: 11,
+                        color: MUTED, fontWeight: 600, paddingBottom: 4
+                    }}>{d}</div>
+                ))}
+                {[...Array(7)].map((_, i) => (
+                    <div key={i} style={{
+                        aspectRatio: '1 / 1', borderRadius: 8,
+                        background: i === today ? INK : '#fff',
+                        color: i === today ? WARM : INK,
+                        fontFamily: SANS, fontSize: 13, fontWeight: 600,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: `1px solid ${i === today ? INK : LINE}`,
+                        position: 'relative',
+                    }}>
+                        {16 + i}
+                        {[1, 2, 4, 5].includes(i) && (
+                            <span style={{
+                                position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)',
+                                width: 4, height: 4, borderRadius: '50%',
+                                background: i === today ? RED : RED,
+                            }} />
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {[
+                    { t: '10:00', n: 'Imani O.', s: 'Knotless · 4hr', c: '#E8DCC8' },
+                    { t: '14:30', n: 'Brielle T.', s: 'Silk press', c: '#F2C8C8' },
+                    { t: '18:00', n: 'Ade K.', s: 'Color refresh', c: '#E8CFA0' },
+                ].map((a, i) => (
+                    <div key={i} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '8px 10px', borderRadius: 10, background: '#fff',
+                        border: `1px solid ${LINE}`,
+                    }}>
+                        <span style={{ width: 26, height: 26, borderRadius: '50%', background: a.c }} />
+                        <span style={{ fontFamily: MONO, fontSize: 11, color: INK, fontWeight: 600 }}>{a.t}</span>
+                        <span style={{ fontFamily: SANS, fontSize: 12, color: INK, fontWeight: 500 }}>{a.n}</span>
+                        <span style={{ fontFamily: SANS, fontSize: 11, color: MUTED, marginLeft: 'auto' }}>{a.s}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function PaymentsMock() {
+    return (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{
+                background: 'rgba(250,247,242,.05)', borderRadius: 16, padding: 18,
+                border: '1px solid rgba(250,247,242,.08)',
+            }}>
+                <div style={{
+                    fontFamily: MONO, fontSize: 10, color: 'rgba(250,247,242,.5)',
+                    letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 8
+                }}>Deposit · Imani O.</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontFamily: SERIF, fontSize: 36, fontWeight: 400, color: WARM, letterSpacing: '-.02em' }}>$50.00</span>
+                    <span style={{ fontFamily: SANS, fontSize: 12, color: '#7BD8A0', fontWeight: 600 }}>✓ Paid</span>
+                </div>
+                <div style={{ marginTop: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {['Card', 'Apple Pay', 'Google Pay', 'Cash App'].map((m, i) => (
+                        <span key={i} style={{
+                            fontFamily: SANS, fontSize: 11, color: WARM, fontWeight: 500,
+                            padding: '5px 10px', borderRadius: 999,
+                            background: i === 0 ? RED : 'rgba(250,247,242,.08)',
+                            border: i === 0 ? 'none' : '1px solid rgba(250,247,242,.12)',
+                        }}>{m}</span>
+                    ))}
+                </div>
+            </div>
+
+            <div style={{
+                background: 'rgba(250,247,242,.05)', borderRadius: 16, padding: 18,
+                border: '1px solid rgba(250,247,242,.08)', flex: 1,
+            }}>
+                <div style={{
+                    fontFamily: MONO, fontSize: 10, color: 'rgba(250,247,242,.5)',
+                    letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 14
+                }}>Recent</div>
+                {[
+                    ['Brielle T.', 'Silk press', '$110'],
+                    ['Ade K.', 'Color refresh', '$165'],
+                    ['Joy A.', 'Knotless braids', '$220'],
+                ].map(([n, s, a], i) => (
+                    <div key={i} style={{
+                        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
+                        borderBottom: i < 2 ? '1px solid rgba(250,247,242,.06)' : 'none',
+                    }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: SANS, fontSize: 13, color: WARM, fontWeight: 600 }}>{n}</div>
+                            <div style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(250,247,242,.5)' }}>{s}</div>
+                        </div>
+                        <span style={{ fontFamily: SERIF, fontSize: 17, color: WARM, fontWeight: 500 }}>{a}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function AnalyticsMock() {
+    return (
+        <div className="aa-analytics" style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 18 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 9, color: MUTED, letterSpacing: '.14em',
+                        textTransform: 'uppercase', fontWeight: 600
+                    }}>This month</div>
+                    <div style={{
+                        fontFamily: SERIF, fontSize: 30, fontWeight: 500, color: INK,
+                        letterSpacing: '-.02em', marginTop: 4
+                    }}>$4,820</div>
+                    <div style={{ fontFamily: SANS, fontSize: 11, color: '#0A8D54', fontWeight: 600 }}>↑ 18%</div>
+                </div>
+                <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 10 }}>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 9, color: MUTED, letterSpacing: '.14em',
+                        textTransform: 'uppercase', fontWeight: 600
+                    }}>Top service</div>
+                    <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: INK, marginTop: 4 }}>
+                        Knotless braids
+                    </div>
+                    <div style={{ fontFamily: SANS, fontSize: 11, color: MUTED }}>62% of revenue</div>
+                </div>
+            </div>
+            <div style={{
+                background: WARM, borderRadius: 14, padding: 16,
+                display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+                <div style={{
+                    fontFamily: MONO, fontSize: 9, color: MUTED, letterSpacing: '.14em',
+                    textTransform: 'uppercase', fontWeight: 600
+                }}>Last 12 weeks</div>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'end', gap: 5 }}>
+                    {[40, 56, 48, 72, 60, 82, 70, 90, 78, 96, 84, 100].map((h, i) => (
+                        <div key={i} style={{
+                            flex: 1, height: `${h}%`, borderRadius: 3,
+                            background: i === 11 ? RED : '#D9C9B0',
+                        }} />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function PageMock() {
+    return (
+        <div style={{
+            flex: 1, background: WARM, borderRadius: 12, padding: 14,
+            display: 'flex', flexDirection: 'column',
+        }}>
+            <div style={{
+                fontFamily: MONO, fontSize: 9, color: MUTED, letterSpacing: '.1em',
+                marginBottom: 8
+            }}>nia.afroallure.site</div>
+            <div style={{
+                background: '#3E2A1E', borderRadius: 8, padding: 14, color: '#D9B687',
+                fontFamily: SERIF, fontSize: 18, fontWeight: 500, lineHeight: 1.1,
+                marginBottom: 8,
+            }}>
+                Nia's<br />Studio
+            </div>
+            <div style={{
+                background: '#fff', borderRadius: 8, padding: 8, fontFamily: SANS,
+                fontSize: 10, color: INK, marginBottom: 6, display: 'flex', justifyContent: 'space-between',
+            }}>
+                <span>Knotless braids</span><span style={{ color: RED, fontWeight: 600 }}>Book →</span>
+            </div>
+            <div style={{
+                background: '#fff', borderRadius: 8, padding: 8, fontFamily: SANS,
+                fontSize: 10, color: INK, marginBottom: 6, display: 'flex', justifyContent: 'space-between',
+            }}>
+                <span>Silk press</span><span style={{ color: RED, fontWeight: 600 }}>Book →</span>
+            </div>
+            <div style={{
+                background: '#fff', borderRadius: 8, padding: 8, fontFamily: SANS,
+                fontSize: 10, color: INK, display: 'flex', justifyContent: 'space-between',
+            }}>
+                <span>Color refresh</span><span style={{ color: RED, fontWeight: 600 }}>Book →</span>
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// WHY AFROALLURE — dark
+// ─────────────────────────────────────────────────────────────
+function WhyAfroAllure() {
+    const points = [
+        {
+            n: '01',
+            t: 'Built for Black beauty, not adapted for it',
+            d: `When the platform is built around your specialties from day one — knotless,
+            locs, silk press, kids' styles, barbering — your services aren't an afterthought
+            tucked into a generic dropdown. The defaults work for you, the templates look
+            like you, and the discovery filters reflect what your clients actually search for.`,
+        },
+        {
+            n: '02',
+            t: 'You own your clients — we never sell your data',
+            d: `Your client list is yours. Your booking history is yours. Export it any time,
+            in any format, and take it anywhere. We don't monetize introductions to your
+            own clients, we don't gate communication, and we don't treat your customer
+            relationships as inventory we can resell to the highest bidder.`,
+        },
+        {
+            n: '03',
+            t: 'Business-first, not marketplace-first',
+            d: `The directory is a benefit you receive, not the product we sell. AfroAllure
+            is built so you can run a complete business on it — even if no one ever
+            discovers you through us. Your booking page, your payments, your client
+            management, your analytics. The marketplace is the cherry, not the cake.`,
+        },
+    ];
+
+    return (
+        <section className="aa-section" style={{ background: DARKER, color: WARM, padding: '120px 56px' }}>
+            <div style={{ maxWidth: 1240, margin: '0 auto' }}>
+                <div style={{
+                    fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                    color: 'rgba(250,247,242,.5)', marginBottom: 24,
+                }}>
+                    <span style={{ color: GOLD }}>Difference</span> &nbsp; positioning
+                </div>
+                <h2 style={{
+                    fontFamily: SERIF, fontWeight: 400,
+                    fontSize: 'clamp(48px, 6.5vw, 88px)', lineHeight: .98,
+                    letterSpacing: '-.03em', margin: '0 0 80px', color: WARM,
+                }}>
+                    Why <em style={{ fontStyle: 'italic' }}>AfroAllure?</em>
+                </h2>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {points.map((p, i) => (
+                        <div key={i} className="aa-why-row" style={{
+                            display: 'grid', gridTemplateColumns: '120px 1.5fr 2fr', gap: 48,
+                            padding: '40px 0',
+                            borderTop: '1px solid rgba(250,247,242,.12)',
+                            alignItems: 'start',
+                        }}>
+                            <div style={{
+                                fontFamily: MONO, fontSize: 12, letterSpacing: '.16em',
+                                color: GOLD, fontWeight: 700, paddingTop: 8,
+                            }}>{p.n}</div>
+                            <div style={{
+                                fontFamily: SERIF, fontSize: 28, fontWeight: 500,
+                                letterSpacing: '-.02em', lineHeight: 1.05, color: WARM,
+                                textWrap: 'balance',
+                            }}>{p.t}</div>
+                            <p className="aa-why-desc" style={{
+                                fontFamily: SANS, fontSize: 16, lineHeight: 1.6,
+                                color: 'rgba(250,247,242,.72)', margin: 0, fontWeight: 400,
+                                textWrap: 'pretty',
+                            }}>{p.d}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// PRICING
+// ─────────────────────────────────────────────────────────────
+function Pricing() {
+    const starter = [
+        '10 monthly bookings',
+        'Basic booking page',
+        'Confirmation emails',
+        'Client management',
+        'Booking notifications',
+        'Card payment processing',
+    ];
+    const growth = [
+        'Everything in Starter',
+        'Unlimited bookings',
+        'Drag & drop page builder',
+        'Apple Pay · Google Pay · Cash App',
+        'Automated email reminders',
+        'Booking analytics',
+    ];
+
+    return (
+        <section id="pricing" className="aa-section" style={{ background: WARM, padding: '120px 56px' }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+                <div style={{ textAlign: 'center', marginBottom: 64 }}>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                        color: RED, marginBottom: 22, fontWeight: 600,
+                    }}>Pricing</div>
+                    <h2 style={{
+                        fontFamily: SERIF, fontWeight: 400,
+                        fontSize: 'clamp(40px, 5.2vw, 68px)', lineHeight: 1,
+                        letterSpacing: '-.025em', margin: '0 0 18px', color: INK,
+                    }}>
+                        Plans &amp; <em style={{ fontStyle: 'italic' }}>Pricing</em>
+                    </h2>
+                    <p style={{
+                        fontFamily: SANS, fontSize: 16, lineHeight: 1.5, color: MUTED,
+                        margin: 0, fontWeight: 400,
+                    }}>
+                        Select a plan and start growing your business.
+                    </p>
+                </div>
+
+                <div className="aa-pricing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                    {/* STARTER */}
+                    <div className="aa-pricing-card" style={{
+                        background: '#fff', borderRadius: 24, padding: '40px 36px',
+                        border: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column',
+                    }}>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                            color: MUTED, marginBottom: 18, fontWeight: 600,
+                        }}>Starter</div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                            <span style={{
+                                fontFamily: SERIF, fontSize: 60, fontWeight: 400, color: INK,
+                                letterSpacing: '-.03em', lineHeight: 1
+                            }}>Free</span>
+                        </div>
+                        <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginTop: 8 }}>
+                            Free Forever · for trying things out
+                        </div>
+
+                        <a href="/register" style={{
+                            marginTop: 28, fontFamily: SANS, fontWeight: 600, fontSize: 14,
+                            background: WARM, color: INK, border: `1.5px solid ${INK}`,
+                            padding: '14px 22px', borderRadius: 999, cursor: 'pointer',
+                            display: 'inline-block', textDecoration: 'none', textAlign: 'center',
+                        }}>Join for Free</a>
+
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
+                            color: MUTED, margin: '32px 0 16px', fontWeight: 600,
+                        }}>Includes</div>
+                        <ul style={{
+                            listStyle: 'none', padding: 0, margin: 0,
+                            display: 'flex', flexDirection: 'column', gap: 12
+                        }}>
+                            {starter.map((f, i) => (
+                                <li key={i} style={{
+                                    display: 'flex', alignItems: 'center', gap: 12,
+                                    fontFamily: SANS, fontSize: 14, color: INK, fontWeight: 400,
+                                }}>
+                                    <span style={{
+                                        width: 18, height: 18, borderRadius: '50%',
+                                        background: WARM, color: INK,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        flexShrink: 0,
+                                    }}>
+                                        <Icon d={ICONS.check} size={11} stroke={2.5} />
+                                    </span>
+                                    {f}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* GROWTH — recommended */}
+                    <div className="aa-pricing-card" style={{
+                        background: '#fff', borderRadius: 24, padding: '40px 36px',
+                        border: `2px solid ${RED}`,
+                        boxShadow: '0 30px 80px -30px rgba(252,97,97,.4), 0 0 0 6px rgba(252,97,97,.08)',
+                        display: 'flex', flexDirection: 'column', position: 'relative',
+                    }}>
+                        <span style={{
+                            position: 'absolute', top: -14, left: 36,
+                            background: RED, color: '#fff',
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+                            padding: '7px 14px', borderRadius: 999, fontWeight: 700,
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                        }}>
+                            <Icon d={ICONS.spark} size={11} fill="currentColor" />
+                            Recommended
+                        </span>
+
+                        <div style={{
+                            fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                            color: RED, marginBottom: 18, fontWeight: 600,
+                        }}>Growth</div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                            <span style={{
+                                fontFamily: SERIF, fontSize: 60, fontWeight: 400, color: INK,
+                                letterSpacing: '-.03em', lineHeight: 1
+                            }}>$25</span>
+                            <span style={{ fontFamily: SANS, fontSize: 14, color: MUTED, fontWeight: 500 }}>/month</span>
+                        </div>
+                        <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginTop: 8 }}>
+                            14-day free trial · no credit card required
+                        </div>
+
+                        <a href="/register" style={{
+                            marginTop: 28, fontFamily: SANS, fontWeight: 600, fontSize: 14,
+                            background: RED, color: '#fff', border: 'none',
+                            padding: '14px 22px', borderRadius: 999, cursor: 'pointer',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                            textDecoration: 'none',
+                        }}>
+                            Start 14-day Free Trial
+                            <Icon d={ICONS.arrow} size={14} stroke={2} />
+                        </a>
+
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
+                            color: MUTED, margin: '32px 0 16px', fontWeight: 600,
+                        }}>Everything you need</div>
+                        <ul style={{
+                            listStyle: 'none', padding: 0, margin: 0,
+                            display: 'flex', flexDirection: 'column', gap: 12
+                        }}>
+                            {growth.map((f, i) => (
+                                <li key={i} style={{
+                                    display: 'flex', alignItems: 'center', gap: 12,
+                                    fontFamily: SANS, fontSize: 14, color: INK,
+                                    fontWeight: i === 0 ? 600 : 400,
+                                }}>
+                                    <span style={{
+                                        width: 18, height: 18, borderRadius: '50%',
+                                        background: RED, color: '#fff',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        flexShrink: 0,
+                                    }}>
+                                        <Icon d={ICONS.check} size={11} stroke={2.5} />
+                                    </span>
+                                    {f}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// FEE TRANSPARENCY — calculator + comparison
+// ─────────────────────────────────────────────────────────────
+function FeeTransparency() {
+    const [amount, setAmount] = useState(200)
+
+    const safe = Math.max(0, amount || 0)
+    const stripeFee = safe * 0.029 + 0.30
+    const aaFee = safe * 0.03
+    const payout = Math.max(0, safe - stripeFee - aaFee)
+    const styleSeatLow = Math.round(safe * 0.65)
+    const styleSeatHigh = Math.round(safe * 0.75)
+
+    const rows: [string, string, string][] = [
+        ['Platform fee', '3%', '25–35%'],
+        ['Monthly fee', '$25/mo', '$35+/mo'],
+        ['You keep', `$${payout.toFixed(2)}`, `$${styleSeatLow.toFixed(2)} – $${styleSeatHigh.toFixed(2)}`],
+        ['Marketplace', 'Coming soon', '✓'],
+        ['Built for Black beauty', '✓', '✗'],
+        ['Client ownership', '✓', '✗'],
+    ]
+
+    return (
+        <section className="aa-section" style={{ background: WARM, padding: '80px 56px' }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+                {/* Header */}
+                <div style={{
+                    fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                    color: RED, marginBottom: 16, fontWeight: 600,
+                }}>Pricing Transparency</div>
+                <h2 style={{
+                    fontFamily: SERIF, fontWeight: 400,
+                    fontSize: 'clamp(32px, 4vw, 52px)', lineHeight: 1.05,
+                    letterSpacing: '-.025em', margin: '0 0 0', color: INK,
+                }}>
+                    Understand exactly what you take home.
+                </h2>
+
+                {/* Two-column grid */}
+                <div className="aa-fee-grid">
+                    {/* LEFT — Calculator */}
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+                            color: MUTED, marginBottom: 10, fontWeight: 600,
+                        }}>How our fees work</div>
+                        <div style={{
+                            fontFamily: SERIF, fontSize: 26, fontWeight: 500,
+                            letterSpacing: '-.015em', marginBottom: 8, color: INK,
+                        }}>The breakdown</div>
+                        <div style={{
+                            fontFamily: SANS, fontSize: 14, lineHeight: 1.55, color: MUTED, marginBottom: 24,
+                        }}>
+                            Type any service price to see exactly what you take home.
+                        </div>
+
+                        {/* Input */}
+                        <div style={{ marginBottom: 20 }}>
+                            <label style={{
+                                fontFamily: SANS, fontSize: 11, fontWeight: 600, letterSpacing: '.1em',
+                                textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: 8,
+                            }}>Your service price</label>
+                            <div style={{ position: 'relative' }}>
+                                <span style={{
+                                    position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                                    fontFamily: SANS, fontSize: 15, color: INK, fontWeight: 600,
+                                    pointerEvents: 'none',
+                                }}>$</span>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={amount}
+                                    onChange={e => setAmount(Math.max(0, Number(e.target.value)))}
+                                    style={{
+                                        width: '100%', height: 44, paddingLeft: 28, paddingRight: 14,
+                                        border: `1px solid ${LINE}`, borderRadius: 8,
+                                        fontFamily: SANS, fontSize: 15, color: INK,
+                                        background: '#fff', outline: 'none',
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Breakdown card */}
+                        <div style={{ background: '#fff', border: `1px solid ${LINE}`, borderRadius: 16, padding: 20 }}>
+                            <div style={{
+                                fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase',
+                                color: MUTED, fontWeight: 600, marginBottom: 12,
+                            }}>
+                                On a ${safe.toFixed(2)} service
+                            </div>
+
+                            {[
+                                { label: 'Client pays', value: `$${safe.toFixed(2)}`, muted: false },
+                                { label: 'Stripe processing (2.9% + $0.30)', value: `-$${stripeFee.toFixed(2)}`, muted: true },
+                                { label: 'AfroAllure fee (3%)', value: `-$${aaFee.toFixed(2)}`, muted: true },
+                            ].map(({ label, value, muted }, i) => (
+                                <div key={i} style={{
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    padding: '10px 0', borderBottom: '1px solid rgba(232,226,214,0.5)',
+                                }}>
+                                    <span style={{ fontFamily: SANS, fontSize: 14, color: muted ? MUTED : INK }}>{label}</span>
+                                    <span style={{ fontFamily: SANS, fontSize: 14, color: muted ? MUTED : INK, fontWeight: 500 }}>{value}</span>
+                                </div>
+                            ))}
+
+                            <hr style={{ border: 'none', borderTop: `1px solid ${LINE}`, margin: '4px 0' }} />
+
+                            <div style={{
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0',
+                            }}>
+                                <span style={{ fontFamily: SANS, fontSize: 14, color: INK, fontWeight: 600 }}>You receive</span>
+                                <span style={{ fontFamily: SERIF, fontSize: 22, color: INK, fontWeight: 700, letterSpacing: '-.01em' }}>
+                                    ${payout.toFixed(2)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* RIGHT — Comparison */}
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+                            color: MUTED, marginBottom: 10, fontWeight: 600,
+                        }}>The alternative</div>
+                        <div style={{
+                            fontFamily: SERIF, fontSize: 26, fontWeight: 500,
+                            letterSpacing: '-.015em', marginBottom: 24, color: INK,
+                        }}>See how we compare</div>
+
+                        <div style={{ border: `1px solid ${LINE}`, borderRadius: 16, overflow: 'hidden' }}>
+                            {/* Table header */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', borderBottom: `1px solid ${LINE}` }}>
+                                <div style={{ padding: '12px 16px' }} />
+                                <div style={{
+                                    padding: '12px 16px', textAlign: 'center', background: 'rgba(250,247,242,0.8)',
+                                    fontFamily: MONO, fontSize: 10, letterSpacing: '.14em',
+                                    textTransform: 'uppercase', color: RED, fontWeight: 700,
+                                }}>AfroAllure</div>
+                                <div style={{
+                                    padding: '12px 16px', textAlign: 'center',
+                                    fontFamily: MONO, fontSize: 10, letterSpacing: '.14em',
+                                    textTransform: 'uppercase', color: MUTED, fontWeight: 600,
+                                }}>StyleSeat</div>
+                            </div>
+
+                            {/* Table rows */}
+                            {rows.map(([label, aa, ss], i) => (
+                                <div key={i} style={{
+                                    display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr',
+                                    borderBottom: i < rows.length - 1 ? `1px solid ${LINE}` : 'none',
+                                }}>
+                                    <div style={{ padding: '12px 16px', fontFamily: SANS, fontSize: 13, color: MUTED }}>{label}</div>
+                                    <div style={{
+                                        padding: '12px 16px', textAlign: 'center',
+                                        background: 'rgba(250,247,242,0.5)',
+                                        fontFamily: i === 2 ? SERIF : SANS,
+                                        fontSize: i === 2 ? 16 : 13,
+                                        fontWeight: 600, color: INK,
+                                    }}>{aa}</div>
+                                    <div style={{
+                                        padding: '12px 16px', textAlign: 'center',
+                                        fontFamily: SANS, fontSize: 13, color: MUTED,
+                                    }}>{ss}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <p style={{
+                            fontFamily: SANS, fontSize: 12, color: MUTED, fontStyle: 'italic',
+                            marginTop: 12, lineHeight: 1.5,
+                        }}>
+                            StyleSeat figures based on their published commission structure.
+                            Stripe processing applies to all platforms that accept card payments.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Full-width callout */}
+                <div style={{
+                    marginTop: 40, background: 'rgba(201,151,74,0.08)',
+                    border: '1px solid rgba(201,151,74,0.3)',
+                    borderRadius: 12, padding: 20,
+                    display: 'flex', gap: 12, alignItems: 'flex-start',
+                }}>
+                    <Sparkles size={18} color="#C9974A" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <p style={{ fontFamily: SANS, fontSize: 14, color: '#3A3532', lineHeight: 1.6, margin: 0 }}>
+                        Why we charge a fee at all: the 3% keeps AfroAllure running — the servers, the
+                        payments infrastructure, the reminder emails, the analytics, the marketplace
+                        we're building. No investor pressure to extract more from your earnings.
+                        Just enough to build something that lasts for this community.
+                    </p>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+// ─────────────────────────────────────────────────────────────
+// FOUNDING MEMBER — warm white with thick gold border
+// ─────────────────────────────────────────────────────────────
+function Founding({ foundingMemberCount }: { foundingMemberCount: number }) {
+    return (
+        <section className="aa-section" style={{ background: WARM, padding: '40px 56px 120px' }}>
+            <div className="aa-founding-card" style={{
+                maxWidth: 1240, margin: '0 auto',
+                background: '#fff',
+                border: `3px solid ${GOLD}`,
+                borderRadius: 28, padding: '72px 64px',
+                position: 'relative', overflow: 'hidden',
+            }}>
+                {/* Gold ornamental corners */}
+                <svg viewBox="0 0 200 200" style={{
+                    position: 'absolute', top: -40, right: -40, width: 280, height: 280,
+                    opacity: .12, pointerEvents: 'none',
+                }}>
+                    {[...Array(8)].map((_, i) => (
+                        <circle key={i} cx="100" cy="100" r={20 + i * 12}
+                            fill="none" stroke={GOLD} strokeWidth="1" />
+                    ))}
+                </svg>
+
+                <div className="aa-founding-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 64, alignItems: 'center', position: 'relative' }}>
+                    <div>
+                        <div style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            background: GOLD, color: '#fff',
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+                            padding: '8px 14px', borderRadius: 999, fontWeight: 700, marginBottom: 28,
+                        }}>
+                            <Icon d={ICONS.crown} size={12} stroke={2} />
+                            Founding member
+                        </div>
+
+                        <h2 style={{
+                            fontFamily: SERIF, fontWeight: 400,
+                            fontSize: 'clamp(40px, 5vw, 60px)', lineHeight: 1,
+                            letterSpacing: '-.025em', margin: 0, color: INK, textWrap: 'balance',
+                        }}>
+                            Lock in your rate.<br />
+                            <em style={{ fontStyle: 'italic', color: GOLD }}>Forever.</em>
+                        </h2>
+
+                        <div style={{
+                            fontFamily: SANS, fontSize: 16, lineHeight: 1.65, color: '#3A3532',
+                            marginTop: 28, fontWeight: 400, maxWidth: 560,
+                        }}>
+                            <p style={{ margin: '0 0 14px' }}>
+                                Founding members get a rate that never changes — no matter what AfroAllure charges
+                                in the future. First in the marketplace when it launches. Your badge on your
+                                public page, permanently.
+                            </p>
+                            <p style={{ margin: 0, color: MUTED }}>
+                                Only 250 spots. Once they're gone, this offer doesn't come back.
+                            </p>
+                        </div>
+
+                        <div className="aa-founding-cta" style={{ marginTop: 36, display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <a href="/register" style={{
+                                fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                                background: INK, color: WARM, border: 'none',
+                                padding: '15px 24px', borderRadius: 999, cursor: 'pointer',
+                                display: 'inline-flex', alignItems: 'center', gap: 8,
+                                textDecoration: 'none',
+                            }}>
+                                Become a Founding Member
+                                <Icon d={ICONS.arrow} size={16} stroke={2} />
+                            </a>
+                            <span style={{
+                                fontFamily: MONO, fontSize: 11, letterSpacing: '.14em',
+                                textTransform: 'uppercase', color: MUTED,
+                            }}>
+                                {foundingMemberCount} / 250 spots claimed
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Right: founding member benefits */}
+                    <div style={{
+                        background: WARM, borderRadius: 20, padding: 32,
+                        border: `1px solid ${LINE}`,
+                    }}>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
+                            color: GOLD, fontWeight: 700, marginBottom: 20,
+                        }}>What's included</div>
+                        <ul style={{
+                            listStyle: 'none', padding: 0, margin: 0,
+                            display: 'flex', flexDirection: 'column', gap: 18
+                        }}>
+                            {[
+                                ['First-listed in marketplace', 'When it opens'],
+                                ['Rate locked forever', '$25/mo — always'],
+                                ['Founding-member badge', 'On your public page'],
+                                ['Priority support', 'Direct access to the team'],
+                            ].map(([t, d], i) => (
+                                <li key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                                    <span style={{
+                                        width: 22, height: 22, borderRadius: '50%',
+                                        background: GOLD, color: '#fff', flexShrink: 0,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    }}>
+                                        <Icon d={ICONS.check} size={12} stroke={2.5} />
+                                    </span>
+                                    <div>
+                                        <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: INK }}>{t}</div>
+                                        <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED }}>{d}</div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// FINAL CTA — dark
+// ─────────────────────────────────────────────────────────────
+function FinalCTA() {
+    return (
+        <section className="aa-section" style={{ background: DARK, color: WARM, padding: '120px 56px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{
+                position: 'absolute', inset: 0,
+                background: `radial-gradient(ellipse 60% 80% at 50% 100%, rgba(252,97,97,.18), transparent 60%)`,
+                pointerEvents: 'none',
+            }} />
+            <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+                <div style={{
+                    fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                    color: 'rgba(250,247,242,.5)', marginBottom: 28,
+                }}>
+                    <span style={{ color: RED }}>Beta</span> &nbsp; closing soon
+                </div>
+                <h2 style={{
+                    fontFamily: SERIF, fontWeight: 400,
+                    fontSize: 'clamp(46px, 6vw, 84px)', lineHeight: .98, letterSpacing: '-.03em',
+                    margin: 0, color: WARM, textWrap: 'balance',
+                }}>
+                    The beta is free. The founding<br />
+                    spots <em style={{ fontStyle: 'italic', color: GOLD }}>won't be.</em>
+                </h2>
+                <p style={{
+                    fontFamily: SANS, fontSize: 17, lineHeight: 1.55,
+                    color: 'rgba(250,247,242,.75)',
+                    margin: '24px auto 40px', maxWidth: 560, fontWeight: 400,
+                }}>
+                    Lock in your founding-member rate now. First in the marketplace at launch.
+                    Your badge, your rate — locked forever. No credit card required.
+                </p>
+
+                <a href="/register" style={{
+                    fontFamily: SANS, fontWeight: 600, fontSize: 16,
+                    background: RED, color: '#fff', border: 'none',
+                    padding: '17px 30px', borderRadius: 999, cursor: 'pointer',
+                    display: 'inline-flex', alignItems: 'center', gap: 10,
+                    textDecoration: 'none',
+                }}>
+                    Start Booking with AfroAllure
+                    <Icon d={ICONS.arrow} size={16} stroke={2} />
+                </a>
+
+                <div style={{
+                    marginTop: 24, fontFamily: SANS, fontSize: 13,
+                    color: 'rgba(250,247,242,.55)',
+                }}>
+                    No credit card · Cancel anytime · Built in Atlanta
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// FOOTER (same as landing)
+// ─────────────────────────────────────────────────────────────
+function Footer() {
+    return (
+        <footer className="aa-section" style={{
+            background: DARK, color: WARM, padding: '64px 56px 48px',
+            borderTop: '1px solid rgba(250,247,242,.08)'
+        }}>
+            <div className="aa-footer-grid" style={{
+                maxWidth: 1240, margin: '0 auto',
+                display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: 48,
+                paddingBottom: 48, borderBottom: '1px solid rgba(250,247,242,.1)',
+            }}>
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 16 }}>
+                        <div>
+                            <Image style={{ filter: 'brightness(0) invert(1)' }}
+                                src={LOGO} alt="logo-img" width={150} />
+                        </div>
+                    </div>
+                    <p style={{
+                        fontFamily: SERIF, fontSize: 18, color: 'rgba(250,247,242,.7)',
+                        margin: 0, fontStyle: 'italic', maxWidth: 320, lineHeight: 1.4
+                    }}>
+                        The platform Black beauty was waiting for.
+                    </p>
+                </div>
+                <div>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 10, letterSpacing: '.16em',
+                        textTransform: 'uppercase', color: 'rgba(250,247,242,.5)', marginBottom: 18
+                    }}>Platform</div>
+                    <ul style={{
+                        listStyle: 'none', padding: 0, margin: 0,
+                        display: 'flex', flexDirection: 'column', gap: 12, fontFamily: SANS, fontSize: 14
+                    }}>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Features</a></li>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Marketplace</a></li>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>For Businesses</a></li>
+                        <li><a href="/founding-members" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Founding Members</a></li>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Register</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 10, letterSpacing: '.16em',
+                        textTransform: 'uppercase', color: 'rgba(250,247,242,.5)', marginBottom: 18
+                    }}>Reach us</div>
+                    <ul style={{
+                        listStyle: 'none', padding: 0, margin: 0,
+                        display: 'flex', flexDirection: 'column', gap: 12, fontFamily: SANS, fontSize: 14
+                    }}>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Instagram</a></li>
+                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>hello@afroallure.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div className="aa-footer-bottom" style={{
+                maxWidth: 1240, margin: '0 auto', paddingTop: 24,
+                display: 'flex', justifyContent: 'space-between',
+                fontFamily: MONO, fontSize: 11, color: 'rgba(250,247,242,.4)',
+                letterSpacing: '.08em',
+            }}>
+                <span>© 2026 AfroAllure, Inc.</span>
+                <span>Made with care · Atlanta &amp; everywhere</span>
+            </div>
+        </footer>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────
+// PAGE EXPORT
+// ─────────────────────────────────────────────────────────────
+function AfroAllureBusiness({ isLoggedIn = false, foundingMemberCount = 0 }: { isLoggedIn?: boolean; foundingMemberCount?: number }) {
+    useEffect(() => {
+        const cleanup = () => {
+            document.body.style.pointerEvents = ''
+            document.body.removeAttribute('data-scroll-locked')
+            document.body.removeAttribute('aria-hidden')
+        }
+        const handlePageShow = (e: PageTransitionEvent) => { if (e.persisted) window.location.reload() }
+        window.addEventListener('pageshow', handlePageShow)
+        cleanup()
+        return () => window.removeEventListener('pageshow', handlePageShow)
+    }, [])
+
+    return (
+        <div className="aa-business-root" style={{ background: WARM, color: INK, fontFamily: SANS, width: '100%' }}>
+            <MobileNav isLoggedIn={isLoggedIn} />
+            <Hero isLoggedIn={isLoggedIn} foundingMemberCount={foundingMemberCount} />
+            <Features />
+            <WhyAfroAllure />
+            <Pricing />
+            <FeeTransparency />
+            <Founding foundingMemberCount={foundingMemberCount} />
+            <FinalCTA />
+            <Footer />
+        </div>
+    );
+}
+export default AfroAllureBusiness;

@@ -1,72 +1,53 @@
 'use server'
 
-import { createClient } from "@utils/supabase/server";
-import { Database } from "../../../../../lib/database.types";
+import { createClient } from "@/app/utils/supabase/server";
 import { BookingSettings, PaymentConfig } from "./bookingSettingsClient";
-import { PostgrestSingleResponse } from "@supabase/supabase-js";
-import { stripe } from "@lib/utils";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe/stripeClient";
 
+export const handleBookingSettings = async (
+    bookingSettings: any,
+    businessId: string,
+    paymentConfigId: string,
+    paymentConfig: PaymentConfig,
+    ogPaymentConfig: any
+) => {
+    const supabase = await createClient()
 
-
-export const handleBookingSettings = async (bookingSettings: any, businessId: string, paymentConfigId: string, paymentConfig: PaymentConfig, ogPaymentConfig: any) => {
-    const supabase = createClient<Database>();
-    let oldPayConfig = JSON.stringify({
-        google_pay: {
-            display_preference: {
-                preference: ogPaymentConfig.google_pay?.display_preference.preference!
-            }
-        },
-        apple_pay: {
-            display_preference: {
-                preference: ogPaymentConfig.apple_pay?.display_preference.preference!
-            }
-        },
-        amazon_pay: {
-            display_preference: {
-                preference: ogPaymentConfig.amazon_pay?.display_preference.preference!
-            }
-        },
-        cashapp: {
-            display_preference: {
-                preference: ogPaymentConfig.cashapp?.display_preference.preference!
-            }
-        },
+    const oldPayConfig = JSON.stringify({
+        google_pay: { display_preference: { preference: ogPaymentConfig.google_pay?.display_preference.preference } },
+        apple_pay: { display_preference: { preference: ogPaymentConfig.apple_pay?.display_preference.preference } },
+        amazon_pay: { display_preference: { preference: ogPaymentConfig.amazon_pay?.display_preference.preference } },
+        cashapp: { display_preference: { preference: ogPaymentConfig.cashapp?.display_preference.preference } },
     })
-    let newPayConfig = JSON.stringify(paymentConfig)
-    const { data: hasOnboarded } = await supabase.from('business_users').select('completed_stripe_onboarding, stripe_acc_id').eq('business_id', businessId).maybeSingle()
-    if (!hasOnboarded?.completed_stripe_onboarding && bookingSettings.deposit.enabled) {
+    const newPayConfig = JSON.stringify(paymentConfig)
+
+    const { data: bizData } = await supabase
+        .from('business_users')
+        .select('completed_stripe_onboarding, stripe_acc_id')
+        .eq('business_id', businessId)
+        .maybeSingle()
+
+    if (!bizData?.completed_stripe_onboarding && bookingSettings.deposit.enabled) {
         return false
     }
-    if (newPayConfig === oldPayConfig) { // If the payment method config isn't different from the one already stored, don't update it
-        await stripe.paymentMethodConfigurations.update(paymentConfigId, {
-            google_pay: {
-                display_preference: {
-                    preference: paymentConfig.google_pay.display_preference.preference
-                }
+
+    // Only call Stripe API when the payment config actually changed
+    if (newPayConfig !== oldPayConfig) {
+        await stripe.paymentMethodConfigurations.update(
+            paymentConfigId,
+            {
+                google_pay: { display_preference: { preference: paymentConfig.google_pay.display_preference.preference } },
+                apple_pay: { display_preference: { preference: paymentConfig.apple_pay.display_preference.preference } },
+                amazon_pay: { display_preference: { preference: paymentConfig.amazon_pay.display_preference.preference } },
+                cashapp: { display_preference: { preference: paymentConfig.cashapp.display_preference.preference } },
             },
-            apple_pay: {
-                display_preference: {
-                    preference: paymentConfig.apple_pay.display_preference.preference
-                }
-            },
-            amazon_pay: {
-                display_preference: {
-                    preference: paymentConfig.amazon_pay.display_preference.preference
-                }
-            },
-            cashapp: {
-                display_preference: {
-                    preference: paymentConfig.cashapp.display_preference.preference
-                }
-            }
-        }, {
-            stripeAccount: hasOnboarded?.stripe_acc_id!
-        })
+            { stripeAccount: bizData?.stripe_acc_id! }
+        )
     }
 
-    const { data, error } = await supabase.from('business_policies').insert(
-        {
+    const { data: policyData, error: policyError } = await supabase
+        .from('business_policies')
+        .insert({
             business: businessId,
             deposit: bookingSettings.deposit,
             late_fee: bookingSettings.lateFee,
@@ -76,19 +57,18 @@ export const handleBookingSettings = async (bookingSettings: any, businessId: st
             read_before_booking: bookingSettings.readBeforeBooking,
             reschedule_day_limit: bookingSettings.rescheduleDayLimit,
             reschedule_limit: bookingSettings.rescheduleLimit,
-            book_ahead_value: bookingSettings.bookAheadValue
-        }
-    ).select("id").then(async (result: PostgrestSingleResponse<{
-        id: string;
-    }[]>) => {
-        return await supabase.from('business_users').update({
-            booking_policies: result.data![0].id
-        }).eq("business_id", businessId).select("booking_policies")
-    });
-    console.log(data, error)
+            book_ahead_value: bookingSettings.bookAheadValue,
+        })
+        .select('id')
 
-    if (error) {
-        return error
-    }
+    if (policyError) return policyError
+
+    const { data, error } = await supabase
+        .from('business_users')
+        .update({ booking_policies: policyData[0].id })
+        .eq('business_id', businessId)
+        .select('booking_policies')
+
+    if (error) return error
     return data
 }

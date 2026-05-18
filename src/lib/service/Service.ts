@@ -1,7 +1,21 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { AddOn } from "@utils/types/service";
+import { AddOn } from "@/app/utils/types/service";
 import { Database } from "../../../lib/database.types";
 
+
+export interface ServiceType {
+    id: string,
+    name: string,
+    business: string,
+    description: string,
+    length: number,
+    price: number,
+    photo_url: string,
+    imagePath: string,
+    addons: AddOn[],
+    categories: string[],
+    availability: string
+}
 export class Service {
     constructor(
         public id: string,
@@ -16,7 +30,22 @@ export class Service {
         public categories: string[],
         public availability: string
     ) { }
-    static async createDefault(supabase: SupabaseClient<Database>, businessId: string, availabilityId: string) {
+    toClient() {
+        return {
+            id: this.id,
+            name: this.name,
+            business: this.business,
+            description: this.description,
+            length: this.length,
+            price: this.price,
+            photo_url: this.photo_url,
+            imagePath: this.imagePath,
+            addons: this.addons,
+            categories: this.categories,
+            availability: this.availability
+        }
+    }
+    static async createDefault(supabase: SupabaseClient<Database, any>, businessId: string, availabilityId: string) {
         const { data: row, error } = await supabase.from('services').insert([
             {
                 name: "Box Braids",
@@ -66,7 +95,7 @@ export class Service {
             row.availability
         )
     }
-    static async create(supabase: SupabaseClient<Database>, serviceData: {
+    static async create(supabase: SupabaseClient<Database, any>, serviceData: {
         name: string
         business: string
         description: string
@@ -97,7 +126,7 @@ export class Service {
             throw Error(error.message)
         }
     }
-    static async fetch(supabase: SupabaseClient<Database>, businessId: string) {
+    static async fetch(supabase: SupabaseClient<Database, any>, businessId: string) {
         try {
             const { data: row, error } = await supabase.from('services').select().eq('business', businessId)
             if (error) throw Error(error.message)
@@ -106,7 +135,7 @@ export class Service {
             throw Error(error.message)
         }
     }
-    static async fetchById(supabase: SupabaseClient<Database>, serviceId: string) {
+    static async fetchById(supabase: SupabaseClient<Database, any>, serviceId: string) {
         try {
             const { data: row, error } = await supabase.from('services').select().eq('id', serviceId).single()
             if (error) throw Error(error.message)
@@ -115,7 +144,7 @@ export class Service {
             throw Error(error.message)
         }
     }
-    async update(supabase: SupabaseClient<Database>, updatedService: Service) {
+    async update(supabase: SupabaseClient<Database, any>, updatedService: Service) {
         try {
             const { data: row, error } = await supabase.from('services').update({
                 name: updatedService.name,
@@ -135,7 +164,7 @@ export class Service {
             throw Error(error.message)
         }
     }
-    async delete(supabase: SupabaseClient<Database>) {
+    async delete(supabase: SupabaseClient<Database, any>) {
         try {
             const services = await Service.fetch(supabase, this.business)
             if (Array.isArray(services)) {

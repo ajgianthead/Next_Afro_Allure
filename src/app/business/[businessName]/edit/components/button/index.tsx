@@ -1,6 +1,5 @@
 'use client'
 
-import { IconButton, Button as MUIButton, ToggleButtonGroup, } from "@mui/joy";
 import { FieldLabel, registerOverlayPortal } from "@puckeditor/core";
 import React, { useEffect, useRef } from 'react';
 import type { Fields } from "@puckeditor/core";
@@ -12,8 +11,9 @@ import { buttonProps } from "../defaultStyles";
 export const ButtonComponent: any = {
     resolveFields: buttonResolvedFields,
     defaultProps: buttonProps,
-    render: ({ text, link, action, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, numOfCols, numOfRows, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align }: any) => {
-        return <a href={link} target="_blank">
+    render: ({ text, link, action, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, numOfCols, numOfRows, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, mobileWidth }: any) => {
+        const isFull = mobileWidth === 'full'
+        return <a href={link} target="_blank" className={isFull ? 'block w-full md:inline-block md:w-auto' : 'inline-block'}>
             <button style={{
                 padding: `${padding}rem`,
                 paddingTop: paddingExpanded === 'true' ? `${paddingTop}rem` : `${padding}rem`,
@@ -53,8 +53,9 @@ export const ButtonComponent: any = {
                 lineHeight,
                 textAlign: align,
                 textDecoration: style?.includes('underline') ? 'underline' : "none",
-                fontStyle: style?.includes('italic') ? 'italic' : 'normal'
-            }} className={`apply-font-${id.split('-')[1]} max-w-max`}>
+                fontStyle: style?.includes('italic') ? 'italic' : 'normal',
+                width: isFull ? '100%' : undefined,
+            }} className={`apply-font-${id.split('-')[1]} ${isFull ? 'w-full md:w-auto' : 'max-w-max'}`}>
                 {text}
             </button>
         </a>

@@ -1,21 +1,22 @@
 'use server'
-
-import { stripe as SP } from "../../../lib/utils";
-import pool from "@utils/dbPool";
+import pool from "@/app/utils/dbPool";
 import { DateTime } from "luxon";
 import { Resend } from "resend";
 import { getSlots, OutputSlot } from "slot-calculator";
 import AppointmentRescheduled from "../../../../emails/appointment-rescheduled";
 import RescheduledAppointment from "../../../../emails/rescheduled-appointment";
-import { createClient } from "@utils/supabase/server";
-import { Database } from "../../../../lib/database.types";
+import { createClient } from "@/app/utils/supabase/server";
 import { assignAddons } from "app/api/util/transformServices";
 import { trackAppointmentRescheduled } from "../../../../lib/analytics";
+import { NotificationType } from "@/lib/notifications/Notification";
+import { formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails";
+import { runs } from "@trigger.dev/sdk/v3";
+import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders";
 
-const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const fetchBusinessData = async (businessName: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient();
     const { data, error } = await supabase.from("business_users").select("*, availabilities(*), services(*), appointments(*), web_editors(*)").eq("url_name", `${businessName}`).single();
     const services = data?.services
     if (error) {
@@ -25,7 +26,7 @@ export const fetchBusinessData = async (businessName: string) => {
 }
 
 export const fetchBusinessPolicies = async (policyId: string) => {
-    const supabase = createClient<Database>();
+    const supabase = await createClient();
     const { data: policy, error } = await supabase.from('business_policies').select('*').eq('id', policyId).single()
     return policy
 }
@@ -88,37 +89,6 @@ export const
 
     }
 
-export const cancelAppointment = async (appointmentID: string) => {
-    // Check if appointment still exists
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-        const result = await client.query(`SELECT * FROM appointments app WHERE app.id = $1`, [appointmentID])
-        if (result.rowCount === 0) {
-            throw Error("Appointment doesn't exist")
-        }
-        const appointment = result.rows[0]
-        if (appointment.status === "CANCELLED") {
-            throw Error("Already cancelled")
-        }
-        await client.query(`UPDATE appointments SET status = 'CANCELLED' WHERE id = $1 RETURNING *`, [appointmentID])
-        // Handle deposit refund
-        await client.query('END')
-    } catch (error: any) {
-        if (error.message === "Appointment doesn't exist") {
-            await client.query("ROLLBACK")
-            return -1
-        }
-        if (error.message === "Already cancelled") {
-            await client.query("ROLLBACK")
-            return 0
-        }
-
-    } finally {
-        client.release();
-    }
-
-}
 
 export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
     start: string;
@@ -144,139 +114,256 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
         }
         const ogAppointment = appointments.filter((appointment: Appointment, index: number) => appointment.id === appointmentID)[0]
 
+        // Enforce reschedule_day_limit
+        if (ogAppointment.policy_id) {
+            const policyRes = await client.query(
+                `SELECT reschedule_day_limit FROM business_policies WHERE id = $1`,
+                [ogAppointment.policy_id]
+            )
+            const rescheduleDayLimit = policyRes.rows[0]?.reschedule_day_limit ?? 0
+            if (rescheduleDayLimit > 0) {
+                const daysUntil = DateTime.fromJSDate(ogAppointment.start).diff(DateTime.now(), 'days').days
+                if (daysUntil < rescheduleDayLimit) {
+                    throw new Error(
+                        `Rescheduling is not allowed within ${rescheduleDayLimit} day${rescheduleDayLimit !== 1 ? 's' : ''} of the appointment.`
+                    )
+                }
+            }
+        }
+
         // UPDATE appointment timeslot
         // FIXME: Update "updated_at" timestamp
         const appointment = (await client.query(`UPDATE appointments SET start = $1, "end" = $2, reschedules = $3 WHERE id = $4 RETURNING *`, [timeSlot.start, timeSlot.end, parseInt(ogAppointment.reschedules) - 1, appointmentID])).rows[0]
         const business = (await client.query(`SELECT * FROM business_users WHERE business_id = $1`, [appointment.business])).rows[0]
         await client.query('COMMIT')
-        await resend.emails.send({
-            from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
-            to: appointment.client_metadata?.email,
-            subject: "Appointment Rescheduled",
-            react: AppointmentRescheduled({
-                socials: {
-                    facebook: "",
-                    instagram: "",
-                    twitter: ""
-                },
-                clientData: {
-                    firstName: appointment.client_metadata.firstName,
-                    lastName: appointment.client_metadata.lastName,
-                },
-                businessData: {
-                    id: business.business_id,
-                    name: business.business_name,
-                    businessAddress: "2800 SW 35th Place, Gainesville, FL"
-                },
-                appointmentData: {
-                    id: appointment.id,
-                    start: DateTime.fromJSDate(appointment.start).toISO()!,
-                    end: DateTime.fromJSDate(appointment.end).toISO()!
-                },
-                serviceName: appointment.service_data.name
-            }),
-        })
-        await resend.emails.send({
-            from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
-            to: business?.email!,
-            subject: "Booking Alert",
-            react: RescheduledAppointment({
-                socials: {
-                    facebook: "",
-                    instagram: "",
-                    twitter: ""
-                },
-                clientData: {
-                    firstName: appointment.client_metadata.firstName,
-                    lastName: appointment.client_metadata.lastName,
-                },
-                businessData: {
-                    id: business.business_id,
-                    name: business.business_name,
-                    businessAddress: "2800 SW 35th Place, Gainesville, FL"
-                },
-                appointmentData: {
-                    id: appointment.id,
-                    start: DateTime.fromJSDate(appointment.start).toISO()!,
-                    end: DateTime.fromJSDate(appointment.end).toISO()!
-                },
-                serviceName: appointment.service_data.name
-            }),
-        });
-        await trackAppointmentRescheduled({
+        const businessAddress = formatBusinessAddress(business.account_settings?.business_address ?? {})
+        try {
+            await resend.emails.send({
+                from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
+                to: appointment.client_metadata?.email,
+                subject: "Appointment Rescheduled",
+                react: AppointmentRescheduled({
+                    socials: { instagram: "" },
+                    clientData: {
+                        firstName: appointment.client_metadata.firstName,
+                        lastName: appointment.client_metadata.lastName,
+                    },
+                    businessData: {
+                        id: business.business_id,
+                        name: business.business_name,
+                        businessAddress,
+                    },
+                    appointmentData: {
+                        id: appointment.id,
+                        start: DateTime.fromJSDate(appointment.start).toISO()!,
+                        end: DateTime.fromJSDate(appointment.end).toISO()!,
+                    },
+                    serviceName: appointment.service_data.name,
+                }),
+            })
+            await resend.emails.send({
+                from: 'appointment-confirmed <noreply@reminder.afroallure.co>',
+                to: business?.email!,
+                subject: "Booking Alert",
+                react: RescheduledAppointment({
+                    socials: { instagram: "" },
+                    clientData: {
+                        firstName: appointment.client_metadata.firstName,
+                        lastName: appointment.client_metadata.lastName,
+                    },
+                    businessData: {
+                        id: business.business_id,
+                        name: business.business_name,
+                        businessAddress,
+                    },
+                    appointmentData: {
+                        id: appointment.id,
+                        start: DateTime.fromJSDate(appointment.start).toISO()!,
+                        end: DateTime.fromJSDate(appointment.end).toISO()!,
+                    },
+                    serviceName: appointment.service_data.name,
+                }),
+            })
+        } catch (emailErr) {
+            console.error('Failed to send reschedule emails:', emailErr)
+        }
+
+        trackAppointmentRescheduled({
             businessId: appointment.business,
             serviceId: appointment.service_data.id,
             serviceName: appointment.service_data.name,
             servicePrice: appointment.service_data.price,
-            appointmentType: ""
-        })
+            appointmentType: "",
+        }).catch(console.error)
+
+        // rescheduled-booking notification — non-critical
+        ;(async () => {
+            try {
+                const supabase = await createClient()
+                await supabase.from('notifications').insert({
+                    body: `${appointment.client_metadata.firstName} ${appointment.client_metadata.lastName} rescheduled their ${appointment.service_data.name} appointment to ${DateTime.fromJSDate(appointment.start).toFormat('LLLL dd, yyyy')} at ${DateTime.fromJSDate(appointment.start).toLocaleString(DateTime.TIME_SIMPLE)}.`,
+                    title: 'Appointment Rescheduled',
+                    read: false,
+                    business_id: appointment.business,
+                    type: NotificationType.RescheduledBooking,
+                    appointment_id: appointment.id,
+                })
+            } catch (notifErr) {
+                console.error('Failed to insert rescheduled-booking notification:', notifErr)
+            }
+        })()
+
+        // Cancel old reminder jobs and schedule new ones — fire-and-forget, non-critical
+        ;(async () => {
+            try {
+                const reminders = ogAppointment.reminder_ids as any
+                if (reminders?.business?.hour) await runs.cancel(reminders.business.hour)
+                if (reminders?.business?.day) await runs.cancel(reminders.business.day)
+                if (reminders?.client?.hour) await runs.cancel(reminders.client.hour)
+                if (reminders?.client?.day) await runs.cancel(reminders.client.day)
+                if (ogAppointment.payment_link_id) await runs.cancel(ogAppointment.payment_link_id)
+                if (reminders?.paymentCheck) await runs.cancel(reminders.paymentCheck)
+                if (reminders?.noShowCheck) await runs.cancel(reminders.noShowCheck)
+
+                const settings = business.account_settings ?? {}
+                const ids = await AppointmentReminders.schedule({
+                    appointmentId: appointment.id,
+                    start: DateTime.fromJSDate(appointment.start).toISO()!,
+                    end: DateTime.fromJSDate(appointment.end).toISO()!,
+                    serviceName: appointment.service_data.name,
+                    businessData: {
+                        id: business.business_id,
+                        name: business.business_name,
+                        email: business.email,
+                        address: formatBusinessAddress(business.account_settings?.business_address ?? {}),
+                    },
+                    clientData: {
+                        firstName: appointment.client_metadata.firstName,
+                        lastName: appointment.client_metadata.lastName,
+                        email: appointment.client_metadata.email,
+                        phoneNumber: appointment.client_metadata.phoneNumber,
+                    },
+                    settings: {
+                        clientReminders: {
+                            email_1: settings.app_reminders?.email_1 ?? false,
+                            email_24: settings.app_reminders?.email_24 ?? false,
+                        },
+                        businessReminders: {
+                            enabled: settings.notifications?.email ?? false,
+                            email_1: settings.notifications?.email_1 ?? false,
+                            email_24: settings.notifications?.email_24 ?? false,
+                        },
+                    },
+                })
+                const supabase = await createClient()
+                await supabase.from('appointments').update({
+                    reminder_ids: {
+                        business: { hour: ids.business.hour, day: ids.business.day },
+                        client: { hour: ids.client.hour, day: ids.client.day },
+                        paymentCheck: ids.paymentCheck,
+                        noShowCheck: ids.noShowCheck,
+                    },
+                    payment_link_id: ids.paymentLink,
+                }).eq('id', appointment.id)
+            } catch (err) {
+                console.error('Failed to manage reminders after public reschedule:', err)
+            }
+        })()
 
         return appointment
     } catch (error: any) {
-
         await client.query('ROLLBACK')
+        throw new Error(error.message)
     } finally {
         client.release();
     }
 }
 
-export const bookAppointment = async (addons: any, paymentIntentID: string, businessId: string, policyId: string, serviceData: Service, client_metadata: any, timeSlot: {
+export const bookAppointment = async (addons: any, paymentIntentID: string, businessId: string, policyId: string, serviceData: any, client_metadata: any, timeSlot: {
     start?: string;
     end?: string;
     appointmentLength: number;
-
-}, zone: string
-
-) => {
+}, zone: string) => {
     const client = await pool.connect()
     try {
         await client.query('BEGIN');
-        // Check if timeslot is still available
-        // 1. Get availability and appointments
-        const availabilities = (await client.query(`SELECT availability_data FROM availabilities av WHERE av.business_id = $1`, [businessId])).rows
-        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1`, [businessId])).rows
-        const availability = availabilities.filter((availability: any, index: number) => availability.availability_data.id === serviceData.availability)[0].availability_data
 
-        let available: boolean = false
+        // Idempotency: if a PROCESSING appointment already exists for this PI, reuse it
+        if (paymentIntentID.length) {
+            const existing = await client.query(
+                `SELECT * FROM appointments WHERE deposit_charge_id = $1 AND status = 'PROCESSING' LIMIT 1`,
+                [paymentIntentID]
+            )
+            if (existing.rowCount && existing.rowCount > 0) {
+                await client.query('COMMIT');
+                return existing.rows[0]
+            }
+        }
+
+        // Check slot availability
+        const availabilities = (await client.query(`SELECT availability_data FROM availabilities av WHERE av.business_id = $1`, [businessId])).rows
+        const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1 AND app.status != 'CANCELLED'`, [businessId])).rows
+        const availabilityRow = availabilities.find((av: any) => av.availability_data.id === serviceData.availability)
+        if (!availabilityRow) throw new Error('No availability configuration found for this service')
+        const availability = availabilityRow.availability_data
 
         const availableSlots = await checkSlots(timeSlot, availability, appointments, zone)
+        const slotAvailable = availableSlots.some((slot: string | null) => slot === timeSlot.start!)
+        if (!slotAvailable) throw new Error('This time slot is no longer available. Please select another time.')
 
-        availableSlots.forEach((slot: string | null, index: number) => {
-            if (slot === timeSlot.start!) {
-                available = true
-            }
-        })
-        if (!available) {
-            throw Error("Timeslot is no longer available")
-        }
-
-        // 2. 
-        // Check if policy and service has changed since the user first loaded the page
+        // Verify policy hasn't changed
         const policy = await client.query(`SELECT booking_policies FROM business_users bu WHERE bu.business_id = $1`, [businessId])
-        if (policy.rows[0].booking_policies !== policyId) {
-            throw Error("Business data has changed")
-        }
-        // Charge account if policy requires deposit
+        if (policy.rows[0].booking_policies !== policyId) throw new Error('Business booking settings have changed. Please refresh and try again.')
+
         const businessPolicy = await client.query(`SELECT * FROM business_policies bp WHERE bp.id = $1`, [policy.rows[0].booking_policies])
+        const policyRow = businessPolicy.rows[0]
+
+        // Compute deposit and total amounts (in cents)
+        const selectedAddonObjects = (serviceData.addons ?? []).filter((a: any) => (addons as string[]).includes(a.id))
+        const addonPriceCents = selectedAddonObjects.reduce((sum: number, a: any) => sum + (a.price ?? 0), 0)
+        const totalPriceCents = serviceData.price + addonPriceCents
+        const policyDeposit = policyRow?.deposit
+        let depositAmountCents = 0
+        if (policyDeposit?.settings?.type === 'flat') {
+            depositAmountCents = Math.round((policyDeposit.settings.value ?? 0) * 100)
+        } else if (policyDeposit?.settings?.type === 'percentage') {
+            depositAmountCents = Math.round(totalPriceCents * (policyDeposit.settings.value ?? 0) / 100)
+        }
+        const rescheduleLimit = policyRow?.reschedule_limit ?? policyRow?.rescheduleLimit ?? 3
 
         let appointment;
         if (paymentIntentID.length) {
-            appointment = await client.query(`INSERT INTO appointments (start, "end", business, client_metadata, status, service_data, deposit_charge_id) VALUES ($1, $2, $3, $4, 'PROCESSING', $5, $6) RETURNING *`, [timeSlot.start, timeSlot.end, businessId, client_metadata, serviceData, paymentIntentID])
-            //TODO: Create charge with Stripe -> LATER!!
-
+            appointment = await client.query(
+                `INSERT INTO appointments (
+                    start, "end", business, client_metadata, status, service_data,
+                    deposit_charge_id, policy_id, require_deposit, paid_deposit,
+                    reschedules, deposit_price, selected_addons, amount_due
+                ) VALUES ($1,$2,$3,$4,'PROCESSING',$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+                [
+                    timeSlot.start, timeSlot.end, businessId, client_metadata, "PROCESSING", serviceData,
+                    paymentIntentID, policyId, true, false,
+                    rescheduleLimit, depositAmountCents, selectedAddonObjects, totalPriceCents
+                ]
+            )
         } else {
-            // Make different INSERT
-            appointment = await client.query(`INSERT INTO appointments (start, "end", business, client_metadata, status, service_data) VALUES ($1, $2, $3, $4, 'CONFIRMED', $5) RETURNING *`, [timeSlot.start, timeSlot.end, businessId, client_metadata, serviceData])
-
+            appointment = await client.query(
+                `INSERT INTO appointments (
+                    start, "end", business, client_metadata, status, service_data,
+                    policy_id, require_deposit, paid_deposit, reschedules,
+                    selected_addons, amount_due
+                ) VALUES ($1,$2,$3,$4,'CONFIRMED',$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+                [
+                    timeSlot.start, timeSlot.end, businessId, client_metadata, "CONFIRMED", serviceData,
+                    policyId, false, false, rescheduleLimit, selectedAddonObjects, totalPriceCents
+                ]
+            )
         }
+
         await client.query('COMMIT');
-        // Send query to supabase confirming the appointment
         return appointment.rows[0]
-
-    } catch (error) {
-        console.error(error)
+    } catch (error: any) {
         await client.query('ROLLBACK')
-
+        throw new Error(error.message)
     } finally {
         client.release();
     }
@@ -284,9 +371,7 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
 
 export const getAvailability = async (startDate: string, endDate: string, availability: any, zone: string
 ) => {
-    console.log(zone)
     let start = DateTime.fromISO(startDate).setZone(zone);
-    console.log(start)
     let end = DateTime.fromISO(endDate).setZone(zone);
     let slotResult = []
     try {
@@ -310,7 +395,6 @@ export const getAvailability = async (startDate: string, endDate: string, availa
                     { year: curr.year, month: curr.month, day: curr.day, hour: startHour, minute: startMin },
                     { zone }
                 );
-                console.log(startDateTimeRef)
 
                 let endDateTimeRef = DateTime.fromObject(
                     { year: curr.year, month: curr.month, day: curr.day, hour: endHour, minute: endMin },
@@ -369,6 +453,8 @@ export const getUnavailability = async (startDate: string, endDate: string, appo
 
     try {
         for (let i = 0; i < appointments.length; i++) {
+            // Only block slots for active appointments; cancelled ones are freed
+            if (appointments[i].status === 'CANCELLED') continue;
             slotResult.push({
                 from: DateTime.fromISO(appointments[i].start).setZone(zone).toISO()!,
                 to: DateTime.fromISO(appointments[i].end).setZone(zone).toISO()!,

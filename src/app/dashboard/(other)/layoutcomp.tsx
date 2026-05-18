@@ -1,246 +1,211 @@
 'use client'
-import Button from '@tailus-ui/Button';
-import { twMerge } from 'tailwind-merge';
-import * as Link from '@components/Link';
-import Separator from '@tailus-ui/Separator';
-import { Notifications } from '@components/Notifications';
-import { useEffect, useState } from 'react';
-import { Menu, Settings, HelpCircle, LayoutDashboard, Calendar, CalendarCog, Database, UsersRound, Shield, Percent, Tag, PanelsTopLeft, ChartNoAxesCombined, Scale, CircleAlert, CircleDollarSign, MessageCircleQuestion } from 'lucide-react';
-import { Caption, Text, Title } from '@tailus-ui/typography';
-import { UserDropdown } from '@components/UserDropdown';
-import ScrollArea from '@components/ScrollArea';
-import { fetchUser, sendFeedback } from './actions';
-import { SiteWrapper } from '@utils/context/BookingSiteContext';
-import Banner from "@components/Banner";
-import { useUserContext } from '@utils/context/UserContext';
-import { Database as DB } from '../../../../lib/database.types';
-import LOGO from "../../../../public/images/logo_transparent_background.png"
-import Image from 'next/image';
-import { useRouter } from 'next/navigation'
-import { usePathname } from 'next/navigation';
-import { getUser } from './getUser';
-import { Badge, Chip, Input, Modal, ModalClose, ModalDialog, Textarea, Typography, Button as MUIButton, CircularProgress } from '@mui/joy';
-import { PostgrestError } from '@supabase/supabase-js';
 
-interface BusinessNoti extends Business {
-    notifications: BusinessNotification[],
+import { usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import LOGO from "../../../../public/images/logo_transparent_background.png"
+import { SiteWrapper } from '@/app/utils/context/BookingSiteContext'
+import { SiteHeader } from '@/app/SiteHeader'
+import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarInset,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarProvider,
+} from '@/components/ui/sidebar'
+import {
+    IconLayoutDashboard,
+    IconCalendarEvent,
+    IconUsers,
+    IconChartBar,
+    IconWorld,
+    IconClock,
+    IconAdjustments,
+    IconScissors,
+    IconCurrencyDollar,
+    IconSettings,
+    IconHelpCircle,
+    type Icon,
+} from '@tabler/icons-react'
+import { useState } from 'react'
+import { TourProvider } from '@/features/tour/TourProvider'
+import { HelpSheet } from '@/features/tour/HelpSheet'
+
+interface NavItem {
+    title: string
+    url: string
+    icon: Icon
 }
 
-export default function LayoutComp({
-    children, businessData
-}: Readonly<{
-    children: React.ReactNode;
-    businessData: any
-}>) {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+interface NavGroup {
+    label?: string
+    items: NavItem[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
+    {
+        items: [
+            { title: 'Dashboard', url: '/dashboard', icon: IconLayoutDashboard },
+            { title: 'Appointments', url: '/dashboard/appointments', icon: IconCalendarEvent },
+            { title: 'Clients', url: '/dashboard/clients', icon: IconUsers },
+            { title: 'Analytics', url: '/dashboard/analytics', icon: IconChartBar },
+        ],
+    },
+    {
+        label: 'Booking',
+        items: [
+            { title: 'Booking Site', url: '/dashboard/booking-site', icon: IconWorld },
+            { title: 'Availability', url: '/dashboard/availability', icon: IconClock },
+            { title: 'Booking Settings', url: '/dashboard/booking-settings', icon: IconAdjustments },
+        ],
+    },
+    {
+        label: 'Business',
+        items: [
+            { title: 'Services', url: '/dashboard/services', icon: IconScissors },
+            { title: 'Monetization', url: '/dashboard/monetization', icon: IconCurrencyDollar },
+        ],
+    },
+]
+
+const BOTTOM_ITEMS: NavItem[] = [
+    { title: 'Settings', url: '/dashboard/settings', icon: IconSettings },
+]
+
+export default function LayoutComp({ children, businessData }: { children: React.ReactNode; businessData: any }) {
     const pathname = usePathname()
     const router = useRouter()
-    const [feedbackModalOpen, setFeedbackModalOpen] = useState<boolean>(false)
-    const [feedback, setFeedback] = useState<string>("")
-    const [sendingFeedback, setSendingFeedback] = useState<boolean>(false)
+    const [helpOpen, setHelpOpen] = useState(false)
+
+    const isActive = (url: string) =>
+        url === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(url)
 
     return (
-        <div lang="en">
-            <div
-                className={twMerge(
-                    'fixed inset-y-0 left-0 z-30 flex -translate-x-72  transition-transform duration-300 lg:translate-x-0',
-                    isMenuOpen && 'translate-x-0'
-                )}
+        <TourProvider
+            toursCompleted={(businessData?.tours_completed as Record<string, boolean>) ?? {}}
+            businessId={businessData?.business_id ?? ''}
+            isOnboarded={businessData?.is_onboarded ?? true}
+        >
+        <div lang="en" className="w-full">
+            <SidebarProvider
+                style={{
+                    '--sidebar-width': 'calc(var(--spacing) * 64)',
+                    '--header-height': 'calc(var(--spacing) * 12)',
+                    '--sidebar-background': '#FFFFFF',
+                    '--sidebar-foreground': '#1A1818',
+                    '--sidebar-accent': '#FAF7F2',
+                    '--sidebar-accent-foreground': '#1A1818',
+                    '--sidebar-border': '#E8E2D6',
+                    '--sidebar-primary': '#0F0E0E',
+                    '--sidebar-primary-foreground': '#FFFFFF',
+                } as React.CSSProperties}
             >
-                <div data-shade="900" className="feedback-bg flex w-72 flex-col gap-4 p-4 lg:w-64">
-                    <div className="flex w-full pr-5">
-                        {/* <BrandIcon className="mx-auto" /> */}
-                        <Image src={LOGO} alt='logo' className='w-full' />
-                    </div>
-                    <ScrollArea.Root className="-mx-1 pr-5 -my-4">
-                        <ScrollArea.Viewport className="w-full px-1 py-4">
-                            <div className="mt-4 space-y-1">
-                                <Caption className="mx-2 my-2">General</Caption>
+                <TooltipProvider>
+                    <Sidebar variant="inset">
+                        <SidebarHeader className="px-4 py-4 border-b" style={{ borderColor: '#E8E2D6' }}>
+                            <Image src={LOGO} alt="AfroAllure" className="w-28" />
+                        </SidebarHeader>
 
-                                <Link.Root link="/dashboard" isActive={pathname === "/dashboard"}>
-                                    <Link.Icon>
-                                        <LayoutDashboard />
-                                    </Link.Icon>
-                                    <Link.Label>Dashboard</Link.Label>
-                                </Link.Root>
-                                <Link.Root link="/dashboard/appointments" isActive={pathname === "/dashboard/appointments"}>
-                                    <Link.Icon>
-                                        <Calendar />
-                                    </Link.Icon>
-                                    <Link.Label>Appointments</Link.Label>
-                                </Link.Root>
-                                <Link.Root link="/dashboard/clients" isActive={pathname === "/dashboard/clients"}>
-                                    <Link.Icon>
-                                        <UsersRound />
-                                    </Link.Icon>
-                                    <Link.Label>Clients</Link.Label>
-                                </Link.Root>
-                                <Link.Root link="/dashboard/monetization" isActive={pathname === "/dashboard/monetization"}>
-                                    <Link.Icon>
-                                        <CircleDollarSign />
-                                    </Link.Icon>
-                                    <Link.Label>Monetization</Link.Label>
-                                </Link.Root>
-                                <div>
-                                    <Caption className="mx-2 my-2">Automated Booking</Caption>
-                                    <Link.Root link="/dashboard/availability" isActive={pathname === "/dashboard/availability"}>
-                                        <Link.Icon>
-                                            <CalendarCog />
-                                        </Link.Icon>
-                                        <Link.Label>Availability</Link.Label>
-                                    </Link.Root>
-                                    <Link.Root link="/dashboard/services" isActive={pathname === "/dashboard/services"}>
-                                        <Link.Icon>
-                                            <Database />
-                                        </Link.Icon>
-                                        <Link.Label>Services</Link.Label>
-                                    </Link.Root>
-                                    <Link.Root link="/dashboard/booking-settings" isActive={pathname === "/dashboard/booking-settings"}>
-                                        <Link.Icon>
-                                            <Scale />
-                                        </Link.Icon>
-                                        <Link.Label>Booking Settings</Link.Label>
-                                    </Link.Root>
-                                    <Link.Root link="/dashboard/booking-site/upload-sections" isActive={pathname === "/dashboard/booking-site/upload-sections"}>
-                                        <Link.Icon>
-                                            <PanelsTopLeft />
-                                        </Link.Icon>
-                                        <Link.Label>Booking Site</Link.Label>
-                                    </Link.Root>
-                                    <Link.Root link="/dashboard/analytics" isActive={pathname === "/dashboard/analytics"}>
-                                        <Link.Icon>
-                                            <ChartNoAxesCombined />
-                                        </Link.Icon>
-                                        <Link.Label>Analytics</Link.Label>
-                                    </Link.Root>
-                                </div>
+                        <SidebarContent className="py-3 gap-0">
+                            {NAV_GROUPS.map((group, gi) => (
+                                <SidebarGroup key={gi} className="px-3 py-2">
+                                    {group.label && (
+                                        <SidebarGroupLabel
+                                            className="text-[10px] font-semibold tracking-widest mb-1 px-2"
+                                            style={{ color: '#C9974A' }}
+                                        >
+                                            {group.label.toUpperCase()}
+                                        </SidebarGroupLabel>
+                                    )}
+                                    <SidebarMenu className="gap-0.5">
+                                        {group.items.map((item) => {
+                                            const active = isActive(item.url)
+                                            return (
+                                                <SidebarMenuItem key={item.title}>
+                                                    <SidebarMenuButton
+                                                        isActive={active}
+                                                        tooltip={item.title}
+                                                        onClick={() => router.push(item.url)}
+                                                        className="rounded-xl transition-colors"
+                                                        style={active
+                                                            ? { backgroundColor: '#0F0E0E', color: '#FFFFFF' }
+                                                            : { color: '#1A1818' }
+                                                        }
+                                                    >
+                                                        <item.icon size={16} />
+                                                        <span className="text-sm">{item.title}</span>
+                                                    </SidebarMenuButton>
+                                                </SidebarMenuItem>
+                                            )
+                                        })}
+                                    </SidebarMenu>
+                                </SidebarGroup>
+                            ))}
+                        </SidebarContent>
+
+                        <SidebarFooter className="px-3 py-3 border-t" style={{ borderColor: '#E8E2D6' }}>
+                            <SidebarMenu className="gap-0.5">
+                                {BOTTOM_ITEMS.map((item) => {
+                                    const active = isActive(item.url)
+                                    return (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton
+                                                isActive={active}
+                                                tooltip={item.title}
+                                                onClick={() => router.push(item.url)}
+                                                className="rounded-xl transition-colors"
+                                                style={active
+                                                    ? { backgroundColor: '#0F0E0E', color: '#FFFFFF' }
+                                                    : { color: '#1A1818' }
+                                                }
+                                            >
+                                                <item.icon size={16} />
+                                                <span className="text-sm">{item.title}</span>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    )
+                                })}
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        tooltip="Help & Tours"
+                                        onClick={() => setHelpOpen(true)}
+                                        className="rounded-xl transition-colors"
+                                        style={{ color: '#1A1818' }}
+                                    >
+                                        <IconHelpCircle size={16} />
+                                        <span className="text-sm">Help & Tours</span>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            </SidebarMenu>
+                        </SidebarFooter>
+                    </Sidebar>
+
+                    <SidebarInset className="px-5">
+                        <SiteHeader
+                            businessId={businessData?.business_id ?? ''}
+                            initialUnreadCount={((businessData?.notifications ?? []) as { read: boolean }[]).filter(n => !n.read).length}
+                        />
+                        <main>
+                            <div className="w-full flex-1 max-h-min">
+                                <SiteWrapper>
+                                    {children}
+                                </SiteWrapper>
                             </div>
-                        </ScrollArea.Viewport>
-                        <ScrollArea.Scrollbar orientation="vertical" />
-
-                    </ScrollArea.Root>
-                    <Modal open={feedbackModalOpen} onClose={() => {
-                        setFeedbackModalOpen(!feedbackModalOpen)
-                        setFeedback("")
-
-                    }}>
-                        <ModalDialog sx={{
-                            padding: 5,
-                            width: '50%'
-                        }} size='lg'>
-                            <ModalClose />
-                            <Typography level='h3'>Send Feedback</Typography>
-                            <div className='flex flex-col gap-3'>
-
-                                <div className=' space-y-2'>
-                                    <Textarea value={feedback} onChange={(e) => {
-                                        setFeedback(e.target.value)
-                                    }} minRows={4} placeholder="Tell us what we're doing wrong and/or what we can do better" />
-                                </div>
-                            </div>
-                            <div className='w-full justify-end flex'>
-                                <MUIButton disabled={sendingFeedback} onClick={async () => {
-                                    setSendingFeedback(true)
-                                    const result = await sendFeedback({
-                                        businessId: businessData.business_id,
-                                        businessName: businessData.business_name,
-                                        email: businessData.email,
-                                        feedback: feedback
-                                    })
-                                    if (result instanceof PostgrestError) {
-                                        console.error(result.message)
-                                    } else {
-
-                                    }
-                                    setFeedbackModalOpen(false)
-                                    setFeedback("")
-                                    setSendingFeedback(false)
-                                }}>
-                                    {sendingFeedback ? <CircularProgress size='sm' /> : "Send Feedback"}
-                                </MUIButton>
-                            </div>
-                        </ModalDialog>
-                    </Modal>
-                    <div className="mt-auto h-fit">
-                        <Separator className="my-4" />
-                        <div className="space-y-1">
-                            <div onClick={() => {
-                                setFeedbackModalOpen(true)
-                            }}>
-                                <Link.Root link="#" >
-                                    <Link.Icon>
-                                        <MessageCircleQuestion />
-                                    </Link.Icon>
-                                    <Link.Label>Send Feedback</Link.Label>
-                                </Link.Root>
-                            </div>
-                            <div>
-                                <Link.Root link="#">
-                                    <Link.Icon>
-                                        <HelpCircle />
-                                    </Link.Icon>
-                                    <Link.Label>Help</Link.Label>
-                                </Link.Root>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            {isMenuOpen && (
-                <div
-                    aria-hidden
-                    className="fixed inset-0 z-[11] bg-[--overlay-bg] transition duration-300 lg:hidden"
-                    onClick={() => setIsMenuOpen(false)}
-                />
-            )}
-            <main className={twMerge('lg:ml-72 lg:w-[calc(100vw-20rem)] h-screen flex flex-col', isMenuOpen && 'pointer-events-none opacity-50')}>
-                <div className="feedback-bg flex-col sticky top-0 z-20 flex items-end justify-between  pl-[1.25rem] py-3 lg:py-4">
-                    <div className='flex-row flex justify-between w-full'>
-                        <div className="flex items-center gap-2 pr-6">
-                            <Button.Root
-                                size="sm"
-                                variant="ghost"
-                                intent="gray"
-                                className="-ml-2 focus:bg-transparent lg:hidden dark:focus:bg-transparent"
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            >
-                                <Button.Icon type="only">
-                                    <Menu />
-                                </Button.Icon>
-                            </Button.Root>
-                        </div>
-                        <div className="flex items-center gap-4 pr-6">
-                            {businessData.notifications.filter((noti: any) => noti.read === false).length ? <div >
-                                <Badge badgeContent={businessData.notifications.filter((noti: any) => noti.read === false).length} badgeInset={8} color='danger' size='sm'>
-                                    <Notifications />
-                                </Badge>
-                            </div> : <Notifications />}
-                            <UserDropdown businessData={businessData} />
-                        </div>
-                    </div>
-
-                    {!businessData?.account_settings?.business_address.line_1.length && !businessData?.account_settings?.business_address.no_address ? <Banner.Root intent="warning" className="mt-2 p-5 rounded-none w-full">
-                        <Banner.Content>
-                            <CircleAlert className="size-5 text-[--body-text-color]" />
-                            <div className="space-y-2">
-                                <Text size="sm" className="my-0 text-warning-800 dark:text-warning-300">
-                                    To start scheduling appointments, you need to first  <a target='_blank' href={`${process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_BASE_URL : process.env.NEXT_PUBLIC_PROD_BASE_URL}/dashboard/settings`}><strong>add your business address</strong></a>
-                                </Text>
-
-                            </div>
-                        </Banner.Content>
-                    </Banner.Root> : <></>}
-                </div>
-
-                <div className='w-full flex-1 max-h-min'>
-                    <SiteWrapper>
-                        {children}
-                    </SiteWrapper>
-                </div>
-
-            </main>
+                        </main>
+                    </SidebarInset>
+                </TooltipProvider>
+            </SidebarProvider>
+            <Toaster />
         </div>
-    );
+        <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
+        </TourProvider>
+    )
 }
-

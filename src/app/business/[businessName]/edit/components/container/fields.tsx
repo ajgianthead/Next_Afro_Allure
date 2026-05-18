@@ -1,1179 +1,347 @@
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowRightLeft, ArrowUp, ArrowUpDown, GridIcon, LocateFixed, Signpost, Square, SquareDashedBottom } from "lucide-react";
-import { FieldLabel } from "@puckeditor/core";
 import type { Fields } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
-import { Checkbox, ColorInput, Input, NumberInput, SegmentedControl, Select, Switch } from "@mantine/core";
-import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, BorderAllIcon, BorderBottomIcon, BorderLeftIcon, BorderRightIcon, BorderTopIcon, ColumnsIcon, ColumnSpacingIcon, CornerBottomLeftIcon, CornerBottomRightIcon, CornersIcon, CornerTopLeftIcon, CornerTopRightIcon, DotIcon, PaddingIcon, RowsIcon, RowSpacingIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
+import { ColumnSpacingIcon, DotIcon, RowSpacingIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
 import { Container } from "../types";
+import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives";
+import { BorderField, MarginField, PaddingField, PositionField, RadiusField } from "../compoundFields";
+import { Input } from "@/components/ui/input";
+import { SPACING_OPTIONS } from "@/features/editor/lib/responsive";
+
+const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
+
+const AlignBtns = ({ value, onChange, options }: {
+    value: string
+    onChange: (v: string) => void
+    options: { v: string; icon: string }[]
+}) => (
+    <div style={{ display: 'flex', gap: 2, flex: 1 }}>
+        {options.map(({ v, icon }) => (
+            <button
+                key={v}
+                type="button"
+                onClick={() => onChange(v)}
+                title={v}
+                style={{
+                    flex: 1, height: 26, borderRadius: 3, fontSize: 12,
+                    background: value === v ? '#FC6161' : '#F4F1EC',
+                    color: value === v ? '#fff' : '#A09790',
+                    border: 'none', cursor: 'pointer',
+                }}
+            >
+                {icon}
+            </button>
+        ))}
+    </div>
+)
 
 export const defaultFields: Fields<Container, {}> = {
-    content: {
-        type: "slot",
-    },
+    content: { type: "slot" },
+
+    // ── Layout ────────────────────────────────────────────────────────────────
     flexDirection: {
         type: 'custom',
         visible: true,
-        label: 'Layout Direction',
-        labelIcon: <Signpost size={16} className="mr-1" />,
-        render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-2">
-                <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e: any) => { onChange(e) }} className=" col-span-3"
-                    data={[{
-                        label: <div className="flex justify-center"><ViewHorizontalIcon className="my-1" /></div>,
-                        value: 'flex-col'
-                    }, {
-                        label: <div className="flex justify-center"><ViewVerticalIcon className="my-1 mr-1" /></div>,
-                        value: 'flex-row'
-                    },
-
-                    ]} />
+        label: 'Direction',
+        render: ({ onChange, value }) => (
+            <div className="grid grid-cols-4 items-center gap-1.5">
+                <p style={{ ...lbl, gridColumn: 'span 2' }}>Direction</p>
+                <SegToggle value={value} onChange={onChange} className="col-span-2 col-start-3" options={[
+                    { label: <div className="flex justify-center"><ViewHorizontalIcon className="my-0.5" /></div>, value: 'flex-col' },
+                    { label: <div className="flex justify-center"><ViewVerticalIcon className="my-0.5 mr-0.5" /></div>, value: 'flex-row' },
+                ]} />
             </div>
-
-
         )
     },
-    gapX: {
-        label: 'Spacing',
+    mainAxisLayout: {
         visible: true,
         type: 'custom',
-        render: (({ field, value, onChange }) => {
-            return (
-                <NumberInput step={1} leftSection={<ColumnSpacingIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-            )
-        })
+        label: 'Main Axis',
+        render: ({ onChange, value }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 44 }}>Main</span>
+                <AlignBtns value={value} onChange={onChange as (v: string) => void} options={[
+                    { v: 'start', icon: '←' },
+                    { v: 'center', icon: '⊙' },
+                    { v: 'end', icon: '→' },
+                    { v: 'space-between', icon: '↔' },
+                    { v: 'space-evenly', icon: '≡' },
+                    { v: 'space-around', icon: '∿' },
+                ]} />
+            </div>
+        )
     },
-    gapY: {
-        label: 'Spacing',
+    altAxisLayout: {
         visible: true,
         type: 'custom',
-        render: (({ field, value, onChange }) => {
-            return (
-                <NumberInput step={1} leftSection={<RowSpacingIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-            )
-        })
+        label: 'Cross Axis',
+        render: ({ onChange, value }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 44 }}>Cross</span>
+                <AlignBtns value={value} onChange={onChange as (v: string) => void} options={[
+                    { v: 'start', icon: '↑' },
+                    { v: 'center', icon: '⊙' },
+                    { v: 'end', icon: '↓' },
+                    { v: 'baseline', icon: '≡' },
+                    { v: 'stretch', icon: '↕' },
+                ]} />
+            </div>
+        )
     },
     grow: {
         type: 'custom',
         label: 'Grow',
-        render: (({ value, onChange, field }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <Switch className="col-span-3"
-                        size="xs" checked={value} onChange={(event) => onChange(event.currentTarget.checked)} />
-                </div>
-            )
-        })
+        render: ({ value, onChange }) => (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
+                <span style={lbl}>Grow</span>
+            </label>
+        )
     },
+    responsive: { visible: false, type: 'text' },
+    responsiveDirection: {
+        type: 'custom',
+        label: 'Resp. Dir',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>Resp. Dir</span>
+                <StrSelect value={value} onChange={onChange} options={['none', 'col-to-row', 'row-to-col']} className="flex-1" />
+            </div>
+        )
+    },
+    hideBelow: {
+        type: 'custom',
+        label: 'Hide Below',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>Hide Below</span>
+                <StrSelect value={value} onChange={onChange} options={['none', 'sm', 'md', 'lg']} className="flex-1" />
+            </div>
+        )
+    },
+    hideAbove: {
+        type: 'custom',
+        label: 'Hide Above',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>Hide Above</span>
+                <StrSelect value={value} onChange={onChange} options={['none', 'sm', 'md', 'lg']} className="flex-1" />
+            </div>
+        )
+    },
+
+    // ── Gap ───────────────────────────────────────────────────────────────────
+    gapX: {
+        label: 'Gap X',
+        visible: true,
+        type: 'custom',
+        render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<ColumnSpacingIcon />} />
+    },
+    gapY: {
+        label: 'Gap Y',
+        visible: true,
+        type: 'custom',
+        render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<RowSpacingIcon />} />
+    },
+
+    // ── Padding (compound) ────────────────────────────────────────────────────
     paddingExpanded: {
         type: 'custom',
         label: 'Padding',
-        labelIcon: <SquareDashedBottom size={16} className="mr-1" />,
-        render: (({ field, value, onChange }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e) => { onChange(e) }} className=" col-span-3"
-                        data={[{
-                            label: <div className="flex justify-center">All</div>,
-                            value: "false"
-                        }, {
-                            label: <div className="flex justify-center">Various</div>,
-                            value: 'true'
-                        },
+        render: ({ value, onChange }) => <PaddingField value={value ?? 'false'} onChange={onChange} />
+    },
+    padding: { visible: false, type: 'number' },
+    paddingTop: { visible: false, type: 'number' },
+    paddingBottom: { visible: false, type: 'number' },
+    paddingLeft: { visible: false, type: 'number' },
+    paddingRight: { visible: false, type: 'number' },
 
-                        ]} />
-                </div>
-            )
-        })
-
-    },
-    padding: {
-        type: 'custom',
-        label: undefined,
-        render: ({ onChange, value, field }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <NumberInput leftSection={<PaddingIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-                </div>
-            )
-        }
-    },
-
-    paddingTop: {
-        type: 'custom',
-        label: 'Padding Top',
-        visible: false,
-        render: ({ onChange, value, field }: any) => (
-            <FieldLabel label={field.label!} icon={field.labelIcon}>
-                <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-            </FieldLabel>
-        )
-    },
-    paddingBottom: {
-        type: 'custom',
-        label: 'Padding Bottom',
-        visible: false,
-        render: ({ onChange, value, field }: any) => (
-            <FieldLabel label={field.label!} icon={field.labelIcon}>
-                <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-            </FieldLabel>
-        )
-    },
-    paddingRight: {
-        type: 'custom',
-        label: 'Padding Right',
-        visible: false,
-        render: ({ onChange, value, field }: any) => (
-            <FieldLabel label={field.label!} icon={field.labelIcon}>
-                <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-            </FieldLabel>
-        )
-    },
-    paddingLeft: {
-        type: 'custom',
-        label: 'Padding Left',
-        visible: false,
-        render: ({ onChange, value, field }: any) => (
-            <FieldLabel label={field.label!} icon={field.labelIcon}>
-                <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-            </FieldLabel>
-        )
-    },
+    // ── Margin (compound) ─────────────────────────────────────────────────────
     marginExpanded: {
         type: 'custom',
         label: 'Margin',
-        labelIcon: <Square size={16} className="mr-1" />,
-        render: (({ value, onChange, field }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e) => { onChange(e) }} className=" col-span-3"
-                        data={[{
-                            label: <div className="flex justify-center">All</div>,
-                            value: "false"
-                        }, {
-                            label: <div className="flex justify-center">Various</div>,
-                            value: 'true'
-                        },
+        render: ({ value, onChange }) => <MarginField value={value ?? 'false'} onChange={onChange} />
+    },
+    margin: { visible: false, type: 'number' },
+    marginTop: { visible: false, type: 'number' },
+    marginBottom: { visible: false, type: 'number' },
+    marginLeft: { visible: false, type: 'number' },
+    marginRight: { visible: false, type: 'number' },
 
-                        ]} />
-                </div>
-            )
-        })
-    },
-    margin: {
-        type: 'custom',
-        label: undefined,
-        render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-2">
-                <NumberInput leftSection={<PaddingIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            </div>
-        )
-    },
-
-    marginTop: {
-        type: 'custom',
-        label: 'Margin Top',
-        visible: false,
-
-        render: ({ onChange, value, field }: any) => (
-            <FieldLabel label={field.label!} icon={field.labelIcon}>
-                <Input step={0.1} className="w-1/2" type="number" radius={'xs'} size="xs" value={value} onChange={(e) => onChange(Number(e.target.value))} />
-            </FieldLabel>
-        )
-    },
-    marginBottom: {
-        type: 'custom',
-        label: 'Margin Bottom',
-        visible: false,
-
-        render: ({ onChange, value, field }: any) => (
-            <FieldLabel label={field.label!} icon={field.labelIcon}>
-                <Input step={0.1} className="w-1/2" type="number" radius={'xs'} size="xs" value={value} onChange={(e) => onChange(Number(e.target.value))} />
-            </FieldLabel>
-        )
-    },
-    marginRight: {
-        type: 'custom',
-        label: 'Margin Right',
-        visible: false,
-
-        render: ({ onChange, value, field }: any) => (
-            <FieldLabel label={field.label!} icon={field.labelIcon}>
-                <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-            </FieldLabel>
-        )
-    },
-    marginLeft: {
-        type: 'custom',
-        label: 'Margin Left',
-        visible: false,
-        render: ({ onChange, value, field }: any) => (
-            <FieldLabel label={field.label!} icon={field.labelIcon}>
-                <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-            </FieldLabel>
-        )
-    },
+    // ── Colors ────────────────────────────────────────────────────────────────
     backgroundColor: {
         type: 'custom',
         label: 'Color',
-        render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-2">
-                <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                <ColorInput
-                    className="col-span-3"
-                    placeholder="Choose a color"
-                    value={value}
-                    onChangeEnd={(e) => onChange(e)}
-                    format="hexa"
-                />
+        render: ({ onChange, value }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={lbl}>Color</span>
+                <ColorPicker value={value} onChange={onChange} className="flex-1" />
             </div>
         )
     },
-    responsive: {
-        type: 'custom',
-        label: undefined,
-        render: ({ value, onChange, id }) => {
-            return (
-                <Checkbox size='xs' label='Responsive' checked={value} onChange={(e) => onChange(e.target.checked)} />
-            )
-        }
-    },
 
-    mainAxisLayout: {
-        visible: true,
-        type: 'custom',
-        label: 'Main Axis Alignment',
-        labelIcon: <ArrowRightLeft size={16} className="mr-1" />,
-        render: (({ field, onChange, value }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className=" col-span-2 text-sm font-medium text-slate-400">{field.label}</p>
-                    <Select
-                        checkIconPosition="right"
-                        onChange={(e: any) => { onChange(e) }}
-                        className="col-span-2 col-start-3"
-                        size="xs"
-                        value={value}
-                        radius={'md'}
-                        data={['start', 'end', 'center', 'space-between', 'space-evenly', 'space-around']}
-                    />
-                </div>
-            )
-        })
-
-    },
-    altAxisLayout: {
-        visible: true,
-        label: 'Cross Axis Alignment',
-        labelIcon: <ArrowUpDown size={16} className="mr-1" />,
-        type: 'custom',
-        render: (({ field, onChange, value }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className=" col-span-2 text-sm font-medium text-slate-400">{field.label}</p>
-                    <Select
-                        checkIconPosition="right"
-                        onChange={(e: any) => { onChange(e) }}
-                        className="col-span-2 col-start-3"
-                        size="xs"
-                        value={value}
-                        radius={'md'}
-                        data={['start', 'end', 'center', 'baseline', 'stretch']}
-                    />
-                </div>
-            )
-        })
-    },
+    // ── Border (compound) ─────────────────────────────────────────────────────
     borderExpanded: {
         type: 'custom',
         label: 'Border',
-        labelIcon: <Square size={16} className="mr-1" />,
-        render: (({ value, onChange, field }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e) => { onChange(e) }} className=" col-span-3"
-                        data={[{
-                            label: <div className="flex justify-center">All</div>,
-                            value: "false"
-                        }, {
-                            label: <div className="flex justify-center">Various</div>,
-                            value: 'true'
-                        },
-
-                        ]} />
-                </div>
-            )
-        })
+        render: ({ value, onChange }) => <BorderField value={value ?? 'false'} onChange={onChange} />
     },
-    borderWidth: {
-        label: undefined,
+    borderWidth: { visible: false, type: 'number' },
+    borderTop: { visible: false, type: 'number' },
+    borderBottom: { visible: false, type: 'number' },
+    borderLeft: { visible: false, type: 'number' },
+    borderRight: { visible: false, type: 'number' },
+    borderColor: { visible: false, type: 'text' },
+    borderType: { visible: false, type: 'text' },
+
+    // ── Radius (compound) ─────────────────────────────────────────────────────
+    borderRadiusExpanded: {
         type: 'custom',
-        render: (({ field, value, onChange }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <NumberInput step={1} leftSection={<BorderAllIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
+        label: 'Radius',
+        render: ({ value, onChange }) => <RadiusField value={value ?? 'false'} onChange={onChange} />
+    },
+    borderRadius: { visible: false, type: 'number' },
+    borderRadiusTopLeft: { visible: false, type: 'number' },
+    borderRadiusTopRight: { visible: false, type: 'number' },
+    borderRadiusBottomLeft: { visible: false, type: 'number' },
+    borderRadiusBottomRight: { visible: false, type: 'number' },
 
-                </div>
-
-            )
-        })
-    },
-    borderTop: {
-        visible: false,
-        type: 'number'
-    },
-    borderBottom: {
-        visible: false,
-        type: 'number'
-    },
-    borderLeft: {
-        visible: false,
-        type: 'number'
-    },
-    borderRight: {
-        visible: false,
-        type: 'number'
-    },
-    borderColor: {
+    // ── Position (compound) ───────────────────────────────────────────────────
+    positionType: {
         type: 'custom',
-        label: undefined,
-        render: ({ onChange, value, field }) => (
-            <div className="grid grid-cols-4 items-center gap-2">
-                <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                <ColorInput
-                    className="col-span-3"
-                    placeholder="Choose a color"
-                    value={value}
-                    onChangeEnd={(e) => onChange(e)}
-                    format="hexa"
+        label: 'Position',
+        render: ({ value, onChange }) => <PositionField value={value ?? 'relative'} onChange={onChange as (v: string) => void} />
+    },
+    top: { visible: false, type: 'number' },
+    bottom: { visible: false, type: 'number' },
+    left: { visible: false, type: 'number' },
+    right: { visible: false, type: 'number' },
+
+    // ── Sizing ────────────────────────────────────────────────────────────────
+    minHeight: {
+        type: 'custom',
+        label: 'Min H',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 44 }}>Min H (rem)</span>
+                <NumInput value={value} onChange={onChange} step={0.5} className="flex-1" />
+            </div>
+        )
+    },
+    maxWidth: {
+        type: 'custom',
+        label: 'Max W',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 44 }}>Max W (rem)</span>
+                <NumInput value={value} onChange={onChange} step={0.5} className="flex-1" />
+            </div>
+        )
+    },
+    aspectRatio: {
+        type: 'custom',
+        label: 'Aspect Ratio',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>Aspect Ratio</span>
+                <Input
+                    className="flex-1 !h-[26px] text-[11px] !bg-[#F4F1EC] !border-0 !shadow-none !ring-0 rounded-[3px]"
+                    placeholder="e.g. 4/5"
+                    value={value ?? ''}
+                    onChange={(e) => onChange(e.target.value)}
                 />
             </div>
         )
     },
-
-
-    borderType: {
+    overflow: {
         type: 'custom',
-        label: undefined,
-        render: (({ field, onChange, value }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className=" text-sm font-medium text-slate-400">{field.label}</p>
-                    <Select
-                        checkIconPosition="right"
-                        onChange={(e: any) => { onChange(e) }}
-                        className="col-span-3 col-start-2"
-                        size="xs"
-                        value={value}
-                        radius={'md'}
-                        data={['solid', 'dashed', 'dotted']}
-                    />
-                </div>
-            )
-        })
-
+        label: 'Overflow',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 44 }}>Overflow</span>
+                <StrSelect value={value} onChange={onChange} options={['visible', 'hidden', 'scroll', 'auto']} className="flex-1" />
+            </div>
+        )
     },
-    borderRadiusExpanded: {
+    gridTemplateColumns: {
+        visible: false,
         type: 'custom',
-        label: 'Radius',
-        labelIcon: <Square size={16} className="mr-1" />,
-        render: (({ value, onChange, field }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e) => { onChange(e) }} className=" col-span-3"
-                        data={[{
-                            label: <div className="flex justify-center">All</div>,
-                            value: "false"
-                        }, {
-                            label: <div className="flex justify-center">Various</div>,
-                            value: 'true'
-                        },
-
-                        ]} />
-                </div>
-            )
-        })
+        label: 'Grid Columns',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>Grid Cols</span>
+                <Input
+                    className="flex-1 !h-[26px] text-[11px] !bg-[#F4F1EC] !border-0 !shadow-none !ring-0 rounded-[3px]"
+                    placeholder="1fr 1fr 1fr"
+                    value={value ?? ''}
+                    onChange={(e) => onChange(e.target.value)}
+                />
+            </div>
+        )
     },
-    borderRadius: {
-        label: undefined,
+    spacing: {
         type: 'custom',
-        render: (({ field, value, onChange }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <NumberInput step={1} leftSection={<CornersIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-                </div>
-
-            )
-        })
-    },
-    borderRadiusTopLeft: {
-        visible: false,
-        type: 'number'
-    },
-    borderRadiusTopRight: {
-        visible: false,
-        type: 'number'
-    },
-    borderRadiusBottomLeft: {
-        visible: false,
-        type: 'number'
-    },
-    borderRadiusBottomRight: {
-        visible: false,
-        type: 'number'
+        label: 'Spacing',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 44 }}>Spacing</span>
+                <select
+                    value={value ?? 'none'}
+                    onChange={(e) => onChange(e.target.value)}
+                    style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
+                >
+                    {SPACING_OPTIONS.map(o => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                </select>
+            </div>
+        )
     },
 
-    positionType: {
-        type: 'custom',
-        label: 'Position',
-        labelIcon: <LocateFixed size={16} className="mr-1" />,
-        render: (({ onChange, value, field }) => {
-            return (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e: any) => { onChange(e) }} className=" col-span-3"
-                        data={[{
-                            label: <div className="flex justify-center">Relative</div>,
-                            value: "relative"
-                        }, {
-                            label: <div className="flex justify-center">Absolute</div>,
-                            value: 'absolute'
-                        },
-
-                        ]} />
-                </div>
-            )
-        })
-    },
-    top: {
-        type: 'number',
-        visible: false
-    },
-    bottom: {
-        type: 'number',
-        visible: false
-    },
-    left: {
-        type: 'number',
-        visible: false,
-    },
-    right: {
-        type: 'number',
-        visible: false,
-    },
+    // ── Advanced ──────────────────────────────────────────────────────────────
     rotation: {
-        type: 'number'
+        type: 'custom',
+        label: 'Rotation',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={lbl}>Rotation</span>
+                <NumInput value={value} onChange={onChange} icon={<DotIcon />} className="flex-1" />
+            </div>
+        )
     },
-    draggable: {
-        type: 'number'
-    }
+    zIndex: {
+        type: 'custom',
+        label: 'Z-Index',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={lbl}>Z-Index</span>
+                <NumInput value={value} onChange={onChange} icon={<DotIcon />} className="flex-1" />
+            </div>
+        )
+    },
+    draggable: { type: 'number' },
 }
 
 export const containerResolvedFields: (data: any) => {} = (data) => {
-    let fields: Fields<Container, {}> = {
-        content: {
-            type: "slot",
-        },
-        flexDirection: {
+    const fields: Fields<Container, {}> = { ...defaultFields }
+
+    if (data.props.flexDirection === 'grid') {
+        fields.gridTemplateColumns = {
             type: 'custom',
             visible: true,
-            label: 'Layout Direction',
-            labelIcon: <Signpost size={16} className="mr-1" />,
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e: any) => { onChange(e) }} className=" col-span-3"
-                        data={[{
-                            label: <div className="flex justify-center"><ViewHorizontalIcon className="my-1" /></div>,
-                            value: 'flex-col'
-                        }, {
-                            label: <div className="flex justify-center"><ViewVerticalIcon className="my-1 mr-1" /></div>,
-                            value: 'flex-row'
-                        },
-
-                        ]} />
-                </div>
-
-
-            )
-        },
-
-        gapX: {
-            label: 'Spacing',
-            visible: true,
-            type: 'custom',
-            render: (({ field, value, onChange }) => {
-                return (
-                    <NumberInput step={1} leftSection={<ColumnSpacingIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-                )
-            })
-        },
-        gapY: {
-            label: 'Spacing',
-            visible: true,
-            type: 'custom',
-            render: (({ field, value, onChange }) => {
-                return (
-                    <NumberInput step={1} leftSection={<RowSpacingIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-                )
-            })
-        },
-        grow: {
-            type: 'custom',
-            label: 'Grow',
-            render: (({ value, onChange, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <Switch className="col-span-3"
-                            size="xs" checked={value} onChange={(event) => onChange(event.currentTarget.checked)} />
-                    </div>
-                )
-            })
-        },
-        paddingExpanded: {
-            type: 'custom',
-            label: 'Padding',
-            labelIcon: <SquareDashedBottom size={16} className="mr-1" />,
-            render: (({ field, value, onChange }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e) => { onChange(e) }} className=" col-span-3"
-                            data={[{
-                                label: <div className="flex justify-center">All</div>,
-                                value: "false"
-                            }, {
-                                label: <div className="flex justify-center">Various</div>,
-                                value: 'true'
-                            },
-
-                            ]} />
-                    </div>
-                )
-            })
-
-        },
-        padding: {
-            type: 'custom',
-            label: undefined,
-            render: ({ onChange, value, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <NumberInput leftSection={<PaddingIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-                    </div>
-                )
-            }
-        },
-
-        paddingTop: {
-            type: 'custom',
-            label: 'Padding Top',
-            visible: false,
-            render: ({ onChange, value, field }: any) => (
-                <FieldLabel label={field.label!} icon={field.labelIcon}>
-                    <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} defaultValue={data.props.padding} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                </FieldLabel>
-            )
-        },
-        paddingBottom: {
-            type: 'custom',
-            label: 'Padding Bottom',
-            visible: false,
-            render: ({ onChange, value, field }: any) => (
-                <FieldLabel label={field.label!} icon={field.labelIcon}>
-                    <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} defaultValue={data.props.padding} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                </FieldLabel>
-            )
-        },
-        paddingRight: {
-            type: 'custom',
-            label: 'Padding Right',
-            visible: false,
-            render: ({ onChange, value, field }: any) => (
-                <FieldLabel label={field.label!} icon={field.labelIcon}>
-                    <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} defaultValue={data.props.padding} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                </FieldLabel>
-            )
-        },
-        paddingLeft: {
-            type: 'custom',
-            label: 'Padding Left',
-            visible: false,
-            render: ({ onChange, value, field }: any) => (
-                <FieldLabel label={field.label!} icon={field.labelIcon}>
-                    <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} defaultValue={data.props.padding} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                </FieldLabel>
-            )
-        },
-        marginExpanded: {
-            type: 'custom',
-            label: 'Margin',
-            labelIcon: <Square size={16} className="mr-1" />,
-            render: (({ value, onChange, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e) => { onChange(e) }} className=" col-span-3"
-                            data={[{
-                                label: <div className="flex justify-center">All</div>,
-                                value: "false"
-                            }, {
-                                label: <div className="flex justify-center">Various</div>,
-                                value: 'true'
-                            },
-
-                            ]} />
-                    </div>
-                )
-            })
-        },
-        margin: {
-            type: 'custom',
-            label: undefined,
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <NumberInput leftSection={<PaddingIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-                </div>
-            )
-        },
-
-        marginTop: {
-            type: 'custom',
-            label: 'Margin Top',
-            visible: false,
-
-            render: ({ onChange, value, field }: any) => (
-                <FieldLabel label={field.label!} icon={field.labelIcon}>
-                    <Input step={0.1} className="w-1/2" type="number" radius={'xs'} size="xs" defaultValue={data.props.padding} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                </FieldLabel>
-            )
-        },
-        marginBottom: {
-            type: 'custom',
-            label: 'Margin Bottom',
-            visible: false,
-
-            render: ({ onChange, value, field }: any) => (
-                <FieldLabel label={field.label!} icon={field.labelIcon}>
-                    <Input step={0.1} className="w-1/2" type="number" radius={'xs'} size="xs" defaultValue={data.props.padding} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                </FieldLabel>
-            )
-        },
-        marginRight: {
-            type: 'custom',
-            label: 'Margin Right',
-            visible: false,
-
-            render: ({ onChange, value, field }: any) => (
-                <FieldLabel label={field.label!} icon={field.labelIcon}>
-                    <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} defaultValue={data.props.padding} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                </FieldLabel>
-            )
-        },
-        marginLeft: {
-            type: 'custom',
-            label: 'Margin Left',
-            visible: false,
-            render: ({ onChange, value, field }: any) => (
-                <FieldLabel label={field.label!} icon={field.labelIcon}>
-                    <Input step={0.1} className="w-1/2" type="number" size="xs" radius={'xs'} defaultValue={data.props.padding} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                </FieldLabel>
-            )
-        },
-        backgroundColor: {
-            type: 'custom',
-            label: 'Color',
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <ColorInput
-                        className="col-span-3"
-                        placeholder="Choose a color"
-                        value={value}
-                        onChangeEnd={(e) => onChange(e)}
-                        format="hexa"
+            label: 'Grid Columns',
+            render: ({ value, onChange }) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 11, color: '#A09790', minWidth: 56, whiteSpace: 'nowrap' }}>Grid Cols</span>
+                    <Input
+                        className="flex-1 !h-[26px] text-[11px] !bg-[#F4F1EC] !border-0 !shadow-none !ring-0 rounded-[3px]"
+                        placeholder="1fr 1fr 1fr"
+                        value={value ?? ''}
+                        onChange={(e) => onChange(e.target.value)}
                     />
                 </div>
             )
-        },
-        responsive: {
-            type: 'custom',
-            label: undefined,
-            render: ({ value, onChange, id }) => {
-                return (
-                    <Checkbox size='xs' label='Responsive' checked={value} onChange={(e) => onChange(e.target.checked)} />
-                )
-            }
-        },
-
-        mainAxisLayout: {
-            visible: true,
-            type: 'custom',
-            label: 'Main Axis Alignment',
-            labelIcon: <ArrowRightLeft size={16} className="mr-1" />,
-            render: (({ field, onChange, value }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className=" col-span-2 text-sm font-medium text-slate-400">{field.label}</p>
-                        <Select
-                            checkIconPosition="right"
-                            onChange={(e: any) => { onChange(e) }}
-                            className="col-span-2 col-start-3"
-                            size="xs"
-                            value={value}
-                            radius={'md'}
-                            data={['start', 'end', 'center', 'space-between', 'space-evenly', 'space-around']}
-                        />
-                    </div>
-                )
-            })
-
-        },
-        altAxisLayout: {
-            visible: true,
-            label: 'Cross Axis Alignment',
-            labelIcon: <ArrowUpDown size={16} className="mr-1" />,
-            type: 'custom',
-            render: (({ field, onChange, value }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className=" col-span-2 text-sm font-medium text-slate-400">{field.label}</p>
-                        <Select
-                            checkIconPosition="right"
-                            onChange={(e: any) => { onChange(e) }}
-                            className="col-span-2 col-start-3"
-                            size="xs"
-                            value={value}
-                            radius={'md'}
-                            data={['start', 'end', 'center', 'baseline', 'stretch']}
-                        />
-                    </div>
-                )
-            })
-        },
-        borderExpanded: {
-            type: 'custom',
-            label: 'Border',
-            labelIcon: <Square size={16} className="mr-1" />,
-            render: (({ value, onChange, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e) => { onChange(e) }} className=" col-span-3"
-                            data={[{
-                                label: <div className="flex justify-center">All</div>,
-                                value: "false"
-                            }, {
-                                label: <div className="flex justify-center">Various</div>,
-                                value: 'true'
-                            },
-
-                            ]} />
-                    </div>
-                )
-            })
-        },
-        borderWidth: {
-            label: undefined,
-            type: 'custom',
-            render: (({ field, value, onChange }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <NumberInput step={1} leftSection={<BorderAllIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-                    </div>
-
-                )
-            })
-        },
-        borderTop: {
-            visible: false,
-            type: 'number'
-        },
-        borderBottom: {
-            visible: false,
-            type: 'number'
-        },
-        borderLeft: {
-            visible: false,
-            type: 'number'
-        },
-        borderRight: {
-            visible: false,
-            type: 'number'
-        },
-        borderColor: {
-            type: 'custom',
-            label: undefined,
-            render: ({ onChange, value, field }) => (
-                <div className="grid grid-cols-4 items-center gap-2">
-                    <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                    <ColorInput
-                        className="col-span-3"
-                        placeholder="Choose a color"
-                        value={value}
-                        onChangeEnd={(e) => onChange(e)}
-                        format="hexa"
-                    />
-                </div>
-            )
-        },
-
-
-        borderType: {
-            type: 'custom',
-            label: undefined,
-            render: (({ field, onChange, value }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className=" text-sm font-medium text-slate-400">{field.label}</p>
-                        <Select
-                            checkIconPosition="right"
-                            onChange={(e: any) => { onChange(e) }}
-                            className="col-span-3 col-start-2"
-                            size="xs"
-                            value={value}
-                            radius={'md'}
-                            data={['solid', 'dashed', 'dotted']}
-                        />
-                    </div>
-                )
-            })
-
-        },
-        borderRadiusExpanded: {
-            type: 'custom',
-            label: 'Radius',
-            labelIcon: <Square size={16} className="mr-1" />,
-            render: (({ value, onChange, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e) => { onChange(e) }} className=" col-span-3"
-                            data={[{
-                                label: <div className="flex justify-center">All</div>,
-                                value: "false"
-                            }, {
-                                label: <div className="flex justify-center">Various</div>,
-                                value: 'true'
-                            },
-
-                            ]} />
-                    </div>
-                )
-            })
-        },
-        borderRadius: {
-            label: undefined,
-            type: 'custom',
-            render: (({ field, value, onChange }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <NumberInput step={1} leftSection={<CornersIcon />} radius={'md'} className="w-full col-span-3" size="xs" value={value} onChange={(e) => onChange(Number(e))} />
-
-                    </div>
-
-                )
-            })
-        },
-        borderRadiusTopLeft: {
-            visible: false,
-            type: 'number'
-        },
-        borderRadiusTopRight: {
-            visible: false,
-            type: 'number'
-        },
-        borderRadiusBottomLeft: {
-            visible: false,
-            type: 'number'
-        },
-        borderRadiusBottomRight: {
-            visible: false,
-            type: 'number'
-        },
-
-        positionType: {
-            type: 'custom',
-            label: 'Position',
-            labelIcon: <LocateFixed size={16} className="mr-1" />,
-            render: (({ onChange, value, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <SegmentedControl value={value} size="xs" radius={'md'} onChange={(e: any) => { onChange(e) }} className=" col-span-3"
-                            data={[{
-                                label: <div className="flex justify-center">Relative</div>,
-                                value: "relative"
-                            }, {
-                                label: <div className="flex justify-center">Absolute</div>,
-                                value: 'absolute'
-                            },
-
-                            ]} />
-                    </div>
-                )
-            })
-        },
-        top: {
-            type: 'custom',
-            label: 'Top',
-            labelIcon: <ArrowUp size={16} className="mr-1" />,
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<ArrowUpIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        },
-        bottom: {
-            type: 'custom',
-            label: 'Bottom',
-            labelIcon: <ArrowUp size={16} className="mr-1" />,
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<ArrowDownIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        },
-        left: {
-            type: 'custom',
-            label: 'Left',
-            labelIcon: <ArrowUp size={16} className="mr-1" />,
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<ArrowLeftIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        },
-        right: {
-            type: 'custom',
-            label: 'Right',
-            labelIcon: <ArrowUp size={16} className="mr-1" />,
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<ArrowRightIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        },
-        rotation: {
-            type: 'custom',
-            label: 'Rotation',
-            render: (({ value, onChange, field }) => {
-                return (
-                    <div className="grid grid-cols-4 items-center gap-2">
-                        <p className="text-sm font-medium text-slate-400">{field.label}</p>
-                        <NumberInput
-                            size="xs"
-                            radius={'md'}
-                            className="col-span-3"
-                            value={value}
-                            onChange={(e) => onChange(Number(e))}
-                            rightSection={<DotIcon />}
-                        />
-                    </div>
-                )
-            })
-        },
-        draggable: {
-            type: 'number'
         }
     }
 
-    if (data.props.borderExpanded === 'true') {
-        fields.borderWidth = {
-            visible: false,
-            type: 'text'
-        }
-        fields.borderTop = {
-            type: 'custom',
-
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<BorderTopIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.borderBottom = {
-            type: 'custom',
-
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<BorderBottomIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.borderLeft = {
-            type: 'custom',
-
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<BorderLeftIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.borderRight = {
-            type: 'custom',
-            label: 'Top',
-            labelIcon: <ArrowUp size={16} className="mr-1" />,
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<BorderRightIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-
-    }
-    if (data.props.borderRadiusExpanded === 'true') {
-        fields.borderRadius = {
-            visible: false,
-            type: 'text'
-        }
-        fields.borderRadiusTopLeft = {
-            type: 'custom',
-
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<CornerTopLeftIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.borderRadiusBottomLeft = {
-            type: 'custom',
-
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<CornerBottomLeftIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.borderRadiusBottomRight = {
-            type: 'custom',
-
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<CornerBottomRightIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.borderRadiusTopRight = {
-            type: 'custom',
-            label: 'Top',
-            labelIcon: <ArrowUp size={16} className="mr-1" />,
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<CornerTopRightIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-
-    }
-
-
-    if (data.props.paddingExpanded === 'true') {
-        fields.paddingTop = {
-            type: 'custom',
-            label: 'Top',
-            labelIcon: <ArrowUp size={16} className="mr-1" />,
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<ArrowUpIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.paddingBottom = {
-            type: 'custom',
-            label: 'Bottom',
-            labelIcon: <ArrowDown size={16} className="mr-1" />,
-
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<ArrowDownIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.paddingLeft = {
-            type: 'custom',
-            label: 'Left',
-            labelIcon: <ArrowLeft size={16} className="mr-1" />,
-
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<ArrowLeftIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.paddingRight = {
-            type: 'custom',
-            label: 'Right',
-            labelIcon: <ArrowRight size={16} className="mr-1" />,
-
-            visible: true,
-            render: ({ onChange, value, field }: any) => (
-                <NumberInput leftSection={<ArrowRightIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-            )
-        }
-        fields.padding = {
-            type: 'custom',
-            label: 'Padding',
-            visible: false,
-            render: ({ onChange, value, field }) => {
-                return (
-                    <FieldLabel label={field.label!} >
-                        <Input type="number" value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                    </FieldLabel>
-                )
-
-            }
-        }
-
-    }
-    if (data.props.marginExpanded === 'true') {
-        fields.margin = {
-            type: 'custom',
-            label: 'Margin',
-            visible: false,
-            render: ({ onChange, value, field }) => (
-                <FieldLabel label={field.label!}>
-                    <Input type="number" value={value} onChange={(e) => onChange(Number(e.target.value))} />
-                </FieldLabel>
-            )
-        },
-            fields.marginTop = {
-                type: 'custom',
-                label: 'Top',
-                labelIcon: <ArrowUp size={16} className="mr-1" />,
-                visible: true,
-                render: ({ onChange, value, field }: any) => (
-                    <NumberInput leftSection={<ArrowUpIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-                )
-            },
-            fields.marginBottom = {
-                type: 'custom',
-                label: 'Bottom',
-                labelIcon: <ArrowDown size={16} className="mr-1" />,
-                visible: true,
-                render: ({ onChange, value, field }: any) => (
-                    <NumberInput leftSection={<ArrowDownIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-                )
-            },
-            fields.marginLeft = {
-                type: 'custom',
-                label: 'Left',
-                labelIcon: <ArrowLeft size={16} className="mr-1" />,
-                visible: true,
-                render: ({ onChange, value, field }: any) => (
-                    <NumberInput leftSection={<ArrowLeftIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-                )
-            },
-            fields.marginRight = {
-                type: 'custom',
-                label: 'Right',
-                labelIcon: <ArrowRight size={16} className="mr-1" />,
-                visible: true,
-                render: ({ onChange, value, field }: any) => (
-                    <NumberInput leftSection={<ArrowRightIcon />} step={1} className="col-span-3  col-start-2" size="xs" radius={'md'} value={value} onChange={(e) => onChange(Number(e))} />
-                )
-            }
-    }
     return fields
 }

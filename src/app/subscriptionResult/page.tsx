@@ -1,11 +1,8 @@
-import React from 'react';
+import { redirect } from 'next/navigation'
 
-const Page = () => {
-    return (
-        <div>
-
-        </div>
-    );
+// Returning paid subscribers land here after Stripe checkout.
+// Redirect immediately to the dashboard — the webhook will have updated plan_type
+// and the ?success=true param triggers the confirmation banner.
+export default function SubscriptionResult() {
+    redirect('/dashboard?success=true')
 }
-
-export default Page;

@@ -1,4 +1,4 @@
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import LayoutComp from "./layoutcomp";
 import { Database } from "../../../../lib/database.types";
 import { fetchUser } from "./actions";
@@ -12,7 +12,7 @@ export const metadata = {
 
 export default async function Layout({ children }: any) {
     const fetchUserData = async (user_id: string) => {
-        const supabase = createClient<Database>();
+        const supabase = await createClient();
         const businessData = (await supabase.from('business_users').select("*, notifications(*)").eq('user_id', user_id).single()).data
         return businessData
     }

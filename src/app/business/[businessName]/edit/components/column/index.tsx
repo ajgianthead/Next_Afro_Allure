@@ -9,23 +9,30 @@ export const ColumnLayoutComponent: any = {
     resolveData: resolvedColumnData,
     defaultProps: columnProps,
     inline: true,
-    render: (({ columns, gap, alignItems, puck }: {
-        columns: {
-            column: SlotComponent
-        }[], gap: number, numberOfColumns: number, alignItems: string, puck: any
+    render: (({ columns, gap, alignItems, mobileLayout, puck }: {
+        columns: { column: SlotComponent }[]
+        gap: number
+        numberOfColumns: number
+        alignItems: string
+        mobileLayout: string
+        puck: any
     }) => {
-        const gridTemplateColumns = columns.map(() => "1fr").join(" ");
+        if (mobileLayout === 'stack') {
+            return (
+                <div ref={puck.dragRef} className="flex flex-col md:flex-row w-full" style={{ gap, alignItems }}>
+                    {columns.map(({ column: Column }, index) => (
+                        <div key={index} className="flex-1"><Column /></div>
+                    ))}
+                </div>
+            )
+        }
+        const gridTemplateColumns = columns.map(() => "1fr").join(" ")
         return (
-            <div ref={puck.dragRef} style={{ display: "grid", gridTemplateColumns, gap: gap, alignItems }} className="w-full">
-                {columns.map(({ column: Column }, index) => {
-                    return (
-                        <div key={index}>
-                            <Column />
-                        </div>
-                    )
-                })}
+            <div ref={puck.dragRef} style={{ display: "grid", gridTemplateColumns, gap, alignItems }} className="w-full">
+                {columns.map(({ column: Column }, index) => (
+                    <div key={index}><Column /></div>
+                ))}
             </div>
-
         )
     }),
 }

@@ -1,4 +1,3 @@
-import { TypographySystem } from "@mui/joy";
 import { Box, Columns, Grid2X2, Heading, ImageIcon, Layers, MousePointerClick, Rows, Type, Video } from "lucide-react";
 import type { Config, Slot } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
@@ -13,7 +12,6 @@ import { CustomizableTextComponent } from "./components/customizableText";
 import { ContainerComponent } from "./components/container";
 import { textPresetsComponents } from "./components/textPresets";
 import { Components } from "./components/types";
-import { GalleryComponent } from "./components/prebuitComponents/gallery";
 import { ColumnLayoutComponent } from "./components/column";
 import { RowLayoutComponent } from "./components/row";
 import { GridLayoutComponent } from "./components/grid";
@@ -31,10 +29,7 @@ export const config: Config<Components> = {
         },
         prebuilt: {
             title: 'Pre-built Components',
-            components: ['Navbar', 'HeroSection', 'AboutBusiness',
-                'Card',
-                'Footer'
-            ]
+            components: ['Navbar', 'HeroSection', 'AboutBusiness', 'Card', 'Footer']
         },
         media: {
             defaultExpanded: false,
@@ -47,8 +42,7 @@ export const config: Config<Components> = {
         other: {
             title: 'Other',
             components: ['Button']
-        }
-
+        },
     },
     components: {
         Card: CardComponent,
@@ -84,7 +78,7 @@ export const drawerItemStyleProps = new Map<
     string,
     {
         icon: React.JSX.Element;
-        fontLevel: keyof TypographySystem | "inherit" | undefined;
+        fontLevel: string | undefined;
         label: string
     }
 >([

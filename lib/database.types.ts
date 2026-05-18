@@ -30,7 +30,7 @@ export type Database = {
           id: string
           paid_amount: number
           paid_deposit: boolean
-          payment_link_id: string | null
+          payment_link_id: string
           policy_id: string | null
           reminder_ids: Json | null
           require_deposit: boolean
@@ -42,6 +42,8 @@ export type Database = {
           service_paid_type: Database["public"]["Enums"]["paid_type"] | null
           start: string
           status: Database["public"]["Enums"]["status"]
+          substraction: boolean
+          time_range: unknown
           updated_at: string
         }
         Insert: {
@@ -59,7 +61,7 @@ export type Database = {
           id?: string
           paid_amount?: number
           paid_deposit?: boolean
-          payment_link_id?: string | null
+          payment_link_id?: string
           policy_id?: string | null
           reminder_ids?: Json | null
           require_deposit?: boolean
@@ -71,6 +73,8 @@ export type Database = {
           service_paid_type?: Database["public"]["Enums"]["paid_type"] | null
           start: string
           status?: Database["public"]["Enums"]["status"]
+          substraction?: boolean
+          time_range?: unknown
           updated_at?: string
         }
         Update: {
@@ -88,7 +92,7 @@ export type Database = {
           id?: string
           paid_amount?: number
           paid_deposit?: boolean
-          payment_link_id?: string | null
+          payment_link_id?: string
           policy_id?: string | null
           reminder_ids?: Json | null
           require_deposit?: boolean
@@ -100,6 +104,8 @@ export type Database = {
           service_paid_type?: Database["public"]["Enums"]["paid_type"] | null
           start?: string
           status?: Database["public"]["Enums"]["status"]
+          substraction?: boolean
+          time_range?: unknown
           updated_at?: string
         }
         Relationships: [
@@ -177,6 +183,72 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "client_users"
             referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      booking_sessions: {
+        Row: {
+          amount: number | null
+          business_id: string
+          clientInfo: Json | null
+          confirmed_at: string | null
+          created_at: string
+          currency: string | null
+          expires_at: string | null
+          id: string
+          metadata: Json | null
+          payment_intent_id: string | null
+          selected_datetime: string | null
+          service_id: string | null
+          status: Database["public"]["Enums"]["booking_session_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          business_id?: string
+          clientInfo?: Json | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_intent_id?: string | null
+          selected_datetime?: string | null
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["booking_session_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          business_id?: string
+          clientInfo?: Json | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_intent_id?: string | null
+          selected_datetime?: string | null
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["booking_session_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_sessions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "booking_sessions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -279,6 +351,7 @@ export type Database = {
         Row: {
           account_settings: Json | null
           booking_policies: string
+          brand_color: string | null
           business_id: string
           business_name: string
           clients: string[] | null
@@ -286,7 +359,11 @@ export type Database = {
           created_at: string
           current_onboarding_link: string | null
           default_availability: string
+          early_access: boolean
           email: string
+          founding_member: boolean
+          founding_member_number: number | null
+          founding_member_since: string | null
           had_trial: boolean
           has_marketplace_profile: boolean | null
           is_onboarded: boolean
@@ -298,13 +375,16 @@ export type Database = {
           published_site: boolean
           stripe_acc_id: string | null
           stripe_customer_id: string | null
+          tours_completed: Json | null
           updated_at: string
+          upgrade_prompt_dismissed_at: string | null
           url_name: string
           user_id: string
         }
         Insert: {
           account_settings?: Json | null
           booking_policies?: string
+          brand_color?: string | null
           business_id?: string
           business_name: string
           clients?: string[] | null
@@ -312,7 +392,11 @@ export type Database = {
           created_at?: string
           current_onboarding_link?: string | null
           default_availability?: string
+          early_access?: boolean
           email: string
+          founding_member?: boolean
+          founding_member_number?: number | null
+          founding_member_since?: string | null
           had_trial?: boolean
           has_marketplace_profile?: boolean | null
           is_onboarded?: boolean
@@ -324,13 +408,16 @@ export type Database = {
           published_site?: boolean
           stripe_acc_id?: string | null
           stripe_customer_id?: string | null
+          tours_completed?: Json | null
           updated_at?: string
+          upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
         }
         Update: {
           account_settings?: Json | null
           booking_policies?: string
+          brand_color?: string | null
           business_id?: string
           business_name?: string
           clients?: string[] | null
@@ -338,7 +425,11 @@ export type Database = {
           created_at?: string
           current_onboarding_link?: string | null
           default_availability?: string
+          early_access?: boolean
           email?: string
+          founding_member?: boolean
+          founding_member_number?: number | null
+          founding_member_since?: string | null
           had_trial?: boolean
           has_marketplace_profile?: boolean | null
           is_onboarded?: boolean
@@ -350,7 +441,9 @@ export type Database = {
           published_site?: boolean
           stripe_acc_id?: string | null
           stripe_customer_id?: string | null
+          tours_completed?: Json | null
           updated_at?: string
+          upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
         }
@@ -398,6 +491,27 @@ export type Database = {
           last_name?: string
           phone_number?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      client_waitlist: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
         }
         Relationships: []
       }
@@ -972,6 +1086,50 @@ export type Database = {
             }
             Returns: string
           }
+      confirm_booking_session:
+        | {
+            Args: {
+              p_amount_due: number
+              p_booking_session_id: string
+              p_business: string
+              p_client_metadata: Json
+              p_deposit_charge_id: string
+              p_deposit_price: number
+              p_end: string
+              p_paid_deposit: boolean
+              p_require_deposit: boolean
+              p_reschedules: number
+              p_selected_addons: Json
+              p_service_data: Json
+              p_service_id: string
+              p_start: string
+              p_status: string
+              p_subtraction: boolean
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_amount_due: number
+              p_booking_session_id: string
+              p_business: string
+              p_client_metadata: Json
+              p_deposit_charge_id: string
+              p_deposit_price: number
+              p_end: string
+              p_paid_deposit: boolean
+              p_require_deposit: boolean
+              p_reschedules: number
+              p_selected_addons: Json
+              p_service_data: Json
+              p_service_id: string
+              p_start: string
+              p_status: string
+              p_subtraction: number
+              p_user_id: string
+            }
+            Returns: undefined
+          }
       dashboard_bookings_this_month: {
         Args: { business: string }
         Returns: number
@@ -1116,6 +1274,54 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_booking_performance: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_bookings_per_week: number
+          bookings_by_day: Json
+          bookings_by_hour: Json
+          busiest_day_of_week: string
+          cancellation_rate: number
+          completion_rate: number
+          no_show_rate: number
+          total_bookings_last_month: number
+          total_bookings_this_month: number
+        }[]
+      }
+      get_client_analytics: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_days_between_visits: number
+          average_lifetime_value: number
+          average_visits_per_client: number
+          client_growth_percent: number
+          new_clients_last_month: number
+          new_clients_this_month: number
+          one_time_clients: number
+          retention_rate: number
+          returning_clients: number
+          total_unique_clients: number
+        }[]
+      }
+      get_client_list: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_days_between_visits: number
+          average_spend_per_visit: number
+          client_email: string
+          client_name: string
+          days_since_last_visit: number
+          first_visit: string
+          is_at_risk: boolean
+          is_due_soon: boolean
+          is_loyal: boolean
+          last_visit: string
+          most_booked_service: string
+          preferred_day: string
+          total_spent: number
+          total_visits: number
+        }[]
+      }
       get_dashboard_growth: {
         Args: { p_stylist_id: string }
         Returns: {
@@ -1125,6 +1331,78 @@ export type Database = {
           revenue_growth: number
           revenue_last_month: number
           revenue_this_month: number
+        }[]
+      }
+      get_financial_summary: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_monthly_revenue: number
+          booking_count_all_time: number
+          booking_count_this_year: number
+          months_active: number
+          total_deposits_all_time: number
+          total_deposits_this_year: number
+          total_earned_all_time: number
+          total_earned_this_year: number
+          total_outstanding_balances: number
+        }[]
+      }
+      get_growth_trends: {
+        Args: { p_business_id: string }
+        Returns: {
+          best_growth_month: string
+          bookings_last_month: number
+          bookings_mom_growth: number
+          bookings_this_month: number
+          clients_last_month: number
+          clients_mom_growth: number
+          clients_this_month: number
+          on_pace_vs_last_month: string
+          projected_month_revenue: number
+          revenue_3month_avg: number
+          revenue_last_month: number
+          revenue_mom_growth: number
+          revenue_this_month: number
+        }[]
+      }
+      get_revenue_by_month: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_ticket: number
+          booking_count: number
+          month: string
+          month_label: string
+          revenue: number
+        }[]
+      }
+      get_revenue_overview: {
+        Args: { p_business_id: string }
+        Returns: {
+          average_per_appointment: number
+          best_month_amount: number
+          best_month_date: string
+          revenue_growth_percent: number
+          total_deposits_collected: number
+          total_last_12_months: number
+          total_last_3_months: number
+          total_last_month: number
+          total_outstanding: number
+          total_this_month: number
+          total_this_year: number
+        }[]
+      }
+      get_service_analytics: {
+        Args: { p_business_id: string }
+        Returns: {
+          addon_revenue: number
+          average_price: number
+          cancellation_count: number
+          repeat_client_count: number
+          revenue_percent: number
+          service_id: string
+          service_name: string
+          total_bookings: number
+          total_revenue: number
         }[]
       }
       gettransactionid: { Args: never; Returns: unknown }
@@ -1782,6 +2060,14 @@ export type Database = {
       }
     }
     Enums: {
+      booking_session_status:
+        | "initiated"
+        | "details_completed"
+        | "payment_pending"
+        | "confirmed"
+        | "expired"
+        | "canceled"
+        | "date_selected"
       paid_type: "PLATFORM" | "CASH"
       plan_type: "STARTER" | "GROWTH"
       status:
@@ -1929,6 +2215,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      booking_session_status: [
+        "initiated",
+        "details_completed",
+        "payment_pending",
+        "confirmed",
+        "expired",
+        "canceled",
+        "date_selected",
+      ],
       paid_type: ["PLATFORM", "CASH"],
       plan_type: ["STARTER", "GROWTH"],
       status: [

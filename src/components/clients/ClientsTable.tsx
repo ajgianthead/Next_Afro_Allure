@@ -1,358 +1,506 @@
-'use client';
-import { faker } from '@faker-js/faker';
-import { Archive, Ban, EllipsisVertical, Pencil, Plus, Trash, User } from 'lucide-react';
-import Avatar from '@tailus-ui/Avatar';
-import DropdownMenu from '@tailus-ui/Dropdown';
-import { Badge } from '@tailus-ui/Badge';
-import { Caption, Text, Title } from '@tailus-ui/typography';
-import Card from '@tailus-ui/Card';
-import Dialog from '@components/Dialog';
-import Input from '@components/Input';
-import Textarea from '@components/TextArea';
-import { useEffect, useState } from 'react';
-import { createClient } from '@utils/supabase/client';
-import { Database } from '../../../lib/database.types';
-import { useUserContext } from '@utils/context/UserContext';
-import { Button, CircularProgress, DialogContent, DialogTitle, Dropdown, FormControl, FormLabel, List, ListItem, ListItemButton, ListItemContent, Menu, MenuButton, MenuItem, Modal, ModalClose, ModalDialog, Snackbar, Stack, Table, Typography } from '@mui/joy';
-import { addCreateNewClient, banClientFromList, deleteClient, unbanClient, updateClientInfo } from 'app/dashboard/(other)/clients/actions';
-import { PostgrestError } from '@supabase/supabase-js';
+'use client'
 
+import { Ban, Loader2, Plus, UserX } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import {
+    addCreateNewClient,
+    banClientFromList,
+    deleteClient,
+    unbanClient,
+    updateClientInfo,
+    type BannedClientDisplay,
+    type Client,
+} from 'app/dashboard/(other)/clients/actions'
+import { PostgrestError } from '@supabase/supabase-js'
 
+const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
-const clients: any[] = Array.from({ length: 50 }, (_, i) => ({
-    first_name: faker.person.firstName(),
-    last_name: faker.person.lastName(),
-    email: faker.internet.email(),
-    phone_number: faker.phone.number("754-###-####"),
-}));
-
-
-
-export const ClientsTable = ({ clientData, businessId, bannedClients }: {
-    clientData: Client[], businessId: string, bannedClients: {
-        business_id: string | null;
-        created_at: string;
-        email: string | null;
-        id: string;
-        phone_number: string | null;
-    }[]
-}) => {
-    const [open, setOpen] = useState<boolean>(false);
-    const [banned, setBanned] = useState<typeof bannedClients>([...bannedClients])
-    const [clientInfo, setClientInfo] = useState<{
-        firstName: string;
-        lastName: string;
-        email: string;
-        phoneNumber: string;
-    }>({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phoneNumber: ""
-    })
-    const [clients, setClients] = useState<Client[]>([...clientData])
-    const [sendingClientData, setSendingClientData] = useState<boolean>(false)
-    const [editing, setEditing] = useState<boolean>(false)
-    const [index, setIndex] = useState<number>()
-    const [deletingClient, setDeletingClient] = useState<boolean>(false)
-    const handleDeletingClient = async (clientId: string) => {
-        setDeletingClient(true)
-        const res = await deleteClient(clientId)
-        let clone = [...clients]
-        clone.splice(index!, 1)
-        setClients(clone)
-        setDeletingClient(false)
-    }
-    const [openBanList, setOpenBanList] = useState<boolean>(false)
-    const [banningClient, setBanningClient] = useState<boolean>(false)
-    const [unbanning, setUnbanning] = useState<boolean>(false)
-    const [error, setError] = useState<"Client is banned from this business" | "Client already exists for this business" | PostgrestError>()
-    const [openErrorPrompt, setOpenErrorPrompt] = useState<boolean>(false)
+function FieldLabel({ children }: { children: React.ReactNode }) {
     return (
-        <div>
-            <Snackbar
-                variant='soft'
-                color='danger'
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                open={openErrorPrompt}
-                onClose={() => {
-                    setOpenErrorPrompt(false)
+        <label className="text-xs font-medium" style={{ color: '#6F6863' }}>
+            {children}
+        </label>
+    )
+}
+
+function BrandInput({
+    value,
+    onChange,
+    placeholder,
+    required,
+    autoFocus,
+    type = 'text',
+}: {
+    value: string
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+    placeholder?: string
+    required?: boolean
+    autoFocus?: boolean
+    type?: string
+}) {
+    return (
+        <input
+            type={type}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            required={required}
+            autoFocus={autoFocus}
+            className="w-full rounded-xl px-3 py-2 text-sm outline-none transition-shadow"
+            style={{
+                border: '1px solid #E8E2D6',
+                color: '#1A1818',
+                backgroundColor: '#FAFAFA',
+            }}
+            onFocus={e => (e.currentTarget.style.boxShadow = '0 0 0 2px rgba(201,151,74,0.3)')}
+            onBlur={e => (e.currentTarget.style.boxShadow = 'none')}
+        />
+    )
+}
+
+export const ClientsTable = ({
+    clientData,
+    businessId,
+    bannedClients,
+}: {
+    clientData: Client[]
+    businessId: string
+    bannedClients: BannedClientDisplay[]
+}) => {
+    const [clients, setClients] = useState<Client[]>([...clientData])
+    const [banned, setBanned] = useState<BannedClientDisplay[]>([...bannedClients])
+
+    const [open, setOpen] = useState(false)
+    const [openBanList, setOpenBanList] = useState(false)
+    const [editing, setEditing] = useState(false)
+    const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+
+    const [saving, setSaving] = useState(false)
+    const [deleting, setDeleting] = useState(false)
+    const [banning, setBanning] = useState(false)
+    const [unbanning, setUnbanning] = useState<string | null>(null)
+
+    const [clientInfo, setClientInfo] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
+    })
+
+    const resetForm = () => {
+        setClientInfo({ firstName: '', lastName: '', email: '', phoneNumber: '' })
+        setEditing(false)
+        setSelectedClientId(null)
+        setOpen(false)
+    }
+
+    const selectedClient = clients.find(c => c.client_id === selectedClientId)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setSaving(true)
+
+        if (editing && selectedClient) {
+            const res = await updateClientInfo(
+                {
+                    client_id: selectedClient.client_id!,
+                    first_name: clientInfo.firstName,
+                    last_name: clientInfo.lastName,
+                    email: clientInfo.email,
+                    phone_number: clientInfo.phoneNumber,
+                },
+                businessId
+            )
+            if (typeof res === 'string' || res instanceof PostgrestError) {
+                toast.error(typeof res === 'string' ? res : res.message)
+            } else {
+                setClients(prev => prev.map(c => (c.client_id === res.client_id ? (res as Client) : c)))
+                resetForm()
+            }
+        } else {
+            const res = await addCreateNewClient(
+                {
+                    first_name: clientInfo.firstName,
+                    last_name: clientInfo.lastName,
+                    email: clientInfo.email,
+                    phone_number: clientInfo.phoneNumber,
+                },
+                businessId
+            )
+            if (typeof res === 'string' || res instanceof PostgrestError) {
+                toast.error(typeof res === 'string' ? res : res.message)
+            } else {
+                setClients(prev => [...prev, res as Client])
+                resetForm()
+            }
+        }
+
+        setSaving(false)
+    }
+
+    const handleDelete = async () => {
+        if (!selectedClient) return
+        setDeleting(true)
+        const res = await deleteClient(selectedClient.client_id!, businessId)
+        if (res instanceof PostgrestError) {
+            toast.error(res.message)
+        } else {
+            setClients(prev => prev.filter(c => c.client_id !== selectedClient.client_id))
+            resetForm()
+        }
+        setDeleting(false)
+    }
+
+    const handleBan = async () => {
+        if (!selectedClient) return
+        setBanning(true)
+        const res = await banClientFromList(selectedClient.client_id!, businessId)
+        if (res instanceof PostgrestError) {
+            toast.error(res.message)
+        } else {
+            // Add to banned display list — fetch full info from current client record
+            setBanned(prev => [
+                ...prev,
+                {
+                    id: (res as any).id,
+                    business_id: businessId,
+                    client_id: selectedClient.client_id!,
+                    created_at: (res as any).created_at ?? new Date().toISOString(),
+                    email: selectedClient.email,
+                    phone_number: selectedClient.phone_number,
+                    first_name: selectedClient.first_name,
+                    last_name: selectedClient.last_name,
+                },
+            ])
+            setClients(prev => prev.filter(c => c.client_id !== selectedClient.client_id))
+            resetForm()
+        }
+        setBanning(false)
+    }
+
+    const handleUnban = async (client: BannedClientDisplay) => {
+        setUnbanning(client.id)
+        const res = await unbanClient(client.id)
+        if (res instanceof PostgrestError) {
+            toast.error(res.message)
+        } else {
+            setBanned(prev => prev.filter(b => b.id !== client.id))
+        }
+        setUnbanning(null)
+    }
+
+    const busy = saving || deleting || banning
+
+    const openEdit = (client: Client) => {
+        setSelectedClientId(client.client_id!)
+        setClientInfo({
+            firstName: client.first_name,
+            lastName: client.last_name,
+            email: client.email,
+            phoneNumber: client.phone_number,
+        })
+        setEditing(true)
+        setOpen(true)
+    }
+
+    return (
+        <div className="p-4 sm:p-5 flex flex-col gap-5 sm:gap-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div>
+                    <h1 className="text-lg font-semibold" style={{ color: '#1A1818' }}>
+                        Manage Clientele
+                    </h1>
+                    <p className="text-sm mt-0.5" style={{ color: '#6F6863' }}>
+                        Add, edit, and remove clients. Ban clients to block future bookings.
+                    </p>
+                </div>
+                <div className="flex items-center gap-2 sm:shrink-0">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl flex-1 sm:flex-none"
+                        style={{ borderColor: '#E8E2D6', color: '#1A1818', fontSize: '13px' }}
+                        onClick={() => setOpenBanList(true)}
+                    >
+                        <Ban size={14} className="mr-1.5" />
+                        Banned List
+                    </Button>
+                    <Button
+                        size="sm"
+                        className="rounded-xl flex-1 sm:flex-none"
+                        style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF', fontSize: '13px' }}
+                        onClick={() => setOpen(true)}
+                    >
+                        <Plus size={14} className="mr-1.5" />
+                        Add Client
+                    </Button>
+                </div>
+            </div>
+
+            {/* Table / Card list */}
+            <div
+                className="rounded-2xl overflow-hidden"
+                style={{ border: '1px solid #E8E2D6', backgroundColor: '#FFFFFF' }}
+            >
+                {clients.length > 0 ? (
+                    <>
+                        {/* Mobile card list */}
+                        <ul className="sm:hidden">
+                            {clients.map((client, i) => (
+                                <li
+                                    key={client.client_id}
+                                    className="px-4 py-3.5 cursor-pointer active:bg-[#FAF7F2]"
+                                    style={{ borderBottom: i < clients.length - 1 ? '1px solid #F0EBE3' : undefined }}
+                                    onClick={() => openEdit(client)}
+                                >
+                                    <p className="text-sm font-medium" style={{ color: '#1A1818' }}>
+                                        {client.first_name} {client.last_name}
+                                    </p>
+                                    <p className="text-xs mt-0.5 truncate" style={{ color: '#6F6863' }}>
+                                        {client.email}
+                                    </p>
+                                    <p className="text-xs" style={{ color: '#6F6863' }}>
+                                        {client.phone_number}
+                                    </p>
+                                </li>
+                            ))}
+                        </ul>
+
+                        {/* Desktop table */}
+                        <table className="w-full hidden sm:table">
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid #E8E2D6', backgroundColor: '#FAF7F2' }}>
+                                    {['First Name', 'Last Name', 'Email', 'Phone Number'].map(h => (
+                                        <th
+                                            key={h}
+                                            className="text-left px-5 py-3 text-[10px] font-semibold tracking-widest uppercase"
+                                            style={{ color: '#6F6863' }}
+                                        >
+                                            {h}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {clients.map((client, i) => (
+                                    <tr
+                                        key={client.client_id}
+                                        className="cursor-pointer transition-colors"
+                                        style={{ borderBottom: i < clients.length - 1 ? '1px solid #F0EBE3' : undefined }}
+                                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FAF7F2')}
+                                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '')}
+                                        onClick={() => openEdit(client)}
+                                    >
+                                        <td className="px-5 py-3.5 text-sm" style={{ color: '#1A1818' }}>
+                                            {client.first_name}
+                                        </td>
+                                        <td className="px-5 py-3.5 text-sm" style={{ color: '#1A1818' }}>
+                                            {client.last_name}
+                                        </td>
+                                        <td className="px-5 py-3.5 text-sm" style={{ color: '#6F6863' }}>
+                                            {client.email}
+                                        </td>
+                                        <td className="px-5 py-3.5 text-sm" style={{ color: '#6F6863' }}>
+                                            {client.phone_number}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                        <UserX size={32} style={{ color: '#E8E2D6' }} />
+                        <p className="text-sm italic" style={{ color: '#6F6863' }}>
+                            You have no current clients
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Add / Edit Client Dialog */}
+            <Dialog
+                open={open}
+                onOpenChange={v => {
+                    if (!v) resetForm()
                 }}
             >
-                {error instanceof PostgrestError ? error.message : error}
-            </Snackbar>
-            <div className='mx-6'>
-                <Title>Manage Clientele</Title>
-                <Caption>Add, edit, and delete clients that booked or have yet to book with you. You can also ban current and/or potential clientele. No two clients can share the same email or phone number</Caption>
-            </div>
-            <Modal open={openBanList} onClose={() => {
-                setOpenBanList(false)
-            }}>
-                <ModalDialog sx={{
-                    width: 500,
-                    padding: 3
-                }} size='sm'>
-                    <ModalClose />
-                    <DialogTitle>Banned Clients</DialogTitle>
-                    <DialogContent>List of clients that are banned from booking with you</DialogContent>
-                    <div>
-                        <List sx={{
-                            maxHeight: 300,
-                            overflowY: banned.length > 0 ? 'scroll' : 'none'
-                        }}>
-                            {banned.length > 0 ? banned.map((client, index) => {
-                                return (
-                                    <ListItem >
-                                        <ListItemButton sx={{
-                                            borderRadius: 8,
-                                            padding: 1.5
-                                        }}>
-                                            <ListItemContent >
-                                                <div>
-                                                    <Typography>{client.email}</Typography>
-                                                    <Caption>{client.phone_number}</Caption>
-                                                </div>
-                                            </ListItemContent>
-                                            <Dropdown sx={{
-                                                zIndex: 50
-                                            }}>
-                                                <MenuButton
-                                                    variant='plain'
-                                                    slotProps={{ root: { variant: 'outlined', color: 'neutral' } }}
-                                                >
-                                                    <EllipsisVertical size={16} />  </MenuButton>
-                                                <Menu disablePortal >
-                                                    <MenuItem disabled={unbanning} variant='plain' color='danger' onClick={async () => {
-                                                        setUnbanning(true)
-                                                        const res = await unbanClient(client)
-                                                        if (res instanceof PostgrestError) {
+                <DialogContent className="rounded-2xl w-[calc(100vw-2rem)] sm:max-w-md" style={{ borderColor: '#E8E2D6' }}>
+                    <DialogHeader>
+                        <DialogTitle style={{ fontFamily: SERIF, color: '#1A1818', fontSize: '1.1rem' }}>
+                            {editing ? 'Edit Client' : 'Add New Client'}
+                        </DialogTitle>
+                        <DialogDescription style={{ color: '#6F6863' }}>
+                            {editing
+                                ? 'Update the client information below.'
+                                : 'Enter the client details below to add them to your list.'}
+                        </DialogDescription>
+                    </DialogHeader>
 
-                                                        } else {
-                                                            let clone = [...banned]
-                                                            clone.splice(index, 1)
-                                                            setBanned(clone)
-                                                        }
-                                                        setUnbanning(false)
-                                                        setOpenBanList(false)
-                                                    }}><Ban size={16} />Unban</MenuItem>
-                                                </Menu>
-                                            </Dropdown>
-
-                                        </ListItemButton>
-                                    </ListItem>
-
-                                )
-                            }) : <div className='flex justify-center w-full py-5'>
-                                <Caption className='italic'>You have no banned clients</Caption>
-                            </div>}
-
-                        </List>
-                    </div>
-                </ModalDialog>
-            </Modal>
-            <Modal open={open} onClose={() => {
-                setOpen(false)
-                setEditing(false)
-                setClientInfo({
-                    firstName: "",
-                    lastName: "",
-                    email: "",
-                    phoneNumber: ""
-                })
-            }}>
-                <ModalDialog sx={{
-                    width: 500,
-                    padding: 3
-                }} size='sm'>
-                    <ModalClose />
-                    <DialogTitle>{editing ? "Update Client Info" : "Create New Client"}</DialogTitle>
-                    <DialogContent>{editing ? "Edit and save client info below" : "Enter the client info below to add new client"}</DialogContent>
-                    <form
-                        onSubmit={async (event: React.FormEvent<HTMLFormElement>) => {
-                            event.preventDefault();
-                            setSendingClientData(true)
-                            if (editing) {
-                                const client = await updateClientInfo({
-                                    first_name: clientInfo.firstName,
-                                    last_name: clientInfo.lastName,
-                                    email: clientInfo.email,
-                                    phone_number: clientInfo.phoneNumber,
-                                    business_id: businessId,
-                                    client_id: clients[index!].client_id
-                                })
-                                if (client === "Client already exists for this business" || client instanceof PostgrestError) {
-                                    setError(client)
-                                    setOpenErrorPrompt(true)
-
-                                } else {
-                                    let clone = [...clients]
-                                    let index = clone.findIndex((person) => person.client_id === client.client_id)
-                                    clone.splice(index, 1, client)
-                                    setClients(clone)
-
-                                }
-                            } else {
-                                const client = await addCreateNewClient({
-                                    first_name: clientInfo.firstName,
-                                    last_name: clientInfo.lastName,
-                                    email: clientInfo.email,
-                                    phone_number: clientInfo.phoneNumber,
-                                    business_id: businessId
-                                })
-                                if (client === "Client is banned from this business" || client === "Client already exists for this business" || client instanceof PostgrestError) {
-                                    setError(client)
-                                    setOpenErrorPrompt(true)
-                                } else {
-
-                                    setClients([
-                                        ...clients,
-                                        client
-                                    ])
-
-                                }
-                            }
-
-                            setSendingClientData(false)
-                            setOpen(false);
-                            setClientInfo({
-                                firstName: "",
-                                lastName: "",
-                                email: "",
-                                phoneNumber: ""
-                            })
-                            setIndex(undefined)
-                        }}
-                    >
-                        <Stack spacing={2}>
-                            <FormControl>
-                                <FormLabel>First Name</FormLabel>
-                                <Input value={clientInfo.firstName} onChange={(e) => {
-                                    setClientInfo({
-                                        ...clientInfo,
-                                        firstName: e.target.value
-                                    })
-                                }} size='sm' autoFocus required />
-                            </FormControl>
-                            <FormControl>
-                                <FormLabel>Last Name</FormLabel>
-                                <Input onChange={(e) => {
-                                    setClientInfo({
-                                        ...clientInfo,
-                                        lastName: e.target.value
-                                    })
-                                }} value={clientInfo.lastName} required size='sm' />
-                            </FormControl>
-                            <FormControl>
-                                <FormLabel>Email</FormLabel>
-                                <Input onChange={(e) => {
-                                    setClientInfo({
-                                        ...clientInfo,
-                                        email: e.target.value
-                                    })
-                                }} value={clientInfo.email} required size='sm' />
-                            </FormControl>
-                            <FormControl>
-                                <FormLabel>Phone Number</FormLabel>
-                                <Input onChange={(e) => {
-                                    setClientInfo({
-                                        ...clientInfo,
-                                        phoneNumber: e.target.value
-                                    })
-                                }} value={clientInfo.phoneNumber} required size='sm' />
-                            </FormControl>
-                            <div className='flex flex-col gap-1 w-full'>
-                                <Button disabled={sendingClientData || deletingClient || banningClient} type="submit">{sendingClientData ? <CircularProgress size='sm' /> : editing ? "Save Client Info" : "Create Client"}</Button>
-                                {editing ? <div className="flex flex-col w-full gap-1">
-                                    <Button variant='outlined' onClick={async () => {
-                                        await handleDeletingClient(clients[index!].client_id)
-                                        setOpen(false);
-                                        setClientInfo({
-                                            firstName: "",
-                                            lastName: "",
-                                            email: "",
-                                            phoneNumber: ""
-                                        })
-                                        setEditing(false)
-                                        setIndex(undefined)
-
-                                    }} color='danger' disabled={sendingClientData || deletingClient || banningClient}>{deletingClient ? <CircularProgress size='sm' /> : <div className='flex items-center gap-2'>
-                                        <Trash size={16} /> Delete Client</div>}</Button>
-                                    <Button variant='solid' onClick={async () => {
-                                        setBanningClient(true)
-                                        const res = await banClientFromList(clients[index!].client_id)
-                                        if (!(res instanceof PostgrestError)) {
-                                            setBanned([
-                                                ...banned,
-                                                res
-                                            ])
-                                            let clone = [...clients]
-                                            clone.splice(index!, 1)
-                                            setClients(clone)
-                                        }
-                                        setOpen(false);
-                                        setClientInfo({
-                                            firstName: "",
-                                            lastName: "",
-                                            email: "",
-                                            phoneNumber: ""
-                                        })
-                                        setEditing(false)
-                                        setIndex(undefined)
-                                        setBanningClient(false)
-                                    }} color='danger' disabled={sendingClientData || deletingClient || banningClient}>{banningClient ? <CircularProgress size='sm' /> : <div className='flex items-center gap-2'>
-                                        <Ban size={16} />Ban Client</div>}</Button>
-                                </div> : <></>}
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1.5">
+                                <FieldLabel>First Name</FieldLabel>
+                                <BrandInput
+                                    value={clientInfo.firstName}
+                                    onChange={e => setClientInfo(p => ({ ...p, firstName: e.target.value }))}
+                                    required
+                                    autoFocus
+                                />
                             </div>
+                            <div className="flex flex-col gap-1.5">
+                                <FieldLabel>Last Name</FieldLabel>
+                                <BrandInput
+                                    value={clientInfo.lastName}
+                                    onChange={e => setClientInfo(p => ({ ...p, lastName: e.target.value }))}
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <FieldLabel>Email</FieldLabel>
+                            <BrandInput
+                                type="email"
+                                value={clientInfo.email}
+                                onChange={e => setClientInfo(p => ({ ...p, email: e.target.value }))}
+                                required
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <FieldLabel>Phone Number</FieldLabel>
+                            <BrandInput
+                                type="tel"
+                                value={clientInfo.phoneNumber}
+                                onChange={e => setClientInfo(p => ({ ...p, phoneNumber: e.target.value }))}
+                                required
+                            />
+                        </div>
 
-                        </Stack>
+                        <div className="flex flex-col gap-2 pt-1">
+                            <Button
+                                type="submit"
+                                disabled={busy}
+                                className="w-full rounded-xl"
+                                style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF', fontSize: '13px' }}
+                            >
+                                {saving ? (
+                                    <Loader2 size={14} className="animate-spin mr-1.5" />
+                                ) : null}
+                                {editing ? 'Save Changes' : 'Add Client'}
+                            </Button>
+
+                            {editing && (
+                                <>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={busy}
+                                        className="w-full rounded-xl"
+                                        style={{ borderColor: '#FC6161', color: '#FC6161', fontSize: '13px' }}
+                                        onClick={handleDelete}
+                                    >
+                                        {deleting ? (
+                                            <Loader2 size={14} className="animate-spin mr-1.5" />
+                                        ) : null}
+                                        Delete Client
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        disabled={busy}
+                                        className="w-full rounded-xl"
+                                        style={{ backgroundColor: '#FC6161', color: '#FFFFFF', fontSize: '13px' }}
+                                        onClick={handleBan}
+                                    >
+                                        {banning ? (
+                                            <Loader2 size={14} className="animate-spin mr-1.5" />
+                                        ) : (
+                                            <Ban size={14} className="mr-1.5" />
+                                        )}
+                                        Ban Client
+                                    </Button>
+                                </>
+                            )}
+                        </div>
                     </form>
-                </ModalDialog>
-            </Modal>
-            <div className='flex justify-end px-6 my-2 gap-2'>
-                <Button variant='outlined' color='danger' onClick={() => {
-                    setOpenBanList(true)
-                }}>Banned Client List</Button>
-                <Button onClick={() => {
-                    setOpen(true)
-                }} className='flex gap-2 items-center'><Plus size={16} />Add Client</Button>
-            </div>
-            <Card className='px-6 py-6 overflow-x-auto lg:overflow-clip mx-6'>
-                {clients.length ? <Table hoverRow>
-                    <thead>
-                        <tr>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Email</th>
-                            <th>Phone Number</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {clients.map((client, index) => (
-                            <tr className=' cursor-pointer' key={client.client_id} onClick={() => {
-                                setClientInfo({
-                                    firstName: client.first_name,
-                                    lastName: client.last_name,
-                                    email: client.email,
-                                    phoneNumber: client.phone_number
-                                })
-                                setEditing(true)
-                                setIndex(index)
-                                setOpen(true)
-                            }}>
-                                <td>{client.first_name}</td>
-                                <td>{client.last_name}</td>
-                                <td>{client.email}</td>
-                                <td>{client.phone_number}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table> : <div className='flex w-full justify-center py-2 italic'>
-                    <Caption>You have no current clients</Caption></div>}
+                </DialogContent>
+            </Dialog>
 
-            </Card>
+            {/* Banned Client List Dialog */}
+            <Dialog open={openBanList} onOpenChange={setOpenBanList}>
+                <DialogContent className="rounded-2xl w-[calc(100vw-2rem)] sm:max-w-md" style={{ borderColor: '#E8E2D6' }}>
+                    <DialogHeader>
+                        <DialogTitle style={{ fontFamily: SERIF, color: '#1A1818', fontSize: '1.1rem' }}>
+                            Banned Clients
+                        </DialogTitle>
+                        <DialogDescription style={{ color: '#6F6863' }}>
+                            Clients on this list are blocked from booking with you.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div
+                        className="rounded-xl overflow-hidden mt-1"
+                        style={{ border: '1px solid #E8E2D6', maxHeight: 340, overflowY: 'auto' }}
+                    >
+                        {banned.length > 0 ? (
+                            <ul>
+                                {banned.map((client, i) => (
+                                    <li
+                                        key={client.id}
+                                        className="flex items-center justify-between gap-3 px-4 py-3"
+                                        style={{
+                                            borderBottom: i < banned.length - 1 ? '1px solid #F0EBE3' : undefined,
+                                        }}
+                                    >
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium" style={{ color: '#1A1818' }}>
+                                                {client.first_name} {client.last_name}
+                                            </p>
+                                            <p className="text-xs truncate" style={{ color: '#6F6863' }}>
+                                                {client.email}
+                                            </p>
+                                            <p className="text-xs" style={{ color: '#6F6863' }}>
+                                                {client.phone_number}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            disabled={unbanning === client.id}
+                                            className="rounded-lg shrink-0"
+                                            style={{ borderColor: '#E8E2D6', color: '#6F6863', fontSize: '12px' }}
+                                            onClick={() => handleUnban(client)}
+                                        >
+                                            {unbanning === client.id ? (
+                                                <Loader2 size={12} className="animate-spin" />
+                                            ) : (
+                                                'Unban'
+                                            )}
+                                        </Button>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <div className="flex justify-center py-10">
+                                <p className="text-sm italic" style={{ color: '#6F6863' }}>
+                                    No banned clients
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
+    )
+}
 
-    );
-};
-
-export default ClientsTable;
+export default ClientsTable

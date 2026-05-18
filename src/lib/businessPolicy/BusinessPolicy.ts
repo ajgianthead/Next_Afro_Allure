@@ -12,6 +12,33 @@ export enum Type {
     PERCENT = "percent"
 }
 
+export interface BusinessPolicyType {
+    id: string,
+    business: string,
+    deposit: {
+        enabled: boolean,
+        settings: {
+            type: Type,
+            value: number,
+            subtraction: boolean
+        }
+    },
+    late_fee: {
+        enabled: boolean
+        fee?: number
+    },
+    no_show: {
+        enabled: boolean
+        level?: Level
+    },
+    rescheduleLimit: number,
+    rescheduleDayLimit: number,
+    cancelDayLimit: number,
+    importantInfo: string,
+    readBeforeBooking: string,
+    bookAheadValue: string
+}
+
 export class BusinessPolicy {
     constructor(
         public id: string,
@@ -76,11 +103,11 @@ export class BusinessPolicy {
                 settings: (row.deposit as typeof BusinessPolicy.prototype.deposit).settings
             },
             {
-                enabled: (row.deposit as typeof BusinessPolicy.prototype.late_fee).enabled
+                enabled: (row.late_fee as typeof BusinessPolicy.prototype.late_fee).enabled
             },
             {
-                enabled: (row.deposit as typeof BusinessPolicy.prototype.no_show).enabled,
-                level: (row.deposit as typeof BusinessPolicy.prototype.no_show).level
+                enabled: (row.no_show as typeof BusinessPolicy.prototype.no_show).enabled,
+                level: (row.no_show as typeof BusinessPolicy.prototype.no_show).level
             },
             row.reschedule_limit!,
             row.reschedule_day_limit!,
@@ -90,7 +117,35 @@ export class BusinessPolicy {
             row.book_ahead_value
         )
     }
-    static async fetch(supabase: SupabaseClient<Database>, businessId: string) {
+    toClient() {
+        return {
+            id: this.id,
+            business: this.business,
+            deposit: {
+                enabled: this.deposit.enabled,
+                settings: {
+                    type: this.deposit.settings.type,
+                    value: this.deposit.settings.value,
+                    subtraction: this.deposit.settings.subtraction
+                }
+            },
+            late_fee: {
+                enabled: this.late_fee.enabled,
+                fee: this.late_fee.fee
+            },
+            no_show: {
+                enabled: this.no_show,
+                level: this.no_show.level
+            },
+            rescheduleLimit: this.rescheduleLimit,
+            rescheduleDayLimit: this.rescheduleDayLimit,
+            cancelDayLimit: this.cancelDayLimit,
+            importantInfo: this.importantInfo,
+            readBeforeBooking: this.readBeforeBooking,
+            bookAheadValue: this.bookAheadValue
+        } as unknown as BusinessPolicyType
+    }
+    static async fetch(supabase: SupabaseClient<Database, any>, businessId: string) {
         try {
             const { data: row, error } = await supabase.from('business_policies').select().eq('business', businessId).single()
             if (error) throw Error(error.message)
@@ -99,7 +154,7 @@ export class BusinessPolicy {
             throw Error(error.message)
         }
     }
-    async update(supabase: SupabaseClient<Database>, policy: typeof BusinessPolicy.prototype) {
+    async update(supabase: SupabaseClient<Database, any>, policy: typeof BusinessPolicy.prototype) {
         try {
             const { data: row, error } = await supabase.from('business_policies').update({
                 deposit: {

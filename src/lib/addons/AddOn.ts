@@ -35,7 +35,13 @@ export class Addon {
             throw Error(error.message)
         }
     }
-    static async fetchById(supabase: SupabaseClient<Database>, addOnId: string) {
+    static async fetchByIds(supabase: SupabaseClient<Database>, ids: string[]): Promise<Addon[]> {
+        if (ids.length === 0) return []
+        const { data, error } = await supabase.from('service_addons').select().in('id', ids)
+        if (error) throw new Error(error.message)
+        return (data ?? []).map(row => Addon.fromRow(row) as Addon)
+    }
+    static async fetchById(supabase: SupabaseClient<Database, any>, addOnId: string) {
         try {
             const { data: row, error } = await supabase.from('service_addons').select().eq('id', addOnId).single()
             if (error) throw Error(error.message)
@@ -59,7 +65,7 @@ export class Addon {
     }
     async update(supabase: SupabaseClient<Database>, data: typeof Addon.prototype) {
         try {
-            const { data: row, error } = await supabase.from('service_addons').insert({
+            const { data: row, error } = await supabase.from('service_addons').update({
                 name: data.name,
                 price: data.price
             }).eq('id', this.id).select().single()

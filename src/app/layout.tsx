@@ -1,11 +1,10 @@
 import '@mantine/core/styles.css';
 
-import { createClient } from "@utils/supabase/server";
+import { createClient } from "@/app/utils/supabase/server";
 import RootLayout from "./layoutcomp";
 import { Database } from "../../lib/database.types";
 import { Analytics } from "@vercel/analytics/next"
 import { CssVarsProvider } from "@mui/joy";
-import { theme } from "./landingPage";
 
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 

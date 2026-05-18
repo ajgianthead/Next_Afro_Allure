@@ -1,0 +1,58 @@
+.aa-business-root, .aa-business-root * { box-sizing: border-box; }
+
+@media (max-width: 1024px) {
+  .aa-business-root .aa-section { padding-left: 36px !important; padding-right: 36px !important; }
+  .aa-business-root .aa-nav { padding-left: 36px !important; padding-right: 36px !important; }
+  .aa-business-root .aa-hero-inner { padding-left: 36px !important; padding-right: 36px !important; }
+  .aa-business-root .aa-bento { grid-template-columns: repeat(2, 1fr) !important; }
+  .aa-business-root .aa-bento > * { grid-column: span 2 !important; grid-row: auto !important; }
+  .aa-business-root .aa-why-row { grid-template-columns: 80px 1fr !important; }
+  .aa-business-root .aa-why-desc { grid-column: 1 / -1 !important; padding-top: 8px !important; }
+  .aa-business-root .aa-pricing-grid { grid-template-columns: 1fr !important; }
+  .aa-business-root .aa-founding-grid { grid-template-columns: 1fr !important; gap: 36px !important; }
+  .aa-business-root .aa-founding-card { padding: 56px 40px !important; }
+  .aa-business-root .aa-footer-grid { grid-template-columns: 1.4fr 1fr 1fr !important; }
+}
+
+@media (max-width: 720px) {
+  .aa-business-root .aa-section { padding-left: 22px !important; padding-right: 22px !important; padding-top: 72px !important; padding-bottom: 72px !important; }
+  .aa-business-root .aa-nav { padding: 16px 22px !important; flex-wrap: wrap !important; gap: 12px !important; }
+  .aa-business-root .aa-nav-links { display: none !important; }
+  .aa-business-root .aa-hero-inner { padding: 48px 22px 80px !important; }
+  .aa-business-root .aa-hero-cta { flex-direction: column !important; align-items: stretch !important; }
+  .aa-business-root .aa-hero-cta button { width: 100% !important; }
+  .aa-business-root .aa-hero-cta .aa-rating { margin-left: 0 !important; margin-top: 6px !important; }
+  .aa-business-root .aa-bento { grid-template-columns: 1fr !important; }
+  .aa-business-root .aa-bento > * { grid-column: span 1 !important; min-height: auto !important; }
+  .aa-business-root .aa-analytics { grid-template-columns: 1fr !important; }
+  .aa-business-root .aa-features-header { flex-direction: column !important; align-items: flex-start !important; }
+  .aa-business-root .aa-why-row { grid-template-columns: 1fr !important; gap: 12px !important; padding: 28px 0 !important; }
+  .aa-business-root .aa-why-desc { padding-top: 0 !important; }
+  .aa-business-root .aa-pricing-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .aa-business-root .aa-pricing-card { padding: 32px 24px !important; }
+  .aa-business-root .aa-founding-card { padding: 40px 24px !important; }
+  .aa-business-root .aa-founding-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .aa-business-root .aa-founding-cta { flex-direction: column !important; align-items: stretch !important; }
+  .aa-business-root .aa-footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .aa-business-root .aa-footer-bottom { flex-direction: column !important; gap: 8px !important; }
+}
+
+.aa-business-root .aa-mobile-nav { display: none !important; }
+.aa-business-root .aa-desktop-nav { display: block !important; }
+@media (max-width: 720px) {
+  .aa-business-root .aa-mobile-nav { display: block !important; }
+  .aa-business-root .aa-desktop-nav { display: none !important; }
+}
+
+.aa-business-root .aa-fee-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 48px;
+}
+@media (max-width: 720px) {
+  .aa-business-root .aa-fee-grid {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+}

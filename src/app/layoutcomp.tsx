@@ -1,9 +1,9 @@
 "use client";
-import { Inter } from "next/font/google";
+import { Inter, Fraunces } from "next/font/google";
+import './global.css'
 import "./globals.scss";
-import { UserWrapper } from "@utils/context/UserContext";
-import { NextUIProvider } from "@nextui-org/react";
-import '@fontsource/inter';
+import '../styles/globals.css'
+import { UserWrapper } from "@/app/utils/context/UserContext";
 import Script from 'next/script'
 import { useEffect, useRef } from "react";
 import * as gtag from '../../lib/gtag';
@@ -11,6 +11,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 
 const inter = Inter({ subsets: ["latin"] });
+const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", weight: ["400", "500", "600", "700"] });
 
 export default function RootLayout({
     children,
@@ -62,10 +63,8 @@ export default function RootLayout({
                         </>
                     )}
                 </head>
-                <body className={inter.className}>
-                    <NextUIProvider>
-                        {children}
-                    </NextUIProvider>
+                <body className={`${inter.className} ${fraunces.variable}`}>
+                    {children}
                 </body>
             </html>
 

@@ -1,7 +1,7 @@
 import { fetchBusinessUser, fetchUser } from "app/dashboard/(other)/actions";
 import EditorClient from "./editorClient";
 import { redirect } from "next/navigation";
-import { getEditorData } from "@utils/editor_actions";
+import { getEditorData } from "@/app/utils/editor_actions";
 import { PostgrestError } from "@supabase/supabase-js";
 
 export const dynamic = 'force-dynamic';

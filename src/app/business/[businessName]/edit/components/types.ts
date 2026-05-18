@@ -12,26 +12,25 @@ export interface Text {
     linkType: string
     url: string
     sections: string
+    textTransform: string
+    size: string
 }
 
 export interface PreBuiltComponents {
     content: Slot
 }
 
-export interface Navbar extends PreBuiltComponents {
+export interface Navbar {
     logo: Slot
     menu: {
         item: Slot
     }[]
-    variants: string
 }
 export interface HeroSection {
-    sectionOne: Slot
-    sectionTwo: Slot
+    content: Slot
 }
 export interface About {
-    sectionOne: Slot,
-    sectionTwo: Slot
+    content: Slot
 }
 export interface Gallery {
     gallery: Slot
@@ -53,7 +52,7 @@ export interface CTA { }
 export interface RegularText extends Text {
     fontSize: number
     fontWeight: number
-
+    maxWidth: number
 }
 
 export interface ColumnLayout {
@@ -63,6 +62,7 @@ export interface ColumnLayout {
     alignItems: string
     numberOfColumns: number
     gap: number
+    mobileLayout: string
 }
 export interface RowLayout {
     rows: {
@@ -71,6 +71,7 @@ export interface RowLayout {
     justifyItems: string
     numberOfRows: number
     gap: number
+    mobileLayout: string
 }
 export interface GridLayout {
     alignItems: string // Aligns along the column
@@ -84,6 +85,9 @@ export interface GridLayout {
     numberOfColumns: number
     gapX: number
     gapY: number
+    firstCellRowSpan: number
+    firstCellColumnSpan: number
+    mobileColumns: number
 }
 
 export interface Section {
@@ -133,11 +137,26 @@ export interface Container {
     flexDirection: 'flex-col' | 'flex-row' | 'grid'
     mainAxisLayout: 'start' | 'end' | 'center' | 'space-between' | 'space-around' | 'space-evenly'
     altAxisLayout: 'start' | 'end' | 'center' | 'baseline' | 'stretch'
+    aspectRatio: string
+    overflow: string
+    minHeight: number
+    maxWidth: number
+    gridTemplateColumns: string
+    responsiveDirection: string
+    hideBelow: string
+    hideAbove: string
+    zIndex: number
+    spacing: string
 }
 
 export interface ImageComponent {
     url: string | null
-    width: number
+    alt: string
+    width: string
+    objectFit: string
+    height: string
+    aspectRatio: string
+    mobileVisibility: string
     borderExpanded: string
     borderWidth: number
     borderRadius: number
@@ -159,11 +178,12 @@ export interface ImageComponent {
     borderRadiusBottomRight: number
 }
 
-export interface VideoComponent extends ImageComponent {
+export interface VideoComponent extends Omit<ImageComponent, 'width' | 'height' | 'alt'> {
     controls: boolean
     autoPlay: boolean
     speed: number
     loop: boolean
+    width: number
     height: number
 }
 
@@ -176,6 +196,7 @@ export interface ButtonContainer extends Omit<Container, 'content'>, Omit<Regula
     action: string
     link: string
     variant: string
+    mobileWidth: string
 }
 
 export interface Components {

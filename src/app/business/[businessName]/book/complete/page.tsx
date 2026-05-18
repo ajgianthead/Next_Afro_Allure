@@ -10,7 +10,7 @@ const Page = () => {
                     <CircleCheckBig color='green' />
                     <Title>Appointment Booked</Title></div>
                 <div className='text-center'>
-                    <Caption>Please check email for comfirmation</Caption>
+                    <Caption>Please check email for confirmation</Caption>
                 </div>
             </div>
         </div>

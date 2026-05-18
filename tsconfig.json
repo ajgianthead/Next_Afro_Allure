@@ -1,9 +1,14 @@
 {
   "compilerOptions": {
-    "types": ["vitest/globals"],
+    "types": [
+      "vitest/globals"
+    ],
     "target": "es2017",
     "baseUrl": "./src",
     "paths": {
+      "@/*": [
+        "./*"
+      ],
       "@tailus-ui/*": [
         "components/tailus-ui/*"
       ],
@@ -15,7 +20,7 @@
       ],
       "@utils/*": [
         "../utils/*"
-      ],
+      ]
     },
     "lib": [
       "es5",
@@ -33,13 +38,13 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
         "name": "next"
       }
-    ],
+    ]
   },
   "include": [
     "next-env.d.ts",
@@ -48,7 +53,8 @@
     ".next/types/**/*.ts",
     "src/app/dashboard/booking-site",
     "src/app/dashboard/(booking-site)/preview",
-    "trigger.config.ts"
+    "trigger.config.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

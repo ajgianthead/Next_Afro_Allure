@@ -1,63 +1,63 @@
 'use client'
 
 
-import { ComponentConfig, SlotComponent } from "@puckeditor/core"
+import { ComponentConfig, Fields, SlotComponent } from "@puckeditor/core"
 import { resolveCardFields, defaultCardfields } from "./fields"
-import { Card as MUICard, CardContent, CardCover } from "@mui/joy"
 import { Card } from "../../types"
-import { useRouter } from "next/navigation"
-import { useEditorContext } from "@utils/context/EditorContext"
-import CryptoJS from "crypto-js";
+import { useRouter, usePathname } from "next/navigation"
 
 
 export const CardComponent: ComponentConfig<Card> = {
     resolveFields: resolveCardFields,
-    fields: defaultCardfields,
-    render: (({ cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service }) => {
+    inline: true,
+    fields: defaultCardfields as Fields<Card, {}>,
+    render: (({ puck, cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service }) => {
         const router = useRouter()
-        const { editorState } = useEditorContext()
+        const pathname = usePathname()
+        const businessName = pathname?.split('/')[2] ?? ''
         return (
-            <div onClick={() => {
+            <div ref={puck.dragRef} className={`w-full${linkToService ? ' cursor-pointer' : ''}`} onClick={() => {
                 if (linkToService) {
-                    router.push(`/${editorState.businessName}/book?service=${CryptoJS.AES.encrypt(service, process.env.NEXT_PUBLIC_SECRET!).toString()}`)
+                    router.push(`/business/${businessName}/book?service=${service}`)
                 }
             }}>
-                {variant === 'basic' ? <MUICard sx={{ minWidth: 300, flexGrow: 1 }}>
-                    <CardContent>
+                {variant === 'basic' ? (
+                    <div className="w-full">
                         <Content />
-                    </CardContent>
-                </MUICard> : <MUICard sx={{ minWidth: 300, flexGrow: 1 }}>
-                    {cardCover === 'image' ? <CardCover >
-                        <img
-                            src={imageSource!}
-                            srcSet={`${imageSource} 2x`}
-                            loading="lazy"
-                            alt=""
-                        />
-                    </CardCover> : <CardCover>
-                        <video
-                            autoPlay
-                            loop
-                            muted
-                            poster="https://assets.codepen.io/6093409/river.jpg"
-                        >
-                            <source
-                                src={videoSource}
-                                type="video/mp4"
+                    </div>
+                ) : (
+                    <div className="min-w-[300px] flex-grow rounded-md overflow-hidden relative">
+                        {cardCover === 'image' ? (
+                            <img
+                                src={imageSource!}
+                                srcSet={`${imageSource} 2x`}
+                                loading="lazy"
+                                alt=""
+                                className="absolute inset-0 w-full h-full object-cover"
                             />
-                        </video>
-                    </CardCover>}
-
-                    <CardCover
-                        sx={{
-                            background:
-                                'linear-gradient(to top, rgba(0, 0, 0, 0.705), rgba(0,0,0,0) 200px), linear-gradient(to top, rgba(0, 0, 0, 0.459), rgba(0,0,0,0) 300px)',
-                        }}
-                    />
-                    <CardContent>
-                        <Content />
-                    </CardContent>
-                </MUICard>}
+                        ) : (
+                            <video
+                                autoPlay
+                                loop
+                                muted
+                                poster="https://assets.codepen.io/6093409/river.jpg"
+                                className="absolute inset-0 w-full h-full object-cover"
+                            >
+                                <source src={videoSource} type="video/mp4" />
+                            </video>
+                        )}
+                        <div
+                            className="absolute inset-0"
+                            style={{
+                                background:
+                                    'linear-gradient(to top, rgba(0, 0, 0, 0.705), rgba(0,0,0,0) 200px), linear-gradient(to top, rgba(0, 0, 0, 0.459), rgba(0,0,0,0) 300px)',
+                            }}
+                        />
+                        <div className="relative z-10 p-4">
+                            <Content />
+                        </div>
+                    </div>
+                )}
             </div>
 
         )
@@ -66,82 +66,81 @@ export const CardComponent: ComponentConfig<Card> = {
         cardContent: [{
             type: 'Container',
             props: {
+                flexDirection: 'flex-col',
+                mainAxisLayout: 'start',
+                altAxisLayout: 'start',
                 gapX: 0,
-                gapY: 3,
-                draggable: true,
+                gapY: 2,
                 padding: 0,
-                borderRadiusExpanded: 'false',
-                borderRadiusTopLeft: 0,
-                borderRadiusTopRight: 0,
-                borderRadiusBottomLeft: 0,
-                borderRadiusBottomRight: 0,
-                paddingExpanded: "false",
-                marginExpanded: "false",
+                paddingExpanded: 'false',
+                marginExpanded: 'false',
+                margin: 0,
+                marginTop: 0,
                 marginBottom: 0,
                 marginLeft: 0,
                 marginRight: 0,
-                marginTop: 0,
-                margin: 0,
+                paddingTop: 0,
                 paddingBottom: 0,
                 paddingLeft: 0,
                 paddingRight: 0,
-                paddingTop: 0,
-                backgroundColor: '#f0000006b',
-                borderColor: '#eee',
-                borderRadius: 8,
+                backgroundColor: 'transparent',
+                borderColor: '#000000',
+                borderRadius: 0,
                 borderWidth: 0,
                 borderBottom: 0,
                 borderExpanded: 'false',
                 borderLeft: 0,
                 borderRight: 0,
                 borderTop: 0,
-                numOfCols: 3,
-                numOfRows: 3,
                 borderType: 'solid',
+                borderRadiusExpanded: 'false',
+                borderRadiusTopLeft: 0,
+                borderRadiusTopRight: 0,
+                borderRadiusBottomLeft: 0,
+                borderRadiusBottomRight: 0,
                 positionType: 'relative',
                 left: 0,
                 right: 0,
                 top: 0,
                 bottom: 0,
+                grow: true,
+                draggable: true,
                 responsive: true,
-                flexDirection: 'flex-col',
-                mainAxisLayout: 'start',
-                altAxisLayout: 'start',
                 content: [
                     {
-                        type: 'HeadingOne',
+                        type: 'HeadingTwo',
                         props: {
-                            color: '#fff',
+                            text: 'Service Name',
+                            color: '#1A1818',
                             fontFamily: 'Roboto',
-                            letterSpacing: 1.2,
-                            lineHeight: 1.5,
+                            letterSpacing: 0,
+                            lineHeight: 1.2,
                             align: 'start',
                             style: [],
-                            text: 'Heading'
-                        }
-                    },
-                    {
-                        type: 'TitleLarge',
-                        props: {
-                            color: '#fff',
-                            fontFamily: 'Roboto',
-                            letterSpacing: 1.2,
-                            lineHeight: 1.5,
-                            align: 'start',
-                            style: [],
-                            text: 'Title'
+                            isLink: false,
+                            linkType: 'external',
+                            url: '',
+                            sections: '',
+                            textTransform: 'none',
+                            size: 'md',
                         }
                     },
                     {
                         type: 'BodyMedium',
                         props: {
-                            color: '#fff',
+                            text: 'A short description of this service.',
+                            color: '#6F6863',
                             fontFamily: 'Roboto',
-                            letterSpacing: 1.2,
+                            letterSpacing: 0,
                             lineHeight: 1.5,
                             align: 'start',
                             style: [],
-                            text: 'Body'
+                            isLink: false,
+                            linkType: 'external',
+                            url: '',
+                            sections: '',
+                            textTransform: 'none',
+                            size: 'md',
                         }
                     },
                 ]
