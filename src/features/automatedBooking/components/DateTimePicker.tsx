@@ -31,7 +31,7 @@ export const DateTimePicker = () => {
         const serviceLength = getServiceLength()
         const availability = data.services.find((s) => s.id === data.selectedService)?.availability
         const currAvailability = data.availabilities?.find((el: any) => el.id === availability)
-        const formattedAvailability = await getAvailability(startDate, endDate, currAvailability?.availability_data, userZone)
+        const formattedAvailability = await getAvailability(startDate, endDate, currAvailability, userZone)
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!, userZone)
         const { availableSlotsByDay } = getSlots({
             from: startDate,
@@ -90,7 +90,7 @@ export const DateTimePicker = () => {
 
     useEffect(() => {
         const initialize = async () => {
-            if (Object.keys(data.availabilities!).length && data.appointments?.length) {
+            if (data.availabilities && Object.keys(data.availabilities).length) {
                 const startDate = DateTime.now().setZone(userZone).startOf("day").toISO()!
                 const endDate = DateTime.now().setZone(userZone).endOf("month").toISO()!
                 const result = await getData(startDate, endDate)
