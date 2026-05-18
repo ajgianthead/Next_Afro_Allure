@@ -31,7 +31,7 @@ export const DateTimePicker = () => {
         const serviceLength = getServiceLength()
         const availability = data.services.find((s) => s.id === data.selectedService)?.availability
         const currAvailability = data.availabilities?.find((el: any) => el.id === availability)
-        const formattedAvailability = await getAvailability(startDate, endDate, currAvailability, userZone)
+        const formattedAvailability = await getAvailability(startDate, endDate, currAvailability?.availability_data, userZone)
         const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!, userZone)
         const { availableSlotsByDay } = getSlots({
             from: startDate,
