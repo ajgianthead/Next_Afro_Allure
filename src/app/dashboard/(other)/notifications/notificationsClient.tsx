@@ -1,17 +1,12 @@
 'use client'
 
-import { Badge, Button, Checkbox, Divider, IconButton, List, ListDivider, ListItem, ListItemButton, ListItemContent, Typography } from '@mui/joy';
+import { Badge, Button, Checkbox, Divider, IconButton, List, ListItem, ListItemButton, ListItemContent, Typography } from '@mui/joy';
 import { Caption, Title } from '@tailus-ui/typography';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { deleteNotification, updateNotificationState } from './actions';
 import { PostgrestError } from '@supabase/supabase-js';
-import ConfirmAppointmentTemplate from '../../../../../emails/confirm-appointment';
-import RescheduledAppointment from '../../../../../emails/rescheduled-appointment';
 import { DateTime } from 'luxon';
-import CancelledAppointment from '../../../../../emails/cancelled-appointment';
 import { ChevronLeft, Trash2 } from 'lucide-react';
-import { pretty, render } from '@react-email/components';
-import NewAppointment from '../../../../../emails/new-appointment';
 
 interface AppointmentNotification extends BusinessNotification {
     appointments: Appointment,
@@ -29,23 +24,13 @@ const NotificationsClient = ({ notifications }: PageProps) => {
     const [selectedNotis, setSelectedNotis] = React.useState<Set<string>>(new Set())
     const handleSelectAll = (e: any) => {
         const checked = e.target.checked
-        let notiClone = [...notificationState]
-        let selectedClone = new Set([...selectedNotis])
-        if (checked) {
-            notiClone.forEach((noti) => {
-                noti.checked = true
-                selectedNotis.add(noti.id)
-            })
-        } else {
-            notiClone.forEach((noti) => {
-                noti.checked = false
-                selectedNotis.delete(noti.id)
-
-            })
-        }
+        const newSelected = new Set<string>()
+        const notiClone = notificationState.map((noti) => {
+            if (checked) newSelected.add(noti.id)
+            return { ...noti, checked }
+        })
         setNotificationState(notiClone)
-
-
+        setSelectedNotis(newSelected)
     }
     const [loading, setLoading] = React.useState<boolean>(false)
     return (
@@ -137,58 +122,56 @@ const NotificationsClient = ({ notifications }: PageProps) => {
 
 const IndividualNoti = ({ notiData, notiClicked, setNotiClicked }: { notiData: AppointmentNotification | null, notiClicked: boolean, setNotiClicked: React.Dispatch<React.SetStateAction<boolean>> }) => {
     if (!notiData) return null;
-    const [html, setHtml] = React.useState<string>()
-    useEffect(() => {
-        (async () => {
-            setHtml(await pretty(await render(notiToTemplate[notiData.type as keyof typeof notiToTemplate])))
-        })()
-    }, []);
-    const res = notiData.appointments as any;
 
-    const commonProps = {
-        socials: { facebook: "", instagram: "", twitter: "" },
-        clientData: {
-            firstName: res.client_metadata?.firstName,
-            lastName: res.client_metadata.lastName,
-        },
-        businessData: {
-            id: res.business,
-            name: res.business_users.business_name,
-            businessAddress: "2800 SW 35th Place, Gainesville, FL"
-        },
-        appointmentData: {
-            id: res.id,
-            start: DateTime.fromISO(res.start).toISO()!,
-            end: DateTime.fromISO(res.end).toISO()!
-        },
-        serviceName: res.service_data.name
-    };
-
-    const notiToTemplate = {
-        'new-booking': NewAppointment(commonProps),
-        'rescheduled-booking': RescheduledAppointment(commonProps),
-        'cancelled-booking': CancelledAppointment(commonProps)
-    };
+    const appt = notiData.appointments as any
+    const createdAt = DateTime.fromISO(notiData.created_at).toLocaleString(DateTime.DATETIME_MED)
+    const serviceName = appt?.service_data?.name
+    const clientName = appt?.client_metadata
+        ? `${appt.client_metadata.firstName ?? ''} ${appt.client_metadata.lastName ?? ''}`.trim()
+        : null
+    const apptStart = appt?.start
+        ? DateTime.fromISO(appt.start).toLocaleString(DateTime.DATETIME_MED)
+        : null
 
     return (
         <div>
-            <div>
-                <Title className='mb-2 flex items-center'>{notiClicked ? <div>
-                    <IconButton onClick={() => {
-                        setNotiClicked(false)
-                    }}>
-                        <ChevronLeft />
+            <div className='p-5'>
+                <Title className='mb-2 flex items-center gap-1'>
+                    <IconButton onClick={() => setNotiClicked(false)} size='sm'>
+                        <ChevronLeft size={18} />
                     </IconButton>
-                </div> : <></>}{notiData.title}</Title>
+                    {notiData.title}
+                </Title>
                 <Divider />
-                <div className='w-full flex justify-center'>
-                    <div className='mt-16 md:w-1/2 w-full px-10'>
-                        <List>
-                            <div dangerouslySetInnerHTML={{ __html: html! }} />
-                        </List>
-                    </div>
+                <div className='mt-5 space-y-3 px-1'>
+                    <Typography level='body-md'>{notiData.body}</Typography>
+                    {clientName && (
+                        <Typography level='body-sm'>
+                            <span style={{ color: '#6F6863' }}>Client: </span>{clientName}
+                        </Typography>
+                    )}
+                    {serviceName && (
+                        <Typography level='body-sm'>
+                            <span style={{ color: '#6F6863' }}>Service: </span>{serviceName}
+                        </Typography>
+                    )}
+                    {apptStart && (
+                        <Typography level='body-sm'>
+                            <span style={{ color: '#6F6863' }}>Appointment: </span>{apptStart}
+                        </Typography>
+                    )}
+                    <Typography level='body-xs' sx={{ color: 'text.tertiary', paddingTop: 1 }}>
+                        {createdAt}
+                    </Typography>
+                    {notiData.appointment_id && (
+                        <a
+                            href='/dashboard/appointments'
+                            style={{ display: 'block', color: '#FC6161', fontSize: 13, paddingTop: 4 }}
+                        >
+                            View appointment →
+                        </a>
+                    )}
                 </div>
-
             </div>
         </div>
     );
