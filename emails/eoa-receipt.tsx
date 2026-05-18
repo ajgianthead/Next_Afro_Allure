@@ -1,6 +1,9 @@
-import { Container, Heading, Hr, Html, Img, Link, Preview, Tailwind, Text } from "@react-email/components";
-import * as React from "react";
-import { DateTime } from "luxon";
+import * as React from 'react'
+import { Html, Head, Body, Container, Section, Row, Column, Text, Preview } from '@react-email/components'
+import { DateTime } from 'luxon'
+import { EmailHeader } from './components/EmailHeader'
+import { EmailFooter } from './components/EmailFooter'
+import { AppointmentDetailBlock } from './components/AppointmentDetailBlock'
 
 export interface EOAReceiptProps {
     clientData: { firstName: string; lastName: string }
@@ -11,80 +14,93 @@ export interface EOAReceiptProps {
     socials: { instagram: string }
 }
 
-export default function EOAReceiptEmail({ clientData, businessData, appointmentData, serviceName, amountPaid, socials }: EOAReceiptProps) {
+export default function EOAReceiptEmail({ clientData, businessData, appointmentData, serviceName, amountPaid }: EOAReceiptProps) {
+    const date = DateTime.fromISO(appointmentData.start).toFormat('cccc, LLLL d, yyyy')
+    const time = DateTime.fromISO(appointmentData.start).toFormat('h:mm a')
+    const amount = `$${(amountPaid / 100).toFixed(2)}`
+
     return (
-        <Tailwind config={{
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Helvetica', 'sans-serif'],
-                    },
-                },
-            },
-        }}>
-            <Html className="px-5 font-sans">
-                <Preview>{`Payment received — thank you, ${clientData.firstName}!`}</Preview>
-                <table align="center" role="presentation" style={{ margin: '0 auto' }}>
-                    <tr>
-                        <td align="center">
-                            <Img
-                                src="https://res.cloudinary.com/dr5ztqpd3/image/upload/v1749588842/logo_transparent_background_single_lyghlm.png"
-                                alt="Logo"
-                                width="50"
-                                height="60"
-                                style={{ display: 'block' }}
-                            />
-                        </td>
-                    </tr>
-                </table>
-                <Container className="font-sans w-full text-center">
-                    <Heading as="h2">Payment Received ✅</Heading>
-                    <Text>{`Hi ${clientData.firstName}, thank you for your payment! Here's your receipt for your appointment with ${businessData.name}.`}</Text>
+        <Html lang="en">
+            <Head />
+            <Preview>{`Payment received — thank you, ${clientData.firstName}! You're all set with ${businessData.name}.`}</Preview>
+            <Body style={{ backgroundColor: '#FAF7F2', margin: 0, padding: '40px 0' }}>
+                <Container style={{ maxWidth: 600, margin: '0 auto' }}>
+
+                    <EmailHeader />
+
+                    <Section style={{ backgroundColor: '#FFFFFF', borderRadius: '0 0 16px 16px' }}>
+                        <Row>
+                            <Column style={{ padding: '40px' }}>
+
+                                <Text
+                                    style={{
+                                        fontFamily: "Georgia, 'Times New Roman', serif",
+                                        fontSize: 32,
+                                        color: '#1A1818',
+                                        fontWeight: 'normal',
+                                        margin: '0 0 12px 0',
+                                        lineHeight: 1.2,
+                                    }}
+                                >
+                                    Payment received.
+                                </Text>
+                                <Text
+                                    style={{
+                                        fontFamily: 'Arial, Helvetica, sans-serif',
+                                        fontSize: 15,
+                                        color: '#3A3532',
+                                        margin: '0 0 8px 0',
+                                        lineHeight: 1.6,
+                                    }}
+                                >
+                                    Hi {clientData.firstName}, thank you for your payment. Here's your receipt for your appointment with {businessData.name}.
+                                </Text>
+
+                                <AppointmentDetailBlock
+                                    date={date}
+                                    time={time}
+                                    service={serviceName}
+                                    location={businessData.businessAddress}
+                                    amount={amount}
+                                />
+
+                                <Text
+                                    style={{
+                                        fontFamily: 'Arial, Helvetica, sans-serif',
+                                        fontSize: 14,
+                                        color: '#6F6863',
+                                        margin: '16px 0 0 0',
+                                        lineHeight: 1.6,
+                                    }}
+                                >
+                                    We hope you enjoy your appointment. If you have any questions, reach out to {businessData.name} directly.
+                                </Text>
+
+                            </Column>
+                        </Row>
+                    </Section>
+
+                    <EmailFooter showUnsubscribe />
+
                 </Container>
-                <Hr />
-                <Container className="font-sans">
-                    <ul>
-                        <li>{`📆 Date: ${DateTime.fromISO(appointmentData.start).toFormat('LLLL dd, yyyy')}`}</li>
-                        <li>{`⏰ Time: ${DateTime.fromISO(appointmentData.start).toLocaleString(DateTime.TIME_SIMPLE)}`}</li>
-                        <li>{`📍 Location: ${businessData.businessAddress}`}</li>
-                        <li>{`💇 Service(s): ${serviceName}`}</li>
-                        <li>{`💳 Amount Paid: $${(amountPaid / 100).toFixed(2)}`}</li>
-                    </ul>
-                </Container>
-                <Container className="font-sans mt-5">
-                    <Text>{`We hope you enjoyed your experience. If you have any questions, feel free to reach out to ${businessData.name}.`}</Text>
-                </Container>
-                <Container className="flex flex-col">
-                    <Text>Stay connected with us!</Text>
-                    <ul className="list-none mt-0">
-                        <li><Link href={socials.instagram}>📸 Instagram</Link></li>
-                    </ul>
-                </Container>
-                <Container className="mt-5">
-                    <Text className="m-0">Warm regards,</Text>
-                    <Text className="m-0">The AfroAllure Team</Text>
-                </Container>
-                <Container className="text-center my-5 font-thin">
-                    <Text className="m-0">{`Copyright (C) ${new Date().getFullYear()} AfroAllure. All rights reserved.`}</Text>
-                </Container>
-            </Html>
-        </Tailwind>
-    );
+            </Body>
+        </Html>
+    )
 }
 
 EOAReceiptEmail.PreviewProps = {
     socials: { instagram: 'https://instagram.com/afroallure_' },
-    serviceName: "Loc Retwist",
-    clientData: { firstName: "Abijah", lastName: "Nesbitt" },
+    serviceName: 'Loc Retwist',
+    clientData: { firstName: 'Abijah', lastName: 'Nesbitt' },
     businessData: {
-        id: "a2c9f0d8-35b8-4eea-81ed-e1926ae2cf90",
-        name: "LadyPlutoLooks",
-        businessAddress: "2800 SW 35th Place, Apt 1508A, Gainesville, FL, 32608",
+        id: 'a2c9f0d8-35b8-4eea-81ed-e1926ae2cf90',
+        name: 'LadyPlutoLooks',
+        businessAddress: '2800 SW 35th Place, Gainesville, FL 32608',
     },
     appointmentData: {
-        id: "4561ec13-2406-4823-86fd-db3a188f7aa8",
-        start: "2025-06-11T03:37:37.400Z",
-        end: "2025-06-11T05:37:37.400Z",
+        id: '4561ec13-2406-4823-86fd-db3a188f7aa8',
+        start: '2025-09-18T15:00:00.000Z',
+        end: '2025-09-18T17:00:00.000Z',
     },
     amountPaid: 15000,
-} satisfies EOAReceiptProps;
+} satisfies EOAReceiptProps
