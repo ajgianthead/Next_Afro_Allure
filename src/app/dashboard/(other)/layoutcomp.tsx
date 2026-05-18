@@ -31,13 +31,11 @@ import {
     IconAdjustments,
     IconScissors,
     IconCurrencyDollar,
-    IconBell,
     IconSettings,
     IconHelpCircle,
     type Icon,
 } from '@tabler/icons-react'
-import { useState, useEffect, useRef } from 'react'
-import { createClient } from '@/app/utils/supabase/client'
+import { useState } from 'react'
 import { TourProvider } from '@/features/tour/TourProvider'
 import { HelpSheet } from '@/features/tour/HelpSheet'
 
@@ -79,7 +77,6 @@ const NAV_GROUPS: NavGroup[] = [
 ]
 
 const BOTTOM_ITEMS: NavItem[] = [
-    { title: 'Notifications', url: '/dashboard/notifications', icon: IconBell },
     { title: 'Settings', url: '/dashboard/settings', icon: IconSettings },
 ]
 
@@ -87,32 +84,6 @@ export default function LayoutComp({ children, businessData }: { children: React
     const pathname = usePathname()
     const router = useRouter()
     const [helpOpen, setHelpOpen] = useState(false)
-
-    const [unreadCount, setUnreadCount] = useState(
-        ((businessData?.notifications ?? []) as { read: boolean }[]).filter(n => !n.read).length
-    )
-    const supabase = useRef(createClient()).current
-    const businessId = businessData?.business_id ?? ''
-
-    useEffect(() => {
-        if (!businessId) return
-        const channel = supabase
-            .channel(`nav-bell:${businessId}`)
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'notifications', filter: `business_id=eq.${businessId}` },
-                async () => {
-                    const { count } = await supabase
-                        .from('notifications')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('business_id', businessId)
-                        .eq('read', false)
-                    if (count !== null) setUnreadCount(count)
-                }
-            )
-            .subscribe()
-        return () => { supabase.removeChannel(channel) }
-    }, [businessId, supabase])
 
     const isActive = (url: string) =>
         url === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(url)
@@ -182,53 +153,7 @@ export default function LayoutComp({ children, businessData }: { children: React
 
                         <SidebarFooter className="px-3 py-3 border-t" style={{ borderColor: '#E8E2D6' }}>
                             <SidebarMenu className="gap-0.5">
-                                {/* Notifications — rendered separately to show unread badge */}
-                                {(() => {
-                                    const active = isActive('/dashboard/notifications')
-                                    return (
-                                        <SidebarMenuItem key="Notifications">
-                                            <SidebarMenuButton
-                                                isActive={active}
-                                                tooltip="Notifications"
-                                                onClick={() => router.push('/dashboard/notifications')}
-                                                className="rounded-xl transition-colors"
-                                                style={active
-                                                    ? { backgroundColor: '#0F0E0E', color: '#FFFFFF' }
-                                                    : { color: '#1A1818' }
-                                                }
-                                            >
-                                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                                    <IconBell size={16} />
-                                                    {unreadCount > 0 && (
-                                                        <span style={{
-                                                            position: 'absolute',
-                                                            top: -6, right: -7,
-                                                            background: '#FC6161',
-                                                            color: '#fff',
-                                                            fontSize: 9,
-                                                            fontWeight: 700,
-                                                            fontFamily: 'Inter, system-ui, sans-serif',
-                                                            minWidth: 15,
-                                                            height: 15,
-                                                            borderRadius: 999,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            padding: '0 3px',
-                                                            lineHeight: 1,
-                                                        }}>
-                                                            {unreadCount > 9 ? '9+' : unreadCount}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <span className="text-sm">Notifications</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    )
-                                })()}
-                                {/* Settings */}
-                                {(() => {
-                                    const item = BOTTOM_ITEMS.find(i => i.title === 'Settings')!
+                                {BOTTOM_ITEMS.map((item) => {
                                     const active = isActive(item.url)
                                     return (
                                         <SidebarMenuItem key={item.title}>
@@ -247,7 +172,7 @@ export default function LayoutComp({ children, businessData }: { children: React
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
                                     )
-                                })()}
+                                })}
                                 <SidebarMenuItem>
                                     <SidebarMenuButton
                                         tooltip="Help & Tours"
@@ -264,7 +189,10 @@ export default function LayoutComp({ children, businessData }: { children: React
                     </Sidebar>
 
                     <SidebarInset className="px-5">
-                        <SiteHeader />
+                        <SiteHeader
+                            businessId={businessData?.business_id ?? ''}
+                            initialUnreadCount={((businessData?.notifications ?? []) as { read: boolean }[]).filter(n => !n.read).length}
+                        />
                         <main>
                             <div className="w-full flex-1 max-h-min">
                                 <SiteWrapper>
