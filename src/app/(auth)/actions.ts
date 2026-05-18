@@ -16,7 +16,7 @@ export const createBusinessUser = async (email: string, name: string, password: 
     try {
         const supabase = await createClient()
         const businessUser = await BusinessUser.create(supabase, email, password, name)
-        return businessUser
+        return businessUser.toClient()
     } catch (error: any) {
         return Error(error.message)
     }
