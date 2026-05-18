@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
+import { createClient } from '@/app/utils/supabase/client'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -17,6 +18,7 @@ interface AppointmentNotification extends BusinessNotification {
 
 interface PageProps {
     notifications: AppointmentNotification[]
+    businessId: string
 }
 
 const BOOKING_TYPES = ['new-booking', 'booking-confirmed', 'cancelled-booking', 'rescheduled-booking']
@@ -48,12 +50,54 @@ function relativeTime(iso: string): string {
     return 'Just now'
 }
 
-const NotificationsClient = ({ notifications: initial }: PageProps) => {
+const NotificationsClient = ({ notifications: initial, businessId }: PageProps) => {
     const [notifications, setNotifications] = useState<AppointmentNotification[]>(initial ?? [])
     const [selected, setSelected] = useState<Set<string>>(new Set())
     const [detail, setDetail] = useState<AppointmentNotification | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [markingAll, setMarkingAll] = useState(false)
+    const supabase = useRef(createClient()).current
+
+    useEffect(() => {
+        const channel = supabase
+            .channel(`notifications:${businessId}`)
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'notifications', filter: `business_id=eq.${businessId}` },
+                async (payload) => {
+                    // Fetch full row with joins so appointment details are available in detail view
+                    const { data } = await supabase
+                        .from('notifications')
+                        .select('*, appointments(*, business_users(*))')
+                        .eq('id', (payload.new as any).id)
+                        .single()
+                    if (data) {
+                        setNotifications(prev => [data as AppointmentNotification, ...prev])
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `business_id=eq.${businessId}` },
+                (payload) => {
+                    const updated = payload.new as any
+                    setNotifications(prev => prev.map(n =>
+                        n.id === updated.id ? { ...n, read: updated.read } : n
+                    ))
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'DELETE', schema: 'public', table: 'notifications', filter: `business_id=eq.${businessId}` },
+                (payload) => {
+                    const deleted = payload.old as any
+                    setNotifications(prev => prev.filter(n => n.id !== deleted.id))
+                }
+            )
+            .subscribe()
+
+        return () => { supabase.removeChannel(channel) }
+    }, [businessId, supabase])
 
     const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications])
 

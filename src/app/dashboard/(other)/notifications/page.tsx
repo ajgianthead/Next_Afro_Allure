@@ -17,7 +17,7 @@ export default async function Page() {
             ascending: false
         })
         return (
-            <NotificationsClient notifications={notifications!} />
+            <NotificationsClient notifications={notifications ?? []} businessId={business!.business_id} />
         )
     } else {
         redirect('/login')
