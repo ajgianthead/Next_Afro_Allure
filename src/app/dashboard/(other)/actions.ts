@@ -53,8 +53,8 @@ export const fetchDashboardAnalytics = async (businessId: string) => {
         returningRate
     ] = await Promise.all([
         supabase.rpc('dashboard_revenue_this_month', { business: businessId }),
-        supabase.rpc('dashboard_bookings_this_month', { business: businessId }),
-        supabase.rpc('dashboard_new_clients_this_month', { business: businessId }),
+        supabase.rpc('dashboard_bookings_this_month', { p_business: businessId }),
+        supabase.rpc('dashboard_new_clients_this_month', { p_business: businessId }),
         supabase.rpc('dashboard_returning_rate', { business: businessId })
     ]);
     return { revenue, bookings, newClients, returningRate }
