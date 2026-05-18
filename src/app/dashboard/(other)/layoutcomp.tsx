@@ -36,7 +36,8 @@ import {
     IconHelpCircle,
     type Icon,
 } from '@tabler/icons-react'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createClient } from '@/app/utils/supabase/client'
 import { TourProvider } from '@/features/tour/TourProvider'
 import { HelpSheet } from '@/features/tour/HelpSheet'
 
@@ -87,8 +88,31 @@ export default function LayoutComp({ children, businessData }: { children: React
     const router = useRouter()
     const [helpOpen, setHelpOpen] = useState(false)
 
-    const unreadCount = ((businessData?.notifications ?? []) as { read: boolean }[])
-        .filter((n) => !n.read).length
+    const [unreadCount, setUnreadCount] = useState(
+        ((businessData?.notifications ?? []) as { read: boolean }[]).filter(n => !n.read).length
+    )
+    const supabase = useRef(createClient()).current
+    const businessId = businessData?.business_id ?? ''
+
+    useEffect(() => {
+        if (!businessId) return
+        const channel = supabase
+            .channel(`nav-bell:${businessId}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'notifications', filter: `business_id=eq.${businessId}` },
+                async () => {
+                    const { count } = await supabase
+                        .from('notifications')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('business_id', businessId)
+                        .eq('read', false)
+                    if (count !== null) setUnreadCount(count)
+                }
+            )
+            .subscribe()
+        return () => { supabase.removeChannel(channel) }
+    }, [businessId, supabase])
 
     const isActive = (url: string) =>
         url === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(url)
