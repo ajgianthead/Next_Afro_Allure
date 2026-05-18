@@ -5,6 +5,7 @@ interface AppointmentDetailBlockProps {
     date?: string
     time?: string
     service?: string
+    location?: string
     duration?: string
     amount?: string
     deposit?: string
@@ -32,6 +33,7 @@ export function AppointmentDetailBlock({
     date,
     time,
     service,
+    location,
     duration,
     amount,
     deposit,
@@ -40,6 +42,7 @@ export function AppointmentDetailBlock({
         { label: 'Date',     value: date },
         { label: 'Time',     value: time },
         { label: 'Service',  value: service },
+        { label: 'Location', value: location },
         { label: 'Duration', value: duration },
         { label: 'Amount',   value: amount },
         { label: 'Deposit',  value: deposit },
