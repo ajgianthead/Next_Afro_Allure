@@ -9,15 +9,16 @@ import { useRouter, usePathname } from "next/navigation"
 
 export const CardComponent: ComponentConfig<Card> = {
     resolveFields: resolveCardFields,
+    inline: true,
     fields: defaultCardfields as Fields<Card, {}>,
-    render: (({ cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service }) => {
+    render: (({ puck, cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service }) => {
         const router = useRouter()
         const pathname = usePathname()
-        const businessName = pathname?.split('/')[1] ?? ''
+        const businessName = pathname?.split('/')[2] ?? ''
         return (
-            <div className={`w-full${linkToService ? ' cursor-pointer' : ''}`} onClick={() => {
+            <div ref={puck.dragRef} className={`w-full${linkToService ? ' cursor-pointer' : ''}`} onClick={() => {
                 if (linkToService) {
-                    router.push(`/${businessName}/book?service=${service}`)
+                    router.push(`/business/${businessName}/book?service=${service}`)
                 }
             }}>
                 {variant === 'basic' ? (

@@ -49,7 +49,7 @@ export const ContainerComponent: any = {
         return (
             <div className={outerClass} ref={puck.dragRef}>
                 <Content className={`${dirClass} ${sizeClass} ${spacingClass}`} style={{
-                    display: isGrid ? 'grid' : 'flex',
+                    display: 'flex',
                     transform: `rotate(${rotation}deg)`,
                     ...inlinePadding,
                     flexShrink: !grow ? 1 : 0,

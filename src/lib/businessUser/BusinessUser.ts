@@ -13,6 +13,7 @@ import { createStripeOnboardingLink } from "@lib/stripe/createStripeOnboardingLi
 import { Client } from "@lib/clients/Client";
 import { Appointment } from "@/features/manualBooking/server/models/Appointment";
 import { Notification } from "@lib/notifications/Notification";
+import { checkAndAssignFoundingMember } from "@/lib/foundingMember";
 
 export interface BusinessType {
     id: string,
@@ -177,6 +178,8 @@ export class BusinessUser {
             await Service.createDefault(supabase, businessUser?.business_id!, Array.isArray(availability) ? availability[0].id : availability.id
             )
             await BusinessPolicy.createDefault(supabase, business.business_id)
+
+            checkAndAssignFoundingMember(business.business_id).catch(console.error)
 
             return BusinessUser.fromRow(business)
 

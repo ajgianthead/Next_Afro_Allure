@@ -600,7 +600,7 @@ function Features() {
 // ─────────────────────────────────────────────────────────────
 // MARKETPLACE — search-result list with filters
 // ─────────────────────────────────────────────────────────────
-function Marketplace({ openWaitlist }: { openWaitlist: () => void }) {
+function Marketplace({ openWaitlist, foundingMemberCount }: { openWaitlist: () => void; foundingMemberCount: number }) {
     return (
         <section className="aa-section" style={{ background: '#fff', padding: '120px 56px' }}>
             <div className="aa-marketplace-grid" style={{
@@ -670,7 +670,7 @@ function Marketplace({ openWaitlist }: { openWaitlist: () => void }) {
                         marginTop: 24, fontFamily: MONO, fontSize: 11, letterSpacing: '.12em',
                         textTransform: 'uppercase', color: MUTED,
                     }}>
-                        184 founding members so far
+                        {foundingMemberCount} founding members so far
                     </div>
                 </div>
 
@@ -933,6 +933,7 @@ function Footer() {
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Features</a></li>
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Marketplace</a></li>
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>For Businesses</a></li>
+                        <li><a href="/founding-members" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Founding Members</a></li>
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Register</a></li>
                     </ul>
                 </div>
@@ -1067,7 +1068,7 @@ function WaitlistForm({ onClose }: { onClose: () => void }) {
 // ─────────────────────────────────────────────────────────────
 // PAGE EXPORT
 // ─────────────────────────────────────────────────────────────
-function AfroAllureLanding({ waitlistCount = 0 }: { waitlistCount?: number }) {
+function AfroAllureLanding({ waitlistCount = 0, foundingMemberCount = 0 }: { waitlistCount?: number; foundingMemberCount?: number }) {
     const [waitlistOpen, setWaitlistOpen] = useState(false)
     const openWaitlist = () => setWaitlistOpen(true)
 
@@ -1091,7 +1092,7 @@ function AfroAllureLanding({ waitlistCount = 0 }: { waitlistCount?: number }) {
             <Hero openWaitlist={openWaitlist} />
             <Problem />
             <Features />
-            <Marketplace openWaitlist={openWaitlist} />
+            <Marketplace openWaitlist={openWaitlist} foundingMemberCount={foundingMemberCount} />
             <BetaCTA />
             {waitlistCount > 0 && (
                 <div style={{ textAlign: 'center', padding: '32px', background: WARM }}>

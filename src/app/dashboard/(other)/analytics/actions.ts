@@ -1,5 +1,6 @@
 'use server'
 import { createClient } from '@/app/utils/supabase/server'
+import { getActualPlatformFees } from './stripeActions'
 
 // ─── Return interfaces ────────────────────────────────────────────────────────
 
@@ -101,12 +102,10 @@ export interface FinancialSummary {
     total_deposits_this_year: number
     total_deposits_all_time: number
     total_outstanding_balances: number
-    total_platform_fees_this_year: number
-    total_platform_fees_all_time: number
-    net_earnings_this_year: number
-    net_earnings_all_time: number
     average_monthly_revenue: number
     months_active: number
+    booking_count_this_year: number
+    booking_count_all_time: number
 }
 
 // ─── Individual actions ───────────────────────────────────────────────────────
@@ -170,7 +169,7 @@ export async function getFinancialSummary(businessId: string): Promise<Financial
 // ─── Aggregator ───────────────────────────────────────────────────────────────
 
 export async function getAnalyticsPageData(businessId: string) {
-    const [overview, byMonth, booking, service, client, clientList, growth, financial] =
+    const [overview, byMonth, booking, service, client, clientList, growth, financial, platformFees] =
         await Promise.all([
             getRevenueOverview(businessId),
             getRevenueByMonth(businessId),
@@ -180,8 +179,9 @@ export async function getAnalyticsPageData(businessId: string) {
             getClientList(businessId),
             getGrowthTrends(businessId),
             getFinancialSummary(businessId),
+            getActualPlatformFees(businessId),
         ])
-    return { overview, byMonth, booking, service, client, clientList, growth, financial }
+    return { overview, byMonth, booking, service, client, clientList, growth, financial, platformFees }
 }
 
 export type AnalyticsData = Awaited<ReturnType<typeof getAnalyticsPageData>>

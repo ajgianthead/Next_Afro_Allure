@@ -84,11 +84,11 @@ export const CheckoutForm = ({
                 elements,
                 redirect: 'if_required',
                 confirmParams: {
-                    return_url: `${window.location.origin}/${businessName}/book/complete`,
+                    return_url: `${window.location.origin}/business/${businessName}/book/complete`,
                 },
             })
             if (error) throw new Error(error.message)
-            router.push(`/${businessName}/book/complete`)
+            router.push(`/business/${businessName}/book/complete`)
         } catch (err: any) {
             setError(err.message ?? 'Something went wrong. Please try again.')
             setOpenErrorDialog(true)

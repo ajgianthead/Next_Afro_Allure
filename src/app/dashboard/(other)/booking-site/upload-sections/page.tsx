@@ -18,8 +18,8 @@ const Page = async () => {
     const uploadedImages = await getSectionImages(sectionData?.id!, business.business_id)
 
     return (
-        <div className='flex justify-center'>
-            <UploadSectionClient isPublished={business.published_site} uploadedImageUrls={uploadedImages} section_data={sectionData!} businessId={business?.business_id!} editorId={sectionData?.id!} url_name={business.url_name} />
+        <div className='w-full'>
+            <UploadSectionClient isPublished={business.published_site} uploadedImageUrls={uploadedImages} section_data={sectionData!} businessId={business?.business_id!} editorId={sectionData?.id!} url_name={business.url_name} initialBrandColor={business.brand_color ?? '#FC6161'} />
         </div>
     );
 }

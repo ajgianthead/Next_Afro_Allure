@@ -331,7 +331,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
         localStorage.removeItem('bookingSessionId')
         setData((prev) => ({ ...prev, selectedService: '', selectedAddons: [], bookingSession: null }))
         setPreSelected(false)
-        router.push(`/${businessName}/book`)
+        router.push(`/business/${businessName}/book`)
     }
 
     const canGoNext =
@@ -432,7 +432,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                 style={{ borderBottom: '1px solid var(--t-border)' }}
             >
                 <Link
-                    href={`/${businessName}`}
+                    href={`/business/${businessName}`}
                     className="flex items-center gap-2 text-sm transition-opacity hover:opacity-70"
                     style={{ color: 'var(--t-muted)' }}
                 >
@@ -495,7 +495,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                                                 setSubmitting(true)
                                                 try {
                                                     const res = await handleSubmit()
-                                                    if (res) router.push(`/${businessName}/book/complete`)
+                                                    if (res) router.push(`/business/${businessName}/book/complete`)
                                                 } catch (err: any) {
                                                     if (err?.message?.includes('BOOKING_LIMIT_REACHED')) {
                                                         setBookingLimitReached(true)

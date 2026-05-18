@@ -20,7 +20,14 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\abija\\\\Documents\\\\afroallure\\\\Next_Afro_Allure\" -Recurse -Filter \"*.tsx\" -o Name)",
       "Bash(Select-String \"\\(book|booking\\)\")",
       "Bash(Select-Object -First 20)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\abija\\\\Documents\\\\afroallure\\\\Next_Afro_Allure\\\\src\\\\app\\\\dashboard\\\\\\(other\\)\\\\booking-site\" -Recurse -File)",
+      "Bash(git commit -m ' *)",
+      "Bash(xargs grep -l \"founding\")",
+      "Bash(xargs grep -l \"founding\\\\|welcome.*member\\\\|member.*welcome\")",
+      "Bash(tooltip\")",
+      "Bash(grep -rn \"booking-confirmed\\\\|deposit.*webhook\\\\|connected_account\" src/app/api/ --include=\"*.ts\" -l)",
+      "Bash(ls src/app/api/webhook/)"
     ]
   }
 }

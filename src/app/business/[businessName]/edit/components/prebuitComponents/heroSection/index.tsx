@@ -41,6 +41,7 @@ export const HeroSectionComponent: any = {
                             backgroundColor: '#ffffff',
                             borderWidth: 0,
                             grow: true,
+                            responsiveDirection: 'none',
                             content: [
                                 {
                                     type: 'CustomizableText',

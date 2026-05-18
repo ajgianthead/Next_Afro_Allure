@@ -2,8 +2,8 @@
 
 import Image from 'next/image';
 import React, { useMemo, useState } from 'react';
-import { deleteUploadedImg, saveSectionData, uploadImgSectionChanges } from '../actions';
-import { ChevronLeft, GripVertical, ImageIcon, Loader2, Pencil, Trash, Type, Upload } from 'lucide-react';
+import { deleteUploadedImg, saveBrandColor, saveSectionData, uploadImgSectionChanges } from '../actions';
+import { ChevronLeft, Eye, EyeOff, GripVertical, ImageIcon, Loader2, Pencil, Smartphone, Trash, Type, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import content from "@tailus-ui/components/tiptap-templates/simple/data/content.json";
@@ -17,8 +17,37 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import TextSection from './textSection';
+import { AboutForm, AnnouncementForm, BookCtaForm, ContactForm, HeroForm, LocationForm, ServicesForm, TestimonialsForm } from './sectionForms';
 
-const UploadSectionClient = ({ businessId, editorId, url_name, section_data, uploadedImageUrls, isPublished }: {
+const SECTION_TYPES = [
+    { type: 'hero', emoji: '🖼', label: 'Hero', description: 'Full-width headline with a booking CTA' },
+    { type: 'about', emoji: '👤', label: 'About', description: 'Introduce yourself with a photo & bio' },
+    { type: 'services', emoji: '✂️', label: 'Services', description: 'Showcase your service menu with pricing' },
+    { type: 'book_cta', emoji: '📅', label: 'Book CTA', description: 'Bold call-to-action banner to drive books' },
+    { type: 'announcement', emoji: '📣', label: 'Announcement', description: 'Highlight a promo, policy, or update' },
+    { type: 'testimonials', emoji: '⭐', label: 'Testimonials', description: 'Show off client reviews and social proof' },
+    { type: 'contact', emoji: '✉️', label: 'Contact', description: 'Email, phone, and social links' },
+    { type: 'location', emoji: '📍', label: 'Location', description: 'Address with Google Maps link' },
+] as const
+
+type PrebuiltSectionType = typeof SECTION_TYPES[number]['type']
+const PREBUILT_TYPES = SECTION_TYPES.map(s => s.type) as string[]
+
+const defaultSectionData = (type: string): Record<string, any> => {
+    switch (type) {
+        case 'hero': return { headline: 'Book Your Next Look', subheadline: '', cta_label: 'Book Now', background_color: '#1A1818', text_color: '#FFFFFF', image_url: '' }
+        case 'about': return { display_name: '', bio: '', image_url: '' }
+        case 'services': return { headline: 'Services', show_price: true, show_duration: true }
+        case 'book_cta': return { headline: 'Ready to book?', subheadline: '', cta_label: 'Book Now' }
+        case 'announcement': return { text: 'New announcement', background_color: '#FFF3CD', text_color: '#1A1818' }
+        case 'testimonials': return { headline: 'What clients say', items: [] }
+        case 'contact': return { email: '', phone: '', instagram: '', facebook: '' }
+        case 'location': return { street_address: '', city_state: '', directions_note: '' }
+        default: return {}
+    }
+}
+
+const UploadSectionClient = ({ businessId, editorId, url_name, section_data, uploadedImageUrls, isPublished, initialBrandColor }: {
     businessId: string
     editorId: string
     url_name: string
@@ -34,8 +63,11 @@ const UploadSectionClient = ({ businessId, editorId, url_name, section_data, upl
     } | null
     uploadedImageUrls: { url: string; id: string }[]
     isPublished: boolean
+    initialBrandColor: string
 }) => {
     const [imageURLS, setImageURLS] = useState<{ url: string; id: string }[]>(uploadedImageUrls)
+    const [brandColor, setBrandColor] = useState(initialBrandColor)
+    const [savingColor, setSavingColor] = useState(false)
     const [editorState, setEditorState] = useState<any[]>(
         section_data?.section_data?.length
             ? section_data.section_data
@@ -46,6 +78,7 @@ const UploadSectionClient = ({ businessId, editorId, url_name, section_data, upl
     const [initialData, setInitialData] = useState<any[]>([...(section_data?.section_data ?? [])])
     const [imgDeleting, setImgDeleting] = useState('')
     const [deletingImg, setDeletingImg] = useState(false)
+    const [showAddSection, setShowAddSection] = useState(false)
     const router = useRouter()
 
     const getSectionPosition = (id: UniqueIdentifier) => editorState.findIndex(s => s.id === id)
@@ -75,7 +108,7 @@ const UploadSectionClient = ({ businessId, editorId, url_name, section_data, upl
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col w-full">
 
             {/* Sticky header */}
             <div className="sticky top-0 z-10 bg-background border-b px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
@@ -99,13 +132,46 @@ const UploadSectionClient = ({ businessId, editorId, url_name, section_data, upl
                 <p className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
                     <span className="shrink-0">Booking site:</span>
                     <Link
-                        href={`${process.env.NEXT_PUBLIC_BASE_URL}/${url_name}`}
+                        href={`${process.env.NEXT_PUBLIC_BASE_URL}/business/${url_name}`}
                         target="_blank"
                         className="font-medium text-foreground underline-offset-2 hover:underline truncate"
                     >
-                        {`${process.env.NEXT_PUBLIC_BASE_URL}/${url_name}`}
+                        {`${process.env.NEXT_PUBLIC_BASE_URL}/business/${url_name}`}
                     </Link>
                 </p>
+            </div>
+
+            {/* Brand color */}
+            <div className="px-4 sm:px-6 py-2.5 border-b flex items-center gap-3">
+                <label className="text-xs text-muted-foreground shrink-0">Brand color</label>
+                <div className="relative size-7 rounded-md border overflow-hidden cursor-pointer shrink-0">
+                    <div className="absolute inset-0" style={{ backgroundColor: brandColor }} />
+                    <input
+                        type="color"
+                        value={brandColor}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        onChange={(e) => setBrandColor(e.target.value)}
+                        onBlur={async (e) => {
+                            if (e.target.value === initialBrandColor) return
+                            setSavingColor(true)
+                            try {
+                                await saveBrandColor(businessId, e.target.value)
+                                toast.success('Brand color saved')
+                            } catch {
+                                toast.error('Failed to save brand color')
+                            }
+                            setSavingColor(false)
+                        }}
+                    />
+                </div>
+                <span className="text-xs font-mono text-muted-foreground">{brandColor.toUpperCase()}</span>
+                {savingColor && <Loader2 className="size-3 animate-spin text-muted-foreground" />}
+            </div>
+
+            {/* Mobile preview note */}
+            <div className="px-4 sm:px-6 py-2 border-b bg-muted/20 flex items-center gap-2">
+                <Smartphone className="size-3.5 text-muted-foreground shrink-0" />
+                <p className="text-xs text-muted-foreground">Most clients view your booking site on mobile — preview it on your phone before publishing.</p>
             </div>
 
             {/* Image picker modal */}
@@ -202,7 +268,7 @@ const UploadSectionClient = ({ businessId, editorId, url_name, section_data, upl
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium">No sections yet</p>
-                                    <p className="text-xs text-muted-foreground mt-0.5">Add a text or image section below to get started</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">Add a section below to get started</p>
                                 </div>
                             </div>
                         ) : (
@@ -223,37 +289,87 @@ const UploadSectionClient = ({ businessId, editorId, url_name, section_data, upl
                 </DndContext>
 
                 {/* Add section */}
-                <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                <div className="mt-6">
                     <Button
                         variant="outline"
-                        className="flex-1 h-12 sm:h-14 gap-2 border-dashed border-2"
-                        onClick={() => setEditorState(prev => [...prev, {
-                            id: crypto.randomUUID(),
-                            type: 'text',
-                            html: '<p>Type here...</p>',
-                            content,
-                            editing: true,
-                        }])}
+                        className="w-full h-12 sm:h-14 gap-2 border-dashed border-2"
+                        onClick={() => setShowAddSection(true)}
                     >
-                        <Type className="size-4" />
-                        Add Text Section
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="flex-1 h-12 sm:h-14 gap-2 border-dashed border-2"
-                        onClick={() => setOpenImageModal({ open: true, sectionId: '' })}
-                    >
-                        <ImageIcon className="size-4" />
-                        Add Image Section
+                        <span className="text-lg leading-none">+</span>
+                        Add Section
                     </Button>
                 </div>
+
+                {/* Add Section picker dialog */}
+                <Dialog open={showAddSection} onOpenChange={setShowAddSection}>
+                    <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Add a Section</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-sm text-muted-foreground -mt-2">Choose a section type to add to your page</p>
+                        <div className="grid grid-cols-2 gap-3 mt-1">
+                            {SECTION_TYPES.map(({ type, emoji, label, description }) => (
+                                <button
+                                    key={type}
+                                    className="text-left rounded-xl border bg-card p-4 hover:border-primary hover:shadow-sm transition-all"
+                                    onClick={() => {
+                                        setEditorState(prev => [...prev, {
+                                            id: crypto.randomUUID(),
+                                            type,
+                                            visible: true,
+                                            data: defaultSectionData(type),
+                                        }])
+                                        setShowAddSection(false)
+                                    }}
+                                >
+                                    <div className="text-2xl mb-2">{emoji}</div>
+                                    <p className="text-sm font-semibold">{label}</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{description}</p>
+                                </button>
+                            ))}
+                        </div>
+                        <Separator />
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                className="text-left rounded-xl border bg-card p-4 hover:border-primary hover:shadow-sm transition-all"
+                                onClick={() => {
+                                    setEditorState(prev => [...prev, {
+                                        id: crypto.randomUUID(),
+                                        type: 'text',
+                                        html: '<p>Type here...</p>',
+                                        content,
+                                        visible: true,
+                                        editing: true,
+                                    }])
+                                    setShowAddSection(false)
+                                }}
+                            >
+                                <div className="text-2xl mb-2">📝</div>
+                                <p className="text-sm font-semibold">Text</p>
+                                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Free-form rich text content</p>
+                            </button>
+                            <button
+                                className="text-left rounded-xl border bg-card p-4 hover:border-primary hover:shadow-sm transition-all"
+                                onClick={() => {
+                                    setOpenImageModal({ open: true, sectionId: '' })
+                                    setShowAddSection(false)
+                                }}
+                            >
+                                <div className="text-2xl mb-2">🖼️</div>
+                                <p className="text-sm font-semibold">Image</p>
+                                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Upload or select a photo</p>
+                            </button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     )
 }
 
 const WebSection = ({ element, editorState, setEditorState, index, setOpenImageModal }: any) => {
-    const isEditing = element.type === 'text' && element.editing
+    const isEditing = !!element.editing
+    const isHidden = element.visible === false
 
     const { transform, transition, attributes, listeners, setNodeRef } = useSortable({
         id: element.id,
@@ -277,13 +393,22 @@ const WebSection = ({ element, editorState, setEditorState, index, setOpenImageM
         })
     }
 
+    const handleToggleVisibility = () => {
+        setEditorState((prev: any[]) => {
+            const updated = [...prev]
+            updated[index] = { ...prev[index], visible: !isHidden }
+            return updated
+        })
+    }
+
     return (
         <div
             ref={setNodeRef}
             style={style}
             className={cn(
                 'w-full rounded-xl border bg-card flex items-stretch overflow-hidden transition-shadow',
-                isEditing && 'shadow-md ring-1 ring-ring'
+                isEditing && 'shadow-md ring-1 ring-ring',
+                isHidden && 'opacity-50'
             )}
         >
             {/* Drag handle */}
@@ -304,9 +429,33 @@ const WebSection = ({ element, editorState, setEditorState, index, setOpenImageM
             <div className={cn('flex-1 min-w-0', isEditing ? 'p-3 sm:p-4' : 'p-2.5 sm:p-3')}>
                 {element.type === 'text' ? (
                     <TextSection editorState={editorState} setEditorState={setEditorState} index={index} />
-                ) : (
+                ) : element.type === 'image' ? (
                     <div className="relative w-full h-28 sm:h-36 rounded-lg overflow-hidden">
                         <Image src={element.url} alt="section-image" fill className="object-cover" />
+                    </div>
+                ) : element.type === 'hero' && isEditing ? (
+                    <HeroForm element={element} index={index} setEditorState={setEditorState} />
+                ) : element.type === 'about' && isEditing ? (
+                    <AboutForm element={element} index={index} setEditorState={setEditorState} />
+                ) : element.type === 'services' && isEditing ? (
+                    <ServicesForm element={element} index={index} setEditorState={setEditorState} />
+                ) : element.type === 'book_cta' && isEditing ? (
+                    <BookCtaForm element={element} index={index} setEditorState={setEditorState} />
+                ) : element.type === 'announcement' && isEditing ? (
+                    <AnnouncementForm element={element} index={index} setEditorState={setEditorState} />
+                ) : element.type === 'testimonials' && isEditing ? (
+                    <TestimonialsForm element={element} index={index} setEditorState={setEditorState} />
+                ) : element.type === 'contact' && isEditing ? (
+                    <ContactForm element={element} index={index} setEditorState={setEditorState} />
+                ) : element.type === 'location' && isEditing ? (
+                    <LocationForm element={element} index={index} setEditorState={setEditorState} />
+                ) : (
+                    <div className="flex items-center gap-2 py-1">
+                        <span className="text-lg leading-none">{SECTION_TYPES.find(s => s.type === element.type)?.emoji}</span>
+                        <span className="text-sm font-medium">{SECTION_TYPES.find(s => s.type === element.type)?.label}</span>
+                        {element.data?.headline && (
+                            <span className="text-xs text-muted-foreground truncate">— {element.data.headline}</span>
+                        )}
                     </div>
                 )}
             </div>
@@ -318,12 +467,22 @@ const WebSection = ({ element, editorState, setEditorState, index, setOpenImageM
                         variant="ghost"
                         size="icon"
                         className="size-8"
-                        onClick={element.type === 'text'
-                            ? handleEdit
-                            : () => setOpenImageModal({ open: true, sectionId: element.id })
+                        onClick={
+                            element.type === 'image'
+                                ? () => setOpenImageModal({ open: true, sectionId: element.id })
+                                : handleEdit
                         }
                     >
                         <Pencil className="size-3.5" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-muted-foreground hover:text-foreground"
+                        onClick={handleToggleVisibility}
+                        title={isHidden ? 'Show section' : 'Hide section'}
+                    >
+                        {isHidden ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                     </Button>
                     <Button
                         variant="ghost"

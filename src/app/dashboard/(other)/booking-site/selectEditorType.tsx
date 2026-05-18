@@ -97,7 +97,7 @@ const SelectEditorType = ({ businessId, urlName, businessName, switchType, planT
                                 setCreatingEditor(false)
                                 return
                             }
-                            if (res) router.push(`/${urlName}/edit`)
+                            if (res) router.push(`/business/${urlName}/edit`)
                         }}
                         className={cn(
                             'relative flex flex-col text-left rounded-2xl p-6 gap-5 transition-all duration-200',

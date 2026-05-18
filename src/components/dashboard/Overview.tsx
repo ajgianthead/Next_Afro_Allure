@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { sendPaymentLink } from 'app/dashboard/(other)/actions'
 import QRCode from 'react-qr-code'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
 import { DashboardTour } from '@/features/tour/tours/DashboardTour'
 
@@ -91,10 +92,44 @@ export const StackedCards = ({ weekAppointments, upcomingAppointments, businessD
 function Greeting({ businessData }: { businessData: Business }) {
   const hour = DateTime.now().hour
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const isFoundingMember = businessData.founding_member === true
+  const memberNumber = businessData.founding_member_number as number | null
+  const padded = memberNumber ? String(memberNumber).padStart(3, '0') : null
+
   return (
     <div>
       <p className="text-sm" style={{ color: BRAND.warm }}>{greeting}</p>
-      <h1 className="text-2xl font-semibold" style={{ color: BRAND.black }}>{businessData.business_name}</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <h1 className="text-2xl font-semibold" style={{ color: BRAND.black }}>{businessData.business_name}</h1>
+        {isFoundingMember && padded && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                background: '#C9974A', color: '#fff',
+                fontSize: 10, fontWeight: 700, letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                padding: '4px 10px', borderRadius: 999,
+                border: 'none', cursor: 'pointer',
+                flexShrink: 0,
+              }}>
+                ✦ Founding Member #{padded}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent style={{ maxWidth: 280, padding: 16 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1818', margin: '0 0 4px' }}>
+                Founding Member #{padded}
+              </p>
+              <p style={{ fontSize: 12, color: '#6F6863', margin: '0 0 8px', lineHeight: 1.5 }}>
+                You&apos;re one of the first 250 professionals on AfroAllure. Your $25/mo rate is locked forever, and you&apos;ll be first-listed in the marketplace.
+              </p>
+              <a href="/founding-members" style={{ fontSize: 12, fontWeight: 600, color: '#C9974A', textDecoration: 'none' }}>
+                See the founding members wall →
+              </a>
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
     </div>
   )
 }

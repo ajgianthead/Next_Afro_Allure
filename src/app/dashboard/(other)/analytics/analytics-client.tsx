@@ -200,7 +200,7 @@ export function AnalyticsClient({ data, business }: AnalyticsClientProps) {
                 </SectionCard>
 
                 <SectionCard id="financial" title="Financial Summary" defaultOpen={isDesktop}>
-                    <FinancialSummarySection financial={data.financial} />
+                    <FinancialSummarySection financial={data.financial} platformFees={data.platformFees} />
                 </SectionCard>
             </div>
         </div>

@@ -43,3 +43,16 @@
   .aa-business-root .aa-mobile-nav { display: block !important; }
   .aa-business-root .aa-desktop-nav { display: none !important; }
 }
+
+.aa-business-root .aa-fee-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 48px;
+}
+@media (max-width: 720px) {
+  .aa-business-root .aa-fee-grid {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+}

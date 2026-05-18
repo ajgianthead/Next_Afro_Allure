@@ -40,6 +40,7 @@ export const FooterComponent: any = {
                 backgroundColor: '#1A1818',
                 borderWidth: 0,
                 grow: true,
+                responsiveDirection: 'none',
                 content: [
                     {
                         type: 'Container',
@@ -74,6 +75,7 @@ export const FooterComponent: any = {
                                         backgroundColor: 'transparent',
                                         borderWidth: 0,
                                         grow: false,
+                                        responsiveDirection: 'none',
                                         content: [
                                             {
                                                 type: 'HeadingThree',
@@ -143,6 +145,7 @@ export const FooterComponent: any = {
                                                     backgroundColor: 'transparent',
                                                     borderWidth: 0,
                                                     grow: false,
+                                                    responsiveDirection: 'none',
                                                     content: [
                                                         {
                                                             type: 'CustomizableText',
@@ -176,6 +179,7 @@ export const FooterComponent: any = {
                                                     backgroundColor: 'transparent',
                                                     borderWidth: 0,
                                                     grow: false,
+                                                    responsiveDirection: 'none',
                                                     content: [
                                                         {
                                                             type: 'CustomizableText',

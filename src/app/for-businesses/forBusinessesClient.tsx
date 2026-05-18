@@ -5,7 +5,7 @@ import './forBusinesses.css'
 import { useState, useEffect, useRef } from "react";
 import LOGO from '../../../public/images/logo_transparent_background.png'
 import Image from "next/image";
-import { Menu } from "lucide-react";
+import { Menu, Sparkles } from "lucide-react";
 
 
 const RED = '#FC6161';
@@ -167,7 +167,7 @@ function Nav({ dark = false, isLoggedIn = false }: { dark?: boolean; isLoggedIn?
 // ─────────────────────────────────────────────────────────────
 // HERO — confident, direct, dark with hair-texture vibe
 // ─────────────────────────────────────────────────────────────
-function Hero({ isLoggedIn }: { isLoggedIn: boolean }) {
+function Hero({ isLoggedIn, foundingMemberCount }: { isLoggedIn: boolean; foundingMemberCount: number }) {
     return (
         <section style={{
             background: DARK, color: WARM, position: 'relative', overflow: 'hidden',
@@ -255,7 +255,7 @@ function Hero({ isLoggedIn }: { isLoggedIn: boolean }) {
                         <span style={{ color: GOLD, display: 'inline-flex' }}>
                             {[...Array(5)].map((_, i) => <Icon key={i} d={ICONS.star} size={11} fill="currentColor" />)}
                         </span>
-                        184+ founding members
+                        {foundingMemberCount}+ founding members
                     </span>
                 </div>
             </div>
@@ -843,9 +843,207 @@ function Pricing() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// FEE TRANSPARENCY — calculator + comparison
+// ─────────────────────────────────────────────────────────────
+function FeeTransparency() {
+    const [amount, setAmount] = useState(200)
+
+    const safe = Math.max(0, amount || 0)
+    const stripeFee = safe * 0.029 + 0.30
+    const aaFee = safe * 0.03
+    const payout = Math.max(0, safe - stripeFee - aaFee)
+    const styleSeatLow = Math.round(safe * 0.65)
+    const styleSeatHigh = Math.round(safe * 0.75)
+
+    const rows: [string, string, string][] = [
+        ['Platform fee', '3%', '25–35%'],
+        ['Monthly fee', '$25/mo', '$35+/mo'],
+        ['You keep', `$${payout.toFixed(2)}`, `$${styleSeatLow.toFixed(2)} – $${styleSeatHigh.toFixed(2)}`],
+        ['Marketplace', 'Coming soon', '✓'],
+        ['Built for Black beauty', '✓', '✗'],
+        ['Client ownership', '✓', '✗'],
+    ]
+
+    return (
+        <section className="aa-section" style={{ background: WARM, padding: '80px 56px' }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+                {/* Header */}
+                <div style={{
+                    fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                    color: RED, marginBottom: 16, fontWeight: 600,
+                }}>Pricing Transparency</div>
+                <h2 style={{
+                    fontFamily: SERIF, fontWeight: 400,
+                    fontSize: 'clamp(32px, 4vw, 52px)', lineHeight: 1.05,
+                    letterSpacing: '-.025em', margin: '0 0 0', color: INK,
+                }}>
+                    Understand exactly what you take home.
+                </h2>
+
+                {/* Two-column grid */}
+                <div className="aa-fee-grid">
+                    {/* LEFT — Calculator */}
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+                            color: MUTED, marginBottom: 10, fontWeight: 600,
+                        }}>How our fees work</div>
+                        <div style={{
+                            fontFamily: SERIF, fontSize: 26, fontWeight: 500,
+                            letterSpacing: '-.015em', marginBottom: 8, color: INK,
+                        }}>The breakdown</div>
+                        <div style={{
+                            fontFamily: SANS, fontSize: 14, lineHeight: 1.55, color: MUTED, marginBottom: 24,
+                        }}>
+                            Type any service price to see exactly what you take home.
+                        </div>
+
+                        {/* Input */}
+                        <div style={{ marginBottom: 20 }}>
+                            <label style={{
+                                fontFamily: SANS, fontSize: 11, fontWeight: 600, letterSpacing: '.1em',
+                                textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: 8,
+                            }}>Your service price</label>
+                            <div style={{ position: 'relative' }}>
+                                <span style={{
+                                    position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                                    fontFamily: SANS, fontSize: 15, color: INK, fontWeight: 600,
+                                    pointerEvents: 'none',
+                                }}>$</span>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={amount}
+                                    onChange={e => setAmount(Math.max(0, Number(e.target.value)))}
+                                    style={{
+                                        width: '100%', height: 44, paddingLeft: 28, paddingRight: 14,
+                                        border: `1px solid ${LINE}`, borderRadius: 8,
+                                        fontFamily: SANS, fontSize: 15, color: INK,
+                                        background: '#fff', outline: 'none',
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Breakdown card */}
+                        <div style={{ background: '#fff', border: `1px solid ${LINE}`, borderRadius: 16, padding: 20 }}>
+                            <div style={{
+                                fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase',
+                                color: MUTED, fontWeight: 600, marginBottom: 12,
+                            }}>
+                                On a ${safe.toFixed(2)} service
+                            </div>
+
+                            {[
+                                { label: 'Client pays', value: `$${safe.toFixed(2)}`, muted: false },
+                                { label: 'Stripe processing (2.9% + $0.30)', value: `-$${stripeFee.toFixed(2)}`, muted: true },
+                                { label: 'AfroAllure fee (3%)', value: `-$${aaFee.toFixed(2)}`, muted: true },
+                            ].map(({ label, value, muted }, i) => (
+                                <div key={i} style={{
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    padding: '10px 0', borderBottom: '1px solid rgba(232,226,214,0.5)',
+                                }}>
+                                    <span style={{ fontFamily: SANS, fontSize: 14, color: muted ? MUTED : INK }}>{label}</span>
+                                    <span style={{ fontFamily: SANS, fontSize: 14, color: muted ? MUTED : INK, fontWeight: 500 }}>{value}</span>
+                                </div>
+                            ))}
+
+                            <hr style={{ border: 'none', borderTop: `1px solid ${LINE}`, margin: '4px 0' }} />
+
+                            <div style={{
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0',
+                            }}>
+                                <span style={{ fontFamily: SANS, fontSize: 14, color: INK, fontWeight: 600 }}>You receive</span>
+                                <span style={{ fontFamily: SERIF, fontSize: 22, color: INK, fontWeight: 700, letterSpacing: '-.01em' }}>
+                                    ${payout.toFixed(2)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* RIGHT — Comparison */}
+                    <div>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+                            color: MUTED, marginBottom: 10, fontWeight: 600,
+                        }}>The alternative</div>
+                        <div style={{
+                            fontFamily: SERIF, fontSize: 26, fontWeight: 500,
+                            letterSpacing: '-.015em', marginBottom: 24, color: INK,
+                        }}>See how we compare</div>
+
+                        <div style={{ border: `1px solid ${LINE}`, borderRadius: 16, overflow: 'hidden' }}>
+                            {/* Table header */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', borderBottom: `1px solid ${LINE}` }}>
+                                <div style={{ padding: '12px 16px' }} />
+                                <div style={{
+                                    padding: '12px 16px', textAlign: 'center', background: 'rgba(250,247,242,0.8)',
+                                    fontFamily: MONO, fontSize: 10, letterSpacing: '.14em',
+                                    textTransform: 'uppercase', color: RED, fontWeight: 700,
+                                }}>AfroAllure</div>
+                                <div style={{
+                                    padding: '12px 16px', textAlign: 'center',
+                                    fontFamily: MONO, fontSize: 10, letterSpacing: '.14em',
+                                    textTransform: 'uppercase', color: MUTED, fontWeight: 600,
+                                }}>StyleSeat</div>
+                            </div>
+
+                            {/* Table rows */}
+                            {rows.map(([label, aa, ss], i) => (
+                                <div key={i} style={{
+                                    display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr',
+                                    borderBottom: i < rows.length - 1 ? `1px solid ${LINE}` : 'none',
+                                }}>
+                                    <div style={{ padding: '12px 16px', fontFamily: SANS, fontSize: 13, color: MUTED }}>{label}</div>
+                                    <div style={{
+                                        padding: '12px 16px', textAlign: 'center',
+                                        background: 'rgba(250,247,242,0.5)',
+                                        fontFamily: i === 2 ? SERIF : SANS,
+                                        fontSize: i === 2 ? 16 : 13,
+                                        fontWeight: 600, color: INK,
+                                    }}>{aa}</div>
+                                    <div style={{
+                                        padding: '12px 16px', textAlign: 'center',
+                                        fontFamily: SANS, fontSize: 13, color: MUTED,
+                                    }}>{ss}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <p style={{
+                            fontFamily: SANS, fontSize: 12, color: MUTED, fontStyle: 'italic',
+                            marginTop: 12, lineHeight: 1.5,
+                        }}>
+                            StyleSeat figures based on their published commission structure.
+                            Stripe processing applies to all platforms that accept card payments.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Full-width callout */}
+                <div style={{
+                    marginTop: 40, background: 'rgba(201,151,74,0.08)',
+                    border: '1px solid rgba(201,151,74,0.3)',
+                    borderRadius: 12, padding: 20,
+                    display: 'flex', gap: 12, alignItems: 'flex-start',
+                }}>
+                    <Sparkles size={18} color="#C9974A" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <p style={{ fontFamily: SANS, fontSize: 14, color: '#3A3532', lineHeight: 1.6, margin: 0 }}>
+                        Why we charge a fee at all: the 3% keeps AfroAllure running — the servers, the
+                        payments infrastructure, the reminder emails, the analytics, the marketplace
+                        we're building. No investor pressure to extract more from your earnings.
+                        Just enough to build something that lasts for this community.
+                    </p>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+// ─────────────────────────────────────────────────────────────
 // FOUNDING MEMBER — warm white with thick gold border
 // ─────────────────────────────────────────────────────────────
-function Founding() {
+function Founding({ foundingMemberCount }: { foundingMemberCount: number }) {
     return (
         <section className="aa-section" style={{ background: WARM, padding: '40px 56px 120px' }}>
             <div className="aa-founding-card" style={{
@@ -883,8 +1081,8 @@ function Founding() {
                             fontSize: 'clamp(40px, 5vw, 60px)', lineHeight: 1,
                             letterSpacing: '-.025em', margin: 0, color: INK, textWrap: 'balance',
                         }}>
-                            Beta members become<br />
-                            <em style={{ fontStyle: 'italic', color: GOLD }}>founding members.</em>
+                            Lock in your rate.<br />
+                            <em style={{ fontStyle: 'italic', color: GOLD }}>Forever.</em>
                         </h2>
 
                         <div style={{
@@ -892,12 +1090,12 @@ function Founding() {
                             marginTop: 28, fontWeight: 400, maxWidth: 560,
                         }}>
                             <p style={{ margin: '0 0 14px' }}>
-                                Early joiners get first listing in the AfroAllure marketplace when it launches.
-                                Full Growth-plan access — free during beta. A direct line to the team and a real
-                                hand in shaping the platform.
+                                Founding members get a rate that never changes — no matter what AfroAllure charges
+                                in the future. First in the marketplace when it launches. Your badge on your
+                                public page, permanently.
                             </p>
                             <p style={{ margin: 0, color: MUTED }}>
-                                Your name on the wall. Your work in the directory. Your input in every release.
+                                Only 250 spots. Once they're gone, this offer doesn't come back.
                             </p>
                         </div>
 
@@ -916,7 +1114,7 @@ function Founding() {
                                 fontFamily: MONO, fontSize: 11, letterSpacing: '.14em',
                                 textTransform: 'uppercase', color: MUTED,
                             }}>
-                                184 / 250 spots claimed
+                                {foundingMemberCount} / 250 spots claimed
                             </span>
                         </div>
                     </div>
@@ -936,9 +1134,9 @@ function Founding() {
                         }}>
                             {[
                                 ['First-listed in marketplace', 'When it opens'],
-                                ['Free Growth plan during beta', '$25/mo value'],
+                                ['Rate locked forever', '$25/mo — always'],
                                 ['Founding-member badge', 'On your public page'],
-                                ['Direct Slack access to team', 'Real input on roadmap'],
+                                ['Priority support', 'Direct access to the team'],
                             ].map(([t, d], i) => (
                                 <li key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                                     <span style={{
@@ -993,8 +1191,8 @@ function FinalCTA() {
                     color: 'rgba(250,247,242,.75)',
                     margin: '24px auto 40px', maxWidth: 560, fontWeight: 400,
                 }}>
-                    Full Growth-plan access during beta. Founding member listing at marketplace launch.
-                    Direct line to the team. No card required.
+                    Lock in your founding-member rate now. First in the marketplace at launch.
+                    Your badge, your rate — locked forever. No credit card required.
                 </p>
 
                 <a href="/register" style={{
@@ -1059,6 +1257,7 @@ function Footer() {
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Features</a></li>
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Marketplace</a></li>
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>For Businesses</a></li>
+                        <li><a href="/founding-members" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Founding Members</a></li>
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Register</a></li>
                     </ul>
                 </div>
@@ -1092,7 +1291,7 @@ function Footer() {
 // ─────────────────────────────────────────────────────────────
 // PAGE EXPORT
 // ─────────────────────────────────────────────────────────────
-function AfroAllureBusiness({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
+function AfroAllureBusiness({ isLoggedIn = false, foundingMemberCount = 0 }: { isLoggedIn?: boolean; foundingMemberCount?: number }) {
     useEffect(() => {
         const cleanup = () => {
             document.body.style.pointerEvents = ''
@@ -1108,11 +1307,12 @@ function AfroAllureBusiness({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
     return (
         <div className="aa-business-root" style={{ background: WARM, color: INK, fontFamily: SANS, width: '100%' }}>
             <MobileNav isLoggedIn={isLoggedIn} />
-            <Hero isLoggedIn={isLoggedIn} />
+            <Hero isLoggedIn={isLoggedIn} foundingMemberCount={foundingMemberCount} />
             <Features />
             <WhyAfroAllure />
             <Pricing />
-            <Founding />
+            <FeeTransparency />
+            <Founding foundingMemberCount={foundingMemberCount} />
             <FinalCTA />
             <Footer />
         </div>

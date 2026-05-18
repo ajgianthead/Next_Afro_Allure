@@ -182,6 +182,15 @@ export const deleteUploadedImg = async (imageName: string, business_id: string) 
     return data
 }
 
+export const saveBrandColor = async (businessId: string, color: string) => {
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from('business_users')
+        .update({ brand_color: color })
+        .eq('business_id', businessId)
+    if (error) throw error
+}
+
 export const deleteSectionImage = async (business_id: string, imageObjId: string) => {
     const supabase = await createClient();
     await supabase.storage.from('web-section-images').remove([`private/${business_id}/${imageObjId}`])

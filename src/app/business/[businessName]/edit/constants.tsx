@@ -17,14 +17,6 @@ import { RowLayoutComponent } from "./components/row";
 import { GridLayoutComponent } from "./components/grid";
 import { FooterComponent } from "./components/prebuitComponents/footer";
 import { SectionComponent } from "./components/section";
-import { LuxuryNavComponent } from "./components/templateSections/luxuryNav";
-import { LuxuryHeroComponent } from "./components/templateSections/luxuryHero";
-import { ServiceMenuComponent } from "./components/templateSections/serviceMenu";
-import { PortfolioGalleryComponent } from "./components/templateSections/portfolioGallery";
-import { AboutStylistComponent } from "./components/templateSections/aboutStylist";
-import { ReviewsSectionComponent } from "./components/templateSections/reviewsSection";
-import { BookingCTAComponent } from "./components/templateSections/bookingCta";
-import { LuxuryFooterComponent } from "./components/templateSections/luxuryFooter";
 
 
 
@@ -51,11 +43,6 @@ export const config: Config<Components> = {
             title: 'Other',
             components: ['Button']
         },
-        templates: {
-            title: 'Template Sections',
-            defaultExpanded: false,
-            components: ['LuxuryNav', 'LuxuryHero', 'ServiceMenu', 'PortfolioGallery', 'AboutStylist', 'ReviewsSection', 'BookingCTA', 'LuxuryFooter']
-        },
     },
     components: {
         Card: CardComponent,
@@ -72,14 +59,6 @@ export const config: Config<Components> = {
         Image: ImageComponent,
         CustomizableText: CustomizableTextComponent,
         Container: ContainerComponent,
-        LuxuryNav: LuxuryNavComponent,
-        LuxuryHero: LuxuryHeroComponent,
-        ServiceMenu: ServiceMenuComponent,
-        PortfolioGallery: PortfolioGalleryComponent,
-        AboutStylist: AboutStylistComponent,
-        ReviewsSection: ReviewsSectionComponent,
-        BookingCTA: BookingCTAComponent,
-        LuxuryFooter: LuxuryFooterComponent,
         HeadingOne: textPresetsComponents.HeadingOne,
         HeadingTwo: textPresetsComponents.HeadingTwo,
         HeadingThree: textPresetsComponents.HeadingThree,
@@ -216,14 +195,6 @@ export const drawerItemStyleProps = new Map<
             label: 'Video'
         }
     ],
-    ['LuxuryNav', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Luxury Nav' }],
-    ['LuxuryHero', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Luxury Hero' }],
-    ['ServiceMenu', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Service Menu' }],
-    ['PortfolioGallery', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Portfolio Gallery' }],
-    ['AboutStylist', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'About Stylist' }],
-    ['ReviewsSection', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Reviews Section' }],
-    ['BookingCTA', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Booking CTA' }],
-    ['LuxuryFooter', { icon: <Layers className="text-slate-300" />, fontLevel: 'body-md', label: 'Luxury Footer' }],
     [
         "HeadingOne",
         {

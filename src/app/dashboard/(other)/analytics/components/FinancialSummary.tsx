@@ -1,9 +1,9 @@
 'use client'
 
 import { FinancialSummary } from '../actions'
+import { ActualPlatformFees } from '../stripeActions'
 import { fmt } from '../analytics-client'
 import { InfoTooltip } from './InfoTooltip'
-import { PLATFORM_FEE_PERCENT } from '@/lib/fees'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -12,11 +12,13 @@ function StatRow({
     value,
     highlight,
     tip,
+    hero,
 }: {
     label: string
     value: string
     highlight?: 'amber' | 'muted'
     tip?: string
+    hero?: boolean
 }) {
     const valueColor =
         highlight === 'amber' ? '#B45309' : highlight === 'muted' ? '#6F6863' : '#1A1818'
@@ -26,16 +28,45 @@ function StatRow({
                 <p className="text-sm" style={{ color: '#6F6863' }}>{label}</p>
                 {tip && <InfoTooltip text={tip} />}
             </div>
-            <p className="text-sm font-semibold" style={{ fontFamily: SERIF, color: valueColor }}>{value}</p>
+            <p
+                style={{
+                    fontFamily: hero ? SERIF : undefined,
+                    fontSize: hero ? '1.125rem' : undefined,
+                    fontWeight: hero ? 700 : 600,
+                    color: valueColor,
+                }}
+                className={hero ? '' : 'text-sm font-semibold'}
+            >
+                {value}
+            </p>
         </div>
     )
 }
 
 interface Props {
     financial: FinancialSummary
+    platformFees: ActualPlatformFees
 }
 
-export function FinancialSummarySection({ financial }: Props) {
+export function FinancialSummarySection({ financial, platformFees }: Props) {
+    const stripeFeesThisYear =
+        Math.round(financial.total_earned_this_year * 0.029) +
+        financial.booking_count_this_year * 30
+
+    const stripeFeesAllTime =
+        Math.round(financial.total_earned_all_time * 0.029) +
+        financial.booking_count_all_time * 30
+
+    const netThisYear = Math.max(
+        0,
+        financial.total_earned_this_year - platformFees.thisYear - stripeFeesThisYear
+    )
+
+    const netAllTime = Math.max(
+        0,
+        financial.total_earned_all_time - platformFees.allTime - stripeFeesAllTime
+    )
+
     return (
         <div className="flex flex-col sm:flex-row gap-4">
             {/* This Year */}
@@ -54,15 +85,22 @@ export function FinancialSummarySection({ financial }: Props) {
                     tip="Sum of all deposit amounts collected at booking this year."
                 />
                 <StatRow
-                    label={`Platform Fees (${PLATFORM_FEE_PERCENT * 100}%)`}
-                    value={fmt(financial.total_platform_fees_this_year)}
+                    label="AfroAllure Fee (3%)"
+                    value={fmt(platformFees.thisYear)}
                     highlight="muted"
-                    tip="Estimated AfroAllure platform fee of 3% on gross earnings this year."
+                    tip="Actual AfroAllure platform fee pulled from Stripe application fees."
+                />
+                <StatRow
+                    label="Stripe Processing"
+                    value={`~${fmt(stripeFeesThisYear)}`}
+                    highlight="muted"
+                    tip="Stripe's 2.9% + $0.30 per transaction, estimated from your booking count. Exact amounts are in your Stripe dashboard."
                 />
                 <StatRow
                     label="Net Earnings"
-                    value={fmt(financial.net_earnings_this_year)}
-                    tip="Gross earned minus the 3% platform fee. Your estimated take-home this year."
+                    value={fmt(netThisYear)}
+                    hero
+                    tip="Gross earned minus AfroAllure fee and estimated Stripe processing."
                 />
                 {financial.total_outstanding_balances > 0 && (
                     <StatRow
@@ -90,15 +128,22 @@ export function FinancialSummarySection({ financial }: Props) {
                     tip="Sum of all deposit amounts collected at booking across all time."
                 />
                 <StatRow
-                    label={`Platform Fees (${PLATFORM_FEE_PERCENT * 100}%)`}
-                    value={fmt(financial.total_platform_fees_all_time)}
+                    label="AfroAllure Fee (3%)"
+                    value={fmt(platformFees.allTime)}
                     highlight="muted"
-                    tip="Estimated AfroAllure platform fee of 3% on all-time gross earnings."
+                    tip="Actual AfroAllure platform fee pulled from Stripe application fees."
+                />
+                <StatRow
+                    label="Stripe Processing"
+                    value={`~${fmt(stripeFeesAllTime)}`}
+                    highlight="muted"
+                    tip="Stripe's 2.9% + $0.30 per transaction, estimated from your booking count. Exact amounts are in your Stripe dashboard."
                 />
                 <StatRow
                     label="Net Earnings"
-                    value={fmt(financial.net_earnings_all_time)}
-                    tip="All-time gross earned minus the 3% platform fee."
+                    value={fmt(netAllTime)}
+                    hero
+                    tip="Gross earned minus AfroAllure fee and estimated Stripe processing."
                 />
                 <StatRow
                     label="Avg Monthly Revenue"

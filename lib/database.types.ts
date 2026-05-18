@@ -351,6 +351,7 @@ export type Database = {
         Row: {
           account_settings: Json | null
           booking_policies: string
+          brand_color: string | null
           business_id: string
           business_name: string
           clients: string[] | null
@@ -358,7 +359,11 @@ export type Database = {
           created_at: string
           current_onboarding_link: string | null
           default_availability: string
+          early_access: boolean
           email: string
+          founding_member: boolean
+          founding_member_number: number | null
+          founding_member_since: string | null
           had_trial: boolean
           has_marketplace_profile: boolean | null
           is_onboarded: boolean
@@ -379,6 +384,7 @@ export type Database = {
         Insert: {
           account_settings?: Json | null
           booking_policies?: string
+          brand_color?: string | null
           business_id?: string
           business_name: string
           clients?: string[] | null
@@ -386,7 +392,11 @@ export type Database = {
           created_at?: string
           current_onboarding_link?: string | null
           default_availability?: string
+          early_access?: boolean
           email: string
+          founding_member?: boolean
+          founding_member_number?: number | null
+          founding_member_since?: string | null
           had_trial?: boolean
           has_marketplace_profile?: boolean | null
           is_onboarded?: boolean
@@ -407,6 +417,7 @@ export type Database = {
         Update: {
           account_settings?: Json | null
           booking_policies?: string
+          brand_color?: string | null
           business_id?: string
           business_name?: string
           clients?: string[] | null
@@ -414,7 +425,11 @@ export type Database = {
           created_at?: string
           current_onboarding_link?: string | null
           default_availability?: string
+          early_access?: boolean
           email?: string
+          founding_member?: boolean
+          founding_member_number?: number | null
+          founding_member_since?: string | null
           had_trial?: boolean
           has_marketplace_profile?: boolean | null
           is_onboarded?: boolean
@@ -1322,16 +1337,14 @@ export type Database = {
         Args: { p_business_id: string }
         Returns: {
           average_monthly_revenue: number
+          booking_count_all_time: number
+          booking_count_this_year: number
           months_active: number
-          net_earnings_all_time: number
-          net_earnings_this_year: number
           total_deposits_all_time: number
           total_deposits_this_year: number
           total_earned_all_time: number
           total_earned_this_year: number
           total_outstanding_balances: number
-          total_platform_fees_all_time: number
-          total_platform_fees_this_year: number
         }[]
       }
       get_growth_trends: {
