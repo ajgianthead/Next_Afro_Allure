@@ -8,6 +8,7 @@ import RescheduledAppointment from "../../../../emails/rescheduled-appointment";
 import { createClient } from "@/app/utils/supabase/server";
 import { assignAddons } from "app/api/util/transformServices";
 import { trackAppointmentRescheduled } from "../../../../lib/analytics";
+import { NotificationType } from "@/lib/notifications/Notification";
 import { formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails";
 import { runs } from "@trigger.dev/sdk/v3";
 import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders";
@@ -194,6 +195,23 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
             servicePrice: appointment.service_data.price,
             appointmentType: "",
         }).catch(console.error)
+
+        // rescheduled-booking notification — non-critical
+        ;(async () => {
+            try {
+                const supabase = await createClient()
+                await supabase.from('notifications').insert({
+                    body: `${appointment.client_metadata.firstName} ${appointment.client_metadata.lastName} rescheduled their ${appointment.service_data.name} appointment to ${DateTime.fromJSDate(appointment.start).toFormat('LLLL dd, yyyy')} at ${DateTime.fromJSDate(appointment.start).toLocaleString(DateTime.TIME_SIMPLE)}.`,
+                    title: 'Appointment Rescheduled',
+                    read: false,
+                    business_id: appointment.business,
+                    type: NotificationType.RescheduledBooking,
+                    appointment_id: appointment.id,
+                })
+            } catch (notifErr) {
+                console.error('Failed to insert rescheduled-booking notification:', notifErr)
+            }
+        })()
 
         // Cancel old reminder jobs and schedule new ones — fire-and-forget, non-critical
         ;(async () => {

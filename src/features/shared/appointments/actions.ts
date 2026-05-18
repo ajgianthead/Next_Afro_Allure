@@ -189,8 +189,26 @@ export const createAppointmentAction = async (body: {
     try {
         if (data.status === 'PENDING') {
             await AppointmentEmails.sendPendingConfirmation(emailData)
+            const { error: notifError } = await supabase.from('notifications').insert({
+                body: `${client_metadata?.firstName} ${client_metadata?.lastName} just booked ${service_data?.name} on ${DateTime.fromISO(data.start).toFormat('LLLL dd, yyyy')} at ${DateTime.fromISO(data.start).toLocaleString(DateTime.TIME_SIMPLE)}.`,
+                title: 'New Booking Request',
+                read: false,
+                business_id: data.business,
+                type: NotificationType.NewBooking,
+                appointment_id: data.id,
+            })
+            if (notifError) console.error('Failed to insert new-booking notification:', notifError)
         } else if (data.status === 'CONFIRMED') {
             await AppointmentEmails.sendConfirmed(emailData)
+            const { error: notifError } = await supabase.from('notifications').insert({
+                body: `${client_metadata?.firstName} ${client_metadata?.lastName} just booked ${service_data?.name} on ${DateTime.fromISO(data.start).toFormat('LLLL dd, yyyy')} at ${DateTime.fromISO(data.start).toLocaleString(DateTime.TIME_SIMPLE)}.`,
+                title: 'New Booking',
+                read: false,
+                business_id: data.business,
+                type: NotificationType.NewBooking,
+                appointment_id: data.id,
+            })
+            if (notifError) console.error('Failed to insert new-booking notification:', notifError)
             const ids = await AppointmentReminders.schedule({
                 appointmentId: data.id,
                 start: DateTime.fromISO(data.start).toISO()!,

@@ -216,6 +216,22 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
     console.error('Post-confirmation side effects failed (appointment already confirmed):', error);
   }
 
+  // booking-confirmed notification — non-critical, never throw back to Stripe
+  try {
+    const supabase = await createClient();
+    const cm = res.client_metadata;
+    await supabase.from('notifications').insert({
+      body: `${cm.firstName} ${cm.lastName}'s deposit was received. Their ${res.service_data.name} appointment is now confirmed.`,
+      title: 'Booking Confirmed',
+      read: false,
+      business_id: res.business,
+      type: 'booking-confirmed',
+      appointment_id: res.id,
+    });
+  } catch (notifErr) {
+    console.error('Failed to insert booking-confirmed notification:', notifErr);
+  }
+
   // Fire-and-forget — non-critical, never throw back to Stripe
   trackAppointmentBooked({
     businessId: res.business,

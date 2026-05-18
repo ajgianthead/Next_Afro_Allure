@@ -5,6 +5,7 @@ export enum NotificationType {
     NewBooking = 'new-booking',
     CancelledBooking = 'cancelled-booking',
     RescheduledBooking = 'rescheduled-booking',
+    BookingConfirmed = 'booking-confirmed',
 }
 
 interface NotiData {
