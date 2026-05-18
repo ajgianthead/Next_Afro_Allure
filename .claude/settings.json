@@ -27,7 +27,8 @@
       "Bash(xargs grep -l \"founding\\\\|welcome.*member\\\\|member.*welcome\")",
       "Bash(tooltip\")",
       "Bash(grep -rn \"booking-confirmed\\\\|deposit.*webhook\\\\|connected_account\" src/app/api/ --include=\"*.ts\" -l)",
-      "Bash(ls src/app/api/webhook/)"
+      "Bash(ls src/app/api/webhook/)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\abija\\\\Documents\\\\afroallure\\\\Next_Afro_Allure\\\\src\\\\components\\\\UserDropdown.tsx\")"
     ]
   }
 }
