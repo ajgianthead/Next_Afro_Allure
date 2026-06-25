@@ -33,6 +33,26 @@
   .dm-root .dm-desktop-nav { display: none  !important; }
 }
 
+/* ── Hero split layout ───────────────────────────────── */
+.dm-root .dm-hero-split {
+  display: flex;
+  align-items: center;
+  gap: 56px;
+}
+.dm-root .dm-hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+.dm-root .dm-hero-visual {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+@media (max-width: 1024px) {
+  .dm-root .dm-hero-visual { display: none !important; }
+}
+
 /* ── Grids declared here so media overrides work ─────── */
 .dm-root .dm-problem-grid {
   display: grid;

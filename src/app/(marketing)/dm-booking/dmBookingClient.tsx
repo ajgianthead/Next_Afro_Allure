@@ -6,7 +6,7 @@ import { track } from '@vercel/analytics'
 import Image from 'next/image'
 import { Menu } from 'lucide-react'
 import LOGO from '../../../../public/images/logo_transparent_background.png'
-import { DmInboxDemo, AppointmentCreationDemo, DepositLinkDemo, ConfirmationDemo } from '@/components/marketing/demos'
+import { HeroDemo, DmInboxDemo, AppointmentCreationDemo, DepositLinkDemo, ConfirmationDemo } from '@/components/marketing/demos'
 
 const RED  = '#FC6161'
 const DARK = '#0F0E0E'
@@ -149,51 +149,60 @@ function Hero() {
         maxWidth: 1240, margin: '0 auto', padding: '88px 56px 116px',
         position: 'relative', zIndex: 2,
       }}>
-        <Eyebrow text="For Black beauty professionals who book by DM" light />
+        <div className="dm-hero-split">
+          {/* Left: copy */}
+          <div className="dm-hero-copy">
+            <Eyebrow text="For Black beauty professionals who book by DM" light />
 
-        <h1 style={{
-          fontFamily: SERIF, fontWeight: 400,
-          fontSize: 'clamp(52px, 8vw, 108px)', lineHeight: .96,
-          letterSpacing: '-.04em', margin: '0 0 32px', color: WARM,
-          maxWidth: 900,
-        }}>
-          Book by DM.<br />
-          Get paid like<br />
-          <em style={{ fontStyle: 'italic', color: RED }}>a business.</em>
-        </h1>
-
-        <p style={{
-          fontFamily: SANS, fontSize: 18, lineHeight: 1.55,
-          color: 'rgba(250,247,242,.75)', margin: '0 0 44px',
-          maxWidth: 560, fontWeight: 400,
-        }}>
-          AfroAllure adds automatic deposit collection, appointment confirmations,
-          and reminders to your existing DM workflow — without forcing you to
-          change how clients reach you.
-        </p>
-
-        <div className="dm-hero-cta" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-          <a href="/register"
-            onClick={() => track('dm_booking_cta_click', { location: 'hero_primary' })}
-            style={{
-              fontFamily: SANS, fontWeight: 600, fontSize: 15,
-              background: RED, color: '#fff',
-              padding: '16px 26px', borderRadius: 999, textDecoration: 'none',
-              display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 52,
+            <h1 style={{
+              fontFamily: SERIF, fontWeight: 400,
+              fontSize: 'clamp(52px, 8vw, 108px)', lineHeight: .96,
+              letterSpacing: '-.04em', margin: '0 0 32px', color: WARM,
             }}>
-            Start Free
-            <SvgIcon d={ARROW_PATH} size={15} stroke={2.2} color="#fff" />
-          </a>
-          <a href="#walkthrough"
-            onClick={() => track('dm_booking_cta_click', { location: 'hero_secondary' })}
-            style={{
-              fontFamily: SANS, fontWeight: 600, fontSize: 15,
-              color: WARM, border: '1.5px solid rgba(250,247,242,.38)',
-              padding: '14.5px 24px', borderRadius: 999, textDecoration: 'none',
-              display: 'inline-flex', alignItems: 'center', minHeight: 52,
+              Book by DM.<br />
+              Get paid like<br />
+              <em style={{ fontStyle: 'italic', color: RED }}>a business.</em>
+            </h1>
+
+            <p style={{
+              fontFamily: SANS, fontSize: 18, lineHeight: 1.55,
+              color: 'rgba(250,247,242,.75)', margin: '0 0 44px',
+              maxWidth: 520, fontWeight: 400,
             }}>
-            See how it works
-          </a>
+              AfroAllure adds automatic deposit collection, appointment confirmations,
+              and reminders to your existing DM workflow — without forcing you to
+              change how clients reach you.
+            </p>
+
+            <div className="dm-hero-cta" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+              <a href="/register"
+                onClick={() => track('dm_booking_cta_click', { location: 'hero_primary' })}
+                style={{
+                  fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                  background: RED, color: '#fff',
+                  padding: '16px 26px', borderRadius: 999, textDecoration: 'none',
+                  display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 52,
+                }}>
+                Start Free
+                <SvgIcon d={ARROW_PATH} size={15} stroke={2.2} color="#fff" />
+              </a>
+              <a href="#walkthrough"
+                onClick={() => track('dm_booking_cta_click', { location: 'hero_secondary' })}
+                style={{
+                  fontFamily: SANS, fontWeight: 600, fontSize: 15,
+                  color: WARM, border: '1.5px solid rgba(250,247,242,.38)',
+                  padding: '14.5px 24px', borderRadius: 999, textDecoration: 'none',
+                  display: 'inline-flex', alignItems: 'center', minHeight: 52,
+                }}>
+                See how it works
+              </a>
+            </div>
+          </div>
+
+          {/* Right: phone demo — desktop only, hidden via CSS on tablet/mobile */}
+          <div className="dm-hero-visual">
+            <HeroDemo />
+          </div>
         </div>
       </div>
     </section>
