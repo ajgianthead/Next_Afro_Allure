@@ -35,6 +35,7 @@ export default async function FoundingMembersPage() {
 
     return (
         <div style={{ background: WARM, minHeight: '100vh', fontFamily: SANS }}>
+            <style>{`.fm-card:hover { box-shadow: 0 8px 32px -8px rgba(15,14,14,.14) !important; }`}</style>
             {/* Nav */}
             <nav style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -117,7 +118,7 @@ export default async function FoundingMembersPage() {
                                     href={`/business/${m.url_name}`}
                                     style={{ textDecoration: 'none' }}
                                 >
-                                    <div style={{
+                                    <div className="fm-card" style={{
                                         background: '#fff',
                                         border: `1px solid ${LINE}`,
                                         borderRadius: 16,
@@ -125,10 +126,7 @@ export default async function FoundingMembersPage() {
                                         display: 'flex', flexDirection: 'column', gap: 10,
                                         transition: 'box-shadow .15s',
                                         cursor: 'pointer',
-                                    }}
-                                        onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 8px 32px -8px rgba(15,14,14,.14)')}
-                                        onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
-                                    >
+                                    }}>
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                             <span style={{
                                                 fontFamily: MONO, fontSize: 10, letterSpacing: '.16em',
@@ -178,7 +176,7 @@ export default async function FoundingMembersPage() {
                 textAlign: 'center',
             }}>
                 <p style={{ fontFamily: SANS, fontSize: 13, color: 'rgba(250,247,242,.5)', margin: 0 }}>
-                    © {new Date().getFullYear()} AfroAllure, Inc. · Built with care · Atlanta &amp; everywhere
+                    © {new Date().getFullYear()} AfroAllure, Inc. · Built with care · Florida &amp; everywhere
                 </p>
             </footer>
         </div>

@@ -1,0 +1,77 @@
+.dm-root, .dm-root * { box-sizing: border-box; }
+
+/* ── Desktop / tablet ─────────────────────────────────── */
+@media (max-width: 1024px) {
+  .dm-root .dm-section  { padding-left: 36px !important; padding-right: 36px !important; }
+  .dm-root .dm-nav      { padding-left: 36px !important; padding-right: 36px !important; }
+  .dm-root .dm-hero-inner { padding-left: 36px !important; padding-right: 36px !important; }
+  .dm-root .dm-features-grid { grid-template-columns: 1fr !important; }
+  .dm-root .dm-footer-grid { grid-template-columns: 1.2fr 1fr 1fr !important; }
+}
+
+/* ── Mobile ───────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .dm-root .dm-section  {
+    padding-left: 22px !important; padding-right: 22px !important;
+    padding-top: 72px !important; padding-bottom: 72px !important;
+  }
+  .dm-root .dm-nav      { padding: 16px 22px !important; }
+  .dm-root .dm-hero-inner { padding: 52px 22px 80px !important; }
+  .dm-root .dm-hero-cta { flex-direction: column !important; align-items: stretch !important; }
+  .dm-root .dm-problem-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+  .dm-root .dm-walkthrough-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+  .dm-root .dm-features-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .dm-root .dm-footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .dm-root .dm-footer-bottom { flex-direction: column !important; gap: 8px !important; }
+}
+
+/* ── Nav show/hide ────────────────────────────────────── */
+.dm-root .dm-mobile-nav  { display: none  !important; }
+.dm-root .dm-desktop-nav { display: block !important; }
+@media (max-width: 720px) {
+  .dm-root .dm-mobile-nav  { display: block !important; }
+  .dm-root .dm-desktop-nav { display: none  !important; }
+}
+
+/* ── Hero split layout ───────────────────────────────── */
+.dm-root .dm-hero-split {
+  display: flex;
+  align-items: center;
+  gap: 56px;
+}
+.dm-root .dm-hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+.dm-root .dm-hero-visual {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+@media (max-width: 1024px) {
+  .dm-root .dm-hero-visual { display: none !important; }
+}
+
+/* ── Grids declared here so media overrides work ─────── */
+.dm-root .dm-problem-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.dm-root .dm-walkthrough-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.dm-root .dm-features-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.dm-root .dm-footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 48px;
+}
