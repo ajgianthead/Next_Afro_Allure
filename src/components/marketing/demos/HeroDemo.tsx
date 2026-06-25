@@ -393,26 +393,31 @@ export function HeroDemo() {
   const showCal = ['calendar', 'confirmed', 'fading'].includes(phase)
 
   return (
-    <div role="img" aria-label="Demo showing the full DM-to-confirmed booking flow" style={{ position: 'relative', flexShrink: 0 }}>
-      {/* Red/gold glow behind phone — matches hero gradients */}
+    <div role="img" aria-label="Demo showing the full DM-to-confirmed booking flow"
+      style={{ position: 'relative', flexShrink: 0, perspective: '1400px' }}>
+      {/* Glow — shifted left to follow the tilt direction */}
       <div aria-hidden="true" style={{
         position: 'absolute',
-        inset: '-50px -30px',
-        background: 'radial-gradient(ellipse 80% 75% at 50% 58%, rgba(252,97,97,.22) 0%, rgba(201,151,74,.07) 55%, transparent 72%)',
+        inset: '-70px -50px',
+        background: 'radial-gradient(ellipse 90% 80% at 38% 56%, rgba(252,97,97,.26) 0%, rgba(201,151,74,.09) 52%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 
-      {/* Phone frame */}
+      {/* Phone frame — bigger, tilted in 3D */}
       <motion.div
         animate={{ opacity: phase === 'fading' ? 0 : 1 }}
         transition={{ duration: 0.5 }}
         style={{
-          width: 240, height: 430,
-          border: '9px solid #111',
-          borderRadius: 38,
+          width: 290, height: 560,
+          border: '10px solid #111',
+          borderRadius: 48,
           overflow: 'hidden',
           position: 'relative',
-          boxShadow: '0 28px 72px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.06)',
+          rotateY: -16,
+          rotateX: 6,
+          rotate: -1,
+          boxShadow: '-28px 44px 100px rgba(0,0,0,0.62), inset 0 0 0 1px rgba(255,255,255,0.07)',
+          transformStyle: 'preserve-3d',
         }}
       >
         <div aria-hidden="true" style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
