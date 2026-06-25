@@ -176,7 +176,7 @@ export default async function FoundingMembersPage() {
                 textAlign: 'center',
             }}>
                 <p style={{ fontFamily: SANS, fontSize: 13, color: 'rgba(250,247,242,.5)', margin: 0 }}>
-                    © {new Date().getFullYear()} AfroAllure, Inc. · Built with care · Atlanta &amp; everywhere
+                    © {new Date().getFullYear()} AfroAllure, Inc. · Built with care · Florida &amp; everywhere
                 </p>
             </footer>
         </div>

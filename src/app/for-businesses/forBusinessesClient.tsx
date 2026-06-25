@@ -1210,7 +1210,7 @@ function FinalCTA() {
                     marginTop: 24, fontFamily: SANS, fontSize: 13,
                     color: 'rgba(250,247,242,.55)',
                 }}>
-                    No credit card · Cancel anytime · Built in Atlanta
+                    No credit card · Cancel anytime · Built in Florida
                 </div>
             </div>
         </section>
@@ -1270,8 +1270,8 @@ function Footer() {
                         listStyle: 'none', padding: 0, margin: 0,
                         display: 'flex', flexDirection: 'column', gap: 12, fontFamily: SANS, fontSize: 14
                     }}>
-                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Instagram</a></li>
-                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>hello@afroallure.com</a></li>
+                        <li><a href="https://instagram.com/afroallure_" style={{ color: 'rgba(250,247,242,.85)' }}>Instagram</a></li>
+                        <li><a href="mailto:abijahnesbitt@afroallure.co" style={{ color: 'rgba(250,247,242,.85)' }}>abijahnesbitt@afroallure.co</a></li>
                     </ul>
                 </div>
             </div>
@@ -1282,7 +1282,7 @@ function Footer() {
                 letterSpacing: '.08em',
             }}>
                 <span>© 2026 AfroAllure, Inc.</span>
-                <span>Made with care · Atlanta &amp; everywhere</span>
+                <span>Made with care · Florida &amp; everywhere</span>
             </div>
         </footer>
     );

@@ -566,7 +566,7 @@ function Footer() {
           fontFamily: MONO, fontSize: 11, color: 'rgba(250,247,242,.38)', letterSpacing: '.08em',
         }}>
           <span>© 2026 AfroAllure, Inc.</span>
-          <span>Made with care · Atlanta &amp; everywhere</span>
+          <span>Made with care · Florida &amp; everywhere</span>
         </div>
       </div>
     </footer>
