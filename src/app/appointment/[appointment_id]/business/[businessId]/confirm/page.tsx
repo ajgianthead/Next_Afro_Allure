@@ -12,11 +12,13 @@ export default async function Page({ params }: { params: { appointment_id: strin
     const supabase = await createClient()
     const business = await BusinessUser.fetch(supabase, businessId)
 
-    let appointment = await Appointment.fetchById(supabase, appointment_id)
+    let appointment = await Appointment.fetchById(supabase, appointment_id) as Appointment
     const appointmentObj = Object.assign({}, appointment)
+    console.log(appointmentObj);
 
     if (!Array.isArray(appointmentObj)) {
-        return <ConfirmAppClient appointment={appointmentObj} business={business} />;
+        return <ConfirmAppClient appointment={appointment.toClient()} business={business.toClient()} />;
 
     }
+
 }

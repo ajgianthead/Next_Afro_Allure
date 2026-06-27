@@ -17,6 +17,7 @@ import { ClientView } from './appointments/ClientView'
 import { CalendarView } from './appointments/CalendarView'
 import AddAppointmentFAB from './AddAppointmentFAB'
 import { AppointmentsTour } from '@/features/tour/tours/AppointmentsTour'
+import { ManualBookingTour } from '@/features/tour/tours/ManualBookingTour'
 import { useTour } from '@/features/tour/useTour'
 
 const DATE_NAV_VIEWS: AppointmentView[] = ['day', 'week']
@@ -92,6 +93,7 @@ export function AppointmentsClient({
             />
 
             <AppointmentsTour />
+            <ManualBookingTour />
             <div className="flex flex-col gap-4">
                 {/* Header: view switcher + date nav */}
                 <div data-tour="appointments-view-switcher" className="flex flex-col sm:flex-row sm:items-center gap-3">

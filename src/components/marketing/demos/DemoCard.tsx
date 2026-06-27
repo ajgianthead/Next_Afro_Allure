@@ -13,6 +13,7 @@ export function DemoCard({ children, ariaLabel, style }: Props) {
     <div
       role="img"
       aria-label={ariaLabel}
+      className="demo-card"
       style={{
         background: '#FFFFFF',
         borderRadius: 16,

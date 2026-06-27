@@ -243,6 +243,33 @@ export const TOUR_STEPS: Record<string, Step[]> = {
         },
     ],
 
+    manualBooking: [
+        {
+            target: '[data-tour="create-appointment-fab"]',
+            title: 'Book your first client',
+            content: "Tap this button to create your first appointment. You'll add the client's name, service, date, and deposit — takes about 30 seconds.",
+            placement: 'top',
+            data: d('MANUAL BOOKING TOUR'),
+            skipBeacon: false,
+        },
+        {
+            target: '[data-tour="appointments-view-switcher"]',
+            title: 'Your appointments, your way',
+            content: 'Switch between list, day, week, and calendar views to see your bookings however makes sense for you.',
+            placement: 'bottom',
+            data: d('MANUAL BOOKING TOUR'),
+            skipBeacon: true,
+        },
+        {
+            target: '[data-tour="appointments-list"]',
+            title: 'All your bookings in one place',
+            content: 'Every appointment you create shows up here. Tap any card to view details, confirm the booking, or reschedule.',
+            placement: 'top',
+            data: d('MANUAL BOOKING TOUR'),
+            skipBeacon: true,
+        },
+    ],
+
     // Steps shown when the user hasn't published a site yet (SelectEditorType page)
     webBuilder: [
         {
@@ -279,6 +306,7 @@ export const TOUR_STEPS: Record<string, Step[]> = {
 export const TOUR_DISPLAY_NAMES: Record<string, string> = {
     dashboard: 'Dashboard',
     appointments: 'Appointments',
+    manualBooking: 'Getting Started',
     services: 'Services',
     addons: 'Add-Ons',
     availability: 'Availability',
@@ -292,6 +320,7 @@ export const TOUR_DISPLAY_NAMES: Record<string, string> = {
 export const TOUR_DESCRIPTIONS: Record<string, string> = {
     dashboard: 'Stats, today\'s schedule, and your booking link',
     appointments: 'Managing, filtering, and viewing your bookings',
+    manualBooking: 'Creating your first appointment and getting set up',
     services: 'Creating and editing your service menu',
     addons: 'Upselling clients with optional extras',
     availability: 'Setting your hours and scheduling windows',
@@ -305,6 +334,7 @@ export const TOUR_DESCRIPTIONS: Record<string, string> = {
 export const TOUR_ROUTES: Record<string, string> = {
     dashboard: '/dashboard',
     appointments: '/dashboard/appointments',
+    manualBooking: '/dashboard/appointments',
     services: '/dashboard/services',
     addons: '/dashboard/services',
     availability: '/dashboard/availability',

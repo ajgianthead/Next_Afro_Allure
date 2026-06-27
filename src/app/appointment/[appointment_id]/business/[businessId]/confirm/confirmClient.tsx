@@ -20,8 +20,8 @@ import { BusinessUser } from '@/lib/businessUser/BusinessUser'
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 interface PageProps {
-    appointment: InstanceType<typeof Appointment>
-    business: InstanceType<typeof BusinessUser>
+    appointment: ReturnType<typeof Appointment.prototype.toClient>
+    business: ReturnType<typeof BusinessUser.prototype.toClient>
 }
 
 export default function ConfirmAppClient({ appointment, business }: PageProps) {
@@ -141,7 +141,7 @@ function AppointmentSummary({
     appointment,
     amountDue,
 }: {
-    appointment: InstanceType<typeof Appointment>
+    appointment: ReturnType<typeof Appointment.prototype.toClient>
     amountDue?: number
 }) {
     const fmt = (cents: number) =>
