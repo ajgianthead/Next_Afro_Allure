@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "test": "vitest",
     "email": "email dev",
-    "build": "next build --no-lint",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test:e2e:ui": "playwright test --ui",
