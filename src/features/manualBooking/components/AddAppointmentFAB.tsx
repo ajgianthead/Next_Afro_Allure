@@ -8,6 +8,7 @@ export default function AddAppointmentFAB() {
     return (
         <button
             data-testid="create-appointment-btn"
+            data-tour="create-appointment-fab"
             onClick={() => setManualBookingData!({ ...manualBookingData!, openCreateAppointment: true })}
             className="fixed flex items-center justify-center rounded-full transition-all duration-150 hover:-translate-y-0.5 z-50"
             style={{
