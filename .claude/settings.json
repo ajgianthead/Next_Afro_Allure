@@ -28,7 +28,9 @@
       "Bash(tooltip\")",
       "Bash(grep -rn \"booking-confirmed\\\\|deposit.*webhook\\\\|connected_account\" src/app/api/ --include=\"*.ts\" -l)",
       "Bash(ls src/app/api/webhook/)",
-      "Bash(Remove-Item \"c:\\\\Users\\\\abija\\\\Documents\\\\afroallure\\\\Next_Afro_Allure\\\\src\\\\components\\\\UserDropdown.tsx\")"
+      "Bash(Remove-Item \"c:\\\\Users\\\\abija\\\\Documents\\\\afroallure\\\\Next_Afro_Allure\\\\src\\\\components\\\\UserDropdown.tsx\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies['@vercel/analytics'] || 'NOT INSTALLED'\\)\")",
+      "Bash(Select-String \"dm-booking|dmBooking\")"
     ]
   }
 }
