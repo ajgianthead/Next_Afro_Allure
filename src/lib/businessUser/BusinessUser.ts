@@ -177,9 +177,13 @@ export class BusinessUser {
             const availability = await Availability.createDefault(supabase, business?.business_id!)
             await Service.createDefault(supabase, businessUser?.business_id!, Array.isArray(availability) ? availability[0].id : availability.id
             )
-            await BusinessPolicy.createDefault(supabase, business.business_id)
+            const policy = await BusinessPolicy.createDefault(supabase, business.business_id)
+            await supabase
+                .from('business_users')
+                .update({ booking_policies: policy.id })
+                .eq('business_id', business.business_id)
 
-            checkAndAssignFoundingMember(business.business_id).catch(console.error)
+            await checkAndAssignFoundingMember(business.business_id).catch(console.error)
 
             return BusinessUser.fromRow(business)
 

@@ -12,17 +12,33 @@ export default async function Page() {
     const businessUser = await fetchBusinessUser(user.id)
     const supabase = await createClient()
 
-    const { data: bizRow } = await supabase
-        .from('business_users')
-        .select('booking_policies')
-        .eq('business_id', businessUser.business_id)
-        .single()
-
-    const { data } = await supabase
+    // Query by business relation — reliable regardless of whether booking_policies pointer is set
+    let { data } = await supabase
         .from('business_policies')
         .select('*')
-        .eq('id', bizRow?.booking_policies ?? '')
-        .single()
+        .eq('business', businessUser.business_id)
+        .maybeSingle()
+
+    // Self-heal: create a default policy if one doesn't exist yet
+    if (!data) {
+        const { data: created } = await supabase
+            .from('business_policies')
+            .insert({
+                business: businessUser.business_id,
+                deposit: { enabled: false, settings: { type: 'percent', value: 20 } },
+                late_fee: { enabled: false },
+                no_show: { enabled: false, level: 'strict' },
+            })
+            .select()
+            .single()
+        data = created
+        if (created) {
+            await supabase
+                .from('business_users')
+                .update({ booking_policies: created.id })
+                .eq('business_id', businessUser.business_id)
+        }
+    }
 
     let paymentConfig;
     if (businessUser.completed_stripe_onboarding) {
