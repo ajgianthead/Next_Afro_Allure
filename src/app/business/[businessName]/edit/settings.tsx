@@ -236,6 +236,7 @@ const FULL_WIDTH_FIELDS = new Set([
     'objectFit', 'aspectRatio', 'width', 'height',
     'size', 'spacing',
     'backgroundImageUrl', 'backgroundObjectFit', 'backgroundPosition',
+    'opacity',
     'numberOfColumns', 'numberOfRows', 'justifyItems', 'alignItems',
     'gap', 'rotation', 'zIndex', 'minHeight', 'maxWidth',
     'mobileColumns', 'firstCellRowSpan', 'firstCellColumnSpan',

@@ -5,7 +5,7 @@ import React, { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useSt
 import type { Config, Data, DefaultComponents, ComponentDataMap, PuckAction } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import "./global.css";
-import { GripVertical, LayoutTemplate, Loader2, Redo2, Search, Undo2, X } from "lucide-react";
+import { LayoutTemplate, Loader2, Redo2, Search, Undo2, X } from "lucide-react";
 import { config, drawerItemStyleProps } from "./constants";
 import { sendEditorData } from "@/app/utils/editor_actions";
 import Settings from "./settings";
@@ -187,6 +187,55 @@ function EditorHeader({
     )
 }
 
+// ─── Category label map ───────────────────────────────────────────────────────
+
+const CATEGORY_LABELS: Record<string, string> = {
+    layout: 'Layout',
+    prebuilt: 'Pre-built',
+    media: 'Media',
+    typography: 'Typography',
+    other: 'Other',
+}
+
+// ─── DrawerItemCard — single palette card ─────────────────────────────────────
+
+function DrawerItemRow({ label, icon, children }: { label: string; icon: React.ReactNode; children?: React.ReactNode }) {
+    return (
+        <div
+            style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 5, padding: '12px 4px 10px', borderRadius: 8, cursor: 'grab',
+                position: 'relative', minHeight: 72,
+                backgroundColor: '#FFFFFF', border: '1.5px solid #E8E2D6',
+                transition: 'background-color 0.1s, border-color 0.1s, box-shadow 0.1s',
+            }}
+            onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = '#FC6161'
+                el.style.backgroundColor = '#FFF5F5'
+                el.style.boxShadow = '0 2px 8px rgba(252,97,97,0.1)'
+            }}
+            onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = '#E8E2D6'
+                el.style.backgroundColor = '#FFFFFF'
+                el.style.boxShadow = 'none'
+            }}
+        >
+            <span style={{ color: '#A09790', display: 'flex', alignItems: 'center' }}>{icon}</span>
+            <span style={{ fontSize: 10, color: '#6F6863', lineHeight: 1.3, textAlign: 'center', userSelect: 'none', padding: '0 4px' }}>
+                {label}
+            </span>
+            {/* Invisible overlay so full card area is draggable */}
+            {children && (
+                <div style={{ position: 'absolute', inset: 0, opacity: 0 }}>
+                    {children}
+                </div>
+            )}
+        </div>
+    )
+}
+
 // ─── DrawerContent (component palette with search) ────────────────────────────
 
 function DrawerContent({ children }: { children: React.ReactNode }) {
@@ -195,7 +244,6 @@ function DrawerContent({ children }: { children: React.ReactNode }) {
 
     const query = search.toLowerCase().trim()
 
-    // All component entries from drawerItemStyleProps for search results
     const allEntries = useMemo(() =>
         Array.from(drawerItemStyleProps.entries()).map(([name, meta]) => ({ name, meta })),
         []
@@ -208,18 +256,18 @@ function DrawerContent({ children }: { children: React.ReactNode }) {
         : []
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#FAFAFA' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#FAF7F2' }}>
             {/* Search input */}
-            <div style={{ padding: '8px 10px', borderBottom: '1px solid #E8E2D6' }}>
+            <div style={{ padding: '8px 10px', borderBottom: '1px solid #E8E2D6', backgroundColor: '#FFFFFF' }}>
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     border: '1px solid #E8E2D6', borderRadius: 8,
-                    padding: '0 8px', height: 32, backgroundColor: '#FFFFFF',
+                    padding: '0 8px', height: 32, backgroundColor: '#FAF7F2',
                 }}>
                     <Search size={12} style={{ color: '#6F6863', flexShrink: 0 }} />
                     <input
                         type="text"
-                        placeholder="Search components…"
+                        placeholder="Search elements…"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         style={{
@@ -232,26 +280,26 @@ function DrawerContent({ children }: { children: React.ReactNode }) {
 
             <div style={{ flex: 1, overflowY: 'auto' }}>
                 {query.length > 0 ? (
-                    /* Search results — flat list using Puck Drawer.Item for drag support */
-                    <div>
-                        {filteredEntries.length === 0 ? (
-                            <p style={{ fontSize: 12, color: '#6F6863', padding: '16px 12px', textAlign: 'center' }}>
-                                No components found
-                            </p>
-                        ) : (
-                            <Drawer>
+                    /* Search results — card grid using Puck Drawer.Item for drag support */
+                    filteredEntries.length === 0 ? (
+                        <p style={{ fontSize: 12, color: '#6F6863', padding: '20px 12px', textAlign: 'center' }}>
+                            No elements found
+                        </p>
+                    ) : (
+                        <Drawer>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 8 }}>
                                 {filteredEntries.map(({ name, meta }) => (
                                     <Drawer.Item key={name} name={name}>
-                                        {({ children: dragChildren, name: itemName }) => (
+                                        {({ children: dragChildren }) => (
                                             <DrawerItemRow label={meta.label} icon={meta.icon}>
                                                 {dragChildren}
                                             </DrawerItemRow>
                                         )}
                                     </Drawer.Item>
                                 ))}
-                            </Drawer>
-                        )}
-                    </div>
+                            </div>
+                        </Drawer>
+                    )
                 ) : (
                     /* Normal accordion when not searching */
                     drawerItems[0]?.props?.title === 'layout' ? (
@@ -260,21 +308,21 @@ function DrawerContent({ children }: { children: React.ReactNode }) {
                                 <Accordion.Item key={i} value={section.props.title}>
                                     <Accordion.Header>
                                         <Accordion.Trigger
-                                            className="flex w-full items-center justify-between py-2 px-3 hover:bg-[#FAF7F2] transition-colors [&[data-state=open]>svg]:rotate-180"
-                                            style={{ borderBottom: '1px solid #E8E2D6' }}
+                                            className="flex w-full items-center justify-between py-1.5 px-3 hover:bg-[#F0EDE8] transition-colors [&[data-state=open]>svg]:rotate-180"
+                                            style={{ borderBottom: '1px solid #E8E2D6', backgroundColor: '#FAF7F2' }}
                                         >
                                             <span style={{
                                                 fontFamily: 'monospace', fontSize: 10, fontWeight: 700,
                                                 letterSpacing: '0.12em', textTransform: 'uppercase',
                                                 color: '#6F6863',
                                             }}>
-                                                {section.props.title}
+                                                {CATEGORY_LABELS[section.props.title] ?? section.props.title}
                                             </span>
                                             <ChevronDown size={11} style={{ color: '#C9B89A', transition: 'transform 0.2s' }} />
                                         </Accordion.Trigger>
                                     </Accordion.Header>
                                     <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-                                        <div style={{ padding: '4px 0' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 8, backgroundColor: '#FAF7F2' }}>
                                             {React.Children.map(section.props.children, (item: any, j: number) => (
                                                 <div key={j}>{item}</div>
                                             ))}
@@ -286,26 +334,6 @@ function DrawerContent({ children }: { children: React.ReactNode }) {
                     ) : children
                 )}
             </div>
-        </div>
-    )
-}
-
-// ─── DrawerItemRow — single palette item ─────────────────────────────────────
-
-function DrawerItemRow({ label, icon, children }: { label: string; icon: React.ReactNode; children?: React.ReactNode }) {
-    return (
-        <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '6px 10px', cursor: 'grab',
-            borderRadius: 8, transition: 'background-color 0.1s',
-        }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = '#FAF7F2'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}
-        >
-            <GripVertical size={12} style={{ color: '#C9B89A', flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: '#6F6863', flexShrink: 0 }}>{icon}</span>
-            <span style={{ fontSize: 13, color: '#1A1818', userSelect: 'none' }}>{label}</span>
-            {children}
         </div>
     )
 }
