@@ -59,14 +59,15 @@ const ChainBtn = ({ linked, onToggle }: { linked: boolean; onToggle: () => void 
     </button>
 )
 
-const FourInputs = ({ values, onChange, icons }: {
+const FourInputs = ({ values, onChange, icons, allowNegative = true }: {
     values: (number | undefined)[]
     onChange: ((v: number) => void)[]
     icons: React.ReactNode[]
+    allowNegative?: boolean
 }) => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, marginTop: 2 }}>
         {icons.map((icon, i) => (
-            <NumInput key={i} value={values[i] ?? 0} onChange={onChange[i]} icon={icon} />
+            <NumInput key={i} value={values[i] ?? 0} onChange={onChange[i]} icon={icon} allowNegative={allowNegative} />
         ))}
     </div>
 )
@@ -86,7 +87,7 @@ export const PaddingField = ({ value, onChange }: { value: string; onChange: (v:
                 <Lbl>Padding</Lbl>
                 <ChainBtn linked={!expanded} onToggle={() => onChange(expanded ? 'false' : 'true')} />
                 {!expanded && (
-                    <NumInput value={props.padding ?? 0} onChange={(v) => update({ padding: v })} icon={<PaddingIcon />} className="flex-1" />
+                    <NumInput value={props.padding ?? 0} onChange={(v) => update({ padding: v })} icon={<PaddingIcon />} className="flex-1" allowNegative={false} />
                 )}
             </TopRow>
             {expanded && (
@@ -99,6 +100,7 @@ export const PaddingField = ({ value, onChange }: { value: string; onChange: (v:
                         (v) => update({ paddingLeft: v }),
                     ]}
                     icons={[<ArrowUpIcon />, <ArrowRightIcon />, <ArrowDownIcon />, <ArrowLeftIcon />]}
+                    allowNegative={false}
                 />
             )}
         </div>
@@ -177,7 +179,7 @@ export const BorderField = ({ value, onChange }: { value: string; onChange: (v: 
                 <Lbl>Border</Lbl>
                 <ChainBtn linked={!expanded} onToggle={() => onChange(expanded ? 'false' : 'true')} />
                 {!expanded && (
-                    <NumInput value={props.borderWidth ?? 0} onChange={(v) => update({ borderWidth: v })} icon={<BorderAllIcon />} className="flex-1" />
+                    <NumInput value={props.borderWidth ?? 0} onChange={(v) => update({ borderWidth: v })} icon={<BorderAllIcon />} className="flex-1" allowNegative={false} />
                 )}
                 <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <div style={{ position: 'relative', width: 22, height: 22, borderRadius: 3, background: '#F4F1EC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
@@ -202,6 +204,7 @@ export const BorderField = ({ value, onChange }: { value: string; onChange: (v: 
                         (v) => update({ borderLeft: v }),
                     ]}
                     icons={[<BorderTopIcon />, <BRIcon />, <BorderBottomIcon />, <BLIcon />]}
+                    allowNegative={false}
                 />
             )}
         </div>
@@ -219,7 +222,7 @@ export const RadiusField = ({ value, onChange }: { value: string; onChange: (v: 
                 <Lbl>Radius</Lbl>
                 <ChainBtn linked={!expanded} onToggle={() => onChange(expanded ? 'false' : 'true')} />
                 {!expanded && (
-                    <NumInput value={props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v })} icon={<CornersIcon />} className="flex-1" />
+                    <NumInput value={props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v })} icon={<CornersIcon />} className="flex-1" allowNegative={false} />
                 )}
             </TopRow>
             {expanded && (
@@ -232,6 +235,7 @@ export const RadiusField = ({ value, onChange }: { value: string; onChange: (v: 
                         (v) => update({ borderRadiusBottomLeft: v }),
                     ]}
                     icons={[<CornerTopLeftIcon />, <CornerTopRightIcon />, <CornerBottomRightIcon />, <CornerBottomLeftIcon />]}
+                    allowNegative={false}
                 />
             )}
         </div>
