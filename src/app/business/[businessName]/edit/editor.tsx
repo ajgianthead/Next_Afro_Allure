@@ -102,8 +102,8 @@ function EditorHeader({
                 height: 52,
                 padding: '0 12px',
                 gap: 8,
-                backgroundColor: '#0F0E0E',
-                borderBottom: '1px solid rgba(250,247,242,0.08)',
+                backgroundColor: '#FFFFFF',
+                borderBottom: '1px solid #E8E2D6',
                 flexShrink: 0,
             }}
         >
@@ -112,14 +112,14 @@ function EditorHeader({
                 <span className="aa-header-brand" style={{
                     fontFamily: 'monospace', fontSize: 10, fontWeight: 700,
                     letterSpacing: '0.1em', textTransform: 'uppercase',
-                    color: 'rgba(250,247,242,0.45)', flexShrink: 0,
+                    color: '#6F6863', flexShrink: 0,
                 }}>
                     AfroAllure
                 </span>
-                <span className="aa-header-sep" style={{ color: 'rgba(250,247,242,0.15)', fontSize: 14, flexShrink: 0 }}>|</span>
+                <span className="aa-header-sep" style={{ color: '#E8E2D6', fontSize: 14, flexShrink: 0 }}>|</span>
                 <span style={{
                     fontFamily: '"Fraunces", "Times New Roman", serif',
-                    fontSize: 14, color: '#FAF7F2',
+                    fontSize: 14, color: '#1A1818',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                     {displayName}
@@ -131,7 +131,7 @@ function EditorHeader({
                 {lastSaved && (
                     <span className="aa-header-lastsaved" style={{
                         fontFamily: 'monospace', fontSize: 10,
-                        color: 'rgba(250,247,242,0.3)',
+                        color: '#A09790',
                         whiteSpace: 'nowrap',
                     }}>
                         {timeSince(lastSaved)}
@@ -153,10 +153,10 @@ function EditorHeader({
                                 width: 30, height: 30, borderRadius: 6,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 background: 'transparent', border: 'none', cursor: enabled ? 'pointer' : 'not-allowed',
-                                color: enabled ? 'rgba(250,247,242,0.75)' : 'rgba(250,247,242,0.2)',
+                                color: enabled ? '#6F6863' : '#D4CFC8',
                                 transition: 'background 0.1s, color 0.1s',
                             }}
-                            onMouseEnter={e => { if (enabled) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(250,247,242,0.08)' }}
+                            onMouseEnter={e => { if (enabled) (e.currentTarget as HTMLButtonElement).style.background = '#FAF7F2' }}
                             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
                         >
                             {icon}
@@ -325,7 +325,7 @@ function TemplateBanner({ template, dispatch, onDismiss }: {
             borderBottom: '1px solid rgba(201,151,74,0.28)',
         }}>
             <LayoutTemplate size={13} style={{ color: '#C9974A', flexShrink: 0 }} />
-            <p style={{ flex: 1, fontSize: 13, color: '#FAF7F2' }}>
+            <p style={{ flex: 1, fontSize: 13, color: '#1A1818' }}>
                 <span style={{ fontWeight: 600 }}>{template.name}</span> template selected — apply it to load the layout, then customize and save.
             </p>
             <button
