@@ -56,6 +56,9 @@ export const containerDefaultProps: Container = {
     hideAbove: 'none',
     zIndex: 0,
     spacing: 'normal',
+    backgroundImageUrl: '',
+    backgroundObjectFit: 'cover',
+    backgroundPosition: 'center',
 }
 // Column
 export const columnProps: ColumnLayout = {

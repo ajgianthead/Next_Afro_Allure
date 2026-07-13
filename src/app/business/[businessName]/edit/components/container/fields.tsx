@@ -2,10 +2,14 @@ import type { Fields } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import { ColumnSpacingIcon, DotIcon, RowSpacingIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
 import { Container } from "../types";
-import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives";
+import { NumInput, SegToggle, ColorPicker, StrSelect, KVSelect } from "../fieldPrimitives";
 import { BorderField, MarginField, PaddingField, PositionField, RadiusField } from "../compoundFields";
 import { Input } from "@/components/ui/input";
 import { SPACING_OPTIONS } from "@/features/editor/lib/responsive";
+import { useState } from "react";
+import { ImageModal } from "../image/fields";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
@@ -175,6 +179,69 @@ export const defaultFields: Fields<Container, {}> = {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={lbl}>Color</span>
                 <ColorPicker value={value} onChange={onChange} className="flex-1" />
+            </div>
+        )
+    },
+
+    // ── Background Image ──────────────────────────────────────────────────────
+    backgroundImageUrl: {
+        type: 'custom',
+        label: 'Bg Image',
+        render: ({ value, onChange }) => {
+            const [open, setOpen] = useState(false)
+            return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <ImageModal open={open} onClose={() => setOpen(false)} onChange={(v) => onChange(v ?? '')} value={value || null} />
+                    <span style={lbl}>Bg Image</span>
+                    <Button size="sm" variant="outline" onClick={() => setOpen(true)} style={{ flex: 1, height: 26, fontSize: 11 }}>
+                        {value ? 'Change Image' : 'Select Image'}
+                    </Button>
+                    {value && (
+                        <button
+                            type="button"
+                            title="Remove background image"
+                            onClick={() => onChange('')}
+                            style={{ width: 22, height: 22, border: 'none', background: '#F4F1EC', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#A09790' }}
+                        >
+                            <X size={11} />
+                        </button>
+                    )}
+                </div>
+            )
+        }
+    },
+    backgroundObjectFit: {
+        type: 'custom',
+        label: 'Bg Size',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>Bg Size</span>
+                <KVSelect value={value ?? 'cover'} onChange={onChange} className="flex-1" options={[
+                    { label: 'Cover (fill & crop)', value: 'cover' },
+                    { label: 'Contain (show all)', value: 'contain' },
+                    { label: 'Fill (stretch)', value: '100% 100%' },
+                    { label: 'Auto', value: 'auto' },
+                ]} />
+            </div>
+        )
+    },
+    backgroundPosition: {
+        type: 'custom',
+        label: 'Bg Position',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>Bg Position</span>
+                <KVSelect value={value ?? 'center'} onChange={onChange} className="flex-1" options={[
+                    { label: 'Center', value: 'center' },
+                    { label: 'Top', value: 'top' },
+                    { label: 'Bottom', value: 'bottom' },
+                    { label: 'Left', value: 'left' },
+                    { label: 'Right', value: 'right' },
+                    { label: 'Top Left', value: 'top left' },
+                    { label: 'Top Right', value: 'top right' },
+                    { label: 'Bottom Left', value: 'bottom left' },
+                    { label: 'Bottom Right', value: 'bottom right' },
+                ]} />
             </div>
         )
     },

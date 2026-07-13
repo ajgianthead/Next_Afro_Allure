@@ -147,6 +147,9 @@ export interface Container {
     hideAbove: string
     zIndex: number
     spacing: string
+    backgroundImageUrl?: string
+    backgroundObjectFit?: string
+    backgroundPosition?: string
 }
 
 export interface ImageComponent {

@@ -96,6 +96,12 @@ const FILL: Section = {
     fieldNames: ['backgroundColor'],
 }
 
+const BG_IMAGE: Section = {
+    title: 'Background',
+    icon: <ImageIcon size={12} />,
+    fieldNames: ['backgroundImageUrl', 'backgroundObjectFit', 'backgroundPosition'],
+}
+
 const BORDER: Section = {
     title: 'Border',
     icon: <Square size={12} />,
@@ -129,7 +135,7 @@ const CONTENT_TEXT: Section = {
 
 const COMPONENT_SECTIONS: Record<string, Section[]> = {
     CustomizableText: [MOBILE_RESPONSIVE, CONTENT_TEXT, TYPOGRAPHY],
-    Container: [MOBILE_RESPONSIVE, LAYOUT, SPACING, FILL, BORDER, RADIUS, POSITION],
+    Container: [MOBILE_RESPONSIVE, LAYOUT, SPACING, FILL, BG_IMAGE, BORDER, RADIUS, POSITION],
     Button: [
         MOBILE_RESPONSIVE,
         { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'link', 'action', 'variant'] },
@@ -222,6 +228,7 @@ const FULL_WIDTH_FIELDS = new Set([
     'linkToService', 'service',
     'objectFit', 'aspectRatio', 'width', 'height',
     'size', 'spacing',
+    'backgroundImageUrl', 'backgroundObjectFit', 'backgroundPosition',
     'numberOfColumns', 'numberOfRows', 'justifyItems', 'alignItems',
     'gap', 'rotation', 'zIndex', 'minHeight', 'maxWidth',
     'mobileColumns', 'firstCellRowSpan', 'firstCellColumnSpan',
