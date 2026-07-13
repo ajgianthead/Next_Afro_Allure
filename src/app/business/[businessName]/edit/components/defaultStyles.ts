@@ -59,6 +59,7 @@ export const containerDefaultProps: Container = {
     backgroundImageUrl: '',
     backgroundObjectFit: 'cover',
     backgroundPosition: 'center',
+    opacity: 100,
 }
 // Column
 export const columnProps: ColumnLayout = {
@@ -122,6 +123,7 @@ export const imageProps: ImageComponent = {
     borderRadiusExpanded: 'false',
     borderRight: 0,
     borderTop: 0,
+    opacity: 100,
 }
 // Video
 export const videoProps: VideoComponent = {
@@ -173,6 +175,7 @@ export const customTextProps: RegularText = {
     textTransform: 'none',
     maxWidth: 0,
     size: 'md',
+    opacity: 100,
 }
 // Button
 export const buttonProps: ButtonContainer = {
@@ -242,6 +245,7 @@ export const buttonProps: ButtonContainer = {
     spacing: 'none',
     mobileWidth: 'full',
     size: 'md',
+    opacity: 100,
 }
 
 

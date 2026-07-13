@@ -10,6 +10,7 @@ import { useState } from "react";
 import { ImageModal } from "../image/fields";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { OpacityField } from "../compoundFields";
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
@@ -362,6 +363,13 @@ export const defaultFields: Fields<Container, {}> = {
                 </select>
             </div>
         )
+    },
+
+    // ── Opacity ───────────────────────────────────────────────────────────────
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
     },
 
     // ── Advanced ──────────────────────────────────────────────────────────────

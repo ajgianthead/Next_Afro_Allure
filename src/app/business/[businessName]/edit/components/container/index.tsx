@@ -13,7 +13,7 @@ export const ContainerComponent: any = {
     defaultProps: containerDefaultProps,
     fields: defaultFields,
     inline: true,
-    render: ({ puck, content: Content, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, responsive, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, draggable, rotation, grow, responsiveDirection, hideBelow, hideAbove, aspectRatio, overflow, minHeight, maxWidth: containerMaxWidth, gridTemplateColumns, zIndex, spacing, backgroundImageUrl, backgroundObjectFit, backgroundPosition }: any) => {
+    render: ({ puck, content: Content, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, responsive, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, draggable, rotation, grow, responsiveDirection, hideBelow, hideAbove, aspectRatio, overflow, minHeight, maxWidth: containerMaxWidth, gridTemplateColumns, zIndex, spacing, backgroundImageUrl, backgroundObjectFit, backgroundPosition, opacity }: any) => {
         const isGrid = flexDirection === 'grid'
 
         let outerClass: string
@@ -90,6 +90,7 @@ export const ContainerComponent: any = {
                     backgroundSize: backgroundImageUrl ? (backgroundObjectFit ?? 'cover') : undefined,
                     backgroundPosition: backgroundImageUrl ? (backgroundPosition ?? 'center') : undefined,
                     backgroundRepeat: backgroundImageUrl ? 'no-repeat' : undefined,
+                    opacity: opacity != null ? opacity / 100 : undefined,
                 }} />
             </div>
         )

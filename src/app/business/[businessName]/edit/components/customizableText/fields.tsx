@@ -4,6 +4,7 @@ import { FontBoldIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeig
 import { RegularText } from "../types"
 import { useEditorContext } from "@/app/utils/context/EditorContext"
 import { NumInput, StrSelect } from "../fieldPrimitives"
+import { OpacityField } from "../compoundFields"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FontSelector } from "../FontSelector"
 
@@ -213,6 +214,11 @@ export let customizableTextFields: Partial<Fields<RegularText, {}>> = {
                 <NumInput value={value} onChange={onChange} step={0.5} className="flex-1" />
             </div>
         )
+    },
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
     },
 }
 

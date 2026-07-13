@@ -9,7 +9,7 @@ import {
 import { ButtonContainer } from "../types";
 import { Fields, useGetPuck } from "@puckeditor/core";
 import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives";
-import { BorderField, MarginField, PaddingField, PositionField, RadiusField } from "../compoundFields";
+import { BorderField, MarginField, OpacityField, PaddingField, PositionField, RadiusField } from "../compoundFields";
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { GoogleFont, loadGoogleFont } from "useGoogleFonts";
 import { cn } from "@/lib/utils";
@@ -321,6 +321,11 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
             )
         },
         ...(sharedLayoutFields(data) as any),
+        opacity: {
+            type: 'custom',
+            label: 'Opacity',
+            render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
+        },
         mobileWidth: {
             type: 'custom',
             label: 'Width on mobile',

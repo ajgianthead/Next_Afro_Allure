@@ -14,6 +14,7 @@ export interface Text {
     sections: string
     textTransform: string
     size: string
+    opacity?: number
 }
 
 export interface PreBuiltComponents {
@@ -150,6 +151,7 @@ export interface Container {
     backgroundImageUrl?: string
     backgroundObjectFit?: string
     backgroundPosition?: string
+    opacity?: number
 }
 
 export interface ImageComponent {
@@ -160,6 +162,7 @@ export interface ImageComponent {
     height: string
     aspectRatio: string
     mobileVisibility: string
+    opacity?: number
     borderExpanded: string
     borderWidth: number
     borderRadius: number

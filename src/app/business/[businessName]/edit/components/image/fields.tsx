@@ -9,7 +9,7 @@ import { ImageIcon, Loader2, Upload } from "lucide-react"
 import Image from "next/image"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { NumInput, KVSelect, StrSelect } from "../fieldPrimitives"
-import { BorderField, PositionField, RadiusField } from "../compoundFields"
+import { BorderField, OpacityField, PositionField, RadiusField } from "../compoundFields"
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
@@ -23,6 +23,8 @@ export const ImageModal = ({ open, onClose, onChange, value }: {
     const [images, setImages] = useState<{ path: string; url: string }[]>([])
     const [loading, setLoading] = useState<boolean>(true)
     const [selected, setSelected] = useState<string>(value ?? '')
+    const [uploading, setUploading] = useState<boolean>(false)
+    const [uploadError, setUploadError] = useState<string | null>(null)
 
     useEffect(() => {
         (async () => {
@@ -37,11 +39,21 @@ export const ImageModal = ({ open, onClose, onChange, value }: {
     }, [])
 
     const uploadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const user = await fetchUser()
-        if (user) {
+        const file = e.target.files?.[0]
+        if (!file) return
+        e.target.value = ''
+        setUploadError(null)
+        setUploading(true)
+        try {
+            const user = await fetchUser()
+            if (!user) throw new Error('You must be signed in to upload images.')
             const business = await fetchBusinessUser(user.id!)
-            const result = await uploadImage(e.target.files!, business.business_id)
-            if (result) setImages(prev => [...prev, result])
+            const result = await uploadImage(file, business.business_id)
+            setImages(prev => [...prev, result])
+        } catch (error: any) {
+            setUploadError(error?.message ?? 'Failed to upload image. Please try again.')
+        } finally {
+            setUploading(false)
         }
     }
 
@@ -49,10 +61,14 @@ export const ImageModal = ({ open, onClose, onChange, value }: {
         <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
             <DialogContent className="max-w-lg">
                 <p className="font-medium text-lg">Select Image</p>
-                <Button variant="outline" className="w-full" onClick={() => fileInput.current?.click()}>
-                    <Upload size={16} className="mr-2" /> Upload Image
+                <Button variant="outline" className="w-full" disabled={uploading} onClick={() => fileInput.current?.click()}>
+                    {uploading ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Upload size={16} className="mr-2" />}
+                    {uploading ? 'Uploading…' : 'Upload Image'}
                 </Button>
                 <input multiple={false} accept="image/*" onChange={uploadFiles} ref={fileInput} className="hidden" type="file" />
+                {uploadError && (
+                    <p className="text-xs text-destructive">{uploadError}</p>
+                )}
                 <hr className="my-1" />
                 <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
                     {loading ? (
@@ -234,6 +250,11 @@ export const imageResolvedFields: (data: any, params: any) => {} = (data, params
         left: { visible: false, type: 'number' },
         right: { visible: false, type: 'number' },
 
+        opacity: {
+            type: 'custom',
+            label: 'Opacity',
+            render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
+        },
         mobileVisibility: {
             type: 'custom',
             label: 'Show on mobile',

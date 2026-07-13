@@ -5,7 +5,7 @@ import React, { useMemo } from 'react'
 import * as Accordion from '@radix-ui/react-accordion'
 import * as Popover from '@radix-ui/react-popover'
 import {
-    AlignLeft, Box, ChevronDown, Columns, Grid2X2, ImageIcon,
+    AlignLeft, Box, ChevronDown, Columns, Eye, Grid2X2, ImageIcon,
     Info, LayoutDashboard, Maximize2, MousePointerClick, Move,
     PaintBucket, Play, Rows, Smartphone, Square, Type, Video,
 } from 'lucide-react'
@@ -102,6 +102,12 @@ const BG_IMAGE: Section = {
     fieldNames: ['backgroundImageUrl', 'backgroundObjectFit', 'backgroundPosition'],
 }
 
+const APPEARANCE: Section = {
+    title: 'Appearance',
+    icon: <Eye size={12} />,
+    fieldNames: ['opacity'],
+}
+
 const BORDER: Section = {
     title: 'Border',
     icon: <Square size={12} />,
@@ -134,8 +140,8 @@ const CONTENT_TEXT: Section = {
 }
 
 const COMPONENT_SECTIONS: Record<string, Section[]> = {
-    CustomizableText: [MOBILE_RESPONSIVE, CONTENT_TEXT, TYPOGRAPHY],
-    Container: [MOBILE_RESPONSIVE, LAYOUT, SPACING, FILL, BG_IMAGE, BORDER, RADIUS, POSITION],
+    CustomizableText: [MOBILE_RESPONSIVE, CONTENT_TEXT, TYPOGRAPHY, APPEARANCE],
+    Container: [MOBILE_RESPONSIVE, LAYOUT, SPACING, FILL, BG_IMAGE, BORDER, RADIUS, POSITION, APPEARANCE],
     Button: [
         MOBILE_RESPONSIVE,
         { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'link', 'action', 'variant'] },
@@ -146,11 +152,12 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
         BORDER,
         RADIUS,
         POSITION,
+        APPEARANCE,
     ],
     Image: [
         MOBILE_RESPONSIVE,
         { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height', 'objectFit', 'aspectRatio'] },
-        BORDER, RADIUS, POSITION,
+        BORDER, RADIUS, POSITION, APPEARANCE,
     ],
     Video: [
         { title: 'Source', icon: <Video size={12} />, fieldNames: ['url'] },
@@ -183,7 +190,7 @@ const TEXT_PRESET_NAMES = [
     'TitleLarge', 'TitleMedium', 'TitleSmall',
     'BodyLarge', 'BodyMedium', 'BodySmall', 'BodyExtraSmall',
 ]
-TEXT_PRESET_NAMES.forEach(name => { COMPONENT_SECTIONS[name] = [MOBILE_RESPONSIVE, CONTENT_TEXT, TYPOGRAPHY] })
+TEXT_PRESET_NAMES.forEach(name => { COMPONENT_SECTIONS[name] = [MOBILE_RESPONSIVE, CONTENT_TEXT, TYPOGRAPHY, APPEARANCE] })
 
 // ─── Component meta ─────────────────────────────────────────────────────────
 

@@ -11,9 +11,9 @@ import { buttonProps } from "../defaultStyles";
 export const ButtonComponent: any = {
     resolveFields: buttonResolvedFields,
     defaultProps: buttonProps,
-    render: ({ text, link, action, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, numOfCols, numOfRows, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, mobileWidth }: any) => {
+    render: ({ text, link, action, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, numOfCols, numOfRows, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, mobileWidth, opacity }: any) => {
         const isFull = mobileWidth === 'full'
-        return <a href={link} target="_blank" className={isFull ? 'block w-full md:inline-block md:w-auto' : 'inline-block'}>
+        return <a href={link} target="_blank" style={{ opacity: opacity != null ? opacity / 100 : undefined }} className={isFull ? 'block w-full md:inline-block md:w-auto' : 'inline-block'}>
             <button style={{
                 padding: `${padding}rem`,
                 paddingTop: paddingExpanded === 'true' ? `${paddingTop}rem` : `${padding}rem`,

@@ -242,6 +242,22 @@ export const RadiusField = ({ value, onChange }: { value: string; onChange: (v: 
     )
 }
 
+// ── OpacityField ──────────────────────────────────────────────────────────────
+
+export const OpacityField = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Lbl>Opacity</Lbl>
+        <input
+            type="range"
+            min={0} max={100} step={1}
+            value={value ?? 100}
+            onChange={e => onChange(Number(e.target.value))}
+            style={{ flex: 1, accentColor: '#FC6161', cursor: 'pointer' }}
+        />
+        <NumInput value={value ?? 100} onChange={onChange} step={1} allowNegative={false} className="w-[46px]" />
+    </div>
+)
+
 // ── PositionField ─────────────────────────────────────────────────────────────
 
 export const PositionField = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {

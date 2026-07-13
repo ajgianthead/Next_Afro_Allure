@@ -21,7 +21,7 @@ const HEIGHT_MAP: Record<string, string> = {
 export const ImageComponent: any = {
     resolveFields: imageResolvedFields,
     defaultProps: imageProps,
-    render: ({ url, alt, width, objectFit, height, aspectRatio, borderBottom, borderColor, borderExpanded, borderLeft, borderRadius, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusExpanded, borderRadiusTopLeft, borderRadiusTopRight, borderRight, borderTop, borderType, borderWidth, bottom, positionType, right, left, top, mobileVisibility }: any) => {
+    render: ({ url, alt, width, objectFit, height, aspectRatio, borderBottom, borderColor, borderExpanded, borderLeft, borderRadius, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusExpanded, borderRadiusTopLeft, borderRadiusTopRight, borderRight, borderTop, borderType, borderWidth, bottom, positionType, right, left, top, mobileVisibility, opacity }: any) => {
         // Support legacy numeric width/height values from pre-migration saved data
         const containerWidth = typeof width === 'number'
             ? `${width}%`
@@ -37,7 +37,7 @@ export const ImageComponent: any = {
         return (
             <div
                 className={mobileVisibility === 'hide' ? 'hidden md:block' : ''}
-                style={{ position: positionType, top, bottom, left, right }}
+                style={{ position: positionType, top, bottom, left, right, opacity: opacity != null ? opacity / 100 : undefined }}
             >
                 <div
                     style={{
