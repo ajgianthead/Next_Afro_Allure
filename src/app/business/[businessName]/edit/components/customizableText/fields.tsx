@@ -104,7 +104,11 @@ const SectionsField = ({ value, onChange, label }: { value: string, onChange: (v
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        {sectionData.map(s => (
+                        {sectionData.length === 0 ? (
+                            <div style={{ padding: '8px 12px', fontSize: 11, color: '#A09790', textAlign: 'center' }}>
+                                No sections yet. Add sections from the Elements panel to get started.
+                            </div>
+                        ) : sectionData.map(s => (
                             <SelectItem key={s.value} value={s.value} className="text-[11px]">{s.label}</SelectItem>
                         ))}
                     </SelectContent>
