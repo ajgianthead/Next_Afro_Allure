@@ -138,7 +138,7 @@ export function TemplateCardList({ onSelect }: { onSelect: (t: Template) => void
         : templates
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 0', minHeight: 0 }}>
             {/* Search */}
             <div style={{
                 display: 'flex', alignItems: 'center', gap: 6,
@@ -156,7 +156,7 @@ export function TemplateCardList({ onSelect }: { onSelect: (t: Template) => void
             {/* Grid */}
             <div style={{
                 display: 'grid', gridTemplateColumns: '1fr 1fr',
-                gap: 16, overflowY: 'auto', flex: 1,
+                gap: 16, overflowY: 'auto', flex: '1 1 0', minHeight: 0,
             }}>
                 {visible.length === 0 ? (
                     <p style={{ gridColumn: '1/-1', fontSize: 13, color: '#6F6863', textAlign: 'center', paddingTop: 24 }}>
@@ -253,7 +253,7 @@ export const TemplatePicker = () => {
                             Starting from a template replaces your current content. This cannot be undone.
                         </p>
                     </SheetHeader>
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                         <InnerPicker onClose={() => setOpen(false)} />
                     </div>
                 </SheetContent>
