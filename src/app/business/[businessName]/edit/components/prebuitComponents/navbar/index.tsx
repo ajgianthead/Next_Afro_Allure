@@ -14,7 +14,7 @@ import { navbarProps } from "../../defaultStyles";
 export const NavbarComponent: any = {
     fields: navbarFields,
     defaultProps: navbarProps,
-    render: ({ logo: Logo, menu, puck }: any) => {
+    render: ({ logo: Logo, menu, puck, backgroundColor, paddingTop, paddingBottom, paddingLeft, paddingRight, borderBottomWidth, borderColor, borderType }: any) => {
         const [open, setOpen] = useState<boolean>(false)
         const ref = useRef<HTMLDivElement>(null);
 
@@ -23,8 +23,17 @@ export const NavbarComponent: any = {
         }, [ref.current]);
 
         return (
-            <div>
-                <nav className="w-full flex justify-between items-center px-8 py-5">
+            <div style={{
+                backgroundColor: backgroundColor ?? 'transparent',
+                paddingTop: `${paddingTop ?? 1.25}rem`,
+                paddingBottom: `${paddingBottom ?? 1.25}rem`,
+                paddingLeft: `${paddingLeft ?? 2}rem`,
+                paddingRight: `${paddingRight ?? 2}rem`,
+                borderBottomWidth: borderBottomWidth ?? 0,
+                borderBottomColor: borderColor ?? '#E8E2D6',
+                borderBottomStyle: borderType ?? 'solid',
+            }}>
+                <nav className="w-full flex justify-between items-center">
                     <div><Logo /></div>
                     <div className={`text-center hidden lg:flex lg:gap-10 items-center`}>
                         {menu.map(({ item: Item }: { item: SlotComponent }, index: number) => {

@@ -186,39 +186,43 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
 
     useEffect(() => {
         const sessionId = typeof window !== 'undefined' ? localStorage.getItem('bookingSessionId') : null
-        if (!sessionId) {
-            if (preSelectedServiceId) {
-                createBookingSessionAction(data.business_id, preSelectedServiceId).then((session) => {
-                    localStorage.setItem('bookingSessionId', session.id!)
-                    setData((prev) => ({
-                        ...prev,
-                        selectedService: preSelectedServiceId,
-                        bookingSession: {
-                            id: session.id,
-                            businessId: session.business_id,
-                            serviceId: session.service_id,
-                            selectDateTime: session.selected_datetime,
-                            clientInfo: session.clientInfo as any,
-                            status: session.status,
-                            metaData: session.metadata as any,
-                            amountDue: session.amount,
-                            currency: session.currency!,
-                            expiresAt: session.expires_at,
-                            confirmedAt: session.confirmed_at,
-                            paymentIntentId: session.payment_intent_id,
-                            updatedAt: session.updated_at!,
-                        }
-                    }))
-                    setPreSelected(true)
-                    setActiveStep(1)
-                    setIsLoading(false)
-                })
-            } else {
-                setData((prev) => ({ ...prev, bookingSession: null }))
+
+        if (preSelectedServiceId) {
+            if (sessionId) localStorage.removeItem('bookingSessionId')
+            createBookingSessionAction(data.business_id, preSelectedServiceId).then((session) => {
+                localStorage.setItem('bookingSessionId', session.id!)
+                setData((prev) => ({
+                    ...prev,
+                    selectedService: preSelectedServiceId,
+                    bookingSession: {
+                        id: session.id,
+                        businessId: session.business_id,
+                        serviceId: session.service_id,
+                        selectDateTime: session.selected_datetime,
+                        clientInfo: session.clientInfo as any,
+                        status: session.status,
+                        metaData: session.metadata as any,
+                        amountDue: session.amount,
+                        currency: session.currency!,
+                        expiresAt: session.expires_at,
+                        confirmedAt: session.confirmed_at,
+                        paymentIntentId: session.payment_intent_id,
+                        updatedAt: session.updated_at!,
+                    }
+                }))
+                setPreSelected(true)
+                setActiveStep(1)
                 setIsLoading(false)
-            }
+            })
             return
         }
+
+        if (!sessionId) {
+            setData((prev) => ({ ...prev, bookingSession: null }))
+            setIsLoading(false)
+            return
+        }
+
         getBookingSessionAction(sessionId).then((sessionData) => {
             if (!sessionData) { setIsLoading(false); return }
             setData((prev) => ({

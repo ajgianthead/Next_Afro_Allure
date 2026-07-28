@@ -12,7 +12,7 @@ export const CustomizableTextComponent: ComponentConfig<RegularText> = {
     // fields: customizableTextFields,
     resolveFields: resolveCustomizableTextFields,
     defaultProps: customTextProps,
-    render: ({ text, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, sections, url, isLink, linkType, textTransform, maxWidth }) => {
+    render: ({ text, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, sections, url, isLink, linkType, textTransform, maxWidth, opacity }: any) => {
         const { editorState } = useEditorContext()
         const fluidFontSize = fontSize > 2
             ? `clamp(1.5rem, calc(${(fontSize * 0.3).toFixed(3)}rem + ${(fontSize * 1.8).toFixed(3)}vw), ${fontSize}rem)`
@@ -30,6 +30,7 @@ export const CustomizableTextComponent: ComponentConfig<RegularText> = {
             fontStyle: style?.includes('italic') ? 'italic' : 'normal',
             textTransform: (textTransform && textTransform !== 'none' ? textTransform : undefined) as any,
             maxWidth: maxWidth > 0 ? `${maxWidth}rem` : undefined,
+            opacity: opacity != null ? opacity / 100 : undefined,
         }
         return isLink
             ? <a href={linkType === 'external' ? url : `${process.env.NEXT_PUBLIC_BASE_URL}/${editorState.businessName}/#${sections.toLowerCase().replace(/\s+/g, "")}`} style={textStyle} className={`apply-font-${id.split('-')[1]}`}>{text}</a>

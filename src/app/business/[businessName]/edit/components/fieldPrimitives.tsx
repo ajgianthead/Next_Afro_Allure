@@ -1,28 +1,145 @@
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import React from "react"
+import React, { useEffect, useRef, useState } from "react"
 
-const inputBase = "h-[26px] w-full rounded-[3px] text-[11px] bg-[#F4F1EC] border-0 outline-none focus:ring-1 focus:ring-[#C9974A]/50 text-[#1A1818] placeholder:text-[#A09790]"
-const spinnerOff = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+const inputBase = "h-[26px] w-full rounded-[3px] text-[11px] bg-[#F4F1EC] border-0 outline-none focus:ring-1 focus:ring-[#FC6161]/50 text-[#1A1818] placeholder:text-[#A09790]"
 
-export const NumInput = ({ value, onChange, step = 1, icon, className = "w-full" }: {
-    value: any; onChange: (v: any) => void; step?: number; icon?: React.ReactNode; className?: string
-}) => (
-    <div className={`relative ${className}`}>
-        {icon && (
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none flex items-center" style={{ color: '#A09790', fontSize: 12 }}>
-                {icon}
-            </span>
-        )}
-        <input
-            type="number"
-            step={step}
-            className={cn(inputBase, spinnerOff, icon ? "pl-7 pr-1.5" : "px-2")}
-            value={value ?? ''}
-            onChange={(e) => onChange(Number(e.target.value))}
-        />
-    </div>
-)
+export const NumInput = ({ value, onChange, step = 1, allowNegative = true, icon, className = "w-full" }: {
+    value: any
+    onChange: (v: any) => void
+    step?: number
+    allowNegative?: boolean
+    icon?: React.ReactNode
+    className?: string
+}) => {
+    const [display, setDisplay] = useState(value != null ? String(value) : '')
+    const dragRef = useRef<{ startX: number; startVal: number } | null>(null)
+    const isDragging = useRef(false)
+
+    // Sync display when the external value changes (e.g. undo/redo)
+    useEffect(() => {
+        if (!isDragging.current) {
+            setDisplay(value != null ? String(value) : '')
+        }
+    }, [value])
+
+    const commit = (raw: string) => {
+        if (raw === '' || raw === '-') return
+        const n = parseFloat(raw)
+        if (isNaN(n)) { setDisplay(value != null ? String(value) : ''); return }
+        const clamped = allowNegative ? n : Math.max(0, n)
+        setDisplay(String(clamped))
+        onChange(clamped)
+    }
+
+    const applyDrag = (e: React.PointerEvent<any>) => {
+        if (!dragRef.current) return
+        const dx = e.clientX - dragRef.current.startX
+        const multiplier = e.shiftKey ? 10 : e.altKey ? 0.1 : 1
+        const raw = dragRef.current.startVal + dx * multiplier * step
+        const next = Math.round(raw)
+        const clamped = allowNegative ? next : Math.max(0, next)
+        setDisplay(String(clamped))
+        onChange(clamped)
+    }
+
+    // ── Icon drag (existing behaviour, unchanged) ─────────────────────────────
+    const onIconPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {
+        e.preventDefault()
+        e.currentTarget.setPointerCapture(e.pointerId)
+        dragRef.current = { startX: e.clientX, startVal: parseFloat(display) || 0 }
+        isDragging.current = false
+        document.body.style.cursor = 'ew-resize'
+    }
+
+    const onIconPointerMove = (e: React.PointerEvent<HTMLSpanElement>) => {
+        if (!dragRef.current) return
+        const dx = e.clientX - dragRef.current.startX
+        if (Math.abs(dx) < 2 && !isDragging.current) return
+        isDragging.current = true
+        applyDrag(e)
+    }
+
+    const onIconPointerUp = (e: React.PointerEvent<HTMLSpanElement>) => {
+        e.currentTarget.releasePointerCapture(e.pointerId)
+        dragRef.current = null
+        isDragging.current = false
+        document.body.style.cursor = ''
+    }
+
+    // ── Input-level drag (activates when no icon is present) ─────────────────
+    const onInputPointerDown = (e: React.PointerEvent<HTMLInputElement>) => {
+        if (icon) return
+        dragRef.current = { startX: e.clientX, startVal: parseFloat(display) || 0 }
+        isDragging.current = false
+    }
+
+    const onInputPointerMove = (e: React.PointerEvent<HTMLInputElement>) => {
+        if (!dragRef.current || icon) return
+        const dx = e.clientX - dragRef.current.startX
+        if (Math.abs(dx) < 3 && !isDragging.current) return
+        if (!isDragging.current) {
+            isDragging.current = true
+            e.currentTarget.setPointerCapture(e.pointerId)
+            e.currentTarget.blur()
+            document.body.style.cursor = 'ew-resize'
+        }
+        applyDrag(e)
+    }
+
+    const onInputPointerUp = (e: React.PointerEvent<HTMLInputElement>) => {
+        if (icon) return
+        if (isDragging.current) {
+            e.currentTarget.releasePointerCapture(e.pointerId)
+            document.body.style.cursor = ''
+        }
+        dragRef.current = null
+        isDragging.current = false
+    }
+
+    return (
+        <div className={`relative ${className}`}>
+            {icon && (
+                <span
+                    className="absolute left-0 top-0 bottom-0 flex items-center pl-1.5 pr-1 select-none touch-none z-10"
+                    style={{ color: '#A09790', fontSize: 11, cursor: 'ew-resize' }}
+                    onPointerDown={onIconPointerDown}
+                    onPointerMove={onIconPointerMove}
+                    onPointerUp={onIconPointerUp}
+                >
+                    {icon}
+                </span>
+            )}
+            <input
+                type="text"
+                inputMode="decimal"
+                className={cn(inputBase, icon ? "pl-6 pr-1.5" : "px-2")}
+                style={!icon ? { cursor: 'ew-resize' } : undefined}
+                value={display}
+                onChange={e => setDisplay(e.target.value)}
+                onBlur={e => commit(e.target.value)}
+                onKeyDown={e => {
+                    if (e.key === 'Enter') { commit(display); (e.target as HTMLInputElement).blur() }
+                    if (e.key === 'ArrowUp') {
+                        e.preventDefault()
+                        const next = (parseFloat(display) || 0) + step
+                        const clamped = allowNegative ? next : Math.max(0, next)
+                        setDisplay(String(clamped)); onChange(clamped)
+                    }
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault()
+                        const next = (parseFloat(display) || 0) - step
+                        const clamped = allowNegative ? next : Math.max(0, next)
+                        setDisplay(String(clamped)); onChange(clamped)
+                    }
+                }}
+                onPointerDown={onInputPointerDown}
+                onPointerMove={onInputPointerMove}
+                onPointerUp={onInputPointerUp}
+            />
+        </div>
+    )
+}
 
 export const SegToggle = ({ value, onChange, options, className = "col-span-3" }: {
     value: any; onChange: (v: any) => void; options: { label: React.ReactNode; value: string }[]; className?: string

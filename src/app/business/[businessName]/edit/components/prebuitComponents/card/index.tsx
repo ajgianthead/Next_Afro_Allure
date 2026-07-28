@@ -5,28 +5,72 @@ import { ComponentConfig, Fields, SlotComponent } from "@puckeditor/core"
 import { resolveCardFields, defaultCardfields } from "./fields"
 import { Card } from "../../types"
 import { useRouter, usePathname } from "next/navigation"
+import { useState } from "react"
 
 
 export const CardComponent: ComponentConfig<Card> = {
     resolveFields: resolveCardFields,
     inline: true,
     fields: defaultCardfields as Fields<Card, {}>,
-    render: (({ puck, cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service }) => {
+    resolveData: (data, { lastData }) => {
+        if (data.props.variant === lastData?.props?.variant) return data
+
+        const updateSlotColors = () => ({
+            ...data,
+            props: {
+                ...data.props,
+                cardContent: (data.props.cardContent as any[])?.map((item: any) => ({
+                    ...item,
+                    props: {
+                        ...item.props,
+                        content: item.props.content?.map((child: any) => ({
+                            ...child,
+                            props: {
+                                ...child.props,
+                                color: data.props.variant === 'media'
+                                    ? '#ffffff'
+                                    : (child.type === 'HeadingTwo' ? '#1A1818' : '#6F6863'),
+                            },
+                        })),
+                    },
+                })),
+            },
+        })
+
+        return updateSlotColors()
+    },
+    render: (({ puck, cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service, width, widthUnit, height, heightUnit }) => {
         const router = useRouter()
         const pathname = usePathname()
         const businessName = pathname?.split('/')[2] ?? ''
+        const [hovered, setHovered] = useState(false)
+
+        const sizeStyle: React.CSSProperties = {
+            width: (width ?? 0) > 0 ? `${width}${widthUnit ?? 'px'}` : undefined,
+            height: (height ?? 0) > 0 ? `${height}${heightUnit ?? 'px'}` : undefined,
+            transform: hovered ? 'scale(1.03)' : 'scale(1)',
+            transition: 'transform 0.2s ease',
+        }
+
         return (
-            <div ref={puck.dragRef} className={`w-full${linkToService ? ' cursor-pointer' : ''}`} onClick={() => {
-                if (linkToService) {
-                    router.push(`/business/${businessName}/book?service=${service}`)
-                }
-            }}>
+            <div
+                ref={puck.dragRef}
+                className={`w-full${linkToService ? ' cursor-pointer' : ''}`}
+                style={sizeStyle}
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => setHovered(false)}
+                onClick={() => {
+                    if (linkToService) {
+                        router.push(`/business/${businessName}/book?service=${service}`)
+                    }
+                }}
+            >
                 {variant === 'basic' ? (
-                    <div className="w-full">
+                    <div className="w-full h-full">
                         <Content />
                     </div>
                 ) : (
-                    <div className="min-w-[300px] flex-grow rounded-md overflow-hidden relative">
+                    <div className="w-full rounded-md overflow-hidden relative" style={{ minHeight: 200, height: '100%' }}>
                         {cardCover === 'image' ? (
                             <img
                                 src={imageSource!}
@@ -59,9 +103,8 @@ export const CardComponent: ComponentConfig<Card> = {
                     </div>
                 )}
             </div>
-
         )
-    }),
+    }) as any,
     defaultProps: {
         cardContent: [{
             type: 'Container',
@@ -151,6 +194,10 @@ export const CardComponent: ComponentConfig<Card> = {
         imageSource: "https://jappbqntqogmnoluifzx.supabase.co/storage/v1/object/public/editor-media-pool/placeholder_photo.jpg",
         videoSource: "https://assets.codepen.io/6093409/river.mp4",
         linkToService: false,
-        service: ""
+        service: "",
+        width: 0,
+        widthUnit: 'px',
+        height: 0,
+        heightUnit: 'px',
     }
 }

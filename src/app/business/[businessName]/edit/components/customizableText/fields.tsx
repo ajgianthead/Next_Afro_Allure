@@ -4,6 +4,7 @@ import { FontBoldIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeig
 import { RegularText } from "../types"
 import { useEditorContext } from "@/app/utils/context/EditorContext"
 import { NumInput, StrSelect } from "../fieldPrimitives"
+import { OpacityField } from "../compoundFields"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FontSelector } from "../FontSelector"
 
@@ -88,7 +89,7 @@ const AlignField = ({ value, onChange }: { value: string, onChange: (v: string) 
     </div>
 )
 
-const SectionsField = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => {
+export const SectionsField = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => {
     const { editorState } = useEditorContext()
     const getPuck = useGetPuck()
     const { appState } = getPuck()
@@ -104,7 +105,11 @@ const SectionsField = ({ value, onChange, label }: { value: string, onChange: (v
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        {sectionData.map(s => (
+                        {sectionData.length === 0 ? (
+                            <div style={{ padding: '8px 12px', fontSize: 11, color: '#A09790', textAlign: 'center' }}>
+                                No sections yet. Add sections from the Elements panel to get started.
+                            </div>
+                        ) : sectionData.map(s => (
                             <SelectItem key={s.value} value={s.value} className="text-[11px]">{s.label}</SelectItem>
                         ))}
                     </SelectContent>
@@ -209,6 +214,11 @@ export let customizableTextFields: Partial<Fields<RegularText, {}>> = {
                 <NumInput value={value} onChange={onChange} step={0.5} className="flex-1" />
             </div>
         )
+    },
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
     },
 }
 

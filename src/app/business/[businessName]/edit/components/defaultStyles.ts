@@ -55,7 +55,15 @@ export const containerDefaultProps: Container = {
     hideBelow: 'none',
     hideAbove: 'none',
     zIndex: 0,
-    spacing: 'normal',
+    spacing: '',
+    width: 0,
+    widthUnit: 'px',
+    height: 0,
+    heightUnit: 'px',
+    backgroundImageUrl: '',
+    backgroundObjectFit: 'cover',
+    backgroundPosition: 'center',
+    opacity: 100,
 }
 // Column
 export const columnProps: ColumnLayout = {
@@ -119,6 +127,7 @@ export const imageProps: ImageComponent = {
     borderRadiusExpanded: 'false',
     borderRight: 0,
     borderTop: 0,
+    opacity: 100,
 }
 // Video
 export const videoProps: VideoComponent = {
@@ -170,6 +179,7 @@ export const customTextProps: RegularText = {
     textTransform: 'none',
     maxWidth: 0,
     size: 'md',
+    opacity: 100,
 }
 // Button
 export const buttonProps: ButtonContainer = {
@@ -178,7 +188,10 @@ export const buttonProps: ButtonContainer = {
     action: 'REDIRECT',
     draggable: true,
     text: 'Click me',
-    link: "https://afroallure.co/",
+    isLink: false,
+    linkType: 'external',
+    url: '',
+    sections: '',
     fontSize: 1.1,
     fontWeight: 400,
     letterSpacing: 1.8,
@@ -239,6 +252,7 @@ export const buttonProps: ButtonContainer = {
     spacing: 'none',
     mobileWidth: 'full',
     size: 'md',
+    opacity: 100,
 }
 
 
@@ -341,6 +355,14 @@ export const navbarProps: Navbar = {
             }]
         },
     ],
+    backgroundColor: 'transparent',
+    paddingTop: 1.25,
+    paddingBottom: 1.25,
+    paddingLeft: 2,
+    paddingRight: 2,
+    borderBottomWidth: 0,
+    borderColor: '#E8E2D6',
+    borderType: 'solid',
 }
 // Hero Section
 export const heroSectionProps: HeroSection = {

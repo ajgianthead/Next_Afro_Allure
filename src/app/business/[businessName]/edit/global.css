@@ -1,8 +1,8 @@
 /* ── Sidebar widths (Puck's own CSS custom properties) ───────────────── */
 /* These cascade into Puck's layout grid — no class name guessing needed  */
 :root {
-  --puck-user-left-side-bar-width: 220px;
-  --puck-user-right-side-bar-width: 280px;
+  --puck-user-left-side-bar-width: 280px;
+  --puck-user-right-side-bar-width: 320px;
 }
 
 /* ── Canvas background ───────────────────────────────────────────────── */

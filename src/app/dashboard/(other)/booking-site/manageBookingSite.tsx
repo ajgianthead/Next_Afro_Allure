@@ -132,7 +132,7 @@ const ManageBookingSite = ({ urlName, editorData }: PageProps) => {
     const isCustom = editorData.type === 'CUSTOM'
     const bookingPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/${newUrlName}`
     const editPageLink = isCustom
-        ? `${process.env.NEXT_PUBLIC_BASE_URL}/${newUrlName}/edit`
+        ? `${process.env.NEXT_PUBLIC_BASE_URL}/business/${newUrlName}/edit`
         : `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/booking-site/upload-sections`
     const isInvalid = editedUrlName.length > 0 && !/^[a-z]+$/.test(editedUrlName)
     const previewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/${editedUrlName || '…'}`

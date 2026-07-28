@@ -2,12 +2,78 @@ import type { Fields } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import { ColumnSpacingIcon, DotIcon, RowSpacingIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
 import { Container } from "../types";
-import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives";
-import { BorderField, MarginField, PaddingField, PositionField, RadiusField } from "../compoundFields";
+import { NumInput, SegToggle, ColorPicker, StrSelect, KVSelect } from "../fieldPrimitives";
+import { BorderField, DimensionField, MarginField, PaddingField, PositionField, RadiusField } from "../compoundFields";
 import { Input } from "@/components/ui/input";
 import { SPACING_OPTIONS } from "@/features/editor/lib/responsive";
+import { useState } from "react";
+import { ImageModal } from "../image/fields";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { OpacityField } from "../compoundFields";
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
+
+export const GradientField = ({ value, onChange }: { value: string; onChange: (v: any) => void }) => {
+    const isGradient = typeof value === 'string' && value.startsWith('linear-gradient')
+
+    const parseGradient = (v: string) => {
+        const m = v.match(/linear-gradient\((\d+(?:\.\d+)?)deg,\s*(.+?)\s+(\d+(?:\.\d+)?)%,\s*(.+?)\s+(\d+(?:\.\d+)?)%\)/)
+        return m
+            ? { angle: parseFloat(m[1]), c1: m[2].trim(), p1: parseFloat(m[3]), c2: m[4].trim(), p2: parseFloat(m[5]) }
+            : { angle: 135, c1: value || '#f7f7f7', p1: 0, c2: '#1A1818', p2: 100 }
+    }
+
+    const build = (angle: number, c1: string, p1: number, c2: string, p2: number) =>
+        `linear-gradient(${angle}deg, ${c1} ${p1}%, ${c2} ${p2}%)`
+
+    const g = parseGradient(value)
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={lbl}>Fill</span>
+                <SegToggle
+                    value={isGradient ? 'gradient' : 'solid'}
+                    onChange={(mode) => {
+                        if (mode === 'gradient') {
+                            onChange(build(135, isGradient ? g.c1 : (value || '#f7f7f7'), 0, '#1A1818', 100))
+                        } else {
+                            onChange(isGradient ? g.c1 : (value || '#f7f7f7'))
+                        }
+                    }}
+                    options={[
+                        { label: 'Solid', value: 'solid' },
+                        { label: 'Gradient', value: 'gradient' },
+                    ]}
+                    className="flex-1"
+                />
+            </div>
+            {isGradient ? (
+                <>
+                    <div style={{ height: 24, borderRadius: 3, background: value, border: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ ...lbl, minWidth: 40 }}>Angle</span>
+                        <NumInput value={g.angle} onChange={(a) => onChange(build(a, g.c1, g.p1, g.c2, g.p2))} step={1} className="flex-1" />
+                        <span style={{ ...lbl, flexShrink: 0 }}>°</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <ColorPicker value={g.c1} onChange={(c) => onChange(build(g.angle, c, g.p1, g.c2, g.p2))} className="flex-1" />
+                        <NumInput value={g.p1} onChange={(p) => onChange(build(g.angle, g.c1, p, g.c2, g.p2))} step={1} allowNegative={false} className="w-12" />
+                        <span style={{ ...lbl, flexShrink: 0 }}>%</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <ColorPicker value={g.c2} onChange={(c) => onChange(build(g.angle, g.c1, g.p1, c, g.p2))} className="flex-1" />
+                        <NumInput value={g.p2} onChange={(p) => onChange(build(g.angle, g.c1, g.p1, g.c2, p))} step={1} allowNegative={false} className="w-12" />
+                        <span style={{ ...lbl, flexShrink: 0 }}>%</span>
+                    </div>
+                </>
+            ) : (
+                <ColorPicker value={value} onChange={onChange} className="w-full" />
+            )}
+        </div>
+    )
+}
 
 const AlignBtns = ({ value, onChange, options }: {
     value: string
@@ -134,13 +200,23 @@ export const defaultFields: Fields<Container, {}> = {
         label: 'Gap X',
         visible: true,
         type: 'custom',
-        render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<ColumnSpacingIcon />} />
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={lbl}>Gap X</span>
+                <NumInput value={value} onChange={onChange} icon={<ColumnSpacingIcon />} />
+            </div>
+        )
     },
     gapY: {
         label: 'Gap Y',
         visible: true,
         type: 'custom',
-        render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<RowSpacingIcon />} />
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={lbl}>Gap Y</span>
+                <NumInput value={value} onChange={onChange} icon={<RowSpacingIcon />} />
+            </div>
+        )
     },
 
     // ── Padding (compound) ────────────────────────────────────────────────────
@@ -170,11 +246,69 @@ export const defaultFields: Fields<Container, {}> = {
     // ── Colors ────────────────────────────────────────────────────────────────
     backgroundColor: {
         type: 'custom',
-        label: 'Color',
-        render: ({ onChange, value }) => (
+        label: 'Fill',
+        render: ({ onChange, value }) => <GradientField value={value} onChange={onChange} />,
+    },
+
+    // ── Background Image ──────────────────────────────────────────────────────
+    backgroundImageUrl: {
+        type: 'custom',
+        label: 'Bg Image',
+        render: ({ value, onChange }) => {
+            const [open, setOpen] = useState(false)
+            return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <ImageModal open={open} onClose={() => setOpen(false)} onChange={(v) => onChange(v ?? '')} value={value || null} />
+                    <span style={lbl}>Bg Image</span>
+                    <Button size="sm" variant="outline" onClick={() => setOpen(true)} style={{ flex: 1, height: 26, fontSize: 11 }}>
+                        {value ? 'Change Image' : 'Select Image'}
+                    </Button>
+                    {value && (
+                        <button
+                            type="button"
+                            title="Remove background image"
+                            onClick={() => onChange('')}
+                            style={{ width: 22, height: 22, border: 'none', background: '#F4F1EC', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#A09790' }}
+                        >
+                            <X size={11} />
+                        </button>
+                    )}
+                </div>
+            )
+        }
+    },
+    backgroundObjectFit: {
+        type: 'custom',
+        label: 'Bg Size',
+        render: ({ value, onChange }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={lbl}>Color</span>
-                <ColorPicker value={value} onChange={onChange} className="flex-1" />
+                <span style={{ ...lbl, minWidth: 56 }}>Bg Size</span>
+                <KVSelect value={value ?? 'cover'} onChange={onChange} className="flex-1" options={[
+                    { label: 'Cover (fill & crop)', value: 'cover' },
+                    { label: 'Contain (show all)', value: 'contain' },
+                    { label: 'Fill (stretch)', value: '100% 100%' },
+                    { label: 'Auto', value: 'auto' },
+                ]} />
+            </div>
+        )
+    },
+    backgroundPosition: {
+        type: 'custom',
+        label: 'Bg Position',
+        render: ({ value, onChange }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 56 }}>Bg Position</span>
+                <KVSelect value={value ?? 'center'} onChange={onChange} className="flex-1" options={[
+                    { label: 'Center', value: 'center' },
+                    { label: 'Top', value: 'top' },
+                    { label: 'Bottom', value: 'bottom' },
+                    { label: 'Left', value: 'left' },
+                    { label: 'Right', value: 'right' },
+                    { label: 'Top Left', value: 'top left' },
+                    { label: 'Top Right', value: 'top right' },
+                    { label: 'Bottom Left', value: 'bottom left' },
+                    { label: 'Bottom Right', value: 'bottom right' },
+                ]} />
             </div>
         )
     },
@@ -215,6 +349,20 @@ export const defaultFields: Fields<Container, {}> = {
     bottom: { visible: false, type: 'number' },
     left: { visible: false, type: 'number' },
     right: { visible: false, type: 'number' },
+
+    // ── Width / Height ────────────────────────────────────────────────────────
+    width: {
+        type: 'custom',
+        label: 'Width',
+        render: () => <DimensionField label="W" valueProp="width" unitProp="widthUnit" />
+    },
+    widthUnit: { visible: false, type: 'text' },
+    height: {
+        type: 'custom',
+        label: 'Height',
+        render: () => <DimensionField label="H" valueProp="height" unitProp="heightUnit" />
+    },
+    heightUnit: { visible: false, type: 'text' },
 
     // ── Sizing ────────────────────────────────────────────────────────────────
     minHeight: {
@@ -295,6 +443,13 @@ export const defaultFields: Fields<Container, {}> = {
                 </select>
             </div>
         )
+    },
+
+    // ── Opacity ───────────────────────────────────────────────────────────────
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
     },
 
     // ── Advanced ──────────────────────────────────────────────────────────────

@@ -138,7 +138,7 @@ export function TemplateCardList({ onSelect }: { onSelect: (t: Template) => void
         : templates
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 0', minHeight: 0 }}>
             {/* Search */}
             <div style={{
                 display: 'flex', alignItems: 'center', gap: 6,
@@ -156,7 +156,7 @@ export function TemplateCardList({ onSelect }: { onSelect: (t: Template) => void
             {/* Grid */}
             <div style={{
                 display: 'grid', gridTemplateColumns: '1fr 1fr',
-                gap: 16, overflowY: 'auto', flex: 1,
+                gap: 16, overflowY: 'auto', flex: '1 1 0', minHeight: 0,
             }}>
                 {visible.length === 0 ? (
                     <p style={{ gridColumn: '1/-1', fontSize: 13, color: '#6F6863', textAlign: 'center', paddingTop: 24 }}>
@@ -223,20 +223,22 @@ export const TemplatePicker = () => {
                 style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '5px 12px', borderRadius: 9999, fontSize: 13,
-                    border: '1px solid rgba(250,247,242,0.2)',
-                    color: 'rgba(250,247,242,0.75)',
+                    border: '1px solid #E8E2D6',
+                    color: '#6F6863',
                     backgroundColor: 'transparent',
-                    cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s',
+                    cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s, background-color 0.15s',
                 }}
                 onMouseEnter={e => {
                     const el = e.currentTarget as HTMLElement
-                    el.style.borderColor = 'rgba(250,247,242,0.45)'
-                    el.style.color = '#FAF7F2'
+                    el.style.borderColor = '#C9B89A'
+                    el.style.color = '#1A1818'
+                    el.style.backgroundColor = '#FAF7F2'
                 }}
                 onMouseLeave={e => {
                     const el = e.currentTarget as HTMLElement
-                    el.style.borderColor = 'rgba(250,247,242,0.2)'
-                    el.style.color = 'rgba(250,247,242,0.75)'
+                    el.style.borderColor = '#E8E2D6'
+                    el.style.color = '#6F6863'
+                    el.style.backgroundColor = 'transparent'
                 }}
             >
                 <LayoutTemplate size={13} />
@@ -253,7 +255,7 @@ export const TemplatePicker = () => {
                             Starting from a template replaces your current content. This cannot be undone.
                         </p>
                     </SheetHeader>
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                         <InnerPicker onClose={() => setOpen(false)} />
                     </div>
                 </SheetContent>

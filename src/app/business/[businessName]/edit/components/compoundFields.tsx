@@ -59,14 +59,15 @@ const ChainBtn = ({ linked, onToggle }: { linked: boolean; onToggle: () => void 
     </button>
 )
 
-const FourInputs = ({ values, onChange, icons }: {
+const FourInputs = ({ values, onChange, icons, allowNegative = true }: {
     values: (number | undefined)[]
     onChange: ((v: number) => void)[]
     icons: React.ReactNode[]
+    allowNegative?: boolean
 }) => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, marginTop: 2 }}>
         {icons.map((icon, i) => (
-            <NumInput key={i} value={values[i] ?? 0} onChange={onChange[i]} icon={icon} />
+            <NumInput key={i} value={values[i] ?? 0} onChange={onChange[i]} icon={icon} allowNegative={allowNegative} />
         ))}
     </div>
 )
@@ -86,7 +87,7 @@ export const PaddingField = ({ value, onChange }: { value: string; onChange: (v:
                 <Lbl>Padding</Lbl>
                 <ChainBtn linked={!expanded} onToggle={() => onChange(expanded ? 'false' : 'true')} />
                 {!expanded && (
-                    <NumInput value={props.padding ?? 0} onChange={(v) => update({ padding: v })} icon={<PaddingIcon />} className="flex-1" />
+                    <NumInput value={props.padding ?? 0} onChange={(v) => update({ padding: v })} icon={<PaddingIcon />} className="flex-1" allowNegative={false} />
                 )}
             </TopRow>
             {expanded && (
@@ -99,6 +100,7 @@ export const PaddingField = ({ value, onChange }: { value: string; onChange: (v:
                         (v) => update({ paddingLeft: v }),
                     ]}
                     icons={[<ArrowUpIcon />, <ArrowRightIcon />, <ArrowDownIcon />, <ArrowLeftIcon />]}
+                    allowNegative={false}
                 />
             )}
         </div>
@@ -177,7 +179,7 @@ export const BorderField = ({ value, onChange }: { value: string; onChange: (v: 
                 <Lbl>Border</Lbl>
                 <ChainBtn linked={!expanded} onToggle={() => onChange(expanded ? 'false' : 'true')} />
                 {!expanded && (
-                    <NumInput value={props.borderWidth ?? 0} onChange={(v) => update({ borderWidth: v })} icon={<BorderAllIcon />} className="flex-1" />
+                    <NumInput value={props.borderWidth ?? 0} onChange={(v) => update({ borderWidth: v })} icon={<BorderAllIcon />} className="flex-1" allowNegative={false} />
                 )}
                 <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <div style={{ position: 'relative', width: 22, height: 22, borderRadius: 3, background: '#F4F1EC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
@@ -202,6 +204,7 @@ export const BorderField = ({ value, onChange }: { value: string; onChange: (v: 
                         (v) => update({ borderLeft: v }),
                     ]}
                     icons={[<BorderTopIcon />, <BRIcon />, <BorderBottomIcon />, <BLIcon />]}
+                    allowNegative={false}
                 />
             )}
         </div>
@@ -219,7 +222,7 @@ export const RadiusField = ({ value, onChange }: { value: string; onChange: (v: 
                 <Lbl>Radius</Lbl>
                 <ChainBtn linked={!expanded} onToggle={() => onChange(expanded ? 'false' : 'true')} />
                 {!expanded && (
-                    <NumInput value={props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v })} icon={<CornersIcon />} className="flex-1" />
+                    <NumInput value={props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v })} icon={<CornersIcon />} className="flex-1" allowNegative={false} />
                 )}
             </TopRow>
             {expanded && (
@@ -232,11 +235,53 @@ export const RadiusField = ({ value, onChange }: { value: string; onChange: (v: 
                         (v) => update({ borderRadiusBottomLeft: v }),
                     ]}
                     icons={[<CornerTopLeftIcon />, <CornerTopRightIcon />, <CornerBottomRightIcon />, <CornerBottomLeftIcon />]}
+                    allowNegative={false}
                 />
             )}
         </div>
     )
 }
+
+// ── DimensionField ────────────────────────────────────────────────────────────
+
+export const DimensionField = ({ label, valueProp, unitProp }: {
+    label: string
+    valueProp: 'width' | 'height'
+    unitProp: 'widthUnit' | 'heightUnit'
+}) => {
+    const { props, update } = usePropsUpdater()
+    const val = props[valueProp] ?? 0
+    const unit = props[unitProp] ?? 'px'
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Lbl>{label}</Lbl>
+            <NumInput value={val} onChange={(v) => update({ [valueProp]: v })} allowNegative={false} className="flex-1" />
+            <select
+                value={unit}
+                onChange={e => update({ [unitProp]: e.target.value })}
+                style={{ height: 26, borderRadius: 3, padding: '0 4px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818', flexShrink: 0, cursor: 'pointer' }}
+            >
+                {['px', '%', 'vh', 'vw'].map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+        </div>
+    )
+}
+
+// ── OpacityField ──────────────────────────────────────────────────────────────
+
+export const OpacityField = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Lbl>Opacity</Lbl>
+        <input
+            type="range"
+            min={0} max={100} step={1}
+            value={value ?? 100}
+            onChange={e => onChange(Number(e.target.value))}
+            style={{ flex: 1, accentColor: '#FC6161', cursor: 'pointer' }}
+        />
+        <NumInput value={value ?? 100} onChange={onChange} step={1} allowNegative={false} className="w-[46px]" />
+    </div>
+)
 
 // ── PositionField ─────────────────────────────────────────────────────────────
 

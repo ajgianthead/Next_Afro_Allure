@@ -6,14 +6,24 @@ import type { Fields } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import { buttonResolvedFields } from "./fields";
 import { buttonProps } from "../defaultStyles";
+import { useEditorContext } from "@/app/utils/context/EditorContext";
 
 
 export const ButtonComponent: any = {
     resolveFields: buttonResolvedFields,
     defaultProps: buttonProps,
-    render: ({ text, link, action, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, numOfCols, numOfRows, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, mobileWidth }: any) => {
+    render: ({ text, isLink, linkType, url, sections, padding, margin, backgroundColor, flexDirection, mainAxisLayout, altAxisLayout, paddingTop, paddingBottom, paddingExpanded, paddingLeft, paddingRight, positionType, top, bottom, left, right, borderColor, borderRadius, borderType, borderWidth, gapX, gapY, marginExpanded, marginTop, marginBottom, marginLeft, marginRight, borderExpanded, borderBottom, borderLeft, borderRight, borderTop, borderRadiusExpanded, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusTopLeft, borderRadiusTopRight, fontSize, fontWeight, fontFamily, color, letterSpacing, lineHeight, style, id, align, mobileWidth, opacity }: any) => {
         const isFull = mobileWidth === 'full'
-        return <a href={link} target="_blank" className={isFull ? 'block w-full md:inline-block md:w-auto' : 'inline-block'}>
+        const { editorState } = useEditorContext()
+
+        const href = linkType === 'external'
+            ? url
+            : `${process.env.NEXT_PUBLIC_BASE_URL}/${editorState.businessName}/#${(sections ?? '').toLowerCase().replace(/\s+/g, '')}`
+
+        const wrapperClass = isFull ? 'block w-full md:inline-block md:w-auto' : 'inline-block'
+        const wrapperStyle = { opacity: opacity != null ? opacity / 100 : undefined }
+
+        const inner = (
             <button style={{
                 padding: `${padding}rem`,
                 paddingTop: paddingExpanded === 'true' ? `${paddingTop}rem` : `${padding}rem`,
@@ -52,12 +62,17 @@ export const ButtonComponent: any = {
                 letterSpacing,
                 lineHeight,
                 textAlign: align,
-                textDecoration: style?.includes('underline') ? 'underline' : "none",
+                textDecoration: style?.includes('underline') ? 'underline' : 'none',
                 fontStyle: style?.includes('italic') ? 'italic' : 'normal',
                 width: isFull ? '100%' : undefined,
             }} className={`apply-font-${id.split('-')[1]} ${isFull ? 'w-full md:w-auto' : 'max-w-max'}`}>
                 {text}
             </button>
-        </a>
+        )
+
+        if (isLink) {
+            return <a href={href} style={wrapperStyle} className={wrapperClass}>{inner}</a>
+        }
+        return <span style={wrapperStyle} className={wrapperClass}>{inner}</span>
     }
 }
