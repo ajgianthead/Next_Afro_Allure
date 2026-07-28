@@ -79,6 +79,12 @@ const LAYOUT: Section = {
     fieldNames: ['flexDirection', 'mainAxisLayout', 'altAxisLayout', 'grow', 'responsiveDirection', 'hideBelow', 'hideAbove'],
 }
 
+const SIZE: Section = {
+    title: 'Size',
+    icon: <Maximize2 size={12} />,
+    fieldNames: ['width', 'height', 'minHeight', 'maxWidth'],
+}
+
 const SPACING: Section = {
     title: 'Spacing',
     icon: <Maximize2 size={12} />,
@@ -86,7 +92,7 @@ const SPACING: Section = {
         'gapX', 'gapY',
         'paddingExpanded',
         'marginExpanded',
-        'aspectRatio', 'overflow', 'minHeight', 'maxWidth', 'gridTemplateColumns',
+        'aspectRatio', 'overflow', 'gridTemplateColumns',
     ],
 }
 
@@ -141,10 +147,10 @@ const CONTENT_TEXT: Section = {
 
 const COMPONENT_SECTIONS: Record<string, Section[]> = {
     CustomizableText: [MOBILE_RESPONSIVE, CONTENT_TEXT, TYPOGRAPHY, APPEARANCE],
-    Container: [MOBILE_RESPONSIVE, LAYOUT, SPACING, FILL, BG_IMAGE, BORDER, RADIUS, POSITION, APPEARANCE],
+    Container: [MOBILE_RESPONSIVE, LAYOUT, SIZE, SPACING, FILL, BG_IMAGE, BORDER, RADIUS, POSITION, APPEARANCE],
     Button: [
         MOBILE_RESPONSIVE,
-        { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'link', 'action', 'variant'] },
+        { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'isLink', 'linkType', 'url', 'sections'] },
         TYPOGRAPHY,
         LAYOUT,
         SPACING,
@@ -237,6 +243,7 @@ const FULL_WIDTH_FIELDS = new Set([
     'size', 'spacing',
     'backgroundImageUrl', 'backgroundObjectFit', 'backgroundPosition',
     'opacity',
+    'width', 'height', 'widthUnit', 'heightUnit',
     'numberOfColumns', 'numberOfRows', 'justifyItems', 'alignItems',
     'gap', 'rotation', 'zIndex', 'minHeight', 'maxWidth',
     'mobileColumns', 'firstCellRowSpan', 'firstCellColumnSpan',
@@ -251,27 +258,18 @@ function SectionPanel({ section, fieldMap }: { section: Section; fieldMap: Map<s
 
     if (rows.length === 0) return null
 
-    const isCollapsed = section.collapsedByDefault === true
-
     return (
-        <Accordion.Item
-            value={section.title}
-            className="border-b last:border-0"
-            style={{ borderColor: '#E8E2D6' }}
-        >
+        <Accordion.Item value={section.title} style={{ backgroundColor: '#FFFFFF' }}>
             <Accordion.Header>
                 <Accordion.Trigger
-                    className="flex w-full items-center justify-between px-3 py-2 transition-colors [&[data-state=open]>svg]:rotate-180"
-                    style={{ backgroundColor: '#FAF7F2', borderBottom: '1px solid #E8E2D6' }}
+                    className="flex w-full items-center justify-between [&[data-state=open]>svg]:rotate-180"
+                    style={{ padding: '8px 12px', backgroundColor: 'transparent' }}
                 >
-                    <span className="flex items-center gap-1.5" style={{ color: '#6F6863' }}>
-                        <span style={{ opacity: 0.7 }}>{section.icon}</span>
-                        <span style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
-                            {section.title}
-                        </span>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: '#6F6863', lineHeight: 1 }}>
+                        {section.title}
                     </span>
                     <ChevronDown
-                        size={12}
+                        size={11}
                         className="shrink-0 transition-transform duration-200"
                         style={{ color: '#C9B89A' }}
                     />
@@ -279,24 +277,22 @@ function SectionPanel({ section, fieldMap }: { section: Section; fieldMap: Map<s
             </Accordion.Header>
 
             <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-                <div className="grid grid-cols-2 gap-x-2 gap-y-0">
-                    {rows.map(({ name, el }) => {
-                        const isFullWidth = FULL_WIDTH_FIELDS.has(name)
+                <div style={{ borderTop: '1px solid rgba(232,226,214,0.6)' }}>
+                    {rows.map(({ name, el }, i) => {
                         const info = FIELD_INFO[name]
                         return (
                             <div
                                 key={name}
-                                className={isFullWidth ? 'col-span-2' : ''}
                                 style={{
-                                    padding: '6px 10px',
-                                    minHeight: 32,
-                                    borderBottom: '1px solid rgba(232,226,214,0.5)',
+                                    padding: '5px 12px',
+                                    minHeight: 30,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    borderBottom: i < rows.length - 1 ? '1px solid rgba(232,226,214,0.4)' : 'none',
                                 }}
                             >
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-                                    <div style={{ flex: 1, minWidth: 0 }}>{el}</div>
-                                    {info && <InfoBubble text={info} />}
-                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>{el}</div>
+                                {info && <InfoBubble text={info} />}
                             </div>
                         )
                     })}
@@ -328,13 +324,14 @@ function Settings({ fields, componentName }: SettingsProps) {
     const sections = COMPONENT_SECTIONS[componentName]
     const meta = COMPONENT_META[componentName] ?? { label: componentName, icon: <Box size={12} className="text-[#6F6863]" /> }
 
-    // Default open: all sections except those marked collapsedByDefault
-    const defaultOpen = sections
-        ? sections.filter(s => !s.collapsedByDefault).map(s => s.title)
-        : []
-
     return (
-        <div className="flex flex-col h-full" style={{ backgroundColor: '#FFFFFF' }}>
+        <div
+            className="flex flex-col h-full"
+            style={{
+                backgroundColor: '#FAF7F2',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            }}
+        >
             {/* Header */}
             <div
                 className="flex items-center gap-2 px-3 py-2 sticky top-0 z-10"
@@ -352,23 +349,33 @@ function Settings({ fields, componentName }: SettingsProps) {
             </div>
 
             {/* Sections */}
-            <div className="flex-1 overflow-y-auto">
+            <div
+                className="flex-1 overflow-y-auto"
+                style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}
+            >
                 {sections ? (
-                    <Accordion.Root type="multiple" defaultValue={defaultOpen}>
-                        {sections.map(section => (
-                            <SectionPanel key={section.title} section={section} fieldMap={fieldMap} />
-                        ))}
-                    </Accordion.Root>
+                    sections.map(section => (
+                        <Accordion.Root
+                            key={section.title}
+                            type="single"
+                            defaultValue={!section.collapsedByDefault ? section.title : undefined}
+                            collapsible
+                            style={{ border: '1px solid #E8E2D6', borderRadius: 8, overflow: 'hidden' }}
+                        >
+                            <SectionPanel section={section} fieldMap={fieldMap} />
+                        </Accordion.Root>
+                    ))
                 ) : (
-                    // Fallback: same row styling as SectionPanel for unmapped components
-                    <div>
+                    // Fallback for unmapped components
+                    <div style={{ border: '1px solid #E8E2D6', borderRadius: 8, overflow: 'hidden', backgroundColor: '#FFFFFF' }}>
                         {fields.map((f, i) => (
                             <div
                                 key={i}
                                 style={{
-                                    padding: '6px 10px',
-                                    minHeight: 32,
-                                    borderBottom: '1px solid rgba(232,226,214,0.5)',
+                                    padding: '5px 12px',
+                                    minHeight: 30,
+                                    display: 'flex', alignItems: 'center',
+                                    borderBottom: '1px solid rgba(232,226,214,0.4)',
                                 }}
                             >
                                 {f}

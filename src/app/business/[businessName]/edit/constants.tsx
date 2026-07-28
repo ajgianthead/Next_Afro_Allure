@@ -1,4 +1,4 @@
-import { Box, Columns, Grid2X2, Heading, ImageIcon, Layers, MousePointerClick, Rows, Type, Video } from "lucide-react";
+import { Box, Columns, Grid2X2, Heading, ImageIcon, Images, Layers, MousePointerClick, Rows, Type, Video } from "lucide-react";
 import type { Config, Slot } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import { CardComponent } from "./components/prebuitComponents/card";
@@ -17,6 +17,7 @@ import { RowLayoutComponent } from "./components/row";
 import { GridLayoutComponent } from "./components/grid";
 import { FooterComponent } from "./components/prebuitComponents/footer";
 import { SectionComponent } from "./components/section";
+import { GalleryComponent } from "./components/prebuitComponents/gallery";
 
 
 
@@ -29,7 +30,7 @@ export const config: Config<Components> = {
         },
         prebuilt: {
             title: 'Pre-built Components',
-            components: ['Navbar', 'HeroSection', 'AboutBusiness', 'Card', 'Footer']
+            components: ['Navbar', 'HeroSection', 'AboutBusiness', 'Card', 'Gallery', 'Footer']
         },
         media: {
             defaultExpanded: false,
@@ -46,6 +47,7 @@ export const config: Config<Components> = {
     },
     components: {
         Card: CardComponent,
+        Gallery: GalleryComponent,
         Column: ColumnLayoutComponent,
         Row: RowLayoutComponent,
         Grid: GridLayoutComponent,
@@ -120,6 +122,14 @@ export const drawerItemStyleProps = new Map<
             icon: <Layers className="text-slate-300" />,
             fontLevel: "body-md",
             label: 'Card'
+        },
+    ],
+    [
+        "Gallery",
+        {
+            icon: <Images className="text-slate-300" />,
+            fontLevel: "body-md",
+            label: 'Gallery'
         },
     ],
 

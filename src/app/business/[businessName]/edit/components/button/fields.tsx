@@ -14,6 +14,8 @@ import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/Edito
 import { GoogleFont, loadGoogleFont } from "useGoogleFonts";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SectionsField } from "../customizableText/fields";
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
@@ -288,38 +290,62 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
 
 export const buttonResolvedFields: (data: any) => {} = (data: any) => {
     const fields: Fields<ButtonContainer, {}> = {
-        action: {
-            label: 'Action',
+        isLink: {
             type: 'custom',
+            label: 'Hyperlink',
             render: ({ value, onChange, field }) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
                     <span style={lbl}>{field.label}</span>
-                    <StrSelect value={value} onChange={onChange} options={['REDIRECT']} className="flex-1" />
-                </div>
+                </label>
             )
         },
-        variant: {
-            type: 'custom', label: 'Variant',
-            render: ({ value, onChange, field }) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={lbl}>{field.label}</span>
-                    <StrSelect value={value} onChange={onChange} options={['start', 'end', 'center', 'space-between', 'space-evenly', 'space-around']} className="flex-1" />
-                </div>
-            )
-        },
-        link: {
-            visible: true, type: 'custom', label: 'Link',
-            render: ({ value, onChange, field }) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={lbl}>{field.label}</span>
-                    <input
-                        style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
-                        value={value ?? ''}
-                        onChange={(e) => onChange(e.target.value)}
-                    />
-                </div>
-            )
-        },
+        ...(data.props.isLink ? {
+            linkType: {
+                type: 'custom',
+                label: 'Link Type',
+                visible: true,
+                render: ({ value, onChange, field }) => (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ ...lbl, minWidth: 40 }}>{field.label}</span>
+                        <div style={{ flex: 1 }}>
+                            <Select value={value} onValueChange={(v) => onChange(v)}>
+                                <SelectTrigger className="h-[26px] text-[11px] !bg-[#F4F1EC] !border-0 !shadow-none rounded-[3px] !text-[#1A1818]"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="external" className="text-[11px]">External</SelectItem>
+                                    <SelectItem value="internal" className="text-[11px]">Internal</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                )
+            },
+            ...(data.props.linkType === 'external' ? {
+                url: {
+                    type: 'custom',
+                    label: 'URL',
+                    visible: true,
+                    render: ({ onChange, value, field }) => (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ ...lbl, minWidth: 40 }}>{field.label}</span>
+                            <input
+                                style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
+                                placeholder="https://example.com"
+                                value={value ?? ''}
+                                onChange={(e) => onChange(e.target.value)}
+                            />
+                        </div>
+                    )
+                }
+            } : {
+                sections: {
+                    type: 'custom',
+                    label: 'Section',
+                    visible: true,
+                    render: ({ value, onChange, field }) => <SectionsField value={value} onChange={onChange} label={field.label!} />
+                }
+            }),
+        } : {}),
         ...(sharedLayoutFields(data) as any),
         opacity: {
             type: 'custom',

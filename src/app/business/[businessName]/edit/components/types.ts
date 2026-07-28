@@ -26,6 +26,14 @@ export interface Navbar {
     menu: {
         item: Slot
     }[]
+    backgroundColor?: string
+    paddingTop?: number
+    paddingBottom?: number
+    paddingLeft?: number
+    paddingRight?: number
+    borderBottomWidth?: number
+    borderColor?: string
+    borderType?: string
 }
 export interface HeroSection {
     content: Slot
@@ -34,7 +42,11 @@ export interface About {
     content: Slot
 }
 export interface Gallery {
-    gallery: Slot
+    images: { url: string; alt: string }[]
+    columns: number
+    gap: number
+    borderRadius: number
+    aspectRatio: string
 }
 export interface Card {
     variant: string
@@ -44,7 +56,12 @@ export interface Card {
     videoSource: string
     linkToService: boolean,
     service: string
+    width?: number
+    widthUnit?: string
+    height?: number
+    heightUnit?: string
 }
+
 export interface Footer {
     footer: Slot
 }
@@ -152,6 +169,10 @@ export interface Container {
     backgroundObjectFit?: string
     backgroundPosition?: string
     opacity?: number
+    width?: number
+    widthUnit?: string
+    height?: number
+    heightUnit?: string
 }
 
 export interface ImageComponent {
@@ -198,9 +219,8 @@ export interface HyperLink extends RegularText {
     newTab: boolean
 }
 
-export interface ButtonContainer extends Omit<Container, 'content'>, Omit<RegularText, 'isLink' | 'sections' | 'url' | 'linkType'> {
+export interface ButtonContainer extends Omit<Container, 'content'>, RegularText {
     action: string
-    link: string
     variant: string
     mobileWidth: string
 }
@@ -215,6 +235,7 @@ export interface Components {
     HeroSection: HeroSection
     AboutBusiness: About
     Card: Card
+    Gallery: Gallery
     Footer: Footer
     CustomizableText: RegularText
     HeadingOne: Text

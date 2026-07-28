@@ -242,6 +242,31 @@ export const RadiusField = ({ value, onChange }: { value: string; onChange: (v: 
     )
 }
 
+// ── DimensionField ────────────────────────────────────────────────────────────
+
+export const DimensionField = ({ label, valueProp, unitProp }: {
+    label: string
+    valueProp: 'width' | 'height'
+    unitProp: 'widthUnit' | 'heightUnit'
+}) => {
+    const { props, update } = usePropsUpdater()
+    const val = props[valueProp] ?? 0
+    const unit = props[unitProp] ?? 'px'
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Lbl>{label}</Lbl>
+            <NumInput value={val} onChange={(v) => update({ [valueProp]: v })} allowNegative={false} className="flex-1" />
+            <select
+                value={unit}
+                onChange={e => update({ [unitProp]: e.target.value })}
+                style={{ height: 26, borderRadius: 3, padding: '0 4px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818', flexShrink: 0, cursor: 'pointer' }}
+            >
+                {['px', '%', 'vh', 'vw'].map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+        </div>
+    )
+}
+
 // ── OpacityField ──────────────────────────────────────────────────────────────
 
 export const OpacityField = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (

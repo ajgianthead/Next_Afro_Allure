@@ -32,7 +32,18 @@ export const NumInput = ({ value, onChange, step = 1, allowNegative = true, icon
         onChange(clamped)
     }
 
-    // ── Drag-to-scrub (Pointer Events) ────────────────────────────────────────
+    const applyDrag = (e: React.PointerEvent<any>) => {
+        if (!dragRef.current) return
+        const dx = e.clientX - dragRef.current.startX
+        const multiplier = e.shiftKey ? 10 : e.altKey ? 0.1 : 1
+        const raw = dragRef.current.startVal + dx * multiplier * step
+        const next = Math.round(raw)
+        const clamped = allowNegative ? next : Math.max(0, next)
+        setDisplay(String(clamped))
+        onChange(clamped)
+    }
+
+    // ── Icon drag (existing behaviour, unchanged) ─────────────────────────────
     const onIconPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {
         e.preventDefault()
         e.currentTarget.setPointerCapture(e.pointerId)
@@ -46,12 +57,7 @@ export const NumInput = ({ value, onChange, step = 1, allowNegative = true, icon
         const dx = e.clientX - dragRef.current.startX
         if (Math.abs(dx) < 2 && !isDragging.current) return
         isDragging.current = true
-        const multiplier = e.shiftKey ? 10 : e.altKey ? 0.1 : 1
-        const raw = dragRef.current.startVal + dx * multiplier * step
-        const next = Math.round(raw * 100) / 100
-        const clamped = allowNegative ? next : Math.max(0, next)
-        setDisplay(String(clamped))
-        onChange(clamped)
+        applyDrag(e)
     }
 
     const onIconPointerUp = (e: React.PointerEvent<HTMLSpanElement>) => {
@@ -59,6 +65,36 @@ export const NumInput = ({ value, onChange, step = 1, allowNegative = true, icon
         dragRef.current = null
         isDragging.current = false
         document.body.style.cursor = ''
+    }
+
+    // ── Input-level drag (activates when no icon is present) ─────────────────
+    const onInputPointerDown = (e: React.PointerEvent<HTMLInputElement>) => {
+        if (icon) return
+        dragRef.current = { startX: e.clientX, startVal: parseFloat(display) || 0 }
+        isDragging.current = false
+    }
+
+    const onInputPointerMove = (e: React.PointerEvent<HTMLInputElement>) => {
+        if (!dragRef.current || icon) return
+        const dx = e.clientX - dragRef.current.startX
+        if (Math.abs(dx) < 3 && !isDragging.current) return
+        if (!isDragging.current) {
+            isDragging.current = true
+            e.currentTarget.setPointerCapture(e.pointerId)
+            e.currentTarget.blur()
+            document.body.style.cursor = 'ew-resize'
+        }
+        applyDrag(e)
+    }
+
+    const onInputPointerUp = (e: React.PointerEvent<HTMLInputElement>) => {
+        if (icon) return
+        if (isDragging.current) {
+            e.currentTarget.releasePointerCapture(e.pointerId)
+            document.body.style.cursor = ''
+        }
+        dragRef.current = null
+        isDragging.current = false
     }
 
     return (
@@ -78,6 +114,7 @@ export const NumInput = ({ value, onChange, step = 1, allowNegative = true, icon
                 type="text"
                 inputMode="decimal"
                 className={cn(inputBase, icon ? "pl-6 pr-1.5" : "px-2")}
+                style={!icon ? { cursor: 'ew-resize' } : undefined}
                 value={display}
                 onChange={e => setDisplay(e.target.value)}
                 onBlur={e => commit(e.target.value)}
@@ -96,6 +133,9 @@ export const NumInput = ({ value, onChange, step = 1, allowNegative = true, icon
                         setDisplay(String(clamped)); onChange(clamped)
                     }
                 }}
+                onPointerDown={onInputPointerDown}
+                onPointerMove={onInputPointerMove}
+                onPointerUp={onInputPointerUp}
             />
         </div>
     )

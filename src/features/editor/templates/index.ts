@@ -173,9 +173,9 @@ const img = (ov: Record<string, any> = {}) => ({
     type: 'Image' as const,
     props: {
         url: PH_IMG,
-        width: 100,
+        width: 'full',
         objectFit: 'cover',
-        height: 100,
+        height: 'auto',
         aspectRatio: '',
         borderWidth: 0,
         borderRadius: 0,
@@ -281,6 +281,7 @@ const maisonTresseData: Data = {
         // ── 1. NAV ─────────────────────────────────────────────────────────────────
         box({
             id: 'mt-nav',
+            padding: 2,
             flexDirection: 'flex-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'center',
@@ -319,6 +320,7 @@ const maisonTresseData: Data = {
         // ── 2. HERO ────────────────────────────────────────────────────────────────
         box({
             id: 'mt-hero',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             altAxisLayout: 'stretch',
             spacing: 'spacious',
@@ -454,6 +456,7 @@ const maisonTresseData: Data = {
                     grow: true,
                     aspectRatio: '4/5',
                     overflow: 'hidden',
+                    padding: 0,
                     positionType: 'relative',
                     content: [
                         img({ id: 'mt-hero-img' }),
@@ -494,6 +497,7 @@ const maisonTresseData: Data = {
         // ── 3. SERVICES ────────────────────────────────────────────────────────────
         box({
             id: 'mt-services',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             backgroundColor: CREAM,
@@ -555,6 +559,7 @@ const maisonTresseData: Data = {
         // ── 4. PORTFOLIO GALLERY ───────────────────────────────────────────────────
         box({
             id: 'mt-portfolio',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             backgroundColor: '#ebe2d3',
@@ -638,6 +643,7 @@ const maisonTresseData: Data = {
         // ── 5. ABOUT ───────────────────────────────────────────────────────────────
         box({
             id: 'mt-about',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             altAxisLayout: 'center',
             spacing: 'spacious',
@@ -655,6 +661,7 @@ const maisonTresseData: Data = {
                     grow: true,
                     aspectRatio: '4/5',
                     overflow: 'hidden',
+                    padding: 0,
                     content: [img({ id: 'mt-about-img' })],
                 }),
                 // Text side (right)
@@ -722,6 +729,7 @@ const maisonTresseData: Data = {
         // ── 6. REVIEWS ─────────────────────────────────────────────────────────────
         box({
             id: 'mt-reviews',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 40,
@@ -775,6 +783,7 @@ const maisonTresseData: Data = {
         // ── 7. BOOKING CTA ─────────────────────────────────────────────────────────
         box({
             id: 'mt-cta',
+            padding: 2,
             flexDirection: 'flex-col',
             mainAxisLayout: 'center',
             altAxisLayout: 'center',
@@ -810,6 +819,7 @@ const maisonTresseData: Data = {
         // ── 8. FOOTER ──────────────────────────────────────────────────────────────
         box({
             id: 'mt-footer',
+            padding: 2,
             flexDirection: 'flex-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'start',
@@ -916,6 +926,7 @@ const fadeHouseData: Data = {
         // ── NAV ───────────────────────────────────────────────────────────────────
         box({
             id: 'fh-nav',
+            padding: 2,
             flexDirection: 'flex-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'center',
@@ -958,6 +969,7 @@ const fadeHouseData: Data = {
         // ── HERO ──────────────────────────────────────────────────────────────────
         box({
             id: 'fh-hero',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'spacious',
             gapY: 32,
@@ -1012,6 +1024,7 @@ const fadeHouseData: Data = {
         // ── SERVICES ──────────────────────────────────────────────────────────────
         box({
             id: 'fh-services',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             backgroundColor: FH_BG,
@@ -1055,6 +1068,7 @@ const fadeHouseData: Data = {
         // ── PORTFOLIO ─────────────────────────────────────────────────────────────
         box({
             id: 'fh-port',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 32,
@@ -1095,6 +1109,7 @@ const fadeHouseData: Data = {
         // ── ABOUT ─────────────────────────────────────────────────────────────────
         box({
             id: 'fh-about',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             altAxisLayout: 'start',
             spacing: 'spacious',
@@ -1124,6 +1139,7 @@ const fadeHouseData: Data = {
                     grow: true,
                     aspectRatio: '4/5',
                     overflow: 'hidden',
+                    padding: 0,
                     positionType: 'relative',
                     content: [
                         img({ id: 'fh-ab-img' }),
@@ -1153,6 +1169,7 @@ const fadeHouseData: Data = {
         // ── REVIEWS ───────────────────────────────────────────────────────────────
         box({
             id: 'fh-reviews',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 40,
@@ -1185,6 +1202,7 @@ const fadeHouseData: Data = {
         // ── BOOKING CTA ───────────────────────────────────────────────────────────
         box({
             id: 'fh-cta',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'spacious',
             gapY: 24,
@@ -1206,6 +1224,7 @@ const fadeHouseData: Data = {
         // ── FOOTER ────────────────────────────────────────────────────────────────
         box({
             id: 'fh-footer',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'start',
@@ -1282,6 +1301,7 @@ const atelierClairData: Data = {
         // ── NAV ───────────────────────────────────────────────────────────────────
         box({
             id: 'ac-nav',
+            padding: 2,
             flexDirection: 'flex-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'center',
@@ -1315,6 +1335,7 @@ const atelierClairData: Data = {
         // ── HERO ──────────────────────────────────────────────────────────────────
         box({
             id: 'ac-hero',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             altAxisLayout: 'center',
             spacing: 'spacious',
@@ -1352,6 +1373,7 @@ const atelierClairData: Data = {
                     aspectRatio: '5/6',
                     overflow: 'hidden',
                     borderRadius: 24,
+                    padding: 0,
                     content: [img({ id: 'ac-hero-img' })],
                 }),
             ],
@@ -1360,6 +1382,7 @@ const atelierClairData: Data = {
         // ── SERVICES ──────────────────────────────────────────────────────────────
         box({
             id: 'ac-services',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 24,
@@ -1385,6 +1408,7 @@ const atelierClairData: Data = {
         // ── PORTFOLIO ─────────────────────────────────────────────────────────────
         box({
             id: 'ac-port',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 32,
@@ -1438,6 +1462,7 @@ const atelierClairData: Data = {
         // ── ABOUT ─────────────────────────────────────────────────────────────────
         box({
             id: 'ac-about',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             altAxisLayout: 'center',
             spacing: 'spacious',
@@ -1445,7 +1470,7 @@ const atelierClairData: Data = {
             gapY: 32,
             backgroundColor: '#f1ede4',
             content: [
-                box({ id: 'ac-ab-img-wrap', grow: true, aspectRatio: '4/5', overflow: 'hidden', borderRadius: 20, content: [img({ id: 'ac-ab-img' })] }),
+                box({ id: 'ac-ab-img-wrap', grow: true, aspectRatio: '4/5', overflow: 'hidden', borderRadius: 20, padding: 0, content: [img({ id: 'ac-ab-img' })] }),
                 box({
                     id: 'ac-ab-text',
                     grow: true,
@@ -1470,6 +1495,7 @@ const atelierClairData: Data = {
         // ── REVIEWS ───────────────────────────────────────────────────────────────
         box({
             id: 'ac-reviews',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 32,
@@ -1502,6 +1528,7 @@ const atelierClairData: Data = {
         // ── BOOKING CTA ───────────────────────────────────────────────────────────
         box({
             id: 'ac-cta',
+            padding: 2,
             spacing: 'spacious',
             backgroundColor: AC_BG,
             content: [
@@ -1529,6 +1556,7 @@ const atelierClairData: Data = {
         // ── FOOTER ────────────────────────────────────────────────────────────────
         box({
             id: 'ac-footer',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'start',
@@ -1597,6 +1625,7 @@ const rougeMaisonData: Data = {
         // ── NAV ───────────────────────────────────────────────────────────────────
         box({
             id: 'rm-nav',
+            padding: 2,
             flexDirection: 'flex-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'center',
@@ -1630,6 +1659,7 @@ const rougeMaisonData: Data = {
         // ── HERO ──────────────────────────────────────────────────────────────────
         box({
             id: 'rm-hero',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             altAxisLayout: 'stretch',
             backgroundColor: RM_BG,
@@ -1662,6 +1692,7 @@ const rougeMaisonData: Data = {
                     id: 'rm-hero-img-wrap',
                     grow: true,
                     overflow: 'hidden',
+                    padding: 0,
                     positionType: 'relative',
                     backgroundColor: RM_ACCENT,
                     minHeight: 45,
@@ -1689,6 +1720,7 @@ const rougeMaisonData: Data = {
         // ── SERVICES ──────────────────────────────────────────────────────────────
         box({
             id: 'rm-services',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             backgroundColor: RM_FG,
@@ -1755,6 +1787,7 @@ const rougeMaisonData: Data = {
         // ── ABOUT ─────────────────────────────────────────────────────────────────
         box({
             id: 'rm-about',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             altAxisLayout: 'center',
             spacing: 'spacious',
@@ -1762,7 +1795,7 @@ const rougeMaisonData: Data = {
             gapY: 32,
             backgroundColor: RM_ACCENT,
             content: [
-                box({ id: 'rm-ab-img-wrap', grow: true, aspectRatio: '4/5', overflow: 'hidden', content: [img({ id: 'rm-ab-img' })] }),
+                box({ id: 'rm-ab-img-wrap', grow: true, aspectRatio: '4/5', overflow: 'hidden', padding: 0, content: [img({ id: 'rm-ab-img' })] }),
                 box({
                     id: 'rm-ab-text',
                     grow: true,
@@ -1787,6 +1820,7 @@ const rougeMaisonData: Data = {
         // ── REVIEWS ───────────────────────────────────────────────────────────────
         box({
             id: 'rm-reviews',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 32,
@@ -1822,6 +1856,7 @@ const rougeMaisonData: Data = {
         // ── BOOKING CTA ───────────────────────────────────────────────────────────
         box({
             id: 'rm-cta',
+            padding: 2,
             flexDirection: 'flex-col',
             altAxisLayout: 'center',
             spacing: 'spacious',
@@ -1838,6 +1873,7 @@ const rougeMaisonData: Data = {
         // ── FOOTER ────────────────────────────────────────────────────────────────
         box({
             id: 'rm-footer',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'start',
@@ -1910,6 +1946,7 @@ const coilCrownData: Data = {
         // ── NAV ───────────────────────────────────────────────────────────────────
         box({
             id: 'cc-nav',
+            padding: 2,
             flexDirection: 'flex-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'center',
@@ -1940,6 +1977,7 @@ const coilCrownData: Data = {
         // ── HERO ──────────────────────────────────────────────────────────────────
         box({
             id: 'cc-hero',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 32,
@@ -1960,8 +1998,8 @@ const coilCrownData: Data = {
                 ] }),
                 // Gallery collage
                 box({ id: 'cc-hero-imgs', flexDirection: 'flex-row', gapX: 16, altAxisLayout: 'end', content: [
-                    box({ id: 'cc-hi1', grow: true, aspectRatio: '4/5', overflow: 'hidden', borderRadius: 24, content: [img({ id: 'cc-hi1-i' })] }),
-                    box({ id: 'cc-hi2', grow: false, aspectRatio: '3/4', overflow: 'hidden', borderRadius: 24, maxWidth: 14, content: [img({ id: 'cc-hi2-i' })] }),
+                    box({ id: 'cc-hi1', grow: true, aspectRatio: '4/5', overflow: 'hidden', borderRadius: 24, padding: 0, content: [img({ id: 'cc-hi1-i' })] }),
+                    box({ id: 'cc-hi2', grow: false, aspectRatio: '3/4', overflow: 'hidden', borderRadius: 24, maxWidth: 14, padding: 0, content: [img({ id: 'cc-hi2-i' })] }),
                 ] }),
             ],
         }),
@@ -1969,6 +2007,7 @@ const coilCrownData: Data = {
         // ── SERVICES ──────────────────────────────────────────────────────────────
         box({
             id: 'cc-services',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 32,
@@ -2006,6 +2045,7 @@ const coilCrownData: Data = {
         // ── PORTFOLIO ─────────────────────────────────────────────────────────────
         box({
             id: 'cc-port',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 32,
@@ -2044,6 +2084,7 @@ const coilCrownData: Data = {
         // ── ABOUT ─────────────────────────────────────────────────────────────────
         box({
             id: 'cc-about',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             altAxisLayout: 'center',
             spacing: 'spacious',
@@ -2051,7 +2092,7 @@ const coilCrownData: Data = {
             gapY: 32,
             backgroundColor: CC_ACCENT,
             content: [
-                box({ id: 'cc-ab-img-wrap', grow: true, aspectRatio: '4/5', overflow: 'hidden', borderRadius: 24, content: [img({ id: 'cc-ab-img' })] }),
+                box({ id: 'cc-ab-img-wrap', grow: true, aspectRatio: '4/5', overflow: 'hidden', borderRadius: 24, padding: 0, content: [img({ id: 'cc-ab-img' })] }),
                 box({
                     id: 'cc-ab-text',
                     grow: true,
@@ -2076,6 +2117,7 @@ const coilCrownData: Data = {
         // ── REVIEWS ───────────────────────────────────────────────────────────────
         box({
             id: 'cc-reviews',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 32,
@@ -2108,6 +2150,7 @@ const coilCrownData: Data = {
         // ── BOOKING CTA ───────────────────────────────────────────────────────────
         box({
             id: 'cc-cta',
+            padding: 2,
             flexDirection: 'flex-col',
             altAxisLayout: 'center',
             spacing: 'spacious',
@@ -2123,6 +2166,7 @@ const coilCrownData: Data = {
         // ── FOOTER ────────────────────────────────────────────────────────────────
         box({
             id: 'cc-footer',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'start',
@@ -2188,6 +2232,7 @@ const quickstartData: Data = {
         // ── NAV ───────────────────────────────────────────────────────────────────
         box({
             id: 'qs-nav',
+            padding: 2,
             flexDirection: 'flex-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'center',
@@ -2216,6 +2261,7 @@ const quickstartData: Data = {
         // ── HERO ──────────────────────────────────────────────────────────────────
         box({
             id: 'qs-hero',
+            padding: 2,
             flexDirection: 'flex-col',
             altAxisLayout: 'center',
             spacing: 'spacious',
@@ -2244,16 +2290,18 @@ const quickstartData: Data = {
         // ── HERO IMAGE ────────────────────────────────────────────────────────────
         box({
             id: 'qs-hero-img',
+            padding: 2,
             spacing: 'normal',
             backgroundColor: QS_BG,
             content: [
-                box({ id: 'qs-hero-img-wrap', aspectRatio: '16/7', overflow: 'hidden', borderRadius: 16, content: [img({ id: 'qs-hi' })] }),
+                box({ id: 'qs-hero-img-wrap', aspectRatio: '16/7', overflow: 'hidden', borderRadius: 16, padding: 0, content: [img({ id: 'qs-hi' })] }),
             ],
         }),
 
         // ── SERVICES ──────────────────────────────────────────────────────────────
         box({
             id: 'qs-services',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 20,
@@ -2274,6 +2322,7 @@ const quickstartData: Data = {
         // ── GALLERY ───────────────────────────────────────────────────────────────
         box({
             id: 'qs-gallery',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 20,
@@ -2307,6 +2356,7 @@ const quickstartData: Data = {
         // ── ABOUT ─────────────────────────────────────────────────────────────────
         box({
             id: 'qs-about',
+            padding: 2,
             responsiveDirection: 'col-to-row',
             altAxisLayout: 'center',
             spacing: 'normal',
@@ -2314,7 +2364,7 @@ const quickstartData: Data = {
             gapY: 32,
             backgroundColor: QS_BG,
             content: [
-                box({ id: 'qs-ab-img-wrap', grow: false, aspectRatio: '1/1', overflow: 'hidden', borderRadius: 16, maxWidth: 22, content: [img({ id: 'qs-ab-img' })] }),
+                box({ id: 'qs-ab-img-wrap', grow: false, aspectRatio: '1/1', overflow: 'hidden', borderRadius: 16, maxWidth: 22, padding: 0, content: [img({ id: 'qs-ab-img' })] }),
                 box({
                     id: 'qs-ab-text',
                     grow: true,
@@ -2339,6 +2389,7 @@ const quickstartData: Data = {
         // ── REVIEWS ───────────────────────────────────────────────────────────────
         box({
             id: 'qs-reviews',
+            padding: 2,
             flexDirection: 'flex-col',
             spacing: 'normal',
             gapY: 20,
@@ -2371,6 +2422,7 @@ const quickstartData: Data = {
         // ── BOOKING CTA ───────────────────────────────────────────────────────────
         box({
             id: 'qs-cta',
+            padding: 2,
             spacing: 'normal',
             backgroundColor: QS_BG,
             content: [
@@ -2399,6 +2451,7 @@ const quickstartData: Data = {
         // ── FOOTER ────────────────────────────────────────────────────────────────
         box({
             id: 'qs-footer',
+            padding: 2,
             flexDirection: 'flex-row',
             mainAxisLayout: 'space-between',
             altAxisLayout: 'center',

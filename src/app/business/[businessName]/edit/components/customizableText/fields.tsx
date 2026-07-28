@@ -89,7 +89,7 @@ const AlignField = ({ value, onChange }: { value: string, onChange: (v: string) 
     </div>
 )
 
-const SectionsField = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => {
+export const SectionsField = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => {
     const { editorState } = useEditorContext()
     const getPuck = useGetPuck()
     const { appState } = getPuck()
