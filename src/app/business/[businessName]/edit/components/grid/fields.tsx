@@ -28,7 +28,7 @@ export const gridLayoutFields: Fields<GridLayout, {}> = {
     },
     mobileColumns: {
         type: 'custom',
-        label: 'Mobile columns',
+        label: 'Columns on mobile',
         render: ({ value, onChange, field }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>

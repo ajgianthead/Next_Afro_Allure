@@ -74,25 +74,34 @@ interface Section {
     decoration?: React.ReactNode
 }
 
-const MOBILE_RESPONSIVE: Section = {
+// The one unified Mobile section — only these 5 fields ever belong here.
+// A component with none of them simply doesn't get a Mobile section at all.
+const MOBILE_ADVANCED: Section = {
     title: 'Mobile',
     icon: <Smartphone size={12} />,
-    fieldNames: ['size', 'spacing', 'mobileLayout', 'mobileWidth', 'mobileVisibility'],
-    tab: 'style',
+    fieldNames: ['hideBelow', 'hideAbove', 'mobileLayout', 'mobileWidth', 'mobileColumns'],
+    tab: 'advanced',
 }
 
 const LAYOUT: Section = {
     title: 'Layout',
     icon: <LayoutDashboard size={12} />,
-    fieldNames: ['flexDirection', 'mainAxisLayout', 'altAxisLayout', 'grow', 'responsiveDirection', 'hideBelow', 'hideAbove'],
+    fieldNames: ['flexDirection', 'mainAxisLayout', 'altAxisLayout', 'grow', 'responsiveDirection'],
     tab: 'style',
 }
 
 const SIZE: Section = {
     title: 'Size',
     icon: <Maximize2 size={12} />,
-    fieldNames: ['width', 'height', 'minHeight', 'maxWidth'],
+    fieldNames: ['width', 'height'],
     tab: 'style',
+}
+
+const SIZE_LIMITS: Section = {
+    title: 'Size Limits',
+    icon: <Maximize2 size={12} />,
+    fieldNames: ['maxWidth', 'aspectRatio'],
+    tab: 'advanced',
 }
 
 const SPACING: Section = {
@@ -102,7 +111,7 @@ const SPACING: Section = {
         'gapX', 'gapY',
         'paddingExpanded',
         'marginExpanded',
-        'aspectRatio', 'overflow', 'gridTemplateColumns',
+        'gridTemplateColumns',
     ],
     tab: 'style',
     decoration: <BoxModelDiagram />,
@@ -118,7 +127,7 @@ const FILL: Section = {
 const BG_IMAGE: Section = {
     title: 'Background',
     icon: <ImageIcon size={12} />,
-    fieldNames: ['backgroundImageUrl', 'backgroundObjectFit', 'backgroundPosition'],
+    fieldNames: ['backgroundImageUrl'],
     tab: 'style',
 }
 
@@ -154,7 +163,7 @@ const POSITION: Section = {
 const TYPOGRAPHY: Section = {
     title: 'Typography',
     icon: <Type size={12} />,
-    fieldNames: ['fontFamily', 'fontSize', 'fontWeight', 'style', 'align', 'color', 'lineHeight', 'letterSpacing', 'textTransform', 'maxWidth'],
+    fieldNames: ['fontFamily', 'fontSize', 'fontWeight', 'style', 'align', 'color', 'lineHeight', 'letterSpacing', 'textTransform', 'size'],
     tab: 'style',
 }
 
@@ -166,24 +175,35 @@ const CONTENT_TEXT: Section = {
 }
 
 const COMPONENT_SECTIONS: Record<string, Section[]> = {
-    CustomizableText: [MOBILE_RESPONSIVE, CONTENT_TEXT, TYPOGRAPHY, APPEARANCE],
-    Container: [MOBILE_RESPONSIVE, LAYOUT, SIZE, SPACING, FILL, BG_IMAGE, BORDER, RADIUS, POSITION, APPEARANCE],
-    Button: [
-        MOBILE_RESPONSIVE,
-        { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'isLink', 'linkType', 'url', 'sections'], tab: 'content' },
+    CustomizableText: [
+        CONTENT_TEXT,
         TYPOGRAPHY,
+        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['maxWidth'], tab: 'style' },
+        APPEARANCE,
+    ],
+    Container: [
+        LAYOUT, SIZE, SPACING, FILL, BG_IMAGE, BORDER, RADIUS, APPEARANCE,
+        SIZE_LIMITS, MOBILE_ADVANCED, POSITION,
+    ],
+    Button: [
+        { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'isLink', 'linkType', 'url', 'sections'], tab: 'content' },
+        { title: 'Typography', icon: <Type size={12} />, fieldNames: ['fontSize', 'fontWeight', 'style', 'align', 'color'], tab: 'style' },
         LAYOUT,
         SPACING,
         FILL,
         BORDER,
         RADIUS,
-        POSITION,
         APPEARANCE,
+        { title: 'Typography', icon: <Type size={12} />, fieldNames: ['fontFamily'], tab: 'advanced' },
+        MOBILE_ADVANCED,
+        POSITION,
     ],
     Image: [
-        MOBILE_RESPONSIVE,
-        { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height', 'objectFit', 'aspectRatio'], tab: 'content' },
-        BORDER, RADIUS, POSITION, APPEARANCE,
+        { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height'], tab: 'content' },
+        BORDER, RADIUS, APPEARANCE,
+        { title: 'Image Fit', icon: <ImageIcon size={12} />, fieldNames: ['objectFit'], tab: 'advanced' },
+        POSITION,
+        { title: 'More', icon: <Move size={12} />, fieldNames: ['aspectRatio'], tab: 'advanced' },
     ],
     Video: [
         { title: 'Source', icon: <Video size={12} />, fieldNames: ['url'], tab: 'content' },
@@ -192,19 +212,21 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
         BORDER, RADIUS, POSITION, APPEARANCE,
     ],
     Row: [
-        MOBILE_RESPONSIVE,
         { title: 'Layout', icon: <Rows size={12} />, fieldNames: ['numberOfRows', 'gap', 'justifyItems'], tab: 'style' },
         APPEARANCE,
+        MOBILE_ADVANCED,
     ],
     Column: [
-        MOBILE_RESPONSIVE,
         { title: 'Layout', icon: <Columns size={12} />, fieldNames: ['numberOfColumns', 'gap', 'alignItems'], tab: 'style' },
         APPEARANCE,
+        MOBILE_ADVANCED,
     ],
     Grid: [
-        { title: 'Mobile', icon: <Smartphone size={12} />, fieldNames: ['mobileColumns'], tab: 'style' },
-        { title: 'Layout', icon: <Grid2X2 size={12} />, fieldNames: ['numberOfColumns', 'numberOfRows', 'gapX', 'gapY', 'justifyItems', 'alignItems', 'firstCellRowSpan', 'firstCellColumnSpan'], tab: 'style' },
+        { title: 'Layout', icon: <Grid2X2 size={12} />, fieldNames: ['numberOfColumns', 'numberOfRows', 'gapX', 'gapY'], tab: 'style' },
         APPEARANCE,
+        MOBILE_ADVANCED,
+        { title: 'Cells', icon: <Grid2X2 size={12} />, fieldNames: ['firstCellRowSpan', 'firstCellColumnSpan'], tab: 'advanced' },
+        { title: 'Alignment', icon: <Move size={12} />, fieldNames: ['justifyItems', 'alignItems'], tab: 'advanced' },
     ],
     Section: [
         { title: 'Settings', icon: <Box size={12} />, fieldNames: ['sectionName'], tab: 'content' },
@@ -234,7 +256,7 @@ const TEXT_PRESET_NAMES = [
     'TitleLarge', 'TitleMedium', 'TitleSmall',
     'BodyLarge', 'BodyMedium', 'BodySmall', 'BodyExtraSmall',
 ]
-TEXT_PRESET_NAMES.forEach(name => { COMPONENT_SECTIONS[name] = [MOBILE_RESPONSIVE, CONTENT_TEXT, TYPOGRAPHY, APPEARANCE] })
+TEXT_PRESET_NAMES.forEach(name => { COMPONENT_SECTIONS[name] = [CONTENT_TEXT, TYPOGRAPHY, APPEARANCE] })
 
 const TABS: { key: Tab; label: string }[] = [
     { key: 'style', label: 'Style' },

@@ -57,7 +57,7 @@ export const columnLayoutFields: Fields<ColumnLayout, {}> = {
     },
     mobileLayout: {
         type: 'custom',
-        label: 'Mobile',
+        label: 'Mobile direction',
         render: ({ value, onChange, field }) => (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

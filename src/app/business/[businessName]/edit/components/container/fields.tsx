@@ -174,20 +174,20 @@ export const defaultFields: Fields<Container, {}> = {
     },
     hideBelow: {
         type: 'custom',
-        label: 'Hide Below',
+        label: 'Hide on mobile',
         render: ({ value, onChange }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 56 }}>Hide Below</span>
+                <span style={{ ...lbl, minWidth: 56 }}>Hide on mobile</span>
                 <StrSelect value={value} onChange={onChange} options={['none', 'sm', 'md', 'lg']} className="flex-1" />
             </div>
         )
     },
     hideAbove: {
         type: 'custom',
-        label: 'Hide Above',
+        label: 'Hide on desktop',
         render: ({ value, onChange }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 56 }}>Hide Above</span>
+                <span style={{ ...lbl, minWidth: 56 }}>Hide on desktop</span>
                 <StrSelect value={value} onChange={onChange} options={['none', 'sm', 'md', 'lg']} className="flex-1" />
             </div>
         )

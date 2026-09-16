@@ -57,7 +57,7 @@ export const rowLayoutFields: Fields<RowLayout, {}> = {
     },
     mobileLayout: {
         type: 'custom',
-        label: 'Mobile',
+        label: 'Mobile direction',
         render: ({ value, onChange, field }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>

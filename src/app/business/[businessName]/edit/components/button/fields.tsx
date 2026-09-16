@@ -277,10 +277,10 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
         },
         mobileWidth: {
             type: 'custom',
-            label: 'Width on mobile',
+            label: 'Mobile width',
             render: ({ value, onChange }) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ ...lbl, minWidth: 56 }}>Mobile W</span>
+                    <span style={{ ...lbl, minWidth: 56 }}>Mobile width</span>
                     <select
                         value={value ?? 'full'}
                         onChange={(e) => onChange(e.target.value)}
