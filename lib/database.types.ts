@@ -873,9 +873,11 @@ export type Database = {
         Row: {
           business_id: string | null
           created_at: string
+          draft_data: string | null
           editor_data: string | null
           id: string
           image_objects: Json[] | null
+          published_at: string | null
           section_data: Json[] | null
           theme_data: Json
           type: Database["public"]["Enums"]["web_editor"] | null
@@ -884,9 +886,11 @@ export type Database = {
         Insert: {
           business_id?: string | null
           created_at?: string
+          draft_data?: string | null
           editor_data?: string | null
           id?: string
           image_objects?: Json[] | null
+          published_at?: string | null
           section_data?: Json[] | null
           theme_data?: Json
           type?: Database["public"]["Enums"]["web_editor"] | null
@@ -895,9 +899,11 @@ export type Database = {
         Update: {
           business_id?: string | null
           created_at?: string
+          draft_data?: string | null
           editor_data?: string | null
           id?: string
           image_objects?: Json[] | null
+          published_at?: string | null
           section_data?: Json[] | null
           theme_data?: Json
           type?: Database["public"]["Enums"]["web_editor"] | null

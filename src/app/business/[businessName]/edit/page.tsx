@@ -30,7 +30,16 @@ const Page = async ({ params, searchParams }: { params: Promise<{ businessName: 
     return (
         <div>
             <EditorWrapper>
-                <Editor isPublished={business.published_site} services={services.data!} businessName={business.url_name} businessId={business.business_id} editorData={editorData.editor_data!} preloadedTemplateId={template} />
+                <Editor
+                    isPublished={business.published_site}
+                    services={services.data!}
+                    businessName={business.url_name}
+                    businessId={business.business_id}
+                    editorData={editorData.editor_data!}
+                    draftData={editorData.draft_data ?? ''}
+                    publishedAt={editorData.published_at}
+                    preloadedTemplateId={template}
+                />
             </EditorWrapper>
         </div>
     );

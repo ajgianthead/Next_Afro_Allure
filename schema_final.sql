@@ -640,7 +640,9 @@ CREATE TABLE IF NOT EXISTS "public"."web_editors" (
     "type" "public"."web_editor",
     "image_objects" "jsonb"[] DEFAULT '{}'::"jsonb"[],
     "section_data" "jsonb"[] DEFAULT '{}'::"jsonb"[],
-    "theme_data" "jsonb" DEFAULT '{"fontFamily": "Roboto", "primaryColor": "#fff", "secondaryColor": "#fff"}'::"jsonb" NOT NULL
+    "theme_data" "jsonb" DEFAULT '{"fontFamily": "Roboto", "primaryColor": "#fff", "secondaryColor": "#fff"}'::"jsonb" NOT NULL,
+    "draft_data" "text",
+    "published_at" timestamp with time zone
 );
 
 

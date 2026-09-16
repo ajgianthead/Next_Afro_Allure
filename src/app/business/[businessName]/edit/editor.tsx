@@ -1,15 +1,19 @@
 'use client'
 
 import { createUsePuck, Drawer, Puck, useGetPuck } from "@puckeditor/core";
-import React, { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
-import type { Config, Data, DefaultComponents, ComponentDataMap, PuckAction } from "@puckeditor/core";
+import React, { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Config, Data, DefaultComponents, ComponentDataMap, PuckAction, Viewports } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import "./global.css";
 import { LayoutTemplate, Loader2, Redo2, Search, Undo2, X } from "lucide-react";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { config, drawerItemStyleProps } from "./constants";
-import { sendEditorData } from "@/app/utils/editor_actions";
+import { saveDraftData, publishEditorData } from "@/app/utils/editor_actions";
 import Settings from "./settings";
 import { TemplatePicker } from "./templatePicker";
+import { PublishDialog } from "./components/publishDialog";
+import { UnpublishedBanner } from "./components/unpublishedBanner";
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { Components } from "./components/types";
 import { Json } from "../../../../../lib/database.types";
@@ -19,9 +23,13 @@ import { ChevronDown } from "lucide-react";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const saveData = async (data: Data<DefaultComponents, any>, businessId: string, currentlyPublished: boolean) => {
-    await sendEditorData(JSON.stringify(data), businessId, currentlyPublished)
-};
+const VIEWPORTS: Viewports = [
+    { width: 1440, label: 'Desktop', icon: 'Monitor' },
+    { width: 768, label: 'Tablet', icon: 'Tablet' },
+    { width: 390, label: 'Mobile', icon: 'Smartphone' },
+];
+
+const AUTOSAVE_INTERVAL_MS = 60000;
 
 function timeSince(date: Date): string {
     const s = Math.floor((Date.now() - date.getTime()) / 1000)
@@ -54,6 +62,8 @@ interface ServiceType {
 interface PageProps {
     businessId: string
     editorData: string
+    draftData: string
+    publishedAt: string | null
     businessName: string
     services: ServiceType[]
     isPublished: boolean
@@ -66,30 +76,81 @@ interface EditorHeaderProps {
     state: any
     businessId: string
     businessName: string
-    isPublished: boolean
-    saving: boolean
-    setSaving: Dispatch<SetStateAction<boolean>>
-    lastSaved: Date | null
-    setLastSaved: Dispatch<SetStateAction<Date | null>>
+    urlName: string
+    draftDirty: boolean
+    setDraftDirty: Dispatch<SetStateAction<boolean>>
+    lastPublished: Date | null
+    setLastPublished: Dispatch<SetStateAction<Date | null>>
+    showUnpublishedBanner: boolean
+    setShowUnpublishedBanner: Dispatch<SetStateAction<boolean>>
 }
 
 function EditorHeader({
-    state, businessId, businessName, isPublished,
-    saving, setSaving, lastSaved, setLastSaved,
+    state, businessId, businessName, urlName,
+    draftDirty, setDraftDirty,
+    lastPublished, setLastPublished,
+    showUnpublishedBanner, setShowUnpublishedBanner,
 }: EditorHeaderProps) {
     const { editorState } = useEditorContext()
     const getPuck = useGetPuck()
     const store = getPuck()
 
+    const [savingDraft, setSavingDraft] = useState(false)
+    const [publishing, setPublishing] = useState(false)
+    const [showPublishConfirm, setShowPublishConfirm] = useState(false)
+
     const displayName = editorState.businessName || businessName
 
-    const handleSave = async () => {
-        setSaving(true)
+    // Keep a ref to the latest state/dirty flag so the autosave interval
+    // (set up once on mount) never reads a stale closure.
+    const stateRef = useRef(state)
+    stateRef.current = state
+    const draftDirtyRef = useRef(draftDirty)
+    draftDirtyRef.current = draftDirty
+
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            if (!draftDirtyRef.current) return
+            try {
+                await saveDraftData(JSON.stringify(stateRef.current.data), businessId)
+                setDraftDirty(false)
+            } catch {
+                // Silent autosave failure — the dirty flag stays true, so the
+                // next autosave tick (or a manual Save Draft) will retry.
+            }
+        }, AUTOSAVE_INTERVAL_MS)
+        return () => clearInterval(interval)
+    }, [businessId, setDraftDirty])
+
+    const handleSaveDraft = async () => {
+        setSavingDraft(true)
         try {
-            await saveData(state.data, businessId, isPublished)
-            setLastSaved(new Date())
+            await saveDraftData(JSON.stringify(state.data), businessId)
+            setDraftDirty(false)
+            toast.success('Draft saved', { duration: 2000 })
+        } catch (err: any) {
+            toast.error(err?.message ?? 'Could not save draft')
         } finally {
-            setSaving(false)
+            setSavingDraft(false)
+        }
+    }
+
+    const handlePublish = async () => {
+        setPublishing(true)
+        try {
+            // Publish always copies the current in-memory state into draft_data
+            // first, so it can't ever push a stale draft to the live page.
+            await saveDraftData(JSON.stringify(state.data), businessId)
+            await publishEditorData(businessId)
+            setDraftDirty(false)
+            setLastPublished(new Date())
+            setShowUnpublishedBanner(false)
+            toast.success('Published', { description: 'Your page is now live.', duration: 3000 })
+        } catch (err: any) {
+            toast.error(err?.message ?? 'Could not publish')
+        } finally {
+            setPublishing(false)
+            setShowPublishConfirm(false)
         }
     }
 
@@ -124,24 +185,33 @@ function EditorHeader({
                 }}>
                     {displayName}
                 </span>
+                {draftDirty && (
+                    <span
+                        title="Unsaved changes"
+                        style={{
+                            width: 7, height: 7, borderRadius: '50%',
+                            backgroundColor: '#FC6161', flexShrink: 0,
+                        }}
+                    />
+                )}
             </div>
 
             {/* Right — templates + save */}
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, minWidth: 0 }}>
-                {lastSaved && (
+                {lastPublished && (
                     <span className="aa-header-lastsaved" style={{
                         fontFamily: 'monospace', fontSize: 10,
                         color: '#A09790',
                         whiteSpace: 'nowrap',
                     }}>
-                        {timeSince(lastSaved)}
+                        Last published: {timeSince(lastPublished)}
                     </span>
                 )}
                 {/* Undo / Redo */}
                 <div style={{ display: 'flex', gap: 2 }}>
                     {[
-                        { icon: <Undo2 size={14} />, action: () => store.history.back(), enabled: store.history.hasPast, title: 'Undo' },
-                        { icon: <Redo2 size={14} />, action: () => store.history.forward(), enabled: store.history.hasFuture, title: 'Redo' },
+                        { icon: <Undo2 size={14} />, action: () => store.history.back(), enabled: store.history.hasPast(), title: 'Undo' },
+                        { icon: <Redo2 size={14} />, action: () => store.history.forward(), enabled: store.history.hasFuture(), title: 'Redo' },
                     ].map(({ icon, action, enabled, title }) => (
                         <button
                             key={title}
@@ -164,25 +234,56 @@ function EditorHeader({
                     ))}
                 </div>
                 <TemplatePicker />
+
+                {/* Save Draft — secondary, only emphasized when dirty */}
                 <button
                     type="button"
-                    disabled={saving}
-                    onClick={handleSave}
+                    disabled={savingDraft}
+                    onClick={handleSaveDraft}
                     style={{
                         display: 'flex', alignItems: 'center', gap: 6,
-                        backgroundColor: saving ? '#c44' : '#FC6161',
+                        backgroundColor: 'transparent',
+                        color: draftDirty ? '#1A1818' : '#A09790',
+                        border: `1px solid ${draftDirty ? '#D4CFC8' : '#E8E2D6'}`,
+                        borderRadius: 9999, fontSize: 13, fontWeight: 600,
+                        padding: '6px 14px', cursor: savingDraft ? 'not-allowed' : 'pointer',
+                        transition: 'border-color 0.15s, color 0.15s',
+                        whiteSpace: 'nowrap', flexShrink: 0,
+                    }}
+                >
+                    {savingDraft && <Loader2 size={13} className="animate-spin" />}
+                    <span className="aa-header-savedraft-label">Save Draft</span>
+                    <span className="aa-header-savedraft-short">Save</span>
+                </button>
+
+                {/* Publish — primary, pulses while there are unpublished changes */}
+                <button
+                    type="button"
+                    disabled={publishing}
+                    onClick={() => setShowPublishConfirm(true)}
+                    className={draftDirty ? 'aa-publish-pulse' : undefined}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        backgroundColor: publishing ? '#c44' : '#FC6161',
                         color: '#FFFFFF',
                         borderRadius: 9999, fontSize: 13, fontWeight: 600,
-                        padding: '6px 14px', cursor: saving ? 'not-allowed' : 'pointer',
+                        padding: '6px 14px', cursor: publishing ? 'not-allowed' : 'pointer',
                         transition: 'background-color 0.15s',
                         whiteSpace: 'nowrap', flexShrink: 0,
                     }}
                 >
-                    {saving && <Loader2 size={13} className="animate-spin" />}
-                    <span className="aa-header-save-label">{isPublished ? 'Save Changes' : 'Publish Site'}</span>
-                    <span className="aa-header-save-short">{isPublished ? 'Save' : 'Publish'}</span>
+                    {publishing && <Loader2 size={13} className="animate-spin" />}
+                    Publish
                 </button>
             </div>
+
+            <PublishDialog
+                open={showPublishConfirm}
+                onOpenChange={setShowPublishConfirm}
+                urlName={urlName}
+                publishing={publishing}
+                onConfirm={handlePublish}
+            />
         </header>
     )
 }
@@ -384,11 +485,18 @@ function TemplateBanner({ template, dispatch, onDismiss }: {
 
 // ─── Main Editor ─────────────────────────────────────────────────────────────
 
-function Editor({ businessId, editorData, businessName, services, isPublished, preloadedTemplateId }: PageProps) {
+function Editor({ businessId, editorData, draftData, publishedAt, businessName, services, isPublished, preloadedTemplateId }: PageProps) {
     const { editorState, setEditorState } = useEditorContext()
-    const [saving, setSaving] = useState(false)
-    const [lastSaved, setLastSaved] = useState<Date | null>(null)
     const [bannerDismissed, setBannerDismissed] = useState(false)
+
+    // If a draft exists and differs from what's live, resume editing from the
+    // draft rather than the published page, and flag it for the banner below.
+    const hasUnpublishedDraft = draftData.length > 0 && draftData !== editorData
+    const initialDataString = hasUnpublishedDraft ? draftData : editorData
+
+    const [draftDirty, setDraftDirty] = useState(false)
+    const [lastPublished, setLastPublished] = useState<Date | null>(publishedAt ? new Date(publishedAt) : null)
+    const [showUnpublishedBanner, setShowUnpublishedBanner] = useState(hasUnpublishedDraft)
 
     const preloadedTemplate = preloadedTemplateId
         ? templates.find(t => t.id === preloadedTemplateId) ?? null
@@ -399,8 +507,8 @@ function Editor({ businessId, editorData, businessName, services, isPublished, p
     }, [businessName, services])
 
     useEffect(() => {
-        if (editorData.length > 0) {
-            const data = JSON.parse(editorData)
+        if (initialDataString.length > 0) {
+            const data = JSON.parse(initialDataString)
             data.content.forEach((component: ComponentDataMap<Components>) => {
                 if (component.type === 'Section') {
                     setEditorState!(prev => {
@@ -421,12 +529,17 @@ function Editor({ businessId, editorData, businessName, services, isPublished, p
                 state={state}
                 businessId={businessId}
                 businessName={businessName}
-                isPublished={isPublished}
-                saving={saving}
-                setSaving={setSaving}
-                lastSaved={lastSaved}
-                setLastSaved={setLastSaved}
+                urlName={businessName}
+                draftDirty={draftDirty}
+                setDraftDirty={setDraftDirty}
+                lastPublished={lastPublished}
+                setLastPublished={setLastPublished}
+                showUnpublishedBanner={showUnpublishedBanner}
+                setShowUnpublishedBanner={setShowUnpublishedBanner}
             />
+            {showUnpublishedBanner && (
+                <UnpublishedBanner onDismiss={() => setShowUnpublishedBanner(false)} />
+            )}
             {preloadedTemplate && !bannerDismissed && (
                 <TemplateBanner
                     template={preloadedTemplate}
@@ -435,16 +548,22 @@ function Editor({ businessId, editorData, businessName, services, isPublished, p
                 />
             )}
         </div>
-    ), [businessId, businessName, isPublished, saving, lastSaved, preloadedTemplate, bannerDismissed])
+    ), [businessId, businessName, draftDirty, lastPublished, showUnpublishedBanner, preloadedTemplate, bannerDismissed])
 
 
 
     return (
+        <>
+        <Toaster position="bottom-right" />
         <Puck
             config={config}
-            data={editorData.length > 0 ? JSON.parse(editorData) : undefined}
+            data={initialDataString.length > 0 ? JSON.parse(initialDataString) : undefined}
+            viewports={VIEWPORTS}
             renderHeader={renderHeader}
             onAction={(action, state) => {
+                if (action.type !== 'setUi') {
+                    setDraftDirty(true)
+                }
                 if (action.type === 'insert') {
                     const inserted = state.data.content.filter(c => c.type === 'Section').map(c => c.props.id)
                     if (inserted.length) {
@@ -461,10 +580,6 @@ function Editor({ businessId, editorData, businessName, services, isPublished, p
                     )
                     setEditorState!(prev => ({ ...prev, sections: remaining }))
                 }
-            }}
-            onPublish={async (data) => {
-                await saveData(data, businessId, isPublished)
-                setLastSaved(new Date())
             }}
             overrides={{
                 drawer({ children }) {
@@ -489,6 +604,7 @@ function Editor({ businessId, editorData, businessName, services, isPublished, p
                 }
             }}
         />
+        </>
     )
 }
 

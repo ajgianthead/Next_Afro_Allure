@@ -30,7 +30,8 @@
 
 /* ── Editor header — responsive ──────────────────────────────────────── */
 /* Default: show long save label, hide short */
-.aa-header-save-short { display: none; }
+.aa-header-save-short,
+.aa-header-savedraft-short { display: none; }
 
 /* Below 768px: hide brand prefix + last-saved timestamp                 */
 @media (max-width: 768px) {
@@ -39,12 +40,60 @@
   .aa-header-lastsaved { display: none; }
 }
 
-/* Below 540px: hide Templates text, shorten save button label           */
+/* Below 540px: hide Templates text, shorten save button labels          */
 @media (max-width: 540px) {
   .aa-header-templates-label { display: none; }
-  .aa-header-save-label { display: none; }
-  .aa-header-save-short { display: inline; }
+  .aa-header-save-label,
+  .aa-header-savedraft-label { display: none; }
+  .aa-header-save-short,
+  .aa-header-savedraft-short { display: inline; }
   .aa-editor-header { padding: 0 8px !important; gap: 6px !important; }
+}
+
+/* ── Publish button — pulse while there are unpublished changes ────────── */
+@keyframes aa-publish-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+.aa-publish-pulse {
+  animation: aa-publish-pulse 2s ease-in-out infinite;
+}
+
+/* ── Mobile/tablet/desktop viewport switcher (Puck's built-in control) ─── */
+/* Puck ships this natively once a `viewports` prop is passed to <Puck>;   */
+/* we only restyle it to the pill-shaped, brand-red segmented control.     */
+[class*="ViewportControls-actionsInner"] {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background-color: #FFFFFF;
+  border: 1px solid #E8E2D6;
+  border-radius: 9999px;
+  padding: 3px;
+}
+[class*="ViewportButton"] {
+  border-radius: 9999px !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+[class*="ViewportButton"] svg {
+  color: #6F6863;
+  transition: color 0.15s ease;
+}
+[class*="ViewportButton--isActive"] {
+  background-color: #FC6161 !important;
+}
+[class*="ViewportButton--isActive"] svg {
+  color: #FFFFFF !important;
+}
+[class*="ViewportControls-divider"] {
+  background-color: #E8E2D6 !important;
+}
+
+/* Smooth width transition when switching viewports (spring-ish easing)   */
+#puck-canvas-root {
+  transition: width 300ms cubic-bezier(0.34, 1.2, 0.64, 1),
+              height 300ms cubic-bezier(0.34, 1.2, 0.64, 1),
+              transform 300ms cubic-bezier(0.34, 1.2, 0.64, 1) !important;
 }
 
 /* Strip number-input spinners from editor panel inputs */

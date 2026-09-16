@@ -3,26 +3,43 @@
 import { createClient } from "./supabase/server"
 import type { BookingTheme } from "@/features/automatedBooking/types/theme"
 
-export const sendEditorData = async (editorData: string, businessId: string | undefined, isPublished: boolean) => {
-    const supabase = await createClient();
-    if (!isPublished) {
-        await supabase.from('business_users').update({
-            published_site: true
-        }).eq('business_id', businessId!)
-    }
-    const { data, error } = await supabase.from('web_editors').update({
-        editor_data: editorData
-    }).eq("business_id", businessId!).select("*")
-    if (error) throw error
-    return data
-}
-
 export const getEditorData = async (businessId: string | undefined) => {
     const supabase = await createClient();
     const { data, error } = await supabase.from('web_editors').select("*").eq("business_id", businessId!).single()
     if (error) {
         return error
     }
+    return data
+}
+
+export const saveDraftData = async (draftData: string, businessId: string) => {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from('web_editors').update({
+        draft_data: draftData
+    }).eq("business_id", businessId).select("*")
+    if (error) throw error
+    return data
+}
+
+export const publishEditorData = async (businessId: string) => {
+    const supabase = await createClient();
+    const { data: current, error: fetchError } = await supabase.from('web_editors')
+        .select('draft_data')
+        .eq('business_id', businessId)
+        .single()
+    if (fetchError) throw fetchError
+
+    const publishedAt = new Date().toISOString()
+    const { data, error } = await supabase.from('web_editors').update({
+        editor_data: current.draft_data,
+        published_at: publishedAt,
+    }).eq("business_id", businessId).select("*")
+    if (error) throw error
+
+    await supabase.from('business_users').update({
+        published_site: true
+    }).eq('business_id', businessId)
+
     return data
 }
 
