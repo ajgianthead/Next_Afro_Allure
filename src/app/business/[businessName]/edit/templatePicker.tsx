@@ -1,11 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { createUsePuck } from '@puckeditor/core'
+import { createUsePuck, Render } from '@puckeditor/core'
 import { templates, Template } from '@/features/editor/templates'
-import { LayoutTemplate, Search, X } from 'lucide-react'
+import { config } from './constants'
+import { saveDraftData } from '@/app/utils/editor_actions'
+import { useWebBuilderEditorTour } from '@/features/tour/tours/WebBuilderEditorTour'
+import { LayoutTemplate, Search, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog'
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
     AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -16,48 +21,39 @@ const SERIF = '"Fraunces", "Times New Roman", serif'
 
 // ─── Category colors ──────────────────────────────────────────────────────────
 
-const CATEGORY_STYLE: Record<string, { bg: string; accent: string; headline: string; tag: string }> = {
-    luxury: { bg: '#1a1410', accent: '#c9974a', headline: '#f4ede2', tag: 'rgba(201,151,74,0.15)' },
-    modern: { bg: '#0f0e0e', accent: '#FC6161', headline: '#ffffff', tag: 'rgba(252,97,97,0.15)' },
-    minimal: { bg: '#f4ede2', accent: '#6F6863', headline: '#1A1818', tag: 'rgba(26,20,16,0.08)' },
+type Category = Template['category']
+
+const CATEGORY_STYLE: Record<Category, { accent: string; tag: string }> = {
+    luxury: { accent: '#c9974a', tag: 'rgba(201,151,74,0.15)' },
+    modern: { accent: '#FC6161', tag: 'rgba(252,97,97,0.15)' },
+    minimal: { accent: '#6F6863', tag: 'rgba(26,20,16,0.08)' },
+    bold: { accent: '#FF3D7F', tag: 'rgba(255,61,127,0.15)' },
+    clean: { accent: '#A9714A', tag: 'rgba(169,113,74,0.15)' },
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
+const CATEGORY_LABELS: Record<Category, string> = {
     luxury: 'Luxury',
     modern: 'Modern',
     minimal: 'Minimal',
+    bold: 'Bold',
+    clean: 'Clean',
 }
 
-// ─── Template card mockup ─────────────────────────────────────────────────────
+const CATEGORY_FILTERS: (Category | 'all')[] = ['all', 'luxury', 'modern', 'minimal', 'bold', 'clean']
 
-function TemplateMockup({ category }: { category: string }) {
-    const style = CATEGORY_STYLE[category] ?? CATEGORY_STYLE.minimal
+// ─── Live scaled thumbnail — reuses the same config/Render as the public page ──
+
+function TemplateThumbnail({ template, designWidth = 1400, cardWidth = 220, cardHeight = 130 }: {
+    template: Template
+    designWidth?: number
+    cardWidth?: number
+    cardHeight?: number
+}) {
+    const scale = cardWidth / designWidth
     return (
-        <div style={{
-            width: '100%', height: 120, borderRadius: 8, overflow: 'hidden',
-            backgroundColor: style.bg, position: 'relative',
-            display: 'flex', flexDirection: 'column', padding: 12, gap: 6,
-        }}>
-            {/* Simulated nav bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.7 }}>
-                <div style={{ width: 32, height: 5, borderRadius: 3, backgroundColor: style.headline }} />
-                <div style={{ display: 'flex', gap: 4 }}>
-                    {[0, 1, 2].map(i => (
-                        <div key={i} style={{ width: 16, height: 4, borderRadius: 2, backgroundColor: style.headline, opacity: 0.4 }} />
-                    ))}
-                </div>
-            </div>
-            {/* Simulated hero text */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5 }}>
-                <div style={{ width: '70%', height: 8, borderRadius: 3, backgroundColor: style.headline, opacity: 0.9 }} />
-                <div style={{ width: '50%', height: 5, borderRadius: 3, backgroundColor: style.headline, opacity: 0.4 }} />
-                <div style={{ width: 40, height: 14, borderRadius: 4, backgroundColor: style.accent, marginTop: 4 }} />
-            </div>
-            {/* Simulated section */}
-            <div style={{ display: 'flex', gap: 5 }}>
-                {[1, 0.7, 0.5].map((op, i) => (
-                    <div key={i} style={{ flex: 1, height: 20, borderRadius: 4, backgroundColor: style.headline, opacity: op * 0.25 }} />
-                ))}
+        <div style={{ width: '100%', height: cardHeight, overflow: 'hidden', position: 'relative', backgroundColor: '#FAF7F2' }}>
+            <div style={{ width: designWidth, transform: `scale(${scale})`, transformOrigin: 'top left', pointerEvents: 'none' }}>
+                <Render config={config} data={template.data} />
             </div>
         </div>
     )
@@ -67,44 +63,26 @@ function TemplateMockup({ category }: { category: string }) {
 
 function TemplateCard({ template, onSelect }: { template: Template; onSelect: (t: Template) => void }) {
     const [hovered, setHovered] = useState(false)
-    const style = CATEGORY_STYLE[template.category] ?? CATEGORY_STYLE.minimal
+    const style = CATEGORY_STYLE[template.category]
 
     return (
-        <div
+        <button
+            type="button"
+            onClick={() => onSelect(template)}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             style={{
                 border: '1.5px solid #E8E2D6',
                 borderRadius: 12, overflow: 'hidden',
                 backgroundColor: '#FFFFFF',
-                transition: 'box-shadow 0.15s, border-color 0.15s',
-                boxShadow: hovered ? '0 4px 20px rgba(0,0,0,0.08)' : 'none',
-                borderColor: hovered ? '#C9B89A' : '#E8E2D6',
-                cursor: 'pointer',
+                transition: 'box-shadow 0.15s, border-color 0.15s, transform 0.15s',
+                boxShadow: hovered ? '0 6px 20px rgba(0,0,0,0.08)' : 'none',
+                borderColor: hovered ? '#FC6161' : '#E8E2D6',
+                transform: hovered ? 'translateY(-2px)' : 'none',
+                cursor: 'pointer', textAlign: 'left', display: 'block', width: '100%',
             }}
         >
-            <div style={{ position: 'relative' }}>
-                <TemplateMockup category={template.category} />
-                {/* Hover overlay with "Use Template" */}
-                <div style={{
-                    position: 'absolute', inset: 0, display: 'flex',
-                    alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: 'rgba(15,14,14,0.55)',
-                    opacity: hovered ? 1 : 0, transition: 'opacity 0.15s',
-                }}>
-                    <button
-                        type="button"
-                        onClick={() => onSelect(template)}
-                        style={{
-                            backgroundColor: '#FC6161', color: '#FFFFFF',
-                            fontSize: 12, fontWeight: 600,
-                            padding: '6px 14px', borderRadius: 9999,
-                        }}
-                    >
-                        Use Template
-                    </button>
-                </div>
-            </div>
+            <TemplateThumbnail template={template} />
             <div style={{ padding: '10px 12px 12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                     <p style={{ fontFamily: SERIF, fontSize: 14, color: '#1A1818', fontWeight: 400 }}>
@@ -114,17 +92,17 @@ function TemplateCard({ template, onSelect }: { template: Template; onSelect: (t
                         fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
                         letterSpacing: '0.1em', textTransform: 'uppercase',
                         padding: '2px 7px', borderRadius: 9999,
-                        backgroundColor: CATEGORY_STYLE[template.category]?.tag ?? 'rgba(0,0,0,0.06)',
+                        backgroundColor: CATEGORY_STYLE[template.category].tag,
                         color: '#6F6863',
                     }}>
-                        {CATEGORY_LABELS[template.category] ?? template.category}
+                        {CATEGORY_LABELS[template.category]}
                     </span>
                 </div>
                 <p style={{ fontSize: 11, color: '#6F6863', lineHeight: 1.45 }}>
                     {template.description}
                 </p>
             </div>
-        </div>
+        </button>
     )
 }
 
@@ -132,10 +110,14 @@ function TemplateCard({ template, onSelect }: { template: Template; onSelect: (t
 
 export function TemplateCardList({ onSelect }: { onSelect: (t: Template) => void }) {
     const [search, setSearch] = useState('')
+    const [category, setCategory] = useState<Category | 'all'>('all')
     const query = search.toLowerCase()
-    const visible = query
-        ? templates.filter(t => t.name.toLowerCase().includes(query) || t.description.toLowerCase().includes(query) || t.category.includes(query))
-        : templates
+
+    const visible = templates.filter(t => {
+        const matchesQuery = !query || t.name.toLowerCase().includes(query) || t.description.toLowerCase().includes(query)
+        const matchesCategory = category === 'all' || t.category === category
+        return matchesQuery && matchesCategory
+    })
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 0', minHeight: 0 }}>
@@ -153,6 +135,27 @@ export function TemplateCardList({ onSelect }: { onSelect: (t: Template) => void
                     style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#1A1818', backgroundColor: 'transparent' }}
                 />
             </div>
+
+            {/* Category filter tabs */}
+            <div style={{ display: 'flex', gap: 4, flexShrink: 0, overflowX: 'auto' }}>
+                {CATEGORY_FILTERS.map(c => (
+                    <button
+                        key={c}
+                        type="button"
+                        onClick={() => setCategory(c)}
+                        style={{
+                            padding: '5px 12px', borderRadius: 9999, fontSize: 11, fontWeight: 600,
+                            whiteSpace: 'nowrap', flexShrink: 0,
+                            backgroundColor: category === c ? '#FC6161' : '#F5F6F8',
+                            color: category === c ? '#FFFFFF' : '#6F6863',
+                            border: 'none', cursor: 'pointer', transition: 'background-color 0.1s, color 0.1s',
+                        }}
+                    >
+                        {c === 'all' ? 'All' : CATEGORY_LABELS[c]}
+                    </button>
+                ))}
+            </div>
+
             {/* Grid */}
             <div style={{
                 display: 'grid', gridTemplateColumns: '1fr 1fr',
@@ -172,47 +175,101 @@ export function TemplateCardList({ onSelect }: { onSelect: (t: Template) => void
 
 // ─── InnerPicker — must render inside Puck context ────────────────────────────
 
-function InnerPicker({ onClose }: { onClose: () => void }) {
+function InnerPicker({ businessId, onClose }: { businessId?: string; onClose: () => void }) {
     const usePuck = createUsePuck()
     const dispatch = usePuck(s => s.dispatch)
-    const [pending, setPending] = useState<Template | null>(null)
+    const state = usePuck(s => s.appState)
+    const [previewing, setPreviewing] = useState<Template | null>(null)
+    const [confirming, setConfirming] = useState<Template | null>(null)
+    const [applying, setApplying] = useState(false)
+    const { trigger: triggerEditorTour } = useWebBuilderEditorTour()
 
-    const apply = (template: Template) => {
-        dispatch({ type: 'setData', data: () => template.data })
-        onClose()
+    const apply = async (template: Template) => {
+        setApplying(true)
+        try {
+            // Save whatever the stylist currently has as a draft first, so
+            // switching templates is never a destructive, unrecoverable action.
+            if (businessId) {
+                await saveDraftData(JSON.stringify(state.data), businessId)
+            }
+            dispatch({ type: 'setData', data: () => template.data })
+            onClose()
+            triggerEditorTour()
+        } finally {
+            setApplying(false)
+            setConfirming(null)
+        }
     }
 
-    return (
-        <>
-            <TemplateCardList onSelect={t => setPending(t)} />
-
-            <AlertDialog open={!!pending} onOpenChange={open => { if (!open) setPending(null) }}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Replace current content?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will replace everything on your page with the{' '}
-                            <strong>{pending?.name}</strong> template. This cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setPending(null)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => { if (pending) apply(pending) }}
-                            style={{ backgroundColor: '#FC6161' }}
+    if (previewing) {
+        return (
+            <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 0', minHeight: 0 }}>
+                    <button
+                        type="button"
+                        onClick={() => setPreviewing(null)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#6F6863', background: 'none', border: 'none', cursor: 'pointer', alignSelf: 'flex-start' }}
+                    >
+                        <ArrowLeft size={14} /> Back to templates
+                    </button>
+                    <div style={{
+                        flex: '1 1 0', minHeight: 0, borderRadius: 12, overflow: 'hidden',
+                        border: '1px solid #E8E2D6', backgroundColor: '#FAF7F2',
+                    }}>
+                        <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
+                            <div style={{ width: 1400, transform: 'scale(0.5)', transformOrigin: 'top left', pointerEvents: 'none' }}>
+                                <Render config={config} data={previewing.data} />
+                            </div>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                        <div>
+                            <p style={{ fontFamily: SERIF, fontSize: 16, color: '#1A1818' }}>{previewing.name}</p>
+                            <p style={{ fontSize: 12, color: '#6F6863' }}>{previewing.description}</p>
+                        </div>
+                        <Button
+                            onClick={() => setConfirming(previewing)}
+                            style={{ backgroundColor: '#FC6161', color: '#fff', borderRadius: 9999 }}
                         >
-                            Replace
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </>
-    )
+                            Use this template
+                        </Button>
+                    </div>
+                </div>
+
+                <AlertDialog open={!!confirming} onOpenChange={open => { if (!open) setConfirming(null) }}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Apply {confirming?.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will replace your current page. Your current design will be saved as a draft first, so nothing is lost.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                disabled={applying}
+                                onClick={() => { if (confirming) apply(confirming) }}
+                                style={{ backgroundColor: '#FC6161' }}
+                            >
+                                Apply template
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </>
+        )
+    }
+
+    return <TemplateCardList onSelect={setPreviewing} />
 }
 
-// ─── TemplatePicker — the button + sheet ─────────────────────────────────────
+// ─── TemplatePicker — the button + dialog ─────────────────────────────────────
 
-export const TemplatePicker = ({ open: openProp, onOpenChange }: { open?: boolean; onOpenChange?: (open: boolean) => void } = {}) => {
+export const TemplatePicker = ({ businessId, open: openProp, onOpenChange }: {
+    businessId?: string
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+} = {}) => {
     const [internalOpen, setInternalOpen] = useState(false)
     const open = openProp ?? internalOpen
     const setOpen = onOpenChange ?? setInternalOpen
@@ -221,6 +278,7 @@ export const TemplatePicker = ({ open: openProp, onOpenChange }: { open?: boolea
         <>
             <button
                 type="button"
+                data-tour="editor-templates"
                 onClick={() => setOpen(true)}
                 style={{
                     display: 'flex', alignItems: 'center', gap: 6,
@@ -247,21 +305,23 @@ export const TemplatePicker = ({ open: openProp, onOpenChange }: { open?: boolea
                 <span className="aa-header-templates-label">Templates</span>
             </button>
 
-            <Sheet open={open} onOpenChange={setOpen}>
-                <SheetContent side="left" style={{ width: 520, maxWidth: '90vw', padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <SheetHeader style={{ flexShrink: 0 }}>
-                        <SheetTitle style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 400, color: '#1A1818' }}>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent
+                    style={{ width: 760, maxWidth: '92vw', height: '82vh', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}
+                >
+                    <DialogHeader style={{ flexShrink: 0 }}>
+                        <DialogTitle style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 400, color: '#1A1818' }}>
                             Choose a Template
-                        </SheetTitle>
+                        </DialogTitle>
                         <p style={{ fontSize: 13, color: '#6F6863', marginTop: 4 }}>
-                            Starting from a template replaces your current content. This cannot be undone.
+                            Browse a template, preview it, then apply it — your current page is saved as a draft first.
                         </p>
-                    </SheetHeader>
+                    </DialogHeader>
                     <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-                        <InnerPicker onClose={() => setOpen(false)} />
+                        <InnerPicker businessId={businessId} onClose={() => setOpen(false)} />
                     </div>
-                </SheetContent>
-            </Sheet>
+                </DialogContent>
+            </Dialog>
         </>
     )
 }

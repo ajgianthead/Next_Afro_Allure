@@ -6,6 +6,7 @@ import { PostgrestError } from '@supabase/supabase-js';
 import { EditorWrapper } from '@/app/utils/context/EditorContext';
 import { createClient } from '@/app/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import { TourProvider } from '@/features/tour/TourProvider';
 
 const Page = async ({ params, searchParams }: { params: Promise<{ businessName: string }>; searchParams: Promise<{ template?: string }> }) => {
     const user = await fetchUser();
@@ -29,18 +30,24 @@ const Page = async ({ params, searchParams }: { params: Promise<{ businessName: 
 
     return (
         <div>
-            <EditorWrapper>
-                <Editor
-                    isPublished={business.published_site}
-                    services={services.data!}
-                    businessName={business.url_name}
-                    businessId={business.business_id}
-                    editorData={editorData.editor_data!}
-                    draftData={editorData.draft_data ?? ''}
-                    publishedAt={editorData.published_at}
-                    preloadedTemplateId={template}
-                />
-            </EditorWrapper>
+            <TourProvider
+                toursCompleted={(business.tours_completed as Record<string, boolean>) ?? {}}
+                businessId={business.business_id}
+                isOnboarded={business.is_onboarded ?? true}
+            >
+                <EditorWrapper>
+                    <Editor
+                        isPublished={business.published_site}
+                        services={services.data!}
+                        businessName={business.url_name}
+                        businessId={business.business_id}
+                        editorData={editorData.editor_data!}
+                        draftData={editorData.draft_data ?? ''}
+                        publishedAt={editorData.published_at}
+                        preloadedTemplateId={template}
+                    />
+                </EditorWrapper>
+            </TourProvider>
         </div>
     );
 

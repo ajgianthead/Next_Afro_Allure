@@ -301,6 +301,45 @@ export const TOUR_STEPS: Record<string, Step[]> = {
             skipBeacon: false,
         },
     ],
+
+    // First-time guided setup inside the drag-and-drop editor itself, shown
+    // once after a stylist applies their first template. Puck's canvas
+    // renders inside an iframe that a page-level tour can't spotlight, so
+    // every step here targets the editor chrome around the canvas instead.
+    webBuilderEditor: [
+        {
+            target: '[data-tour="editor-templates"]',
+            title: 'Start with a template',
+            content: 'Pick a template that fits your business, then customize it — every template stays fully editable.',
+            placement: 'bottom',
+            data: d('EDITOR SETUP TOUR'),
+            skipBeacon: false,
+        },
+        {
+            target: '[data-tour="editor-drawer"]',
+            title: 'Add your own photos and services',
+            content: 'Drag elements from here onto your page — add your own photos, and use a Card element to link to any of your services.',
+            placement: 'right',
+            data: d('EDITOR SETUP TOUR'),
+            skipBeacon: true,
+        },
+        {
+            target: '[data-tour="editor-savedraft"]',
+            title: 'Save anytime',
+            content: 'Save Draft keeps your progress without changing what visitors see — nothing goes live until you publish.',
+            placement: 'bottom',
+            data: d('EDITOR SETUP TOUR'),
+            skipBeacon: true,
+        },
+        {
+            target: '[data-tour="editor-publish"]',
+            title: "You're ready to publish!",
+            content: 'When your page looks right, hit Publish to make it live at your AfroAllure URL.',
+            placement: 'bottom',
+            data: d('EDITOR SETUP TOUR'),
+            skipBeacon: true,
+        },
+    ],
 }
 
 export const TOUR_DISPLAY_NAMES: Record<string, string> = {
@@ -315,6 +354,7 @@ export const TOUR_DISPLAY_NAMES: Record<string, string> = {
     monetization: 'Monetization',
     webBuilder: 'Web Builder Setup',
     webBuilderManage: 'Booking Site',
+    webBuilderEditor: 'Page Editor Setup',
 }
 
 export const TOUR_DESCRIPTIONS: Record<string, string> = {

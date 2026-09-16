@@ -15,6 +15,8 @@ import { TemplatePicker } from "./templatePicker";
 import { PublishDialog } from "./components/publishDialog";
 import { UnpublishedBanner } from "./components/unpublishedBanner";
 import { EmptyCanvasOverlay } from "./components/emptyCanvasOverlay";
+import { PresetPicker } from "./components/presetPicker";
+import { useWebBuilderEditorTour } from "@/features/tour/tours/WebBuilderEditorTour";
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { Components } from "./components/types";
 import { Json } from "../../../../../lib/database.types";
@@ -237,11 +239,12 @@ function EditorHeader({
                         </button>
                     ))}
                 </div>
-                <TemplatePicker open={templatePickerOpen} onOpenChange={setTemplatePickerOpen} />
+                <TemplatePicker businessId={businessId} open={templatePickerOpen} onOpenChange={setTemplatePickerOpen} />
 
                 {/* Save Draft — secondary, only emphasized when dirty */}
                 <button
                     type="button"
+                    data-tour="editor-savedraft"
                     disabled={savingDraft}
                     onClick={handleSaveDraft}
                     style={{
@@ -263,6 +266,7 @@ function EditorHeader({
                 {/* Publish — primary, pulses while there are unpublished changes */}
                 <button
                     type="button"
+                    data-tour="editor-publish"
                     disabled={publishing}
                     onClick={() => setShowPublishConfirm(true)}
                     className={draftDirty ? 'aa-publish-pulse' : undefined}
@@ -361,7 +365,7 @@ function DrawerContent({ children }: { children: React.ReactNode }) {
         : []
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#FAF7F2' }}>
+        <div data-tour="editor-drawer" style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#FAF7F2' }}>
             {/* Search input */}
             <div style={{ padding: '8px 10px', borderBottom: '1px solid #E8E2D6', backgroundColor: '#FFFFFF' }}>
                 <div style={{
@@ -445,11 +449,15 @@ function DrawerContent({ children }: { children: React.ReactNode }) {
 
 // ─── TemplateBanner ──────────────────────────────────────────────────────────
 
-function TemplateBanner({ template, dispatch, onDismiss }: {
+function TemplateBanner({ template, dispatch, state, businessId, onDismiss }: {
     template: Template
     dispatch: (action: any) => void
+    state: any
+    businessId: string
     onDismiss: () => void
 }) {
+    const [applying, setApplying] = useState(false)
+    const { trigger: triggerEditorTour } = useWebBuilderEditorTour()
     return (
         <div style={{
             display: 'flex', alignItems: 'center', gap: 12,
@@ -463,9 +471,17 @@ function TemplateBanner({ template, dispatch, onDismiss }: {
             </p>
             <button
                 type="button"
-                onClick={() => {
-                    dispatch({ type: 'setData', data: () => template.data })
-                    onDismiss()
+                disabled={applying}
+                onClick={async () => {
+                    setApplying(true)
+                    try {
+                        await saveDraftData(JSON.stringify(state.data), businessId)
+                        dispatch({ type: 'setData', data: () => template.data })
+                        onDismiss()
+                        triggerEditorTour()
+                    } finally {
+                        setApplying(false)
+                    }
                 }}
                 style={{
                     fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
@@ -502,6 +518,7 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
     const [lastPublished, setLastPublished] = useState<Date | null>(publishedAt ? new Date(publishedAt) : null)
     const [showUnpublishedBanner, setShowUnpublishedBanner] = useState(hasUnpublishedDraft)
     const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
+    const [presetTarget, setPresetTarget] = useState<{ kind: 'Container' | 'Section'; id: string } | null>(null)
 
     const preloadedTemplate = preloadedTemplateId
         ? templates.find(t => t.id === preloadedTemplateId) ?? null
@@ -551,6 +568,8 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
                 <TemplateBanner
                     template={preloadedTemplate}
                     dispatch={dispatch}
+                    state={state}
+                    businessId={businessId}
                     onDismiss={() => setBannerDismissed(true)}
                 />
             )}
@@ -580,6 +599,14 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
                             return { ...prev, sections: next }
                         })
                     }
+                    if (action.componentType === 'Container' || action.componentType === 'Section') {
+                        const zone = action.destinationZone
+                        const items = zone === 'root:default-zone' ? state.data.content : state.data.zones?.[zone]
+                        const item = items?.[action.destinationIndex]
+                        if (item?.props?.id) {
+                            setPresetTarget({ kind: action.componentType, id: item.props.id })
+                        }
+                    }
                 }
                 if (action.type === 'remove') {
                     const remaining = new Set(
@@ -601,7 +628,23 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
                 preview: ({ children }) => {
                     const usePuck = createUsePuck()
                     const contentLength = usePuck(s => s.appState.data.content.length)
+                    const getPuck = useGetPuck()
                     const host = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co').replace(/^https?:\/\//, '')
+
+                    const patchTarget = (patch: Record<string, any>) => {
+                        if (!presetTarget) return
+                        const puckState = getPuck()
+                        const currentItem = puckState.getItemById(presetTarget.id)
+                        const selector = puckState.getSelectorForId(presetTarget.id)
+                        if (!currentItem || !selector) return
+                        puckState.dispatch({
+                            type: 'replace',
+                            destinationIndex: selector.index,
+                            destinationZone: selector.zone,
+                            data: { ...currentItem, props: { ...currentItem.props, ...patch } },
+                        })
+                    }
+
                     return (
                         <div style={{ position: 'relative', height: '100%' }}>
                             <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
@@ -617,6 +660,14 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
                             {children}
                             {contentLength === 0 && (
                                 <EmptyCanvasOverlay onBrowseTemplates={() => setTemplatePickerOpen(true)} />
+                            )}
+                            {presetTarget && (
+                                <PresetPicker
+                                    kind={presetTarget.kind}
+                                    onApplyContainer={(preset) => { patchTarget(preset.patch); setPresetTarget(null) }}
+                                    onApplySection={(preset) => { patchTarget(preset.build()); setPresetTarget(null) }}
+                                    onSkip={() => setPresetTarget(null)}
+                                />
                             )}
                         </div>
                     )

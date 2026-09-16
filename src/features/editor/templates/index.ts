@@ -4,7 +4,7 @@ export type Template = {
     id: string
     name: string
     description: string
-    category: 'luxury' | 'modern' | 'minimal'
+    category: 'luxury' | 'modern' | 'minimal' | 'bold' | 'clean'
     data: Data
 }
 
@@ -20,7 +20,7 @@ const PH_IMG =
 
 // ─── Component factory helpers ─────────────────────────────────────────────────
 
-const ct = (text: string, ov: Record<string, any> = {}) => ({
+export const ct = (text: string, ov: Record<string, any> = {}) => ({
     type: 'CustomizableText' as const,
     props: {
         text,
@@ -42,7 +42,7 @@ const ct = (text: string, ov: Record<string, any> = {}) => ({
     },
 })
 
-const box = (ov: Record<string, any> = {}) => ({
+export const box = (ov: Record<string, any> = {}) => ({
     type: 'Container' as const,
     props: {
         backgroundColor: 'transparent',
@@ -100,7 +100,7 @@ const box = (ov: Record<string, any> = {}) => ({
     },
 })
 
-const btn = (text: string, ov: Record<string, any> = {}) => ({
+export const btn = (text: string, ov: Record<string, any> = {}) => ({
     type: 'Button' as const,
     props: {
         text,
@@ -169,7 +169,7 @@ const btn = (text: string, ov: Record<string, any> = {}) => ({
     },
 })
 
-const img = (ov: Record<string, any> = {}) => ({
+export const img = (ov: Record<string, any> = {}) => ({
     type: 'Image' as const,
     props: {
         url: PH_IMG,
@@ -2476,6 +2476,615 @@ const quickstartData: Data = {
     zones: {},
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// ── Natural Hair Studio — clean, organic, earth tones, cream backgrounds ──
+// ═══════════════════════════════════════════════════════════════════════════
+
+const NH_BG = '#FAF7F0'
+const NH_FG = '#2E2A22'
+const NH_ACCENT = '#A9714A'
+const NH_MUTED = 'rgba(46,42,34,.62)'
+const NH_BORDER = 'rgba(46,42,34,.12)'
+const NH_FIELD = 'rgba(169,113,74,.08)'
+const NH_SERIF = '"Fraunces", "Times New Roman", serif'
+const NH_SANS = '"Inter", system-ui, sans-serif'
+
+const nhSvcRow = (name: string, duration: string, price: string, id: string) =>
+    wrapInCard(box({
+        id: `nh-svc-${id}`, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+        paddingExpanded: 'true', paddingTop: 1.25, paddingBottom: 1.25, paddingLeft: 1.25, paddingRight: 1.25,
+        borderRadius: 14, borderWidth: 1, borderColor: NH_BORDER, borderType: 'solid', gapX: 16,
+        content: [
+            box({ id: `nh-svc-${id}-l`, grow: true, gapY: 4, content: [
+                ct(name, { id: `nh-svc-${id}-n`, fontFamily: NH_SERIF, fontSize: 1.375, lineHeight: 1.15, color: NH_FG }),
+                ct(duration, { id: `nh-svc-${id}-d`, fontFamily: NH_SANS, fontSize: 0.8125, color: NH_MUTED, lineHeight: 1 }),
+            ] }),
+            ct(price, { id: `nh-svc-${id}-p`, fontFamily: NH_SERIF, fontSize: 1.25, lineHeight: 1, color: NH_ACCENT, style: ['italic'] }),
+        ],
+    }), `nh-card-${id}`)
+
+const naturalHairStudioData: Data = {
+    content: [
+        box({
+            id: 'nh-nav', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', backgroundColor: NH_BG, borderExpanded: 'true', borderBottom: 1, borderWidth: 0, borderColor: NH_BORDER, borderType: 'solid',
+            content: [
+                ct('Rooted Curls', { id: 'nh-nav-brand', fontFamily: NH_SERIF, fontSize: 1.25, lineHeight: 1, color: NH_FG }),
+                box({ id: 'nh-nav-links', grow: false, flexDirection: 'flex-row', gapX: 28, hideBelow: 'lg', altAxisLayout: 'center', content: [
+                    ct('Services', { id: 'nh-nl1', fontFamily: NH_SANS, fontSize: 0.875, color: NH_FG }),
+                    ct('Gallery', { id: 'nh-nl2', fontFamily: NH_SANS, fontSize: 0.875, color: NH_FG }),
+                    ct('About', { id: 'nh-nl3', fontFamily: NH_SANS, fontSize: 0.875, color: NH_FG }),
+                ] }),
+                btn('Book now', { id: 'nh-nav-cta', backgroundColor: NH_ACCENT, color: '#ffffff', fontFamily: NH_SANS, borderRadius: 999, fontSize: 0.875, fontWeight: 600 }),
+            ],
+        }),
+        box({
+            id: 'nh-hero', padding: 2, responsiveDirection: 'col-to-row', altAxisLayout: 'center', spacing: 'spacious', gapX: 48, gapY: 32, backgroundColor: NH_BG,
+            content: [
+                box({ id: 'nh-hero-text', grow: true, gapY: 18, content: [
+                    ct('Natural Hair Care · Atlanta, GA', { id: 'nh-hero-ew', fontFamily: NH_SANS, fontSize: 0.75, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, lineHeight: 1, color: NH_ACCENT }),
+                    ct('Healthy curls start here.', { id: 'nh-hero-h', fontFamily: NH_SERIF, fontSize: 3.25, lineHeight: 1.15, color: NH_FG, maxWidth: 26 }),
+                    ct('A calm, plant-based studio for locs, twists, and natural texture care — no harsh chemicals, ever.', { id: 'nh-hero-body', fontFamily: NH_SANS, fontSize: 1.0625, lineHeight: 1.6, color: NH_MUTED, maxWidth: 28 }),
+                    box({ id: 'nh-hero-btns', grow: false, flexDirection: 'flex-row', responsiveDirection: 'col-to-row', gapX: 12, content: [
+                        btn('Book an appointment', { id: 'nh-hero-cta', backgroundColor: NH_ACCENT, color: '#ffffff', fontFamily: NH_SANS, borderRadius: 999, fontSize: 0.9375, fontWeight: 600 }),
+                    ] }),
+                ] }),
+                box({ id: 'nh-hero-img-wrap', grow: true, aspectRatio: '4/5', overflow: 'hidden', borderRadius: 24, padding: 0, content: [img({ id: 'nh-hi' })] }),
+            ],
+        }),
+        box({
+            id: 'nh-services', padding: 2, flexDirection: 'flex-col', spacing: 'normal', gapY: 20, backgroundColor: NH_FIELD,
+            content: [
+                ct('Services', { id: 'nh-svc-ew', fontFamily: NH_SANS, fontSize: 0.75, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, lineHeight: 1, color: NH_ACCENT }),
+                ct('Made for your texture.', { id: 'nh-svc-h', fontFamily: NH_SERIF, fontSize: 2.5, lineHeight: 1.15, color: NH_FG }),
+                box({ id: 'nh-svc-list', flexDirection: 'flex-col', gapY: 12, content: [
+                    nhSvcRow('Loc Retwist', '2 hr', '$95', 'r1'),
+                    nhSvcRow('Two-Strand Twists', '3 hr', '$140', 'r2'),
+                    nhSvcRow('Deep Condition & Trim', '75 min', '$70', 'r3'),
+                    nhSvcRow('Wash & Go Styling', '60 min', '$55', 'r4'),
+                ] }),
+            ],
+        }),
+        box({
+            id: 'nh-about', padding: 2, responsiveDirection: 'col-to-row', altAxisLayout: 'center', spacing: 'normal', gapX: 40, gapY: 32, backgroundColor: NH_BG,
+            content: [
+                box({ id: 'nh-ab-img-wrap', grow: false, aspectRatio: '1/1', overflow: 'hidden', borderRadius: 20, maxWidth: 22, padding: 0, content: [img({ id: 'nh-ab-img' })] }),
+                box({ id: 'nh-ab-text', grow: true, gapY: 14, content: [
+                    ct('About the studio', { id: 'nh-ab-ew', fontFamily: NH_SANS, fontSize: 0.75, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, lineHeight: 1, color: NH_ACCENT }),
+                    ct("Hi, I'm Jade.", { id: 'nh-ab-h', fontFamily: NH_SERIF, fontSize: 2.25, lineHeight: 1.15, color: NH_FG }),
+                    ct('Every client leaves with a plan for their hair, not just a style. I believe in patience, plant oils, and protective styles that actually protect.', { id: 'nh-ab-bio', fontFamily: NH_SANS, fontSize: 1, lineHeight: 1.6, color: NH_MUTED, maxWidth: 32 }),
+                ] }),
+            ],
+        }),
+        {
+            type: 'Grid' as const,
+            props: {
+                id: 'nh-gallery-grid', numberOfColumns: 4, numberOfRows: 1, gapX: 12, gapY: 12,
+                justifyItems: 'stretch', alignItems: 'stretch', firstCellRowSpan: 1, firstCellColumnSpan: 1,
+                cells: [
+                    { cell: [box({ id: 'nh-g1', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 16, padding: 0, content: [img({ id: 'nh-g1-i' })] })] },
+                    { cell: [box({ id: 'nh-g2', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 16, padding: 0, content: [img({ id: 'nh-g2-i' })] })] },
+                    { cell: [box({ id: 'nh-g3', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 16, padding: 0, content: [img({ id: 'nh-g3-i' })] })] },
+                    { cell: [box({ id: 'nh-g4', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 16, padding: 0, content: [img({ id: 'nh-g4-i' })] })] },
+                ],
+            },
+        },
+        box({
+            id: 'nh-cta', padding: 2, spacing: 'normal', backgroundColor: NH_BG,
+            content: [
+                box({
+                    id: 'nh-cta-card', flexDirection: 'flex-col', altAxisLayout: 'center', paddingExpanded: 'true',
+                    paddingTop: 3, paddingBottom: 3, paddingLeft: 3.5, paddingRight: 3.5, gapY: 12, backgroundColor: NH_FG, borderRadius: 24,
+                    content: [
+                        ct('Ready for healthier hair?', { id: 'nh-cta-h', fontFamily: NH_SERIF, fontSize: 2.25, lineHeight: 1.15, color: NH_BG, align: 'center' }),
+                        btn('Book an appointment →', { id: 'nh-cta-btn', backgroundColor: NH_ACCENT, color: '#ffffff', fontFamily: NH_SANS, borderRadius: 999, fontSize: 0.9375, fontWeight: 600 }),
+                    ],
+                }),
+            ],
+        }),
+        box({
+            id: 'nh-footer', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', responsiveDirection: 'col-to-row', backgroundColor: NH_BG, borderExpanded: 'true', borderTop: 1, borderWidth: 0, borderColor: NH_BORDER, borderType: 'solid',
+            content: [
+                ct('© Rooted Curls Studio · Built on AfroAllure', { id: 'nh-ft-copy', fontFamily: NH_SANS, fontSize: 0.8125, color: NH_MUTED, lineHeight: 1 }),
+            ],
+        }),
+    ],
+    root: { props: {} },
+    zones: {},
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── Nail Artist — bold, colorful, strong typography ────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+const NA_BG = '#0F0E0E'
+const NA_FG = '#FFFFFF'
+const NA_ACCENT = '#FF3D7F'
+const NA_ACCENT2 = '#3DD9FF'
+const NA_MUTED = 'rgba(255,255,255,.65)'
+const NA_FIELD = 'rgba(255,255,255,.06)'
+const NA_SANS = '"Poppins", system-ui, sans-serif'
+
+const naSvcRow = (name: string, duration: string, price: string, id: string) =>
+    wrapInCard(box({
+        id: `na-svc-${id}`, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+        paddingExpanded: 'true', paddingTop: 1.25, paddingBottom: 1.25, paddingLeft: 1.25, paddingRight: 1.25,
+        borderRadius: 16, backgroundColor: NA_FIELD, gapX: 16,
+        content: [
+            ct(name, { id: `na-svc-${id}-n`, fontFamily: NA_SANS, fontSize: 1.125, fontWeight: 700, lineHeight: 1.2, color: NA_FG }),
+            box({ id: `na-svc-${id}-r`, grow: false, flexDirection: 'flex-row', gapX: 10, altAxisLayout: 'center', content: [
+                ct(duration, { id: `na-svc-${id}-d`, fontFamily: NA_SANS, fontSize: 0.8125, color: NA_MUTED, lineHeight: 1 }),
+                ct(price, { id: `na-svc-${id}-p`, fontFamily: NA_SANS, fontSize: 1.125, fontWeight: 700, color: NA_ACCENT, lineHeight: 1 }),
+            ] }),
+        ],
+    }), `na-card-${id}`)
+
+const nailArtistData: Data = {
+    content: [
+        box({
+            id: 'na-nav', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', backgroundColor: NA_BG,
+            content: [
+                ct('POLISHED.', { id: 'na-nav-brand', fontFamily: NA_SANS, fontSize: 1.25, fontWeight: 800, lineHeight: 1, color: NA_FG }),
+                btn('Book now', { id: 'na-nav-cta', backgroundColor: NA_ACCENT, color: '#ffffff', fontFamily: NA_SANS, borderRadius: 999, fontSize: 0.875, fontWeight: 700 }),
+            ],
+        }),
+        box({
+            id: 'na-hero', padding: 2, flexDirection: 'flex-col', altAxisLayout: 'center', spacing: 'spacious', gapY: 16, backgroundColor: NA_BG,
+            content: [
+                ct('Nail Art Studio · Miami, FL', { id: 'na-hero-ew', fontFamily: NA_SANS, fontSize: 0.8125, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, lineHeight: 1, color: NA_ACCENT2, align: 'center' }),
+                ct('Nails that go off.', { id: 'na-hero-h', fontFamily: NA_SANS, fontSize: 3.75, fontWeight: 800, lineHeight: 1.05, color: NA_FG, align: 'center', maxWidth: 40 }),
+                btn('Book your set', { id: 'na-hero-cta', backgroundColor: NA_ACCENT, color: '#ffffff', fontFamily: NA_SANS, borderRadius: 999, fontSize: 1, fontWeight: 700 }),
+            ],
+        }),
+        box({
+            id: 'na-portfolio', padding: 2, flexDirection: 'flex-col', spacing: 'normal', gapY: 20, backgroundColor: NA_BG,
+            content: [
+                ct('Portfolio', { id: 'na-pf-h', fontFamily: NA_SANS, fontSize: 2.25, fontWeight: 800, lineHeight: 1.1, color: NA_FG, align: 'center' }),
+                {
+                    type: 'Grid' as const,
+                    props: {
+                        id: 'na-pf-grid', numberOfColumns: 3, numberOfRows: 2, gapX: 12, gapY: 12,
+                        justifyItems: 'stretch', alignItems: 'stretch', firstCellRowSpan: 1, firstCellColumnSpan: 1,
+                        cells: Array.from({ length: 6 }, (_, i) => ({
+                            cell: [box({ id: `na-pf-${i}`, aspectRatio: '1/1', overflow: 'hidden', borderRadius: 20, padding: 0, content: [img({ id: `na-pf-${i}-i` })] })],
+                        })),
+                    },
+                },
+            ],
+        }),
+        box({
+            id: 'na-services', padding: 2, flexDirection: 'flex-col', spacing: 'normal', gapY: 20, backgroundColor: NA_BG,
+            content: [
+                ct('Menu', { id: 'na-svc-h', fontFamily: NA_SANS, fontSize: 2.25, fontWeight: 800, lineHeight: 1.1, color: NA_FG }),
+                box({ id: 'na-svc-list', flexDirection: 'flex-col', gapY: 10, content: [
+                    naSvcRow('Full Set — Acrylic', '90 min', '$75', 'r1'),
+                    naSvcRow('Gel-X Extensions', '2 hr', '$95', 'r2'),
+                    naSvcRow('Nail Art (per hand)', '30 min', '$20', 'r3'),
+                    naSvcRow('Fill / Rebalance', '60 min', '$55', 'r4'),
+                ] }),
+            ],
+        }),
+        box({
+            id: 'na-cta', padding: 2, spacing: 'normal', backgroundColor: NA_BG,
+            content: [
+                box({
+                    id: 'na-cta-card', flexDirection: 'flex-col', altAxisLayout: 'center', paddingExpanded: 'true',
+                    paddingTop: 3, paddingBottom: 3, paddingLeft: 3, paddingRight: 3, gapY: 14, backgroundColor: NA_ACCENT, borderRadius: 24,
+                    content: [
+                        ct('Slots go fast.', { id: 'na-cta-h', fontFamily: NA_SANS, fontSize: 2.25, fontWeight: 800, lineHeight: 1.1, color: '#ffffff', align: 'center' }),
+                        btn('Book now →', { id: 'na-cta-btn', backgroundColor: NA_BG, color: '#ffffff', fontFamily: NA_SANS, borderRadius: 999, fontSize: 0.9375, fontWeight: 700 }),
+                    ],
+                }),
+            ],
+        }),
+        box({
+            id: 'na-footer', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', responsiveDirection: 'col-to-row', backgroundColor: NA_BG,
+            content: [
+                ct('© Polished Nail Studio · Built on AfroAllure', { id: 'na-ft-copy', fontFamily: NA_SANS, fontSize: 0.8125, color: NA_MUTED, lineHeight: 1 }),
+            ],
+        }),
+    ],
+    root: { props: {} },
+    zones: {},
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── Barber Shop — dark, masculine, strong contrast ─────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+const BS_BG = '#141414'
+const BS_FG = '#F5F3EE'
+const BS_ACCENT = '#C9A227'
+const BS_MUTED = 'rgba(245,243,238,.6)'
+const BS_BORDER = 'rgba(245,243,238,.14)'
+const BS_FIELD = 'rgba(245,243,238,.05)'
+const BS_DISPLAY = '"Oswald", "Arial Narrow", sans-serif'
+const BS_SANS = '"Inter", system-ui, sans-serif'
+
+const bsSvcRow = (name: string, duration: string, price: string, id: string) =>
+    wrapInCard(box({
+        id: `bs-svc-${id}`, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+        paddingExpanded: 'true', paddingTop: 1.1, paddingBottom: 1.1, paddingLeft: 1.25, paddingRight: 1.25,
+        borderExpanded: 'true', borderBottom: 1, borderWidth: 0, borderColor: BS_BORDER, borderType: 'solid', gapX: 16,
+        content: [
+            ct(name, { id: `bs-svc-${id}-n`, fontFamily: BS_DISPLAY, fontSize: 1.25, textTransform: 'uppercase', letterSpacing: 0.5, lineHeight: 1.2, color: BS_FG }),
+            box({ id: `bs-svc-${id}-r`, grow: false, flexDirection: 'flex-row', gapX: 12, altAxisLayout: 'center', content: [
+                ct(duration, { id: `bs-svc-${id}-d`, fontFamily: BS_SANS, fontSize: 0.8125, color: BS_MUTED, lineHeight: 1 }),
+                ct(price, { id: `bs-svc-${id}-p`, fontFamily: BS_DISPLAY, fontSize: 1.125, color: BS_ACCENT, lineHeight: 1 }),
+            ] }),
+        ],
+    }), `bs-card-${id}`)
+
+const barberShopData: Data = {
+    content: [
+        box({
+            id: 'bs-nav', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', backgroundColor: BS_BG, borderExpanded: 'true', borderBottom: 1, borderWidth: 0, borderColor: BS_BORDER, borderType: 'solid',
+            content: [
+                ct('KINGS CUT CO.', { id: 'bs-nav-brand', fontFamily: BS_DISPLAY, fontSize: 1.25, textTransform: 'uppercase', letterSpacing: 1, lineHeight: 1, color: BS_FG }),
+                box({ id: 'bs-nav-links', grow: false, flexDirection: 'flex-row', gapX: 28, hideBelow: 'lg', altAxisLayout: 'center', content: [
+                    ct('Services', { id: 'bs-nl1', fontFamily: BS_SANS, fontSize: 0.875, color: BS_FG }),
+                    ct('Hours', { id: 'bs-nl2', fontFamily: BS_SANS, fontSize: 0.875, color: BS_FG }),
+                    ct('Location', { id: 'bs-nl3', fontFamily: BS_SANS, fontSize: 0.875, color: BS_FG }),
+                ] }),
+                btn('Book now', { id: 'bs-nav-cta', backgroundColor: BS_ACCENT, color: BS_BG, fontFamily: BS_DISPLAY, textTransform: 'uppercase', borderRadius: 4, fontSize: 0.875 }),
+            ],
+        }),
+        box({
+            id: 'bs-hero', padding: 2, responsiveDirection: 'col-to-row', altAxisLayout: 'center', spacing: 'spacious', gapX: 48, gapY: 32, backgroundColor: BS_BG,
+            content: [
+                box({ id: 'bs-hero-text', grow: true, gapY: 16, content: [
+                    ct('Est. 2019 · Downtown', { id: 'bs-hero-ew', fontFamily: BS_SANS, fontSize: 0.8125, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, lineHeight: 1, color: BS_ACCENT }),
+                    ct('Sharp cuts. No shortcuts.', { id: 'bs-hero-h', fontFamily: BS_DISPLAY, fontSize: 3.5, textTransform: 'uppercase', letterSpacing: 0.5, lineHeight: 1.05, color: BS_FG, maxWidth: 24 }),
+                    ct('Classic barbering with modern precision. Walk-ins welcome, appointments preferred.', { id: 'bs-hero-body', fontFamily: BS_SANS, fontSize: 1.0625, lineHeight: 1.6, color: BS_MUTED, maxWidth: 28 }),
+                    btn('Book an appointment', { id: 'bs-hero-cta', backgroundColor: BS_ACCENT, color: BS_BG, fontFamily: BS_DISPLAY, textTransform: 'uppercase', borderRadius: 4, fontSize: 0.9375 }),
+                ] }),
+                box({ id: 'bs-hero-img-wrap', grow: true, aspectRatio: '4/5', overflow: 'hidden', borderRadius: 4, padding: 0, content: [img({ id: 'bs-hi' })] }),
+            ],
+        }),
+        box({
+            id: 'bs-services', padding: 2, flexDirection: 'flex-col', spacing: 'normal', gapY: 16, backgroundColor: BS_FIELD,
+            content: [
+                ct('Services', { id: 'bs-svc-h', fontFamily: BS_DISPLAY, fontSize: 2.5, textTransform: 'uppercase', letterSpacing: 0.5, lineHeight: 1.1, color: BS_FG }),
+                box({ id: 'bs-svc-list', flexDirection: 'flex-col', gapY: 0, content: [
+                    bsSvcRow('Classic Haircut', '30 min', '$35', 'r1'),
+                    bsSvcRow('Haircut + Beard Line', '45 min', '$50', 'r2'),
+                    bsSvcRow('Skin Fade', '45 min', '$45', 'r3'),
+                    bsSvcRow('Hot Towel Shave', '30 min', '$30', 'r4'),
+                ] }),
+            ],
+        }),
+        box({
+            id: 'bs-info', padding: 2, responsiveDirection: 'col-to-row', spacing: 'normal', gapX: 40, gapY: 24, backgroundColor: BS_BG,
+            content: [
+                box({ id: 'bs-hours', grow: true, gapY: 10, content: [
+                    ct('Hours', { id: 'bs-hrs-h', fontFamily: BS_DISPLAY, fontSize: 1.5, textTransform: 'uppercase', lineHeight: 1.1, color: BS_ACCENT }),
+                    ct('Mon–Fri: 9am – 7pm', { id: 'bs-hrs-1', fontFamily: BS_SANS, fontSize: 0.9375, color: BS_MUTED, lineHeight: 1.5 }),
+                    ct('Sat: 9am – 5pm', { id: 'bs-hrs-2', fontFamily: BS_SANS, fontSize: 0.9375, color: BS_MUTED, lineHeight: 1.5 }),
+                    ct('Sun: Closed', { id: 'bs-hrs-3', fontFamily: BS_SANS, fontSize: 0.9375, color: BS_MUTED, lineHeight: 1.5 }),
+                ] }),
+                box({ id: 'bs-location', grow: true, gapY: 10, content: [
+                    ct('Location', { id: 'bs-loc-h', fontFamily: BS_DISPLAY, fontSize: 1.5, textTransform: 'uppercase', lineHeight: 1.1, color: BS_ACCENT }),
+                    ct('412 Main St, Suite 2', { id: 'bs-loc-1', fontFamily: BS_SANS, fontSize: 0.9375, color: BS_MUTED, lineHeight: 1.5 }),
+                    ct('Downtown', { id: 'bs-loc-2', fontFamily: BS_SANS, fontSize: 0.9375, color: BS_MUTED, lineHeight: 1.5 }),
+                ] }),
+            ],
+        }),
+        box({
+            id: 'bs-cta', padding: 2, spacing: 'normal', backgroundColor: BS_BG,
+            content: [
+                box({
+                    id: 'bs-cta-card', flexDirection: 'flex-col', altAxisLayout: 'center', paddingExpanded: 'true',
+                    paddingTop: 3, paddingBottom: 3, paddingLeft: 3, paddingRight: 3, gapY: 14, backgroundColor: BS_FIELD, borderRadius: 4,
+                    borderExpanded: 'true', borderTop: 1, borderBottom: 1, borderWidth: 0, borderColor: BS_BORDER, borderType: 'solid',
+                    content: [
+                        ct('Book your seat.', { id: 'bs-cta-h', fontFamily: BS_DISPLAY, fontSize: 2.25, textTransform: 'uppercase', lineHeight: 1.1, color: BS_FG, align: 'center' }),
+                        btn('Book now →', { id: 'bs-cta-btn', backgroundColor: BS_ACCENT, color: BS_BG, fontFamily: BS_DISPLAY, textTransform: 'uppercase', borderRadius: 4, fontSize: 0.9375 }),
+                    ],
+                }),
+            ],
+        }),
+        box({
+            id: 'bs-footer', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', responsiveDirection: 'col-to-row', backgroundColor: BS_BG, borderExpanded: 'true', borderTop: 1, borderWidth: 0, borderColor: BS_BORDER, borderType: 'solid',
+            content: [
+                ct('© Kings Cut Co. · Built on AfroAllure', { id: 'bs-ft-copy', fontFamily: BS_SANS, fontSize: 0.8125, color: BS_MUTED, lineHeight: 1 }),
+            ],
+        }),
+    ],
+    root: { props: {} },
+    zones: {},
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── Lash & Beauty — soft, feminine, pink/cream tones ────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+const LB_BG = '#FFF7F5'
+const LB_FG = '#3D2B2E'
+const LB_ACCENT = '#E8A5B8'
+const LB_MUTED = 'rgba(61,43,46,.6)'
+const LB_BORDER = 'rgba(61,43,46,.1)'
+const LB_FIELD = '#FDEDEA'
+const LB_SERIF = '"Cormorant Garamond", "Times New Roman", serif'
+const LB_SANS = '"Inter", system-ui, sans-serif'
+
+const lbSvcRow = (name: string, duration: string, price: string, id: string) =>
+    wrapInCard(box({
+        id: `lb-svc-${id}`, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+        paddingExpanded: 'true', paddingTop: 1.25, paddingBottom: 1.25, paddingLeft: 1.25, paddingRight: 1.25,
+        borderRadius: 16, backgroundColor: '#ffffff', gapX: 16,
+        content: [
+            box({ id: `lb-svc-${id}-l`, grow: true, gapY: 4, content: [
+                ct(name, { id: `lb-svc-${id}-n`, fontFamily: LB_SERIF, fontSize: 1.5, lineHeight: 1.15, color: LB_FG }),
+                ct(duration, { id: `lb-svc-${id}-d`, fontFamily: LB_SANS, fontSize: 0.8125, color: LB_MUTED, lineHeight: 1 }),
+            ] }),
+            ct(price, { id: `lb-svc-${id}-p`, fontFamily: LB_SERIF, fontSize: 1.375, lineHeight: 1, color: LB_ACCENT }),
+        ],
+    }), `lb-card-${id}`)
+
+const lashAndBeautyData: Data = {
+    content: [
+        box({
+            id: 'lb-nav', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', backgroundColor: LB_BG, borderExpanded: 'true', borderBottom: 1, borderWidth: 0, borderColor: LB_BORDER, borderType: 'solid',
+            content: [
+                ct('Blush & Lash', { id: 'lb-nav-brand', fontFamily: LB_SERIF, fontSize: 1.5, lineHeight: 1, color: LB_FG }),
+                btn('Book now', { id: 'lb-nav-cta', backgroundColor: LB_ACCENT, color: '#ffffff', fontFamily: LB_SANS, borderRadius: 999, fontSize: 0.875, fontWeight: 600 }),
+            ],
+        }),
+        box({
+            id: 'lb-hero', padding: 2, flexDirection: 'flex-col', altAxisLayout: 'center', spacing: 'spacious', gapY: 18, backgroundColor: LB_BG,
+            content: [
+                ct('Lash & Brow Studio', { id: 'lb-hero-ew', fontFamily: LB_SANS, fontSize: 0.75, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.5, lineHeight: 1, color: LB_ACCENT, align: 'center' }),
+                ct('Soft glam, everyday.', { id: 'lb-hero-h', fontFamily: LB_SERIF, fontSize: 3.75, lineHeight: 1.1, color: LB_FG, align: 'center', maxWidth: 30 }),
+                ct('Volume lashes, brow lamination, and lash lifts — designed to look effortless.', { id: 'lb-hero-body', fontFamily: LB_SANS, fontSize: 1.0625, lineHeight: 1.6, color: LB_MUTED, align: 'center', maxWidth: 28 }),
+                btn('Book an appointment', { id: 'lb-hero-cta', backgroundColor: LB_ACCENT, color: '#ffffff', fontFamily: LB_SANS, borderRadius: 999, fontSize: 0.9375, fontWeight: 600 }),
+            ],
+        }),
+        box({
+            id: 'lb-services', padding: 2, flexDirection: 'flex-col', spacing: 'normal', gapY: 20, backgroundColor: LB_FIELD,
+            content: [
+                ct('Services', { id: 'lb-svc-ew', fontFamily: LB_SANS, fontSize: 0.75, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.5, lineHeight: 1, color: LB_ACCENT }),
+                ct('Find your look.', { id: 'lb-svc-h', fontFamily: LB_SERIF, fontSize: 2.75, lineHeight: 1.15, color: LB_FG }),
+                box({ id: 'lb-svc-list', flexDirection: 'flex-col', gapY: 12, content: [
+                    lbSvcRow('Classic Lash Set', '90 min', '$85', 'r1'),
+                    lbSvcRow('Hybrid Lash Set', '2 hr', '$110', 'r2'),
+                    lbSvcRow('Volume Lash Set', '2.5 hr', '$135', 'r3'),
+                    lbSvcRow('Brow Lamination', '45 min', '$60', 'r4'),
+                ] }),
+            ],
+        }),
+        {
+            type: 'Grid' as const,
+            props: {
+                id: 'lb-gallery-grid', numberOfColumns: 4, numberOfRows: 1, gapX: 12, gapY: 12,
+                justifyItems: 'stretch', alignItems: 'stretch', firstCellRowSpan: 1, firstCellColumnSpan: 1,
+                cells: [
+                    { cell: [box({ id: 'lb-g1', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 20, padding: 0, content: [img({ id: 'lb-g1-i' })] })] },
+                    { cell: [box({ id: 'lb-g2', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 20, padding: 0, content: [img({ id: 'lb-g2-i' })] })] },
+                    { cell: [box({ id: 'lb-g3', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 20, padding: 0, content: [img({ id: 'lb-g3-i' })] })] },
+                    { cell: [box({ id: 'lb-g4', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 20, padding: 0, content: [img({ id: 'lb-g4-i' })] })] },
+                ],
+            },
+        },
+        box({
+            id: 'lb-reviews', padding: 2, flexDirection: 'flex-col', spacing: 'normal', gapY: 20, backgroundColor: LB_BG,
+            content: [
+                ct('What clients say', { id: 'lb-rv-h', fontFamily: LB_SERIF, fontSize: 2.5, lineHeight: 1.15, color: LB_FG, align: 'center' }),
+                {
+                    type: 'Grid' as const,
+                    props: {
+                        id: 'lb-rv-grid', numberOfColumns: 3, numberOfRows: 1, gapX: 12, gapY: 12,
+                        justifyItems: 'stretch', alignItems: 'start', firstCellRowSpan: 1, firstCellColumnSpan: 1,
+                        cells: [
+                            { cell: [box({ id: 'lb-rv1', backgroundColor: LB_FIELD, borderRadius: 16, paddingExpanded: 'true', paddingTop: 1.25, paddingBottom: 1.25, paddingLeft: 1.25, paddingRight: 1.25, gapY: 8, content: [ct('★★★★★', { id: 'lb-rv1s', fontSize: 0.8125, color: LB_ACCENT, lineHeight: 1 }), ct('"My lashes have never looked better — so soft and natural."', { id: 'lb-rv1q', fontFamily: LB_SANS, fontSize: 0.9375, lineHeight: 1.55, color: LB_FG }), ct('— Simone', { id: 'lb-rv1n', fontFamily: LB_SANS, fontSize: 0.8125, fontWeight: 600, color: LB_FG, lineHeight: 1 })] })] },
+                            { cell: [box({ id: 'lb-rv2', backgroundColor: LB_FIELD, borderRadius: 16, paddingExpanded: 'true', paddingTop: 1.25, paddingBottom: 1.25, paddingLeft: 1.25, paddingRight: 1.25, gapY: 8, content: [ct('★★★★★', { id: 'lb-rv2s', fontSize: 0.8125, color: LB_ACCENT, lineHeight: 1 }), ct('"So relaxing and my brows have never looked so put together."', { id: 'lb-rv2q', fontFamily: LB_SANS, fontSize: 0.9375, lineHeight: 1.55, color: LB_FG }), ct('— Danielle', { id: 'lb-rv2n', fontFamily: LB_SANS, fontSize: 0.8125, fontWeight: 600, color: LB_FG, lineHeight: 1 })] })] },
+                            { cell: [box({ id: 'lb-rv3', backgroundColor: LB_FIELD, borderRadius: 16, paddingExpanded: 'true', paddingTop: 1.25, paddingBottom: 1.25, paddingLeft: 1.25, paddingRight: 1.25, gapY: 8, content: [ct('★★★★★', { id: 'lb-rv3s', fontSize: 0.8125, color: LB_ACCENT, lineHeight: 1 }), ct('"Booked again the same day I left — obsessed."', { id: 'lb-rv3q', fontFamily: LB_SANS, fontSize: 0.9375, lineHeight: 1.55, color: LB_FG }), ct('— Priya', { id: 'lb-rv3n', fontFamily: LB_SANS, fontSize: 0.8125, fontWeight: 600, color: LB_FG, lineHeight: 1 })] })] },
+                        ],
+                    },
+                },
+            ],
+        }),
+        box({
+            id: 'lb-cta', padding: 2, spacing: 'normal', backgroundColor: LB_FIELD,
+            content: [
+                box({
+                    id: 'lb-cta-card', flexDirection: 'flex-col', altAxisLayout: 'center', paddingExpanded: 'true',
+                    paddingTop: 3, paddingBottom: 3, paddingLeft: 3.5, paddingRight: 3.5, gapY: 12, backgroundColor: '#ffffff', borderRadius: 24,
+                    content: [
+                        ct('Treat yourself.', { id: 'lb-cta-h', fontFamily: LB_SERIF, fontSize: 2.5, lineHeight: 1.15, color: LB_FG, align: 'center' }),
+                        btn('Book an appointment →', { id: 'lb-cta-btn', backgroundColor: LB_ACCENT, color: '#ffffff', fontFamily: LB_SANS, borderRadius: 999, fontSize: 0.9375, fontWeight: 600 }),
+                    ],
+                }),
+            ],
+        }),
+        box({
+            id: 'lb-footer', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', responsiveDirection: 'col-to-row', backgroundColor: LB_BG, borderExpanded: 'true', borderTop: 1, borderWidth: 0, borderColor: LB_BORDER, borderType: 'solid',
+            content: [
+                ct('© Blush & Lash Studio · Built on AfroAllure', { id: 'lb-ft-copy', fontFamily: LB_SANS, fontSize: 0.8125, color: LB_MUTED, lineHeight: 1 }),
+            ],
+        }),
+    ],
+    root: { props: {} },
+    zones: {},
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── Loc Specialist — cultural, warm, rich colors ────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+const LS_BG = '#F7EDE2'
+const LS_FG = '#3B1F12'
+const LS_ACCENT = '#8C2F39'
+const LS_GOLD = '#B8860B'
+const LS_MUTED = 'rgba(59,31,18,.62)'
+const LS_BORDER = 'rgba(59,31,18,.14)'
+const LS_SERIF = '"Lora", "Times New Roman", serif'
+const LS_SANS = '"Inter", system-ui, sans-serif'
+
+const lsPriceRow = (name: string, price: string, id: string) =>
+    box({
+        id: `ls-pr-${id}`, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+        paddingExpanded: 'true', paddingTop: 0.9, paddingBottom: 0.9, borderExpanded: 'true', borderBottom: 1, borderWidth: 0, borderColor: LS_BORDER, borderType: 'solid',
+        content: [
+            ct(name, { id: `ls-pr-${id}-n`, fontFamily: LS_SERIF, fontSize: 1.125, lineHeight: 1.2, color: LS_FG }),
+            ct(price, { id: `ls-pr-${id}-p`, fontFamily: LS_SERIF, fontSize: 1.125, lineHeight: 1, color: LS_ACCENT, style: ['italic'] }),
+        ],
+    })
+
+const locSpecialistData: Data = {
+    content: [
+        box({
+            id: 'ls-nav', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', backgroundColor: LS_BG, borderExpanded: 'true', borderBottom: 1, borderWidth: 0, borderColor: LS_BORDER, borderType: 'solid',
+            content: [
+                ct('Crowned Locs', { id: 'ls-nav-brand', fontFamily: LS_SERIF, fontSize: 1.375, lineHeight: 1, color: LS_FG }),
+                btn('Contact', { id: 'ls-nav-cta', backgroundColor: LS_ACCENT, color: '#ffffff', fontFamily: LS_SANS, borderRadius: 4, fontSize: 0.875, fontWeight: 600 }),
+            ],
+        }),
+        box({
+            id: 'ls-about', padding: 2, responsiveDirection: 'col-to-row', altAxisLayout: 'center', spacing: 'spacious', gapX: 48, gapY: 32, backgroundColor: LS_BG,
+            content: [
+                box({ id: 'ls-ab-img-wrap', grow: false, aspectRatio: '4/5', overflow: 'hidden', borderRadius: 4, maxWidth: 24, padding: 0, borderExpanded: 'true', borderWidth: 4, borderColor: LS_GOLD, borderType: 'solid', content: [img({ id: 'ls-ab-img' })] }),
+                box({ id: 'ls-ab-text', grow: true, gapY: 16, content: [
+                    ct('Loctician · Houston, TX', { id: 'ls-ab-ew', fontFamily: LS_SANS, fontSize: 0.75, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.5, lineHeight: 1, color: LS_GOLD }),
+                    ct('Your crown, honored.', { id: 'ls-ab-h', fontFamily: LS_SERIF, fontSize: 3, lineHeight: 1.15, color: LS_FG, maxWidth: 26 }),
+                    ct('Fifteen years of locking, retwisting, and styling — rooted in culture, built on trust. Every set of locs tells a story.', { id: 'ls-ab-bio', fontFamily: LS_SANS, fontSize: 1.0625, lineHeight: 1.65, color: LS_MUTED, maxWidth: 32 }),
+                ] }),
+            ],
+        }),
+        box({
+            id: 'ls-services', padding: 2, flexDirection: 'flex-col', spacing: 'normal', gapY: 16, backgroundColor: '#ffffff',
+            content: [
+                ct('Services', { id: 'ls-svc-h', fontFamily: LS_SERIF, fontSize: 2.5, lineHeight: 1.15, color: LS_FG }),
+                box({ id: 'ls-svc-list', flexDirection: 'flex-col', gapY: 4, content: [
+                    ct('Starter Locs (Full Head)', { id: 'ls-svc-l1', fontFamily: LS_SANS, fontSize: 0.9375, color: LS_MUTED, lineHeight: 1.6 }),
+                    ct('Loc Retwist & Style', { id: 'ls-svc-l2', fontFamily: LS_SANS, fontSize: 0.9375, color: LS_MUTED, lineHeight: 1.6 }),
+                    ct('Loc Repair', { id: 'ls-svc-l3', fontFamily: LS_SANS, fontSize: 0.9375, color: LS_MUTED, lineHeight: 1.6 }),
+                    ct('Loc Styling (Updo)', { id: 'ls-svc-l4', fontFamily: LS_SANS, fontSize: 0.9375, color: LS_MUTED, lineHeight: 1.6 }),
+                ] }),
+            ],
+        }),
+        {
+            type: 'Grid' as const,
+            props: {
+                id: 'ls-gallery-grid', numberOfColumns: 3, numberOfRows: 1, gapX: 12, gapY: 12,
+                justifyItems: 'stretch', alignItems: 'stretch', firstCellRowSpan: 1, firstCellColumnSpan: 1,
+                cells: [
+                    { cell: [box({ id: 'ls-g1', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 4, padding: 0, content: [img({ id: 'ls-g1-i' })] })] },
+                    { cell: [box({ id: 'ls-g2', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 4, padding: 0, content: [img({ id: 'ls-g2-i' })] })] },
+                    { cell: [box({ id: 'ls-g3', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 4, padding: 0, content: [img({ id: 'ls-g3-i' })] })] },
+                ],
+            },
+        },
+        box({
+            id: 'ls-pricing', padding: 2, flexDirection: 'flex-col', spacing: 'normal', gapY: 16, backgroundColor: LS_BG,
+            content: [
+                ct('Pricing', { id: 'ls-pc-h', fontFamily: LS_SERIF, fontSize: 2.25, lineHeight: 1.15, color: LS_FG }),
+                box({ id: 'ls-pc-list', flexDirection: 'flex-col', gapY: 0, maxWidth: 36, content: [
+                    lsPriceRow('Starter Locs', 'From $250', 'r1'),
+                    lsPriceRow('Retwist & Style', 'From $85', 'r2'),
+                    lsPriceRow('Loc Repair', 'From $45', 'r3'),
+                    lsPriceRow('Styled Updo', 'From $65', 'r4'),
+                ] }),
+            ],
+        }),
+        box({
+            id: 'ls-contact', padding: 2, flexDirection: 'flex-col', altAxisLayout: 'center', spacing: 'normal', gapY: 12, backgroundColor: LS_ACCENT,
+            content: [
+                ct('Get in touch.', { id: 'ls-ct-h', fontFamily: LS_SERIF, fontSize: 2.25, lineHeight: 1.15, color: '#ffffff', align: 'center' }),
+                ct('Call, text, or DM to book your appointment.', { id: 'ls-ct-body', fontFamily: LS_SANS, fontSize: 1, lineHeight: 1.6, color: 'rgba(255,255,255,.8)', align: 'center' }),
+                btn('Contact us →', { id: 'ls-ct-btn', backgroundColor: LS_GOLD, color: '#ffffff', fontFamily: LS_SANS, borderRadius: 4, fontSize: 0.9375, fontWeight: 600 }),
+            ],
+        }),
+        box({
+            id: 'ls-footer', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', responsiveDirection: 'col-to-row', backgroundColor: LS_BG,
+            content: [
+                ct('© Crowned Locs Studio · Built on AfroAllure', { id: 'ls-ft-copy', fontFamily: LS_SANS, fontSize: 0.8125, color: LS_MUTED, lineHeight: 1 }),
+            ],
+        }),
+    ],
+    root: { props: {} },
+    zones: {},
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── Minimalist — ultra-clean white, typography-forward, minimal imagery ────
+// ═══════════════════════════════════════════════════════════════════════════
+
+const MN_BG = '#FFFFFF'
+const MN_FG = '#111111'
+const MN_MUTED = 'rgba(17,17,17,.55)'
+const MN_BORDER = 'rgba(17,17,17,.1)'
+const MN_SANS = '"Inter", system-ui, sans-serif'
+
+const mnSvcRow = (name: string, price: string, id: string) =>
+    box({
+        id: `mn-svc-${id}`, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+        paddingExpanded: 'true', paddingTop: 1, paddingBottom: 1, borderExpanded: 'true', borderBottom: 1, borderWidth: 0, borderColor: MN_BORDER, borderType: 'solid',
+        content: [
+            ct(name, { id: `mn-svc-${id}-n`, fontFamily: MN_SANS, fontSize: 1, lineHeight: 1.2, color: MN_FG }),
+            ct(price, { id: `mn-svc-${id}-p`, fontFamily: MN_SANS, fontSize: 1, fontWeight: 600, lineHeight: 1, color: MN_FG }),
+        ],
+    })
+
+const minimalistData: Data = {
+    content: [
+        box({
+            id: 'mn-nav', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', backgroundColor: MN_BG, borderExpanded: 'true', borderBottom: 1, borderWidth: 0, borderColor: MN_BORDER, borderType: 'solid',
+            content: [
+                ct('Studio Nine', { id: 'mn-nav-brand', fontFamily: MN_SANS, fontSize: 1.0625, fontWeight: 600, letterSpacing: -0.3, lineHeight: 1, color: MN_FG }),
+                btn('Book', { id: 'mn-nav-cta', backgroundColor: 'transparent', color: MN_FG, fontFamily: MN_SANS, borderRadius: 4, fontSize: 0.875, fontWeight: 600, borderWidth: 1, borderColor: MN_BORDER, borderType: 'solid' }),
+            ],
+        }),
+        box({
+            id: 'mn-hero', padding: 2, flexDirection: 'flex-col', altAxisLayout: 'start', spacing: 'spacious', gapY: 20, backgroundColor: MN_BG,
+            content: [
+                ct('A quiet, considered studio.', { id: 'mn-hero-h', fontFamily: MN_SANS, fontSize: 3.25, fontWeight: 600, letterSpacing: -1.5, lineHeight: 1.15, color: MN_FG, maxWidth: 30 }),
+                ct('One stylist, one chair, undivided attention. By appointment only.', { id: 'mn-hero-body', fontFamily: MN_SANS, fontSize: 1.125, lineHeight: 1.6, color: MN_MUTED, maxWidth: 28 }),
+                btn('Request an appointment', { id: 'mn-hero-cta', backgroundColor: MN_FG, color: '#ffffff', fontFamily: MN_SANS, borderRadius: 4, fontSize: 0.9375, fontWeight: 600 }),
+            ],
+        }),
+        box({
+            id: 'mn-services', padding: 2, flexDirection: 'flex-col', spacing: 'normal', gapY: 20, backgroundColor: MN_BG,
+            content: [
+                ct('Services', { id: 'mn-svc-h', fontFamily: MN_SANS, fontSize: 1.5, fontWeight: 600, letterSpacing: -0.5, lineHeight: 1.2, color: MN_FG }),
+                box({ id: 'mn-svc-list', flexDirection: 'flex-col', gapY: 0, maxWidth: 36, content: [
+                    mnSvcRow('Cut & Style', '$120', 'r1'),
+                    mnSvcRow('Color Consultation', '$40', 'r2'),
+                    mnSvcRow('Full Color', '$180+', 'r3'),
+                    mnSvcRow('Blowout', '$65', 'r4'),
+                ] }),
+            ],
+        }),
+        box({
+            id: 'mn-contact', padding: 2, flexDirection: 'flex-col', gapY: 12, spacing: 'normal', backgroundColor: MN_BG,
+            borderExpanded: 'true', borderTop: 1, borderWidth: 0, borderColor: MN_BORDER, borderType: 'solid',
+            content: [
+                ct('Contact', { id: 'mn-ct-h', fontFamily: MN_SANS, fontSize: 1.5, fontWeight: 600, letterSpacing: -0.5, lineHeight: 1.2, color: MN_FG }),
+                ct('hello@studionine.com · By appointment only', { id: 'mn-ct-body', fontFamily: MN_SANS, fontSize: 1, lineHeight: 1.6, color: MN_MUTED }),
+                btn('Request an appointment →', { id: 'mn-ct-btn', backgroundColor: MN_FG, color: '#ffffff', fontFamily: MN_SANS, borderRadius: 4, fontSize: 0.9375, fontWeight: 600 }),
+            ],
+        }),
+        box({
+            id: 'mn-footer', padding: 2, flexDirection: 'flex-row', mainAxisLayout: 'space-between', altAxisLayout: 'center',
+            spacing: 'tight', responsiveDirection: 'col-to-row', backgroundColor: MN_BG, borderExpanded: 'true', borderTop: 1, borderWidth: 0, borderColor: MN_BORDER, borderType: 'solid',
+            content: [
+                ct('© Studio Nine · Built on AfroAllure', { id: 'mn-ft-copy', fontFamily: MN_SANS, fontSize: 0.8125, color: MN_MUTED, lineHeight: 1 }),
+            ],
+        }),
+    ],
+    root: { props: {} },
+    zones: {},
+}
+
 export const templates: Template[] = [
     {
         id: 'maison-tresse',
@@ -2518,5 +3127,47 @@ export const templates: Template[] = [
         description: 'Simple starter — white, charcoal, coral. Inter throughout. Fast to customize.',
         category: 'minimal',
         data: quickstartData,
+    },
+    {
+        id: 'natural-hair-studio',
+        name: 'Natural Hair Studio',
+        description: 'Clean, organic natural-hair studio — cream, terracotta, Fraunces serif headlines.',
+        category: 'clean',
+        data: naturalHairStudioData,
+    },
+    {
+        id: 'nail-artist',
+        name: 'Nail Artist',
+        description: 'Bold, colorful nail studio — near-black, hot pink, Poppins display. Portfolio-forward.',
+        category: 'bold',
+        data: nailArtistData,
+    },
+    {
+        id: 'barber-shop',
+        name: 'Barber Shop',
+        description: 'Dark, masculine barbershop — charcoal, gold, Oswald condensed headlines.',
+        category: 'modern',
+        data: barberShopData,
+    },
+    {
+        id: 'lash-and-beauty',
+        name: 'Lash & Beauty',
+        description: 'Soft, feminine lash studio — blush, cream, Cormorant Garamond serif.',
+        category: 'clean',
+        data: lashAndBeautyData,
+    },
+    {
+        id: 'loc-specialist',
+        name: 'Loc Specialist',
+        description: 'Cultural, warm loctician studio — burgundy, gold, Lora serif.',
+        category: 'luxury',
+        data: locSpecialistData,
+    },
+    {
+        id: 'minimalist',
+        name: 'Minimalist',
+        description: 'Ultra-clean, typography-forward studio — white, black, Inter. Minimal imagery.',
+        category: 'minimal',
+        data: minimalistData,
     },
 ]
