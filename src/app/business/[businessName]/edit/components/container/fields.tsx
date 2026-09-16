@@ -78,15 +78,15 @@ export const GradientField = ({ value, onChange }: { value: string; onChange: (v
 const AlignBtns = ({ value, onChange, options }: {
     value: string
     onChange: (v: string) => void
-    options: { v: string; icon: string }[]
+    options: { v: string; icon: string; title: string }[]
 }) => (
     <div style={{ display: 'flex', gap: 2, flex: 1 }}>
-        {options.map(({ v, icon }) => (
+        {options.map(({ v, icon, title }) => (
             <button
                 key={v}
                 type="button"
                 onClick={() => onChange(v)}
-                title={v}
+                title={title}
                 style={{
                     flex: 1, height: 26, borderRadius: 3, fontSize: 12,
                     background: value === v ? '#FC6161' : '#F4F1EC',
@@ -121,17 +121,17 @@ export const defaultFields: Fields<Container, {}> = {
     mainAxisLayout: {
         visible: true,
         type: 'custom',
-        label: 'Main Axis',
+        label: 'Arrange items',
         render: ({ onChange, value }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 44 }}>Main</span>
+                <span style={{ ...lbl, minWidth: 44 }}>Arrange</span>
                 <AlignBtns value={value} onChange={onChange as (v: string) => void} options={[
-                    { v: 'start', icon: '←' },
-                    { v: 'center', icon: '⊙' },
-                    { v: 'end', icon: '→' },
-                    { v: 'space-between', icon: '↔' },
-                    { v: 'space-evenly', icon: '≡' },
-                    { v: 'space-around', icon: '∿' },
+                    { v: 'start', icon: '←', title: 'Start' },
+                    { v: 'center', icon: '⊙', title: 'Center' },
+                    { v: 'end', icon: '→', title: 'End' },
+                    { v: 'space-between', icon: '↔', title: 'Spread evenly' },
+                    { v: 'space-evenly', icon: '≡', title: 'Perfectly even' },
+                    { v: 'space-around', icon: '∿', title: 'Equal spacing' },
                 ]} />
             </div>
         )
@@ -139,16 +139,16 @@ export const defaultFields: Fields<Container, {}> = {
     altAxisLayout: {
         visible: true,
         type: 'custom',
-        label: 'Cross Axis',
+        label: 'Align items',
         render: ({ onChange, value }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 44 }}>Cross</span>
+                <span style={{ ...lbl, minWidth: 44 }}>Align</span>
                 <AlignBtns value={value} onChange={onChange as (v: string) => void} options={[
-                    { v: 'start', icon: '↑' },
-                    { v: 'center', icon: '⊙' },
-                    { v: 'end', icon: '↓' },
-                    { v: 'baseline', icon: '≡' },
-                    { v: 'stretch', icon: '↕' },
+                    { v: 'start', icon: '↑', title: 'Start' },
+                    { v: 'center', icon: '⊙', title: 'Center' },
+                    { v: 'end', icon: '↓', title: 'End' },
+                    { v: 'baseline', icon: '≡', title: 'Baseline' },
+                    { v: 'stretch', icon: '↕', title: 'Fill space' },
                 ]} />
             </div>
         )
@@ -342,7 +342,7 @@ export const defaultFields: Fields<Container, {}> = {
     // ── Position (compound) ───────────────────────────────────────────────────
     positionType: {
         type: 'custom',
-        label: 'Position',
+        label: 'Positioning',
         render: ({ value, onChange }) => <PositionField value={value ?? 'relative'} onChange={onChange as (v: string) => void} />
     },
     top: { visible: false, type: 'number' },
@@ -402,11 +402,16 @@ export const defaultFields: Fields<Container, {}> = {
     },
     overflow: {
         type: 'custom',
-        label: 'Overflow',
+        label: 'If content overflows',
         render: ({ value, onChange }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 44 }}>Overflow</span>
-                <StrSelect value={value} onChange={onChange} options={['visible', 'hidden', 'scroll', 'auto']} className="flex-1" />
+                <span style={{ ...lbl, minWidth: 56 }}>Overflow</span>
+                <KVSelect value={value} onChange={onChange} className="flex-1" options={[
+                    { label: 'Show overflow', value: 'visible' },
+                    { label: 'Hide overflow', value: 'hidden' },
+                    { label: 'Add scrollbar', value: 'scroll' },
+                    { label: 'Auto scrollbar', value: 'auto' },
+                ]} />
             </div>
         )
     },
@@ -465,10 +470,10 @@ export const defaultFields: Fields<Container, {}> = {
     },
     zIndex: {
         type: 'custom',
-        label: 'Z-Index',
+        label: 'Layer order',
         render: ({ value, onChange }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={lbl}>Z-Index</span>
+                <span style={lbl} title="Higher numbers appear in front of lower numbers">Layer order</span>
                 <NumInput value={value} onChange={onChange} icon={<DotIcon />} className="flex-1" />
             </div>
         )

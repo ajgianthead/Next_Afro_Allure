@@ -1,8 +1,30 @@
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import React, { useEffect, useRef, useState } from "react"
+import { ColorPickerPopover } from "./colorPickerPopover"
 
 const inputBase = "h-[26px] w-full rounded-[3px] text-[11px] bg-[#F4F1EC] border-0 outline-none focus:ring-1 focus:ring-[#FC6161]/50 text-[#1A1818] placeholder:text-[#A09790]"
+
+// Plain-English value labels — the underlying value stays a raw CSS-ish
+// token (number/string); only what the stylist reads changes.
+export const FONT_WEIGHT_OPTIONS = [
+    { label: 'Thin', value: '100' },
+    { label: 'Extra Light', value: '200' },
+    { label: 'Light', value: '300' },
+    { label: 'Normal', value: '400' },
+    { label: 'Medium', value: '500' },
+    { label: 'Semi Bold', value: '600' },
+    { label: 'Bold', value: '700' },
+    { label: 'Extra Bold', value: '800' },
+    { label: 'Black', value: '900' },
+]
+
+export const TEXT_TRANSFORM_OPTIONS = [
+    { label: 'Normal', value: 'none' },
+    { label: 'ALL CAPS', value: 'uppercase' },
+    { label: 'all lowercase', value: 'lowercase' },
+    { label: 'Title Case', value: 'capitalize' },
+]
 
 export const NumInput = ({ value, onChange, step = 1, allowNegative = true, icon, className = "w-full" }: {
     value: any
@@ -163,14 +185,10 @@ export const ColorPicker = ({ value, onChange, className }: {
     value: any; onChange: (v: any) => void; className?: string
 }) => (
     <div
-        className={cn("flex items-center gap-1.5 rounded-[3px] px-1.5 cursor-pointer", className)}
+        className={cn("flex items-center rounded-[3px] px-1.5", className)}
         style={{ height: 26, background: '#F4F1EC', minWidth: 80 }}
     >
-        <div className="relative shrink-0">
-            <div className="size-3.5 rounded-[2px] border border-black/10 shadow-sm" style={{ backgroundColor: value ?? '#000000' }} />
-            <input type="color" value={value ?? '#000000'} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-        </div>
-        <span className="text-[11px] font-mono truncate flex-1" style={{ color: '#A09790' }}>{value}</span>
+        <ColorPickerPopover value={value ?? '#000000'} onChange={onChange} className="w-full" />
     </div>
 )
 

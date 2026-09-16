@@ -63,7 +63,7 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
             render: ({ value, onChange }) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={lbl}>Speed</span>
-                    <NumInput value={value} onChange={onChange} className="flex-1" />
+                    <NumInput value={value} onChange={onChange} className="flex-1" allowNegative={false} />
                 </div>
             )
         },
@@ -75,7 +75,7 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
             render: ({ value, onChange }) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={lbl}>Width</span>
-                    <NumInput value={value} onChange={onChange} className="flex-1" />
+                    <NumInput value={value} onChange={onChange} className="flex-1" allowNegative={false} />
                 </div>
             )
         },
@@ -85,7 +85,7 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
             render: ({ value, onChange }) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={lbl}>Height</span>
-                    <NumInput value={value} onChange={onChange} className="flex-1" />
+                    <NumInput value={value} onChange={onChange} className="flex-1" allowNegative={false} />
                 </div>
             )
         },

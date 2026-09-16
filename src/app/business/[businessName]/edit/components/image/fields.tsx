@@ -155,7 +155,7 @@ export const imageResolvedFields: (data: any, params: any) => {} = (data, params
         },
         objectFit: {
             type: 'custom',
-            label: 'Object Fit',
+            label: 'Image fit',
             render: ({ value, onChange, field }) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
@@ -164,9 +164,11 @@ export const imageResolvedFields: (data: any, params: any) => {} = (data, params
                         onChange={onChange}
                         className="flex-1"
                         options={[
-                            { label: 'Cover (fill & crop)', value: 'cover' },
-                            { label: 'Contain (show full)', value: 'contain' },
-                            { label: 'Fill (stretch)', value: 'fill' },
+                            { label: 'Fill (crop to fit)', value: 'cover' },
+                            { label: 'Fit inside', value: 'contain' },
+                            { label: 'Stretch to fill', value: 'fill' },
+                            { label: 'Original size', value: 'none' },
+                            { label: 'Shrink to fit', value: 'scale-down' },
                         ]}
                     />
                 </div>

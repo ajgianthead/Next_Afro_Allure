@@ -3,6 +3,7 @@
 import React from 'react'
 import { createUsePuck, useGetPuck } from '@puckeditor/core'
 import { NumInput } from './fieldPrimitives'
+import { ColorPickerPopover } from './colorPickerPopover'
 import { Link2, Unlink2 } from 'lucide-react'
 import {
     ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon,
@@ -182,15 +183,11 @@ export const BorderField = ({ value, onChange }: { value: string; onChange: (v: 
                     <NumInput value={props.borderWidth ?? 0} onChange={(v) => update({ borderWidth: v })} icon={<BorderAllIcon />} className="flex-1" allowNegative={false} />
                 )}
                 <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <div style={{ position: 'relative', width: 22, height: 22, borderRadius: 3, background: '#F4F1EC', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                        <div style={{ width: 14, height: 14, borderRadius: 2, border: '1px solid rgba(0,0,0,0.1)', backgroundColor: props.borderColor ?? '#000000' }} />
-                        <input
-                            type="color"
-                            value={props.borderColor ?? '#000000'}
-                            onChange={(e) => update({ borderColor: e.target.value })}
-                            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
-                        />
-                    </div>
+                    <ColorPickerPopover
+                        compact
+                        value={props.borderColor ?? '#000000'}
+                        onChange={(v) => update({ borderColor: v })}
+                    />
                     <BorderStyleButtons value={props.borderType ?? 'solid'} onChange={(v) => update({ borderType: v })} />
                 </div>
             </TopRow>
@@ -291,9 +288,9 @@ export const PositionField = ({ value, onChange }: { value: string; onChange: (v
     return (
         <div>
             <TopRow>
-                <Lbl>Position</Lbl>
+                <Lbl>Positioning</Lbl>
                 <div style={{ display: 'flex', gap: 2, padding: 2, borderRadius: 4, background: '#EEEBE4', flex: 1 }}>
-                    {[{ v: 'relative', l: 'Relative' }, { v: 'absolute', l: 'Absolute' }].map(({ v, l }) => (
+                    {[{ v: 'relative', l: 'In flow (normal)' }, { v: 'absolute', l: 'Float freely' }].map(({ v, l }) => (
                         <button
                             key={v}
                             type="button"

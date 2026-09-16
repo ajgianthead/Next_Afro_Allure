@@ -1,17 +1,18 @@
 'use client'
 
-import { ComponentConfig, ComponentData, DefaultComponentProps, Fields, useGetPuck } from "@puckeditor/core"
+import { ComponentConfig, ComponentData, DefaultComponentProps, Fields } from "@puckeditor/core"
 import { Text } from "../types"
 import { TEXT_SIZE_MAP, TEXT_SIZE_OPTIONS } from "@/features/editor/lib/responsive"
 import { PaintBucket, Type } from "lucide-react"
-import { useEditorContext } from "@/app/utils/context/EditorContext"
 import { FontBoldIcon, FontItalicIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
-import { NumInput, StrSelect } from "../fieldPrimitives"
+import { KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS } from "../fieldPrimitives"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { FontSelector } from "../FontSelector"
 import { OpacityField } from "../compoundFields"
+import { SectionsField } from "../customizableText/fields"
+import { ColorPickerPopover } from "../colorPickerPopover"
 
 export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, Record<string, DefaultComponentProps>>, "type">) => Fields<Text, {}> | Promise<Fields<Text, {}>> = (data) => {
     let templateTextFields: Partial<Fields<Text, {}>> = {
@@ -78,13 +79,13 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
             type: 'custom',
             label: 'Line Height',
             labelIcon: <LineHeightIcon />,
-            render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LineHeightIcon />} />,
+            render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LineHeightIcon />} allowNegative={false} />,
         },
         letterSpacing: {
             type: 'custom',
             label: 'Letter Spacing',
             labelIcon: <LetterSpacingIcon />,
-            render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LetterSpacingIcon />} />,
+            render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LetterSpacingIcon />} allowNegative={false} />,
         },
         align: {
             type: 'custom',
@@ -124,17 +125,8 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
             render: ({ onChange, value, field }) => (
                 <div className="grid grid-cols-4 items-center gap-1.5">
                     <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <div className="col-span-3 flex items-center gap-2 border border-input rounded-md px-2 py-1 bg-background cursor-pointer">
-                        <div className="relative shrink-0">
-                            <div className="size-4 rounded-sm border shadow-sm" style={{ backgroundColor: value }} />
-                            <input
-                                type="color"
-                                value={value ?? '#000000'}
-                                onChange={(e) => onChange(e.target.value)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                            />
-                        </div>
-                        <span className="text-xs font-mono text-muted-foreground truncate">{value}</span>
+                    <div className="col-span-3 flex items-center border border-input rounded-md px-2 py-1 bg-background">
+                        <ColorPickerPopover value={value ?? '#000000'} onChange={onChange} className="w-full" />
                     </div>
                 </div>
             )
@@ -163,7 +155,7 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
             render: ({ value, onChange, field }) => (
                 <div className="grid grid-cols-4 items-center gap-1.5">
                     <p className="col-span-2 text-xs font-medium text-slate-400">{field.label}</p>
-                    <StrSelect value={value ?? 'none'} onChange={onChange} options={['none', 'uppercase', 'lowercase', 'capitalize']} className="col-span-2 col-start-3" />
+                    <KVSelect value={value ?? 'none'} onChange={onChange} options={TEXT_TRANSFORM_OPTIONS} className="col-span-2 col-start-3" />
                 </div>
             )
         },
@@ -236,31 +228,7 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
                 type: 'custom',
                 label: 'Section',
                 visible: true,
-                render: ({ value, onChange, field }) => {
-                    const { editorState } = useEditorContext()
-                    const getPuck = useGetPuck()
-                    const { appState } = getPuck()
-                    const sectionData = appState.data.content
-                        .filter(c => c.type === 'Section' && editorState.sections.has(c.props.id))
-                        .map(c => ({ value: c.props.sectionName, label: c.props.sectionName }))
-                    return (
-                        <div className="grid grid-cols-4 items-center gap-1.5">
-                            <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                            <div className="col-span-3">
-                                <Select value={value} onValueChange={(v) => onChange(v)}>
-                                    <SelectTrigger className="h-6 text-xs">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {sectionData.map(s => (
-                                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    )
-                }
+                render: ({ value, onChange, field }) => <SectionsField value={value} onChange={onChange} label={field.label!} />
             }
         }
     }

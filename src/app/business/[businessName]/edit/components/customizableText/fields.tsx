@@ -3,27 +3,19 @@ import { ComponentData, DefaultComponentProps, Fields, useGetPuck } from "@pucke
 import { FontBoldIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
 import { RegularText } from "../types"
 import { useEditorContext } from "@/app/utils/context/EditorContext"
-import { NumInput, StrSelect } from "../fieldPrimitives"
+import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS } from "../fieldPrimitives"
 import { OpacityField } from "../compoundFields"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FontSelector } from "../FontSelector"
+import { ColorPickerPopover } from "../colorPickerPopover"
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
 const ColorField = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ ...lbl, minWidth: 40 }}>{label}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, height: 26, borderRadius: 3, padding: '0 8px', background: '#F4F1EC', flex: 1, cursor: 'pointer' }}>
-            <div className="relative shrink-0">
-                <div style={{ width: 14, height: 14, borderRadius: 2, border: '1px solid rgba(0,0,0,0.1)', backgroundColor: value }} />
-                <input
-                    type="color"
-                    value={value ?? '#000000'}
-                    onChange={(e) => onChange(e.target.value)}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                />
-            </div>
-            <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#A09790', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</span>
+        <div style={{ display: 'flex', alignItems: 'center', height: 26, borderRadius: 3, padding: '0 8px', background: '#F4F1EC', flex: 1 }}>
+            <ColorPickerPopover value={value ?? '#000000'} onChange={onChange} className="w-full" />
         </div>
     </div>
 )
@@ -106,8 +98,8 @@ export const SectionsField = ({ value, onChange, label }: { value: string, onCha
                     </SelectTrigger>
                     <SelectContent>
                         {sectionData.length === 0 ? (
-                            <div style={{ padding: '8px 12px', fontSize: 11, color: '#A09790', textAlign: 'center' }}>
-                                No sections yet. Add sections from the Elements panel to get started.
+                            <div style={{ padding: 16, fontSize: 12, color: '#A09790', textAlign: 'center' }}>
+                                No sections yet. Add a Section from the left panel to get started.
                             </div>
                         ) : sectionData.map(s => (
                             <SelectItem key={s.value} value={s.value} className="text-[11px]">{s.label}</SelectItem>
@@ -150,13 +142,15 @@ export let customizableTextFields: Partial<Fields<RegularText, {}>> = {
         type: 'custom',
         label: 'Font Weight',
         labelIcon: <Type size={16} className="mr-1" />,
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={100} icon={<FontBoldIcon />} />,
+        render: ({ onChange, value }) => (
+            <KVSelect value={String(value ?? 400)} onChange={(v) => onChange(Number(v))} options={FONT_WEIGHT_OPTIONS} className="w-full" />
+        ),
     },
     fontSize: {
         type: 'custom',
         label: 'Font Size (rem)',
         labelIcon: <FontSizeIcon />,
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<FontSizeIcon />} />,
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<FontSizeIcon />} allowNegative={false} />,
     },
     style: {
         type: 'custom',
@@ -166,13 +160,13 @@ export let customizableTextFields: Partial<Fields<RegularText, {}>> = {
         type: 'custom',
         label: 'Line Height',
         labelIcon: <LineHeightIcon />,
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LineHeightIcon />} />,
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LineHeightIcon />} allowNegative={false} />,
     },
     letterSpacing: {
         type: 'custom',
         label: 'Letter Spacing',
         labelIcon: <LetterSpacingIcon />,
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LetterSpacingIcon />} />,
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={0.1} icon={<LetterSpacingIcon />} allowNegative={false} />,
     },
     align: {
         type: 'custom',
@@ -201,7 +195,7 @@ export let customizableTextFields: Partial<Fields<RegularText, {}>> = {
         render: ({ value, onChange, field }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
-                <StrSelect value={value ?? 'none'} onChange={onChange} options={['none', 'uppercase', 'lowercase', 'capitalize']} className="flex-1" />
+                <KVSelect value={value ?? 'none'} onChange={onChange} options={TEXT_TRANSFORM_OPTIONS} className="flex-1" />
             </div>
         )
     },

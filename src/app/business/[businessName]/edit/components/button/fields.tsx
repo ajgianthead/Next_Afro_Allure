@@ -8,7 +8,7 @@ import {
 } from "@radix-ui/react-icons";
 import { ButtonContainer } from "../types";
 import { Fields, useGetPuck } from "@puckeditor/core";
-import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives";
+import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, SegToggle, ColorPicker } from "../fieldPrimitives";
 import { BorderField, MarginField, OpacityField, PaddingField, PositionField, RadiusField } from "../compoundFields";
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { GoogleFont, loadGoogleFont } from "useGoogleFonts";
@@ -47,15 +47,15 @@ const StyleToggle = ({ value, onChange }: { value: string[], onChange: (v: strin
 }
 
 const AlignBtns = ({ value, onChange, options }: {
-    value: string; onChange: (v: string) => void; options: { v: string; icon: React.ReactNode }[]
+    value: string; onChange: (v: string) => void; options: { v: string; icon: React.ReactNode; title: string }[]
 }) => (
     <div style={{ display: 'flex', gap: 2, flex: 1 }}>
-        {options.map(({ v, icon }) => (
+        {options.map(({ v, icon, title }) => (
             <button
                 key={v}
                 type="button"
                 onClick={() => onChange(v)}
-                title={v}
+                title={title}
                 style={{
                     flex: 1, height: 26, borderRadius: 3, fontSize: 12,
                     background: value === v ? '#FC6161' : '#F4F1EC',
@@ -135,32 +135,32 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
         )
     },
     mainAxisLayout: {
-        visible: true, type: 'custom', label: 'Main Axis',
+        visible: true, type: 'custom', label: 'Arrange items',
         render: ({ onChange, value }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 44 }}>Main</span>
+                <span style={{ ...lbl, minWidth: 44 }}>Arrange</span>
                 <AlignBtns value={value} onChange={onChange as (v: string) => void} options={[
-                    { v: 'start', icon: '←' },
-                    { v: 'center', icon: '⊙' },
-                    { v: 'end', icon: '→' },
-                    { v: 'space-between', icon: '↔' },
-                    { v: 'space-evenly', icon: '≡' },
-                    { v: 'space-around', icon: '∿' },
+                    { v: 'start', icon: '←', title: 'Start' },
+                    { v: 'center', icon: '⊙', title: 'Center' },
+                    { v: 'end', icon: '→', title: 'End' },
+                    { v: 'space-between', icon: '↔', title: 'Spread evenly' },
+                    { v: 'space-evenly', icon: '≡', title: 'Perfectly even' },
+                    { v: 'space-around', icon: '∿', title: 'Equal spacing' },
                 ]} />
             </div>
         )
     },
     altAxisLayout: {
-        visible: true, type: 'custom', label: 'Cross Axis',
+        visible: true, type: 'custom', label: 'Align items',
         render: ({ onChange, value }) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 44 }}>Cross</span>
+                <span style={{ ...lbl, minWidth: 44 }}>Align</span>
                 <AlignBtns value={value} onChange={onChange as (v: string) => void} options={[
-                    { v: 'start', icon: '↑' },
-                    { v: 'center', icon: '⊙' },
-                    { v: 'end', icon: '↓' },
-                    { v: 'baseline', icon: '≡' },
-                    { v: 'stretch', icon: '↕' },
+                    { v: 'start', icon: '↑', title: 'Start' },
+                    { v: 'center', icon: '⊙', title: 'Center' },
+                    { v: 'end', icon: '↓', title: 'End' },
+                    { v: 'baseline', icon: '≡', title: 'Baseline' },
+                    { v: 'stretch', icon: '↕', title: 'Fill space' },
                 ]} />
             </div>
         )
@@ -186,7 +186,7 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
     borderRadiusBottomLeft: { visible: false, type: 'number' },
     borderRadiusBottomRight: { visible: false, type: 'number' },
     positionType: {
-        type: 'custom', label: 'Position',
+        type: 'custom', label: 'Positioning',
         render: ({ value, onChange }) => <PositionField value={value ?? 'relative'} onChange={onChange as (v: string) => void} />
     },
     top: { visible: false, type: 'number' },
@@ -245,11 +245,13 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
     },
     fontWeight: {
         type: 'custom', label: 'Font Weight',
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} step={100} icon={<FontBoldIcon />} />,
+        render: ({ onChange, value }) => (
+            <KVSelect value={String(value ?? 400)} onChange={(v) => onChange(Number(v))} options={FONT_WEIGHT_OPTIONS} className="w-full" />
+        ),
     },
     fontSize: {
         type: 'custom', label: 'Font Size',
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<FontSizeIcon />} step={0.1} />
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<FontSizeIcon />} step={0.1} allowNegative={false} />
     },
     style: {
         type: 'custom',
@@ -257,11 +259,11 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
     },
     lineHeight: {
         type: 'custom', label: 'Line Height',
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<LineHeightIcon />} step={0.1} />
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<LineHeightIcon />} step={0.1} allowNegative={false} />
     },
     letterSpacing: {
         type: 'custom', label: 'Letter Spacing',
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<LetterSpacingIcon />} step={0.1} />
+        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<LetterSpacingIcon />} step={0.1} allowNegative={false} />
     },
     align: {
         type: 'custom', label: 'Align',
