@@ -222,8 +222,8 @@ function EditorHeader({
                 {/* Undo / Redo */}
                 <div style={{ display: 'flex', gap: 2 }}>
                     {[
-                        { icon: <Undo2 size={14} />, action: () => store.history.back(), enabled: store.history.hasPast(), title: 'Undo' },
-                        { icon: <Redo2 size={14} />, action: () => store.history.forward(), enabled: store.history.hasFuture(), title: 'Redo' },
+                        { icon: <Undo2 size={14} />, action: () => store.history.back(), enabled: store.history.hasPast, title: 'Undo' },
+                        { icon: <Redo2 size={14} />, action: () => store.history.forward(), enabled: store.history.hasFuture, title: 'Redo' },
                     ].map(({ icon, action, enabled, title }) => (
                         <button
                             key={title}
