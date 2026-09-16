@@ -2,7 +2,7 @@ import { Type } from "lucide-react";
 import { MOBILE_WIDTH_OPTIONS } from "@/features/editor/lib/responsive";
 import {
     FontBoldIcon, FontItalicIcon,
-    FontSizeIcon, LetterSpacingIcon, LineHeightIcon,
+    FontSizeIcon,
     TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon,
     UnderlineIcon,
 } from "@radix-ui/react-icons";
@@ -180,14 +180,12 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
         type: 'custom',
         render: ({ value, onChange }) => <StyleToggle value={value ?? []} onChange={onChange} />
     },
-    lineHeight: {
-        type: 'custom', label: 'Line Height',
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<LineHeightIcon />} step={0.1} allowNegative={false} />
-    },
-    letterSpacing: {
-        type: 'custom', label: 'Letter Spacing',
-        render: ({ onChange, value }) => <NumInput value={value} onChange={onChange} icon={<LetterSpacingIcon />} step={0.1} allowNegative={false} />
-    },
+    // No longer panel-editable — render() still reads whatever's stored, so
+    // each template's existing tracked-uppercase button style (letterSpacing
+    // baked into the template data) is unaffected; new buttons get whatever
+    // buttonProps' defaults already specify.
+    lineHeight: { visible: false, type: 'number' },
+    letterSpacing: { visible: false, type: 'number' },
     align: {
         type: 'custom', label: 'Align',
         render: ({ onChange, value }) => (

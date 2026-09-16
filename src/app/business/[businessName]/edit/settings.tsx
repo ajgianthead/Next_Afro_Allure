@@ -182,13 +182,13 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
     ],
     Image: [
         MOBILE_RESPONSIVE,
-        { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height', 'objectFit', 'objectPosition', 'aspectRatio'], tab: 'content' },
+        { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height', 'objectFit', 'aspectRatio'], tab: 'content' },
         BORDER, RADIUS, POSITION, APPEARANCE,
     ],
     Video: [
         { title: 'Source', icon: <Video size={12} />, fieldNames: ['url'], tab: 'content' },
-        { title: 'Playback', icon: <Play size={12} />, fieldNames: ['loop', 'controls', 'autoPlay', 'speed'], tab: 'content' },
-        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'objectFit'], tab: 'style' },
+        { title: 'Playback', icon: <Play size={12} />, fieldNames: ['loop', 'controls', 'autoPlay'], tab: 'content' },
+        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width'], tab: 'style' },
         BORDER, RADIUS, POSITION, APPEARANCE,
     ],
     Row: [

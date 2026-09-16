@@ -2,10 +2,9 @@ import type { Fields } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import { ColumnSpacingIcon, DotIcon, RowSpacingIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
 import { Container } from "../types";
-import { NumInput, SegToggle, ColorPicker, StrSelect, KVSelect } from "../fieldPrimitives";
+import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives";
 import { BorderField, DimensionField, MarginField, PaddingField, PositionField, RadiusField } from "../compoundFields";
 import { Input } from "@/components/ui/input";
-import { SPACING_OPTIONS } from "@/features/editor/lib/responsive";
 import { useState } from "react";
 import { ImageModal } from "../image/fields";
 import { Button } from "@/components/ui/button";
@@ -276,41 +275,12 @@ export const defaultFields: Fields<Container, {}> = {
             )
         }
     },
-    backgroundObjectFit: {
-        type: 'custom',
-        label: 'Bg Size',
-        render: ({ value, onChange }) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 56 }}>Bg Size</span>
-                <KVSelect value={value ?? 'cover'} onChange={onChange} className="flex-1" options={[
-                    { label: 'Cover (fill & crop)', value: 'cover' },
-                    { label: 'Contain (show all)', value: 'contain' },
-                    { label: 'Fill (stretch)', value: '100% 100%' },
-                    { label: 'Auto', value: 'auto' },
-                ]} />
-            </div>
-        )
-    },
-    backgroundPosition: {
-        type: 'custom',
-        label: 'Bg Position',
-        render: ({ value, onChange }) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 56 }}>Bg Position</span>
-                <KVSelect value={value ?? 'center'} onChange={onChange} className="flex-1" options={[
-                    { label: 'Center', value: 'center' },
-                    { label: 'Top', value: 'top' },
-                    { label: 'Bottom', value: 'bottom' },
-                    { label: 'Left', value: 'left' },
-                    { label: 'Right', value: 'right' },
-                    { label: 'Top Left', value: 'top left' },
-                    { label: 'Top Right', value: 'top right' },
-                    { label: 'Bottom Left', value: 'bottom left' },
-                    { label: 'Bottom Right', value: 'bottom right' },
-                ]} />
-            </div>
-        )
-    },
+    // Cover/center are correct for the vast majority of background images —
+    // no longer panel-editable, but render() still reads whatever's stored
+    // (existing customized values keep working; new components get the
+    // type defaults).
+    backgroundObjectFit: { visible: false, type: 'text' },
+    backgroundPosition: { visible: false, type: 'text' },
 
     // ── Border (compound) ─────────────────────────────────────────────────────
     borderExpanded: {
@@ -364,16 +334,10 @@ export const defaultFields: Fields<Container, {}> = {
     heightUnit: { visible: false, type: 'text' },
 
     // ── Sizing ────────────────────────────────────────────────────────────────
-    minHeight: {
-        type: 'custom',
-        label: 'Min H',
-        render: ({ value, onChange }) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 44 }}>Min H (rem)</span>
-                <NumInput value={value} onChange={onChange} step={0.5} className="flex-1" />
-            </div>
-        )
-    },
+    // minHeight is no longer panel-editable — render() still reads whatever's
+    // stored, so existing content (e.g. hero sections with an explicit
+    // minHeight) is unaffected; new components just get the 0/auto default.
+    minHeight: { visible: false, type: 'number' },
     maxWidth: {
         type: 'custom',
         label: 'Max W',
@@ -399,21 +363,11 @@ export const defaultFields: Fields<Container, {}> = {
             </div>
         )
     },
-    overflow: {
-        type: 'custom',
-        label: 'If content overflows',
-        render: ({ value, onChange }) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 56 }}>Overflow</span>
-                <KVSelect value={value} onChange={onChange} className="flex-1" options={[
-                    { label: 'Show overflow', value: 'visible' },
-                    { label: 'Hide overflow', value: 'hidden' },
-                    { label: 'Add scrollbar', value: 'scroll' },
-                    { label: 'Auto scrollbar', value: 'auto' },
-                ]} />
-            </div>
-        )
-    },
+    // Almost never intentionally changed — no longer panel-editable, render()
+    // still reads whatever's stored (existing content keeps its current
+    // overflow behavior, e.g. hover-scale/shadow effects that rely on
+    // overflow:visible aren't clipped).
+    overflow: { visible: false, type: 'text' },
     gridTemplateColumns: {
         visible: false,
         type: 'custom',
@@ -430,24 +384,10 @@ export const defaultFields: Fields<Container, {}> = {
             </div>
         )
     },
-    spacing: {
-        type: 'custom',
-        label: 'Spacing',
-        render: ({ value, onChange }) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 44 }}>Spacing</span>
-                <select
-                    value={value ?? 'none'}
-                    onChange={(e) => onChange(e.target.value)}
-                    style={{ flex: 1, height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
-                >
-                    {SPACING_OPTIONS.map(o => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                </select>
-            </div>
-        )
-    },
+    // Removed from the panel — it conflicted with gapX/gapY (two systems
+    // controlling similar-sounding spacing at once); gapX/gapY are now the
+    // single source of truth. render() still reads whatever's stored.
+    spacing: { visible: false, type: 'text' },
 
     // ── Opacity ───────────────────────────────────────────────────────────────
     opacity: {

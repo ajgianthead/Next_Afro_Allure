@@ -1,31 +1,15 @@
 import { Fields } from "@puckeditor/core"
 import { VideoComponent } from "../types"
-import { KVSelect, NumInput } from "../fieldPrimitives"
+import { NumInput } from "../fieldPrimitives"
 import { BorderField, OpacityField, PositionField, RadiusField } from "../compoundFields"
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
 export const videoResolvedFields: (data: any, params: any) => {} = (data, params) => {
     let fields: Fields<VideoComponent, {}> = {
-        objectFit: {
-            type: 'custom',
-            label: 'Video fit',
-            render: ({ value, onChange }) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ ...lbl, minWidth: 56 }}>Video fit</span>
-                    <KVSelect
-                        value={value ?? 'cover'}
-                        onChange={onChange}
-                        className="flex-1"
-                        options={[
-                            { label: 'Fill (crop to fit)', value: 'cover' },
-                            { label: 'Fit inside', value: 'contain' },
-                            { label: 'Stretch to fill', value: 'fill' },
-                        ]}
-                    />
-                </div>
-            )
-        },
+        // Cover is correct for nearly every background-video use case — no
+        // longer panel-editable, render() still reads whatever's stored.
+        objectFit: { visible: false, type: 'text' },
         opacity: {
             type: 'custom',
             label: 'Opacity',
@@ -77,16 +61,9 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
                 </label>
             )
         },
-        speed: {
-            type: 'custom',
-            label: 'Speed',
-            render: ({ value, onChange }) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={lbl}>Speed</span>
-                    <NumInput value={value} onChange={onChange} className="flex-1" allowNegative={false} />
-                </div>
-            )
-        },
+        // Almost never changed — no longer panel-editable, render() still
+        // reads whatever's stored (default 1x).
+        speed: { visible: false, type: 'number' },
 
         // ── Size ──────────────────────────────────────────────────────────────
         width: {
