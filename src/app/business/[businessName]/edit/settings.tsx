@@ -188,7 +188,7 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
     Video: [
         { title: 'Source', icon: <Video size={12} />, fieldNames: ['url'], tab: 'content' },
         { title: 'Playback', icon: <Play size={12} />, fieldNames: ['loop', 'controls', 'autoPlay', 'speed'], tab: 'content' },
-        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'height', 'objectFit'], tab: 'style' },
+        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'objectFit'], tab: 'style' },
         BORDER, RADIUS, POSITION, APPEARANCE,
     ],
     Row: [

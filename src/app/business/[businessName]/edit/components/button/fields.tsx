@@ -1,18 +1,17 @@
 import { Type } from "lucide-react";
 import { MOBILE_WIDTH_OPTIONS } from "@/features/editor/lib/responsive";
 import {
-    ColumnSpacingIcon, DotIcon, FontBoldIcon, FontItalicIcon,
-    FontSizeIcon, LetterSpacingIcon, LineHeightIcon, RowSpacingIcon,
+    FontBoldIcon, FontItalicIcon,
+    FontSizeIcon, LetterSpacingIcon, LineHeightIcon,
     TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon,
-    UnderlineIcon, ViewHorizontalIcon, ViewVerticalIcon,
+    UnderlineIcon,
 } from "@radix-ui/react-icons";
 import { ButtonContainer } from "../types";
-import { Fields, useGetPuck } from "@puckeditor/core";
-import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, SegToggle, ColorPicker } from "../fieldPrimitives";
+import { Fields } from "@puckeditor/core";
+import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, ColorPicker } from "../fieldPrimitives";
 import { BorderField, MarginField, OpacityField, PaddingField, PositionField, RadiusField } from "../compoundFields";
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { GoogleFont, loadGoogleFont } from "useGoogleFonts";
-import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SectionsField } from "../customizableText/fields";
@@ -73,31 +72,6 @@ const AlignBtns = ({ value, onChange, options }: {
 import React from "react";
 
 const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => ({
-    flexDirection: {
-        type: 'custom',
-        visible: true,
-        label: 'Direction',
-        render: ({ onChange, value }) => (
-            <div className="grid grid-cols-4 items-center gap-1.5">
-                <p style={{ ...lbl, gridColumn: 'span 2' }}>Direction</p>
-                <SegToggle value={value} onChange={onChange} className="col-span-2 col-start-3" options={[
-                    { label: <div className="flex justify-center"><ViewHorizontalIcon className="my-0.5" /></div>, value: 'flex-col' },
-                    { label: <div className="flex justify-center"><ViewVerticalIcon className="my-0.5 mr-0.5" /></div>, value: 'flex-row' },
-                ]} />
-            </div>
-        )
-    },
-    gapX: { label: 'Gap X', visible: true, type: 'custom', render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<ColumnSpacingIcon />} /> },
-    gapY: { label: 'Gap Y', visible: true, type: 'custom', render: ({ value, onChange }) => <NumInput value={value} onChange={onChange} icon={<RowSpacingIcon />} /> },
-    grow: {
-        type: 'custom', label: 'Grow',
-        render: ({ value, onChange }) => (
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
-                <span style={lbl}>Grow</span>
-            </label>
-        )
-    },
     paddingExpanded: {
         type: 'custom', label: 'Padding',
         render: ({ value, onChange }) => <PaddingField value={value ?? 'false'} onChange={onChange} />
@@ -122,46 +96,6 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={lbl}>Color</span>
                 <ColorPicker value={value} onChange={onChange} className="flex-1" />
-            </div>
-        )
-    },
-    responsive: {
-        type: 'custom', label: undefined,
-        render: ({ value, onChange }) => (
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
-                <span style={lbl}>Responsive</span>
-            </label>
-        )
-    },
-    mainAxisLayout: {
-        visible: true, type: 'custom', label: 'Arrange items',
-        render: ({ onChange, value }) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 44 }}>Arrange</span>
-                <AlignBtns value={value} onChange={onChange as (v: string) => void} options={[
-                    { v: 'start', icon: '←', title: 'Start' },
-                    { v: 'center', icon: '⊙', title: 'Center' },
-                    { v: 'end', icon: '→', title: 'End' },
-                    { v: 'space-between', icon: '↔', title: 'Spread evenly' },
-                    { v: 'space-evenly', icon: '≡', title: 'Perfectly even' },
-                    { v: 'space-around', icon: '∿', title: 'Equal spacing' },
-                ]} />
-            </div>
-        )
-    },
-    altAxisLayout: {
-        visible: true, type: 'custom', label: 'Align items',
-        render: ({ onChange, value }) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...lbl, minWidth: 44 }}>Align</span>
-                <AlignBtns value={value} onChange={onChange as (v: string) => void} options={[
-                    { v: 'start', icon: '↑', title: 'Start' },
-                    { v: 'center', icon: '⊙', title: 'Center' },
-                    { v: 'end', icon: '↓', title: 'End' },
-                    { v: 'baseline', icon: '≡', title: 'Baseline' },
-                    { v: 'stretch', icon: '↕', title: 'Fill space' },
-                ]} />
             </div>
         )
     },
@@ -193,17 +127,6 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
     bottom: { visible: false, type: 'number' },
     left: { visible: false, type: 'number' },
     right: { visible: false, type: 'number' },
-    rotation: {
-        type: 'custom', label: 'Rotation',
-        render: ({ value, onChange }) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={lbl}>Rotation</span>
-                <NumInput value={value} onChange={onChange} icon={<DotIcon />} className="flex-1" />
-            </div>
-        )
-    },
-    draggable: { type: 'number' },
-
     // ── Typography ─────────────────────────────────────────────────────────────
     text: {
         type: 'custom', label: 'Text', labelIcon: <Type size={16} className="mr-1" />,

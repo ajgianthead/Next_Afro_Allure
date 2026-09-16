@@ -163,7 +163,6 @@ export const defaultFields: Fields<Container, {}> = {
             </label>
         )
     },
-    responsive: { visible: false, type: 'text' },
     responsiveDirection: {
         type: 'custom',
         label: 'Resp. Dir',
@@ -478,7 +477,6 @@ export const defaultFields: Fields<Container, {}> = {
             </div>
         )
     },
-    draggable: { type: 'number' },
 }
 
 export const containerResolvedFields: (data: any) => {} = (data) => {

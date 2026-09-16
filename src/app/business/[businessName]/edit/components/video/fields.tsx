@@ -31,9 +31,6 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
             label: 'Opacity',
             render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
         },
-        aspectRatio: { visible: false, type: 'text' },
-        mobileVisibility: { visible: false, type: 'text' },
-
         url: {
             type: 'custom',
             label: 'URL',
@@ -102,17 +99,6 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
                 </div>
             )
         },
-        height: {
-            type: 'custom',
-            label: 'Height',
-            render: ({ value, onChange }) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={lbl}>Height</span>
-                    <NumInput value={value} onChange={onChange} className="flex-1" allowNegative={false} />
-                </div>
-            )
-        },
-
         // ── Border (compound) ─────────────────────────────────────────────────
         borderExpanded: {
             type: 'custom',
