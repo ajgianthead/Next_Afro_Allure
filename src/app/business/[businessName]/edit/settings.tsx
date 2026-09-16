@@ -81,6 +81,7 @@ const MOBILE_ADVANCED: Section = {
     icon: <Smartphone size={12} />,
     fieldNames: ['hideBelow', 'hideAbove', 'mobileLayout', 'mobileWidth', 'mobileColumns'],
     tab: 'advanced',
+    collapsedByDefault: true,
 }
 
 const LAYOUT: Section = {
@@ -95,6 +96,7 @@ const SIZE: Section = {
     icon: <Maximize2 size={12} />,
     fieldNames: ['width', 'height'],
     tab: 'style',
+    collapsedByDefault: true,
 }
 
 const SIZE_LIMITS: Section = {
@@ -102,6 +104,7 @@ const SIZE_LIMITS: Section = {
     icon: <Maximize2 size={12} />,
     fieldNames: ['maxWidth', 'aspectRatio'],
     tab: 'advanced',
+    collapsedByDefault: true,
 }
 
 const SPACING: Section = {
@@ -115,6 +118,7 @@ const SPACING: Section = {
     ],
     tab: 'style',
     decoration: <BoxModelDiagram />,
+    collapsedByDefault: true,
 }
 
 const FILL: Section = {
@@ -129,6 +133,7 @@ const APPEARANCE: Section = {
     icon: <Eye size={12} />,
     fieldNames: ['opacity'],
     tab: 'style',
+    collapsedByDefault: true,
 }
 
 const BORDER: Section = {
@@ -136,6 +141,7 @@ const BORDER: Section = {
     icon: <Square size={12} />,
     fieldNames: ['borderWidth'],
     tab: 'style',
+    collapsedByDefault: true,
 }
 
 const ADVANCED_BORDER: Section = {
@@ -167,6 +173,7 @@ const TYPOGRAPHY: Section = {
     icon: <Type size={12} />,
     fieldNames: ['fontFamily', 'fontSize', 'fontWeight', 'style', 'align', 'color', 'lineHeight', 'letterSpacing', 'textTransform', 'size'],
     tab: 'style',
+    collapsedByDefault: true,
 }
 
 const CONTENT_TEXT: Section = {
@@ -180,7 +187,7 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
     CustomizableText: [
         CONTENT_TEXT,
         TYPOGRAPHY,
-        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['maxWidth'], tab: 'style' },
+        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['maxWidth'], tab: 'style', collapsedByDefault: true },
         APPEARANCE,
     ],
     Container: [
@@ -189,13 +196,13 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
     ],
     Button: [
         { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'isLink', 'linkType', 'url', 'sections'], tab: 'content' },
-        { title: 'Typography', icon: <Type size={12} />, fieldNames: ['fontSize', 'fontWeight', 'style', 'align', 'color'], tab: 'style' },
+        { title: 'Typography', icon: <Type size={12} />, fieldNames: ['fontSize', 'fontWeight', 'style', 'align', 'color'], tab: 'style', collapsedByDefault: true },
         LAYOUT,
         SPACING,
         FILL,
         BORDER,
         APPEARANCE,
-        { title: 'Typography', icon: <Type size={12} />, fieldNames: ['fontFamily'], tab: 'advanced' },
+        { title: 'Typography', icon: <Type size={12} />, fieldNames: ['fontFamily'], tab: 'advanced', collapsedByDefault: true },
         MOBILE_ADVANCED,
         ADVANCED_BORDER, ADVANCED_RADIUS,
         POSITION,
@@ -203,14 +210,14 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
     Image: [
         { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height'], tab: 'content' },
         BORDER, APPEARANCE,
-        { title: 'Image Fit', icon: <ImageIcon size={12} />, fieldNames: ['objectFit'], tab: 'advanced' },
+        { title: 'Image Fit', icon: <ImageIcon size={12} />, fieldNames: ['objectFit'], tab: 'advanced', collapsedByDefault: true },
         ADVANCED_BORDER, ADVANCED_RADIUS, POSITION,
-        { title: 'More', icon: <Move size={12} />, fieldNames: ['aspectRatio'], tab: 'advanced' },
+        { title: 'More', icon: <Move size={12} />, fieldNames: ['aspectRatio'], tab: 'advanced', collapsedByDefault: true },
     ],
     Video: [
         { title: 'Source', icon: <Video size={12} />, fieldNames: ['url'], tab: 'content' },
-        { title: 'Playback', icon: <Play size={12} />, fieldNames: ['loop', 'controls', 'autoPlay'], tab: 'content' },
-        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width'], tab: 'style' },
+        { title: 'Playback', icon: <Play size={12} />, fieldNames: ['loop', 'controls', 'autoPlay'], tab: 'content', collapsedByDefault: true },
+        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width'], tab: 'style', collapsedByDefault: true },
         BORDER, APPEARANCE,
         ADVANCED_BORDER, ADVANCED_RADIUS, POSITION,
     ],
@@ -228,8 +235,8 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
         { title: 'Layout', icon: <Grid2X2 size={12} />, fieldNames: ['numberOfColumns', 'numberOfRows', 'gapX', 'gapY'], tab: 'style' },
         APPEARANCE,
         MOBILE_ADVANCED,
-        { title: 'Cells', icon: <Grid2X2 size={12} />, fieldNames: ['firstCellRowSpan', 'firstCellColumnSpan'], tab: 'advanced' },
-        { title: 'Alignment', icon: <Move size={12} />, fieldNames: ['justifyItems', 'alignItems'], tab: 'advanced' },
+        { title: 'Cells', icon: <Grid2X2 size={12} />, fieldNames: ['firstCellRowSpan', 'firstCellColumnSpan'], tab: 'advanced', collapsedByDefault: true },
+        { title: 'Alignment', icon: <Move size={12} />, fieldNames: ['justifyItems', 'alignItems'], tab: 'advanced', collapsedByDefault: true },
     ],
     Section: [
         { title: 'Settings', icon: <Box size={12} />, fieldNames: ['sectionName'], tab: 'content' },
@@ -237,14 +244,14 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
     ],
     Card: [
         { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['variant', 'cardCover', 'imageSource', 'videoSource', 'linkToService', 'service'], tab: 'content' },
-        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'height'], tab: 'style' },
+        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'height'], tab: 'style', collapsedByDefault: true },
         APPEARANCE,
     ],
     Navbar: [
         { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['menu'], tab: 'content' },
-        { title: 'Spacing', icon: <Maximize2 size={12} />, fieldNames: ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'], tab: 'style' },
-        { title: 'Colors', icon: <PaintBucket size={12} />, fieldNames: ['backgroundColor'], tab: 'style' },
-        { title: 'Border', icon: <Square size={12} />, fieldNames: ['borderBottomWidth', 'borderColor'], tab: 'style' },
+        { title: 'Spacing', icon: <Maximize2 size={12} />, fieldNames: ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'], tab: 'style', collapsedByDefault: true },
+        { title: 'Colors', icon: <PaintBucket size={12} />, fieldNames: ['backgroundColor'], tab: 'style', collapsedByDefault: true },
+        { title: 'Border', icon: <Square size={12} />, fieldNames: ['borderBottomWidth', 'borderColor'], tab: 'style', collapsedByDefault: true },
         APPEARANCE,
     ],
     Gallery: [
@@ -335,7 +342,7 @@ function SectionPanel({ section, fieldMap }: { section: Section; fieldMap: Map<s
                     className="flex w-full items-center justify-between [&[data-state=open]>svg]:rotate-180"
                     style={{ padding: '8px 12px', backgroundColor: 'transparent' }}
                 >
-                    <span style={{ fontSize: 12, fontWeight: 500, color: '#6F6863', lineHeight: 1 }}>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: section.tab === 'advanced' ? '#B0AAA4' : '#6F6863', lineHeight: 1 }}>
                         {section.title}
                     </span>
                     <ChevronDown
@@ -446,6 +453,11 @@ function Settings({ fields, componentName }: SettingsProps) {
                 className="flex-1 overflow-y-auto"
                 style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}
             >
+                {currentTab === 'advanced' && visibleSections.length > 0 && (
+                    <p style={{ fontSize: 11, fontStyle: 'italic', color: '#B0AAA4', margin: '0 2px 2px' }}>
+                        Settings most people never need to touch.
+                    </p>
+                )}
                 {allSections ? (
                     visibleSections.map(section => (
                         <Accordion.Root

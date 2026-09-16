@@ -163,6 +163,33 @@ export const NumInput = ({ value, onChange, step = 1, allowNegative = true, icon
     )
 }
 
+export const Checkbox = ({ checked, onChange, label }: {
+    checked: boolean; onChange: (v: boolean) => void; label?: React.ReactNode
+}) => (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+        <button
+            type="button"
+            role="checkbox"
+            aria-checked={checked}
+            onClick={() => onChange(!checked)}
+            style={{
+                width: 14, height: 14, borderRadius: 4, flexShrink: 0,
+                border: checked ? 'none' : '1.5px solid #DAD3CB',
+                background: checked ? '#FC6161' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 0, cursor: 'pointer',
+            }}
+        >
+            {checked && (
+                <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                    <path d="M1 3.5L3.2 5.7L8 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+            )}
+        </button>
+        {label != null && <span style={{ fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' }}>{label}</span>}
+    </label>
+)
+
 export const SegToggle = ({ value, onChange, options, className = "col-span-3" }: {
     value: any; onChange: (v: any) => void; options: { label: React.ReactNode; value: string }[]; className?: string
 }) => (

@@ -8,7 +8,7 @@ import {
 } from "@radix-ui/react-icons";
 import { ButtonContainer } from "../types";
 import { Fields } from "@puckeditor/core";
-import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, ColorPicker } from "../fieldPrimitives";
+import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, ColorPicker, Checkbox } from "../fieldPrimitives";
 import { BorderField, MarginField, OpacityField, PaddingField, PositionField, RadiusField, SimpleBorderField } from "../compoundFields";
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { GoogleFont, loadGoogleFont } from "useGoogleFonts";
@@ -219,12 +219,7 @@ export const buttonResolvedFields: (data: any) => {} = (data: any) => {
         isLink: {
             type: 'custom',
             label: 'Hyperlink',
-            render: ({ value, onChange, field }) => (
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
-                    <span style={lbl}>{field.label}</span>
-                </label>
-            )
+            render: ({ value, onChange, field }) => <Checkbox checked={!!value} onChange={onChange} label={field.label} />
         },
         ...(data.props.isLink ? {
             linkType: {

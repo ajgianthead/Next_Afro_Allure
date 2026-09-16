@@ -5,7 +5,7 @@ import { Text } from "../types"
 import { TEXT_SIZE_MAP, TEXT_SIZE_OPTIONS } from "@/features/editor/lib/responsive"
 import { PaintBucket, Type } from "lucide-react"
 import { FontBoldIcon, FontItalicIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
-import { KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS } from "../fieldPrimitives"
+import { KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS, Checkbox } from "../fieldPrimitives"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
@@ -137,15 +137,9 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
             render: ({ value, onChange, field }) => (
                 <div className="grid grid-cols-4 items-center gap-1.5">
                     <p className="text-xs font-medium text-slate-400">{field.label}</p>
-                    <label className="col-span-3 flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={!!value}
-                            onChange={(e) => onChange(e.target.checked)}
-                            className="h-3.5 w-3.5"
-                        />
-                        <span className="text-xs text-muted-foreground">Enable link</span>
-                    </label>
+                    <div className="col-span-3">
+                        <Checkbox checked={!!value} onChange={onChange} label="Enable link" />
+                    </div>
                 </div>
             )
         },

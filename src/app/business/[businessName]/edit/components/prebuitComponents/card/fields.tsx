@@ -5,7 +5,7 @@ import { ImageIcon, VideoIcon } from "lucide-react";
 import { useState } from "react";
 import { ImageModal } from "../../image/fields";
 import { useEditorContext } from "@/app/utils/context/EditorContext";
-import { KVSelect, StrSelect } from "../../fieldPrimitives";
+import { KVSelect, StrSelect, Checkbox } from "../../fieldPrimitives";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DimensionField, OpacityField } from "../../compoundFields";
 
@@ -58,10 +58,9 @@ export const defaultCardfields: Partial<Fields<Card, {}>> = {
         render: ({ value, onChange, field }) => (
             <div className="grid grid-cols-4 items-center gap-1.5">
                 <p className="col-span-2 text-[11px] text-[#A09790]">{field.label}</p>
-                <label className="col-span-2 flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} className="h-3.5 w-3.5" />
-                    <span className="text-xs text-muted-foreground">Enabled</span>
-                </label>
+                <div className="col-span-2">
+                    <Checkbox checked={!!value} onChange={onChange} label="Enabled" />
+                </div>
             </div>
         )
     },

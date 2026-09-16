@@ -1,6 +1,6 @@
 import { Fields } from "@puckeditor/core"
 import { VideoComponent } from "../types"
-import { NumInput } from "../fieldPrimitives"
+import { NumInput, Checkbox } from "../fieldPrimitives"
 import { BorderField, OpacityField, PositionField, RadiusField, SimpleBorderField } from "../compoundFields"
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
@@ -34,32 +34,17 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
         loop: {
             type: 'custom',
             label: undefined,
-            render: ({ value, onChange }) => (
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
-                    <span style={lbl}>Loop</span>
-                </label>
-            )
+            render: ({ value, onChange }) => <Checkbox checked={!!value} onChange={onChange} label="Loop" />
         },
         controls: {
             type: 'custom',
             label: undefined,
-            render: ({ value, onChange }) => (
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
-                    <span style={lbl}>Controls</span>
-                </label>
-            )
+            render: ({ value, onChange }) => <Checkbox checked={!!value} onChange={onChange} label="Controls" />
         },
         autoPlay: {
             type: 'custom',
             label: undefined,
-            render: ({ value, onChange }) => (
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
-                    <span style={lbl}>AutoPlay</span>
-                </label>
-            )
+            render: ({ value, onChange }) => <Checkbox checked={!!value} onChange={onChange} label="AutoPlay" />
         },
         // Almost never changed — no longer panel-editable, render() still
         // reads whatever's stored (default 1x).

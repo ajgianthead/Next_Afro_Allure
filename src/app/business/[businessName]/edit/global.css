@@ -15,7 +15,7 @@
   /* Sidebar widths (Puck's own CSS custom properties) — cascade into      */
   /* Puck's layout grid, no class-name guessing needed.                    */
   --puck-user-left-side-bar-width: 260px;
-  --puck-user-right-side-bar-width: 320px;
+  --puck-user-right-side-bar-width: 280px;
 
   /* Selection outline — Puck's own azure blue, redefined to brand red.     */
   --puck-color-azure-05: #FC6161;

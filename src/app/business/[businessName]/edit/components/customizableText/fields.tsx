@@ -3,7 +3,7 @@ import { ComponentData, DefaultComponentProps, Fields, useGetPuck } from "@pucke
 import { FontBoldIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
 import { RegularText } from "../types"
 import { useEditorContext } from "@/app/utils/context/EditorContext"
-import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS } from "../fieldPrimitives"
+import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS, Checkbox } from "../fieldPrimitives"
 import { OpacityField } from "../compoundFields"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FontSelector } from "../FontSelector"
@@ -182,12 +182,7 @@ export let customizableTextFields: Partial<Fields<RegularText, {}>> = {
     isLink: {
         type: 'custom',
         label: 'Hyperlink',
-        render: ({ value, onChange, field }) => (
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
-                <span style={lbl}>{field.label}</span>
-            </label>
-        )
+        render: ({ value, onChange, field }) => <Checkbox checked={!!value} onChange={onChange} label={field.label} />
     },
     textTransform: {
         type: 'custom',

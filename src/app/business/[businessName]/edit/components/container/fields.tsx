@@ -2,7 +2,7 @@ import type { Fields } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
 import { ColumnSpacingIcon, DotIcon, RowSpacingIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
 import { Container } from "../types";
-import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives";
+import { NumInput, SegToggle, ColorPicker, StrSelect, Checkbox } from "../fieldPrimitives";
 import { BorderField, MarginField, PaddingField, PositionField, RadiusField, SimpleBorderField, SizePresetField, usePropsUpdater } from "../compoundFields";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -270,12 +270,7 @@ export const defaultFields: Fields<Container, {}> = {
     grow: {
         type: 'custom',
         label: 'Grow',
-        render: ({ value, onChange }) => (
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} style={{ width: 13, height: 13 }} />
-                <span style={lbl}>Grow</span>
-            </label>
-        )
+        render: ({ value, onChange }) => <Checkbox checked={!!value} onChange={onChange} label="Grow" />
     },
     responsiveDirection: {
         type: 'custom',
