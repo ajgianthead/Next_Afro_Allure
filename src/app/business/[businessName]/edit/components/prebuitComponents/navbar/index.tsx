@@ -14,7 +14,7 @@ import { navbarProps } from "../../defaultStyles";
 export const NavbarComponent: any = {
     fields: navbarFields,
     defaultProps: navbarProps,
-    render: ({ logo: Logo, menu, puck, backgroundColor, paddingTop, paddingBottom, paddingLeft, paddingRight, borderBottomWidth, borderColor, borderType }: any) => {
+    render: ({ logo: Logo, menu, puck, backgroundColor, paddingTop, paddingBottom, paddingLeft, paddingRight, borderBottomWidth, borderColor, borderType, opacity }: any) => {
         const [open, setOpen] = useState<boolean>(false)
         const ref = useRef<HTMLDivElement>(null);
 
@@ -32,6 +32,7 @@ export const NavbarComponent: any = {
                 borderBottomWidth: borderBottomWidth ?? 0,
                 borderBottomColor: borderColor ?? '#E8E2D6',
                 borderBottomStyle: borderType ?? 'solid',
+                opacity: opacity != null ? opacity / 100 : undefined,
             }}>
                 <nav className="w-full flex justify-between items-center">
                     <div><Logo /></div>

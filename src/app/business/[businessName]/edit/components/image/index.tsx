@@ -21,7 +21,7 @@ const HEIGHT_MAP: Record<string, string> = {
 export const ImageComponent: any = {
     resolveFields: imageResolvedFields,
     defaultProps: imageProps,
-    render: ({ url, alt, width, objectFit, height, aspectRatio, borderBottom, borderColor, borderExpanded, borderLeft, borderRadius, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusExpanded, borderRadiusTopLeft, borderRadiusTopRight, borderRight, borderTop, borderType, borderWidth, bottom, positionType, right, left, top, mobileVisibility, opacity }: any) => {
+    render: ({ url, alt, width, objectFit, objectPosition, height, aspectRatio, borderBottom, borderColor, borderExpanded, borderLeft, borderRadius, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusExpanded, borderRadiusTopLeft, borderRadiusTopRight, borderRight, borderTop, borderType, borderWidth, bottom, positionType, right, left, top, mobileVisibility, opacity }: any) => {
         // Support legacy numeric width/height values from pre-migration saved data
         const containerWidth = typeof width === 'number'
             ? `${width}%`
@@ -67,6 +67,7 @@ export const ImageComponent: any = {
                             width: '100%',
                             height: isAutoHeight ? 'auto' : '100%',
                             objectFit: isAutoHeight ? undefined : resolvedObjectFit,
+                            objectPosition: isAutoHeight ? undefined : (objectPosition || 'center'),
                             ...(isAutoHeight ? {} : { position: 'absolute' as const, top: 0, left: 0 }),
                         }}
                     />

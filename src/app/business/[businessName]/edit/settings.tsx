@@ -182,13 +182,13 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
     ],
     Image: [
         MOBILE_RESPONSIVE,
-        { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height', 'objectFit', 'aspectRatio'], tab: 'content' },
+        { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height', 'objectFit', 'objectPosition', 'aspectRatio'], tab: 'content' },
         BORDER, RADIUS, POSITION, APPEARANCE,
     ],
     Video: [
         { title: 'Source', icon: <Video size={12} />, fieldNames: ['url'], tab: 'content' },
         { title: 'Playback', icon: <Play size={12} />, fieldNames: ['loop', 'controls', 'autoPlay', 'speed'], tab: 'content' },
-        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'height'], tab: 'style' },
+        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'height', 'objectFit'], tab: 'style' },
         BORDER, RADIUS, POSITION, APPEARANCE,
     ],
     Row: [
@@ -220,6 +220,12 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
         { title: 'Spacing', icon: <Maximize2 size={12} />, fieldNames: ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'], tab: 'style' },
         { title: 'Colors', icon: <PaintBucket size={12} />, fieldNames: ['backgroundColor'], tab: 'style' },
         { title: 'Border', icon: <Square size={12} />, fieldNames: ['borderBottomWidth', 'borderColor'], tab: 'style' },
+        APPEARANCE,
+    ],
+    Gallery: [
+        { title: 'Content', icon: <ImageIcon size={12} />, fieldNames: ['images'], tab: 'content' },
+        { title: 'Layout', icon: <Grid2X2 size={12} />, fieldNames: ['columns', 'gap', 'aspectRatio', 'borderRadius'], tab: 'style' },
+        APPEARANCE,
     ],
 }
 
@@ -250,6 +256,7 @@ const COMPONENT_META: Record<string, { label: string; icon: React.ReactNode }> =
     Section: { label: 'Section', icon: <Box size={12} className="text-[#6F6863]" /> },
     Card: { label: 'Card', icon: <Box size={12} className="text-[#6F6863]" /> },
     Navbar: { label: 'Navbar', icon: <LayoutDashboard size={12} className="text-[#6F6863]" /> },
+    Gallery: { label: 'Gallery', icon: <ImageIcon size={12} className="text-[#6F6863]" /> },
     HeadingOne: { label: 'Heading 1', icon: <Type size={12} className="text-[#6F6863]" /> },
     HeadingTwo: { label: 'Heading 2', icon: <Type size={12} className="text-[#6F6863]" /> },
     HeadingThree: { label: 'Heading 3', icon: <Type size={12} className="text-[#6F6863]" /> },

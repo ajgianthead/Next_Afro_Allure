@@ -1,6 +1,7 @@
 import { Fields } from "@puckeditor/core";
 import { RowLayout } from "../types";
 import { NumInput, KVSelect } from "../fieldPrimitives";
+import { OpacityField } from "../compoundFields";
 import { RowsIcon, RowSpacingIcon } from "@radix-ui/react-icons";
 import { MOBILE_LAYOUT_OPTIONS } from "@/features/editor/lib/responsive";
 
@@ -71,5 +72,10 @@ export const rowLayoutFields: Fields<RowLayout, {}> = {
                 </select>
             </div>
         )
+    },
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
     },
 }

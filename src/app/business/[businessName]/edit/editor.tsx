@@ -34,6 +34,12 @@ const VIEWPORTS: Viewports = [
 
 const AUTOSAVE_INTERVAL_MS = 60000;
 
+// createUsePuck() is a pure factory — calling it fresh per render (as every
+// call site here used to) allocates a new hook function but doesn't cause
+// extra re-renders itself; the actual re-render cost is governed by each
+// call's selector. Hoisting it once still avoids the redundant allocation.
+const usePuckHook = createUsePuck()
+
 function timeSince(date: Date): string {
     const s = Math.floor((Date.now() - date.getTime()) / 1000)
     if (s < 10) return 'just now'
@@ -626,8 +632,7 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
                     )
                 },
                 preview: ({ children }) => {
-                    const usePuck = createUsePuck()
-                    const contentLength = usePuck(s => s.appState.data.content.length)
+                    const contentLength = usePuckHook(s => s.appState.data.content.length)
                     const getPuck = useGetPuck()
                     const host = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co').replace(/^https?:\/\//, '')
 
@@ -673,8 +678,7 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
                     )
                 },
                 fields: ({ children, isLoading, itemSelector }) => {
-                    const usePuck = createUsePuck();
-                    const selectedItem = usePuck((s) => s.selectedItem)
+                    const selectedItem = usePuckHook((s) => s.selectedItem)
                     if (isLoading) return (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, color: '#6F6863', fontSize: 12 }}>
                             Loading…

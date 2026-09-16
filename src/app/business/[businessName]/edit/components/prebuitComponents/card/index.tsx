@@ -39,7 +39,7 @@ export const CardComponent: ComponentConfig<Card> = {
 
         return updateSlotColors()
     },
-    render: (({ puck, cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service, width, widthUnit, height, heightUnit }) => {
+    render: (({ puck, cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service, width, widthUnit, height, heightUnit, opacity }) => {
         const router = useRouter()
         const pathname = usePathname()
         const businessName = pathname?.split('/')[2] ?? ''
@@ -50,6 +50,7 @@ export const CardComponent: ComponentConfig<Card> = {
             height: (height ?? 0) > 0 ? `${height}${heightUnit ?? 'px'}` : undefined,
             transform: hovered ? 'scale(1.03)' : 'scale(1)',
             transition: 'transform 0.2s ease',
+            opacity: opacity != null ? opacity / 100 : undefined,
         }
 
         return (
@@ -199,5 +200,6 @@ export const CardComponent: ComponentConfig<Card> = {
         widthUnit: 'px',
         height: 0,
         heightUnit: 'px',
+        opacity: 100,
     }
 }

@@ -34,6 +34,7 @@ export interface Navbar {
     borderBottomWidth?: number
     borderColor?: string
     borderType?: string
+    opacity?: number
 }
 export interface HeroSection {
     content: Slot
@@ -47,6 +48,7 @@ export interface Gallery {
     gap: number
     borderRadius: number
     aspectRatio: string
+    opacity?: number
 }
 export interface Card {
     variant: string
@@ -60,6 +62,7 @@ export interface Card {
     widthUnit?: string
     height?: number
     heightUnit?: string
+    opacity?: number
 }
 
 export interface Footer {
@@ -81,6 +84,7 @@ export interface ColumnLayout {
     numberOfColumns: number
     gap: number
     mobileLayout: string
+    opacity?: number
 }
 export interface RowLayout {
     rows: {
@@ -90,6 +94,7 @@ export interface RowLayout {
     numberOfRows: number
     gap: number
     mobileLayout: string
+    opacity?: number
 }
 export interface GridLayout {
     alignItems: string // Aligns along the column
@@ -106,11 +111,13 @@ export interface GridLayout {
     firstCellRowSpan: number
     firstCellColumnSpan: number
     mobileColumns: number
+    opacity?: number
 }
 
 export interface Section {
     section: Slot
     sectionName: string | null
+    opacity?: number
 }
 export interface Container {
     rotation: number
@@ -180,6 +187,7 @@ export interface ImageComponent {
     alt: string
     width: string
     objectFit: string
+    objectPosition?: string
     height: string
     aspectRatio: string
     mobileVisibility: string

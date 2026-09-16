@@ -37,7 +37,7 @@ const EditorSectionInit = ({ sectionName, id }: { sectionName: string | null | '
 export const SectionComponent: ComponentConfig<Section> = {
     fields: sectionFields,
     defaultProps: sectionProps,
-    render: ({ section, sectionName, id }) => {
+    render: ({ section, sectionName, id, opacity }) => {
         const pathName = usePathname()
         const isEditor = pathName.split('/').includes('edit')
         const resolvedId = sectionName
@@ -45,7 +45,7 @@ export const SectionComponent: ComponentConfig<Section> = {
             : id.toLowerCase().replace(/\s+/g, '')
 
         return (
-            <div id={resolvedId}>
+            <div id={resolvedId} style={{ opacity: opacity != null ? opacity / 100 : undefined }}>
                 {isEditor && <EditorSectionInit sectionName={sectionName} id={id} />}
                 {section()}
             </div>

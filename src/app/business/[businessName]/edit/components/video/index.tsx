@@ -13,7 +13,7 @@ export const VideoComponent: any = {
     inline: true,
 
     defaultProps: videoProps,
-    render: ({ url, width, height, borderBottom, borderColor, borderExpanded, borderLeft, borderRadius, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusExpanded, borderRadiusTopLeft, borderRadiusTopRight, borderRight, borderTop, borderType, borderWidth, bottom, positionType, right, left, top, autoPlay, speed, controls, loop, puck }: any) => {
+    render: ({ url, width, height, borderBottom, borderColor, borderExpanded, borderLeft, borderRadius, borderRadiusBottomLeft, borderRadiusBottomRight, borderRadiusExpanded, borderRadiusTopLeft, borderRadiusTopRight, borderRight, borderTop, borderType, borderWidth, bottom, positionType, right, left, top, autoPlay, speed, controls, loop, objectFit, opacity, puck }: any) => {
         const playerRef = useRef<HTMLVideoElement | null>(null)
         const [isReady, setIsReady] = useState(false)
         const [playing, setPlaying] = useState<boolean | undefined>(undefined)
@@ -43,7 +43,8 @@ export const VideoComponent: any = {
             right,
             left,
             width,
-            color: 'white'
+            color: 'white',
+            opacity: opacity != null ? opacity / 100 : undefined,
         }}>
             {!isReady && (
                 <div className="flex justify-center items-center text-xl font-medium text-black h-full">
@@ -52,7 +53,7 @@ export const VideoComponent: any = {
             )}
             <ReactPlayer onReady={() => setIsReady(true)}
                 onError={(e) => console.error("Video error", e)} ref={playerRef} playing={playing}
-                muted={autoPlay} style={{ width: '100%', height: 'auto', aspectRatio: '16/9' }}
+                muted={autoPlay} style={{ width: '100%', height: 'auto', aspectRatio: '16/9', objectFit: objectFit ?? 'cover' }}
                 loop={loop} playbackRate={speed} controls={controls} src={url} />            </div>
 
     }

@@ -10,6 +10,7 @@ import Image from "next/image"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { NumInput, KVSelect, StrSelect } from "../fieldPrimitives"
 import { BorderField, OpacityField, PositionField, RadiusField } from "../compoundFields"
+import { PositionGrid } from "../positionGrid"
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
@@ -171,6 +172,16 @@ export const imageResolvedFields: (data: any, params: any) => {} = (data, params
                             { label: 'Shrink to fit', value: 'scale-down' },
                         ]}
                     />
+                </div>
+            )
+        },
+        objectPosition: {
+            type: 'custom',
+            label: 'Image position',
+            render: ({ value, onChange, field }) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ ...lbl, minWidth: 56 }}>{field.label}</span>
+                    <PositionGrid value={value ?? 'center'} onChange={onChange} />
                 </div>
             )
         },

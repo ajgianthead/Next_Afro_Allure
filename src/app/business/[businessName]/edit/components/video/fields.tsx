@@ -1,13 +1,36 @@
 import { Fields } from "@puckeditor/core"
 import { VideoComponent } from "../types"
-import { NumInput } from "../fieldPrimitives"
-import { BorderField, PositionField, RadiusField } from "../compoundFields"
+import { KVSelect, NumInput } from "../fieldPrimitives"
+import { BorderField, OpacityField, PositionField, RadiusField } from "../compoundFields"
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
 export const videoResolvedFields: (data: any, params: any) => {} = (data, params) => {
     let fields: Fields<VideoComponent, {}> = {
-        objectFit: { visible: false, type: 'text' },
+        objectFit: {
+            type: 'custom',
+            label: 'Video fit',
+            render: ({ value, onChange }) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ ...lbl, minWidth: 56 }}>Video fit</span>
+                    <KVSelect
+                        value={value ?? 'cover'}
+                        onChange={onChange}
+                        className="flex-1"
+                        options={[
+                            { label: 'Fill (crop to fit)', value: 'cover' },
+                            { label: 'Fit inside', value: 'contain' },
+                            { label: 'Stretch to fill', value: 'fill' },
+                        ]}
+                    />
+                </div>
+            )
+        },
+        opacity: {
+            type: 'custom',
+            label: 'Opacity',
+            render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
+        },
         aspectRatio: { visible: false, type: 'text' },
         mobileVisibility: { visible: false, type: 'text' },
 

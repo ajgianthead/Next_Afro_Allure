@@ -1,5 +1,6 @@
 import { Fields } from "@puckeditor/core";
 import { Section } from "../types";
+import { OpacityField } from "../compoundFields";
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
@@ -20,5 +21,10 @@ export const sectionFields: Fields<Section, {}> = {
                 />
             </div>
         )
-    }
+    },
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
+    },
 }

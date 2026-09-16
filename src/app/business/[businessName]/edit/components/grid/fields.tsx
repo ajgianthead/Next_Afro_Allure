@@ -1,6 +1,7 @@
 import { Fields } from "@puckeditor/core"
 import { GridLayout } from "../types"
 import { NumInput, StrSelect } from "../fieldPrimitives"
+import { OpacityField } from "../compoundFields"
 import { ColumnsIcon, ColumnSpacingIcon, RowsIcon, RowSpacingIcon } from "@radix-ui/react-icons"
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
@@ -98,5 +99,10 @@ export const gridLayoutFields: Fields<GridLayout, {}> = {
                 <NumInput value={value} onChange={onChange} className="flex-1" />
             </div>
         )
+    },
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
     },
 }

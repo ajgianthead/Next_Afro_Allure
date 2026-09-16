@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ImageModal } from '../../image/fields'
 import { NumInput, KVSelect } from '../../fieldPrimitives'
+import { OpacityField } from '../../compoundFields'
 import { Button } from '@/components/ui/button'
 import { ImageIcon } from 'lucide-react'
 
@@ -89,5 +90,10 @@ export const galleryFields = {
                 />
             </div>
         ),
+    },
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }: any) => <OpacityField value={value ?? 100} onChange={onChange} />
     },
 }

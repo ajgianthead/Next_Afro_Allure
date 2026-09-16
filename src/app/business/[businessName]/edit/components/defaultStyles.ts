@@ -72,6 +72,7 @@ export const columnProps: ColumnLayout = {
     gap: 10,
     alignItems: 'stretch',
     mobileLayout: 'stack',
+    opacity: 100,
 }
 // Row
 export const rowProps: RowLayout = {
@@ -80,6 +81,7 @@ export const rowProps: RowLayout = {
     gap: 10,
     justifyItems: 'stretch',
     mobileLayout: 'stack',
+    opacity: 100,
 }
 // Grid
 export const gridProps: GridLayout = {
@@ -93,11 +95,13 @@ export const gridProps: GridLayout = {
     firstCellRowSpan: 1,
     firstCellColumnSpan: 1,
     mobileColumns: 1,
+    opacity: 100,
 }
 // Section
 export const sectionProps: Section = {
     section: [],
-    sectionName: null
+    sectionName: null,
+    opacity: 100,
 }
 // Image
 export const imageProps: ImageComponent = {
@@ -105,6 +109,7 @@ export const imageProps: ImageComponent = {
     alt: '',
     width: 'full',
     objectFit: 'cover',
+    objectPosition: 'center',
     height: 'auto',
     aspectRatio: '',
     mobileVisibility: 'show',
@@ -160,6 +165,7 @@ export const videoProps: VideoComponent = {
     controls: true,
     speed: 1,
     loop: false,
+    opacity: 100,
 }
 // CustomText
 export const customTextProps: RegularText = {
@@ -363,6 +369,7 @@ export const navbarProps: Navbar = {
     borderBottomWidth: 0,
     borderColor: '#E8E2D6',
     borderType: 'solid',
+    opacity: 100,
 }
 // Hero Section
 export const heroSectionProps: HeroSection = {

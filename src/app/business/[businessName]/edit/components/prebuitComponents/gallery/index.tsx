@@ -23,8 +23,9 @@ export const GalleryComponent: any = {
         gap: 8,
         borderRadius: 8,
         aspectRatio: '1/1',
+        opacity: 100,
     },
-    render: ({ puck, images = defaultImages, columns = 3, gap = 8, borderRadius = 8, aspectRatio = '1/1' }: any) => {
+    render: ({ puck, images = defaultImages, columns = 3, gap = 8, borderRadius = 8, aspectRatio = '1/1', opacity = 100 }: any) => {
         const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
         const [modal, setModal] = useState<{ open: boolean; index: number }>({ open: false, index: 0 })
 
@@ -40,7 +41,7 @@ export const GalleryComponent: any = {
         }, [modal.open, images.length])
 
         return (
-            <div ref={puck.dragRef} className="w-full">
+            <div ref={puck.dragRef} className="w-full" style={{ opacity: opacity / 100 }}>
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columns}, 1fr)`,

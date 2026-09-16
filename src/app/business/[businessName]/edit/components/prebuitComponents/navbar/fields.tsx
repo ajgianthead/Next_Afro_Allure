@@ -1,5 +1,6 @@
 import { ColorPicker, NumInput } from "../../fieldPrimitives";
 import { GradientField } from "../../container/fields";
+import { OpacityField } from "../../compoundFields";
 
 export const ButtonLinkDefaultProps = {
     fontSize: 1,
@@ -148,5 +149,10 @@ export const navbarFields = {
                 <ColorPicker value={value ?? '#E8E2D6'} onChange={onChange} className="flex-1" />
             </div>
         ),
+    },
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }: any) => <OpacityField value={value ?? 100} onChange={onChange} />
     },
 }

@@ -7,7 +7,7 @@ import { ImageModal } from "../../image/fields";
 import { useEditorContext } from "@/app/utils/context/EditorContext";
 import { KVSelect, StrSelect } from "../../fieldPrimitives";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DimensionField } from "../../compoundFields";
+import { DimensionField, OpacityField } from "../../compoundFields";
 
 const ServiceField = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
     const { editorState } = useEditorContext()
@@ -37,6 +37,11 @@ export const defaultCardfields: Partial<Fields<Card, {}>> = {
         render: () => <DimensionField label="H" valueProp="height" unitProp="heightUnit" />,
     },
     heightUnit: { visible: false, type: 'text' },
+    opacity: {
+        type: 'custom',
+        label: 'Opacity',
+        render: ({ value, onChange }) => <OpacityField value={value ?? 100} onChange={onChange} />
+    },
     variant: {
         type: 'custom',
         label: 'Variant',
