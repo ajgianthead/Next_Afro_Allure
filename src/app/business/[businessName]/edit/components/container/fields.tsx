@@ -3,7 +3,7 @@ import "@puckeditor/core/puck.css";
 import { ColumnSpacingIcon, DotIcon, RowSpacingIcon, ViewHorizontalIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
 import { Container } from "../types";
 import { NumInput, SegToggle, ColorPicker, StrSelect } from "../fieldPrimitives";
-import { BorderField, DimensionField, MarginField, PaddingField, PositionField, RadiusField } from "../compoundFields";
+import { BorderField, MarginField, PaddingField, PositionField, RadiusField, SimpleBorderField, SizePresetField, usePropsUpdater } from "../compoundFields";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { ImageModal } from "../image/fields";
@@ -69,6 +69,121 @@ export const GradientField = ({ value, onChange }: { value: string; onChange: (v
                 </>
             ) : (
                 <ColorPicker value={value} onChange={onChange} className="w-full" />
+            )}
+        </div>
+    )
+}
+
+const GradientBody = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
+    const parseGradient = (v: string) => {
+        const m = v.match(/linear-gradient\((\d+(?:\.\d+)?)deg,\s*(.+?)\s+(\d+(?:\.\d+)?)%,\s*(.+?)\s+(\d+(?:\.\d+)?)%\)/)
+        return m
+            ? { angle: parseFloat(m[1]), c1: m[2].trim(), p1: parseFloat(m[3]), c2: m[4].trim(), p2: parseFloat(m[5]) }
+            : { angle: 135, c1: '#f7f7f7', p1: 0, c2: '#1A1818', p2: 100 }
+    }
+    const build = (angle: number, c1: string, p1: number, c2: string, p2: number) =>
+        `linear-gradient(${angle}deg, ${c1} ${p1}%, ${c2} ${p2}%)`
+    const g = parseGradient(value)
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 6 }}>
+            <div style={{ height: 24, borderRadius: 3, background: value, border: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...lbl, minWidth: 40 }}>Angle</span>
+                <NumInput value={g.angle} onChange={(a) => onChange(build(a, g.c1, g.p1, g.c2, g.p2))} step={1} className="flex-1" />
+                <span style={{ ...lbl, flexShrink: 0 }}>°</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <ColorPicker value={g.c1} onChange={(c) => onChange(build(g.angle, c, g.p1, g.c2, g.p2))} className="flex-1" />
+                <NumInput value={g.p1} onChange={(p) => onChange(build(g.angle, g.c1, p, g.c2, g.p2))} step={1} allowNegative={false} className="w-12" />
+                <span style={{ ...lbl, flexShrink: 0 }}>%</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <ColorPicker value={g.c2} onChange={(c) => onChange(build(g.angle, g.c1, g.p1, c, g.p2))} className="flex-1" />
+                <NumInput value={g.p2} onChange={(p) => onChange(build(g.angle, g.c1, g.p1, g.c2, p))} step={1} allowNegative={false} className="w-12" />
+                <span style={{ ...lbl, flexShrink: 0 }}>%</span>
+            </div>
+        </div>
+    )
+}
+
+type BgType = 'none' | 'color' | 'image' | 'gradient'
+
+const inferBgType = (backgroundColor: string, backgroundImageUrl: string): BgType => {
+    if (backgroundImageUrl) return 'image'
+    if (typeof backgroundColor === 'string' && (backgroundColor.startsWith('linear-gradient') || backgroundColor.startsWith('radial-gradient'))) return 'gradient'
+    if (!backgroundColor || backgroundColor === 'transparent') return 'none'
+    return 'color'
+}
+
+// The single Background control — None / Color / Image / Gradient. Only the
+// active type's CSS is actually applied by render(); switching types here
+// just changes which fields are populated (backgroundColor vs backgroundImageUrl).
+export const BackgroundField = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
+    const { props, update } = usePropsUpdater()
+    const backgroundImageUrl = props.backgroundImageUrl ?? ''
+    const type = inferBgType(value, backgroundImageUrl)
+    const [imageModalOpen, setImageModalOpen] = useState(false)
+
+    const setType = (next: BgType) => {
+        if (next === type) return
+        if (next === 'none') {
+            onChange('transparent')
+            update({ backgroundImageUrl: '' })
+        } else if (next === 'color') {
+            onChange('#F7F5F2')
+            update({ backgroundImageUrl: '' })
+        } else if (next === 'gradient') {
+            onChange('linear-gradient(135deg, #f7f7f7 0%, #1A1818 100%)')
+            update({ backgroundImageUrl: '' })
+        } else if (next === 'image') {
+            setImageModalOpen(true)
+        }
+    }
+
+    return (
+        <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={lbl}>Background</span>
+                <SegToggle
+                    value={type}
+                    onChange={setType}
+                    options={[
+                        { label: 'None', value: 'none' },
+                        { label: 'Color', value: 'color' },
+                        { label: 'Image', value: 'image' },
+                        { label: 'Gradient', value: 'gradient' },
+                    ]}
+                    className="flex-1"
+                />
+            </div>
+            {type === 'color' && (
+                <div style={{ marginTop: 6 }}>
+                    <ColorPicker value={value} onChange={onChange} className="w-full" />
+                </div>
+            )}
+            {type === 'gradient' && <GradientBody value={value} onChange={onChange} />}
+            {type === 'image' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                    <ImageModal
+                        open={imageModalOpen}
+                        onClose={() => setImageModalOpen(false)}
+                        onChange={(v) => update({ backgroundImageUrl: v ?? '' })}
+                        value={backgroundImageUrl || null}
+                    />
+                    <Button size="sm" variant="outline" onClick={() => setImageModalOpen(true)} style={{ flex: 1, height: 26, fontSize: 11 }}>
+                        {backgroundImageUrl ? 'Change Image' : 'Select Image'}
+                    </Button>
+                    {backgroundImageUrl && (
+                        <button
+                            type="button"
+                            title="Remove background image"
+                            onClick={() => update({ backgroundImageUrl: '' })}
+                            style={{ width: 22, height: 22, border: 'none', background: '#F4F1EC', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#A09790' }}
+                        >
+                            <X size={11} />
+                        </button>
+                    )}
+                </div>
             )}
         </div>
     )
@@ -241,40 +356,13 @@ export const defaultFields: Fields<Container, {}> = {
     marginLeft: { visible: false, type: 'number' },
     marginRight: { visible: false, type: 'number' },
 
-    // ── Colors ────────────────────────────────────────────────────────────────
+    // ── Background (None / Color / Image / Gradient) ────────────────────────────
     backgroundColor: {
         type: 'custom',
-        label: 'Fill',
-        render: ({ onChange, value }) => <GradientField value={value} onChange={onChange} />,
+        label: 'Background',
+        render: ({ onChange, value }) => <BackgroundField value={value} onChange={onChange} />,
     },
-
-    // ── Background Image ──────────────────────────────────────────────────────
-    backgroundImageUrl: {
-        type: 'custom',
-        label: 'Bg Image',
-        render: ({ value, onChange }) => {
-            const [open, setOpen] = useState(false)
-            return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <ImageModal open={open} onClose={() => setOpen(false)} onChange={(v) => onChange(v ?? '')} value={value || null} />
-                    <span style={lbl}>Bg Image</span>
-                    <Button size="sm" variant="outline" onClick={() => setOpen(true)} style={{ flex: 1, height: 26, fontSize: 11 }}>
-                        {value ? 'Change Image' : 'Select Image'}
-                    </Button>
-                    {value && (
-                        <button
-                            type="button"
-                            title="Remove background image"
-                            onClick={() => onChange('')}
-                            style={{ width: 22, height: 22, border: 'none', background: '#F4F1EC', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#A09790' }}
-                        >
-                            <X size={11} />
-                        </button>
-                    )}
-                </div>
-            )
-        }
-    },
+    backgroundImageUrl: { visible: false, type: 'text' },
     // Cover/center are correct for the vast majority of background images —
     // no longer panel-editable, but render() still reads whatever's stored
     // (existing customized values keep working; new components get the
@@ -282,27 +370,31 @@ export const defaultFields: Fields<Container, {}> = {
     backgroundObjectFit: { visible: false, type: 'text' },
     backgroundPosition: { visible: false, type: 'text' },
 
-    // ── Border (compound) ─────────────────────────────────────────────────────
-    borderExpanded: {
+    // ── Border (simple on/off, folds in radius) ─────────────────────────────────
+    borderWidth: {
         type: 'custom',
         label: 'Border',
+        render: ({ value, onChange }) => <SimpleBorderField value={value ?? 0} onChange={onChange} />
+    },
+    borderColor: { visible: false, type: 'text' },
+    borderType: { visible: false, type: 'text' },
+    borderRadius: { visible: false, type: 'number' },
+
+    // ── Border / Radius (advanced, per-side) ────────────────────────────────────
+    borderExpanded: {
+        type: 'custom',
+        label: 'Border (per side)',
         render: ({ value, onChange }) => <BorderField value={value ?? 'false'} onChange={onChange} />
     },
-    borderWidth: { visible: false, type: 'number' },
     borderTop: { visible: false, type: 'number' },
     borderBottom: { visible: false, type: 'number' },
     borderLeft: { visible: false, type: 'number' },
     borderRight: { visible: false, type: 'number' },
-    borderColor: { visible: false, type: 'text' },
-    borderType: { visible: false, type: 'text' },
-
-    // ── Radius (compound) ─────────────────────────────────────────────────────
     borderRadiusExpanded: {
         type: 'custom',
-        label: 'Radius',
+        label: 'Radius (per corner)',
         render: ({ value, onChange }) => <RadiusField value={value ?? 'false'} onChange={onChange} />
     },
-    borderRadius: { visible: false, type: 'number' },
     borderRadiusTopLeft: { visible: false, type: 'number' },
     borderRadiusTopRight: { visible: false, type: 'number' },
     borderRadiusBottomLeft: { visible: false, type: 'number' },
@@ -323,13 +415,13 @@ export const defaultFields: Fields<Container, {}> = {
     width: {
         type: 'custom',
         label: 'Width',
-        render: () => <DimensionField label="W" valueProp="width" unitProp="widthUnit" />
+        render: () => <SizePresetField label="Width" valueProp="width" unitProp="widthUnit" />
     },
     widthUnit: { visible: false, type: 'text' },
     height: {
         type: 'custom',
         label: 'Height',
-        render: () => <DimensionField label="H" valueProp="height" unitProp="heightUnit" />
+        render: () => <SizePresetField label="Height" valueProp="height" unitProp="heightUnit" includeHalf={false} />
     },
     heightUnit: { visible: false, type: 'text' },
 

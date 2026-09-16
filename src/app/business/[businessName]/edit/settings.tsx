@@ -118,16 +118,9 @@ const SPACING: Section = {
 }
 
 const FILL: Section = {
-    title: 'Colors',
+    title: 'Background',
     icon: <PaintBucket size={12} />,
     fieldNames: ['backgroundColor'],
-    tab: 'style',
-}
-
-const BG_IMAGE: Section = {
-    title: 'Background',
-    icon: <ImageIcon size={12} />,
-    fieldNames: ['backgroundImageUrl'],
     tab: 'style',
 }
 
@@ -141,15 +134,24 @@ const APPEARANCE: Section = {
 const BORDER: Section = {
     title: 'Border',
     icon: <Square size={12} />,
-    fieldNames: ['borderExpanded'],
+    fieldNames: ['borderWidth'],
     tab: 'style',
 }
 
-const RADIUS: Section = {
-    title: 'Radius',
+const ADVANCED_BORDER: Section = {
+    title: 'Border (per side)',
+    icon: <Square size={12} />,
+    fieldNames: ['borderExpanded'],
+    tab: 'advanced',
+    collapsedByDefault: true,
+}
+
+const ADVANCED_RADIUS: Section = {
+    title: 'Radius (per corner)',
     icon: <Square size={12} />,
     fieldNames: ['borderRadiusExpanded'],
-    tab: 'style',
+    tab: 'advanced',
+    collapsedByDefault: true,
 }
 
 const POSITION: Section = {
@@ -182,8 +184,8 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
         APPEARANCE,
     ],
     Container: [
-        LAYOUT, SIZE, SPACING, FILL, BG_IMAGE, BORDER, RADIUS, APPEARANCE,
-        SIZE_LIMITS, MOBILE_ADVANCED, POSITION,
+        LAYOUT, SIZE, SPACING, FILL, BORDER, APPEARANCE,
+        SIZE_LIMITS, MOBILE_ADVANCED, ADVANCED_BORDER, ADVANCED_RADIUS, POSITION,
     ],
     Button: [
         { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'isLink', 'linkType', 'url', 'sections'], tab: 'content' },
@@ -192,24 +194,25 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
         SPACING,
         FILL,
         BORDER,
-        RADIUS,
         APPEARANCE,
         { title: 'Typography', icon: <Type size={12} />, fieldNames: ['fontFamily'], tab: 'advanced' },
         MOBILE_ADVANCED,
+        ADVANCED_BORDER, ADVANCED_RADIUS,
         POSITION,
     ],
     Image: [
         { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height'], tab: 'content' },
-        BORDER, RADIUS, APPEARANCE,
+        BORDER, APPEARANCE,
         { title: 'Image Fit', icon: <ImageIcon size={12} />, fieldNames: ['objectFit'], tab: 'advanced' },
-        POSITION,
+        ADVANCED_BORDER, ADVANCED_RADIUS, POSITION,
         { title: 'More', icon: <Move size={12} />, fieldNames: ['aspectRatio'], tab: 'advanced' },
     ],
     Video: [
         { title: 'Source', icon: <Video size={12} />, fieldNames: ['url'], tab: 'content' },
         { title: 'Playback', icon: <Play size={12} />, fieldNames: ['loop', 'controls', 'autoPlay'], tab: 'content' },
         { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width'], tab: 'style' },
-        BORDER, RADIUS, POSITION, APPEARANCE,
+        BORDER, APPEARANCE,
+        ADVANCED_BORDER, ADVANCED_RADIUS, POSITION,
     ],
     Row: [
         { title: 'Layout', icon: <Rows size={12} />, fieldNames: ['numberOfRows', 'gap', 'justifyItems'], tab: 'style' },

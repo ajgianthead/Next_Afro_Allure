@@ -1,7 +1,7 @@
 import { Fields } from "@puckeditor/core"
 import { VideoComponent } from "../types"
 import { NumInput } from "../fieldPrimitives"
-import { BorderField, OpacityField, PositionField, RadiusField } from "../compoundFields"
+import { BorderField, OpacityField, PositionField, RadiusField, SimpleBorderField } from "../compoundFields"
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
 
@@ -76,27 +76,31 @@ export const videoResolvedFields: (data: any, params: any) => {} = (data, params
                 </div>
             )
         },
-        // ── Border (compound) ─────────────────────────────────────────────────
-        borderExpanded: {
+        // ── Border (simple on/off, folds in radius) ─────────────────────────────
+        borderWidth: {
             type: 'custom',
             label: 'Border',
+            render: ({ value, onChange }) => <SimpleBorderField value={value ?? 0} onChange={onChange} />
+        },
+        borderColor: { visible: false, type: 'text' },
+        borderType: { visible: false, type: 'text' },
+        borderRadius: { visible: false, type: 'number' },
+
+        // ── Border / Radius (advanced, per-side) ─────────────────────────────────
+        borderExpanded: {
+            type: 'custom',
+            label: 'Border (per side)',
             render: ({ value, onChange }) => <BorderField value={value ?? 'false'} onChange={onChange} />
         },
-        borderWidth: { visible: false, type: 'number' },
         borderTop: { visible: false, type: 'number' },
         borderBottom: { visible: false, type: 'number' },
         borderLeft: { visible: false, type: 'number' },
         borderRight: { visible: false, type: 'number' },
-        borderColor: { visible: false, type: 'text' },
-        borderType: { visible: false, type: 'text' },
-
-        // ── Radius (compound) ─────────────────────────────────────────────────
         borderRadiusExpanded: {
             type: 'custom',
-            label: 'Radius',
+            label: 'Radius (per corner)',
             render: ({ value, onChange }) => <RadiusField value={value ?? 'false'} onChange={onChange} />
         },
-        borderRadius: { visible: false, type: 'number' },
         borderRadiusTopLeft: { visible: false, type: 'number' },
         borderRadiusTopRight: { visible: false, type: 'number' },
         borderRadiusBottomLeft: { visible: false, type: 'number' },

@@ -9,7 +9,7 @@ import {
 import { ButtonContainer } from "../types";
 import { Fields } from "@puckeditor/core";
 import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, ColorPicker } from "../fieldPrimitives";
-import { BorderField, MarginField, OpacityField, PaddingField, PositionField, RadiusField } from "../compoundFields";
+import { BorderField, MarginField, OpacityField, PaddingField, PositionField, RadiusField, SimpleBorderField } from "../compoundFields";
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { GoogleFont, loadGoogleFont } from "useGoogleFonts";
 import { useEffect } from "react";
@@ -99,22 +99,25 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
             </div>
         )
     },
-    borderExpanded: {
+    borderWidth: {
         type: 'custom', label: 'Border',
+        render: ({ value, onChange }) => <SimpleBorderField value={value ?? 0} onChange={onChange} />
+    },
+    borderColor: { visible: false, type: 'text' },
+    borderType: { visible: false, type: 'text' },
+    borderRadius: { visible: false, type: 'number' },
+    borderExpanded: {
+        type: 'custom', label: 'Border (per side)',
         render: ({ value, onChange }) => <BorderField value={value ?? 'false'} onChange={onChange} />
     },
-    borderWidth: { visible: false, type: 'number' },
     borderTop: { visible: false, type: 'number' },
     borderBottom: { visible: false, type: 'number' },
     borderLeft: { visible: false, type: 'number' },
     borderRight: { visible: false, type: 'number' },
-    borderColor: { visible: false, type: 'text' },
-    borderType: { visible: false, type: 'text' },
     borderRadiusExpanded: {
-        type: 'custom', label: 'Radius',
+        type: 'custom', label: 'Radius (per corner)',
         render: ({ value, onChange }) => <RadiusField value={value ?? 'false'} onChange={onChange} />
     },
-    borderRadius: { visible: false, type: 'number' },
     borderRadiusTopLeft: { visible: false, type: 'number' },
     borderRadiusTopRight: { visible: false, type: 'number' },
     borderRadiusBottomLeft: { visible: false, type: 'number' },

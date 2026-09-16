@@ -4,7 +4,7 @@ import React from 'react'
 import { createUsePuck, useGetPuck } from '@puckeditor/core'
 import { NumInput } from './fieldPrimitives'
 import { ColorPickerPopover } from './colorPickerPopover'
-import { Link2, Unlink2 } from 'lucide-react'
+import { Link2 } from 'lucide-react'
 import {
     ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon,
     BorderTopIcon, BorderBottomIcon,
@@ -50,13 +50,14 @@ const ChainBtn = ({ linked, onToggle }: { linked: boolean; onToggle: () => void 
         type="button"
         onClick={onToggle}
         style={{
-            width: 22, height: 22, borderRadius: 3, border: 'none', cursor: 'pointer',
+            height: 22, padding: '0 4px', borderRadius: 3, border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'transparent', color: linked ? '#C9974A' : '#A09790', flexShrink: 0,
+            fontSize: 11, whiteSpace: 'nowrap', textDecoration: linked ? 'underline' : 'none',
         }}
         title={linked ? 'Set each side separately' : 'Set all sides at once'}
     >
-        {linked ? <Link2 size={12} /> : <Unlink2 size={12} />}
+        {linked ? 'Custom' : <Link2 size={12} />}
     </button>
 )
 
@@ -85,7 +86,7 @@ export const PaddingField = ({ value, onChange }: { value: string; onChange: (v:
     return (
         <div>
             <TopRow>
-                <Lbl>Padding</Lbl>
+                <Lbl w={72}>Space inside</Lbl>
                 <ChainBtn linked={!expanded} onToggle={() => onChange(expanded ? 'false' : 'true')} />
                 {!expanded && (
                     <NumInput value={props.padding ?? 0} onChange={(v) => update({ padding: v })} icon={<PaddingIcon />} className="flex-1" allowNegative={false} />
@@ -116,7 +117,7 @@ export const MarginField = ({ value, onChange }: { value: string; onChange: (v: 
     return (
         <div>
             <TopRow>
-                <Lbl>Margin</Lbl>
+                <Lbl w={72}>Space outside</Lbl>
                 <ChainBtn linked={!expanded} onToggle={() => onChange(expanded ? 'false' : 'true')} />
                 {!expanded && (
                     <NumInput value={props.margin ?? 0} onChange={(v) => update({ margin: v })} icon={<PaddingIcon />} className="flex-1" />
@@ -208,6 +209,55 @@ export const BorderField = ({ value, onChange }: { value: string; onChange: (v: 
     )
 }
 
+// ── SimpleBorderField ─────────────────────────────────────────────────────────
+// A single on/off toggle for the common case — one width, one color, one
+// radius. The full per-side BorderField/RadiusField above stay available on
+// the Advanced tab for anyone who needs independent sides.
+
+export const SimpleBorderField = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => {
+    const { props, update } = usePropsUpdater()
+    const on = (value ?? 0) > 0
+
+    const toggle = () => {
+        if (on) {
+            onChange(0)
+        } else {
+            onChange(1)
+            if (!props.borderColor) update({ borderColor: '#1A1818' })
+        }
+    }
+
+    return (
+        <div>
+            <TopRow>
+                <Lbl>Border</Lbl>
+                <button
+                    type="button"
+                    onClick={toggle}
+                    style={{
+                        width: 32, height: 18, borderRadius: 9, border: 'none', cursor: 'pointer',
+                        background: on ? '#FC6161' : '#DAD3CB', position: 'relative', flexShrink: 0, padding: 0,
+                    }}
+                    title={on ? 'Remove border' : 'Add border'}
+                >
+                    <span style={{
+                        position: 'absolute', top: 2, left: on ? 16 : 2,
+                        width: 14, height: 14, borderRadius: '50%', background: '#fff',
+                        transition: 'left 0.15s ease',
+                    }} />
+                </button>
+            </TopRow>
+            {on && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                    <ColorPickerPopover compact value={props.borderColor ?? '#1A1818'} onChange={(v) => update({ borderColor: v })} />
+                    <NumInput value={value} onChange={onChange} icon={<BorderAllIcon />} className="flex-1" allowNegative={false} />
+                    <NumInput value={props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v })} icon={<CornersIcon />} className="flex-1" allowNegative={false} />
+                </div>
+            )}
+        </div>
+    )
+}
+
 // ── RadiusField ───────────────────────────────────────────────────────────────
 
 export const RadiusField = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
@@ -260,6 +310,79 @@ export const DimensionField = ({ label, valueProp, unitProp }: {
             >
                 {['px', '%', 'vh', 'vw'].map(u => <option key={u} value={u}>{u}</option>)}
             </select>
+        </div>
+    )
+}
+
+// ── SizePresetField ───────────────────────────────────────────────────────────
+
+const SIZE_PRESETS: Record<string, { value: number; unit: string }> = {
+    auto: { value: 0, unit: 'px' },
+    full: { value: 100, unit: '%' },
+    half: { value: 50, unit: '%' },
+}
+
+export const SizePresetField = ({ label, valueProp, unitProp, includeHalf = true }: {
+    label: string
+    valueProp: 'width' | 'height'
+    unitProp: 'widthUnit' | 'heightUnit'
+    includeHalf?: boolean
+}) => {
+    const { props, update } = usePropsUpdater()
+    const val = props[valueProp] ?? 0
+    const unit = props[unitProp] ?? 'px'
+
+    const activePreset = Object.entries(SIZE_PRESETS).find(
+        ([, p]) => p.value === val && p.unit === unit
+    )?.[0]
+    const isCustom = !activePreset
+    const [showCustom, setShowCustom] = React.useState(isCustom)
+
+    const pills: { key: string; text: string }[] = [
+        { key: 'auto', text: 'Auto' },
+        { key: 'full', text: 'Full' },
+        ...(includeHalf ? [{ key: 'half', text: 'Half' }] : []),
+    ]
+
+    return (
+        <div>
+            <TopRow>
+                <Lbl>{label}</Lbl>
+                <div style={{ display: 'flex', gap: 2, flex: 1 }}>
+                    {pills.map(({ key, text }) => (
+                        <button
+                            key={key}
+                            type="button"
+                            onClick={() => { setShowCustom(false); update({ [valueProp]: SIZE_PRESETS[key].value, [unitProp]: SIZE_PRESETS[key].unit }) }}
+                            style={{
+                                flex: 1, height: 22, borderRadius: 3, fontSize: 11,
+                                background: !showCustom && activePreset === key ? '#FC6161' : '#F4F1EC',
+                                color: !showCustom && activePreset === key ? '#fff' : '#A09790',
+                                border: 'none', cursor: 'pointer',
+                            }}
+                        >
+                            {text}
+                        </button>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={() => setShowCustom(true)}
+                        style={{
+                            flex: 1, height: 22, borderRadius: 3, fontSize: 11,
+                            background: showCustom ? '#FC6161' : '#F4F1EC',
+                            color: showCustom ? '#fff' : '#A09790',
+                            border: 'none', cursor: 'pointer',
+                        }}
+                    >
+                        Custom
+                    </button>
+                </div>
+            </TopRow>
+            {showCustom && (
+                <div style={{ marginTop: 4 }}>
+                    <DimensionField label={label} valueProp={valueProp} unitProp={unitProp} />
+                </div>
+            )}
         </div>
     )
 }
