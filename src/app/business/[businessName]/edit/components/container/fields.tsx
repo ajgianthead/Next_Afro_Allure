@@ -121,8 +121,12 @@ const inferBgType = (backgroundColor: string, backgroundImageUrl: string): BgTyp
 export const BackgroundField = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
     const { props, update } = usePropsUpdater()
     const backgroundImageUrl = props.backgroundImageUrl ?? ''
-    const type = inferBgType(value, backgroundImageUrl)
+    const inferredType = inferBgType(value, backgroundImageUrl)
     const [imageModalOpen, setImageModalOpen] = useState(false)
+    // While the image picker is open (before anything's been chosen yet),
+    // backgroundImageUrl is still empty so inferredType can't see "image"
+    // coming — force it so the picker UI stays visible instead of vanishing.
+    const type: BgType = imageModalOpen ? 'image' : inferredType
 
     const setType = (next: BgType) => {
         if (next === type) return
