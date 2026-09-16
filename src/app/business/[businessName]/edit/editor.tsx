@@ -14,6 +14,7 @@ import Settings from "./settings";
 import { TemplatePicker } from "./templatePicker";
 import { PublishDialog } from "./components/publishDialog";
 import { UnpublishedBanner } from "./components/unpublishedBanner";
+import { EmptyCanvasOverlay } from "./components/emptyCanvasOverlay";
 import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
 import { Components } from "./components/types";
 import { Json } from "../../../../../lib/database.types";
@@ -83,6 +84,8 @@ interface EditorHeaderProps {
     setLastPublished: Dispatch<SetStateAction<Date | null>>
     showUnpublishedBanner: boolean
     setShowUnpublishedBanner: Dispatch<SetStateAction<boolean>>
+    templatePickerOpen: boolean
+    setTemplatePickerOpen: Dispatch<SetStateAction<boolean>>
 }
 
 function EditorHeader({
@@ -90,6 +93,7 @@ function EditorHeader({
     draftDirty, setDraftDirty,
     lastPublished, setLastPublished,
     showUnpublishedBanner, setShowUnpublishedBanner,
+    templatePickerOpen, setTemplatePickerOpen,
 }: EditorHeaderProps) {
     const { editorState } = useEditorContext()
     const getPuck = useGetPuck()
@@ -233,7 +237,7 @@ function EditorHeader({
                         </button>
                     ))}
                 </div>
-                <TemplatePicker />
+                <TemplatePicker open={templatePickerOpen} onOpenChange={setTemplatePickerOpen} />
 
                 {/* Save Draft — secondary, only emphasized when dirty */}
                 <button
@@ -497,6 +501,7 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
     const [draftDirty, setDraftDirty] = useState(false)
     const [lastPublished, setLastPublished] = useState<Date | null>(publishedAt ? new Date(publishedAt) : null)
     const [showUnpublishedBanner, setShowUnpublishedBanner] = useState(hasUnpublishedDraft)
+    const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
 
     const preloadedTemplate = preloadedTemplateId
         ? templates.find(t => t.id === preloadedTemplateId) ?? null
@@ -536,6 +541,8 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
                 setLastPublished={setLastPublished}
                 showUnpublishedBanner={showUnpublishedBanner}
                 setShowUnpublishedBanner={setShowUnpublishedBanner}
+                templatePickerOpen={templatePickerOpen}
+                setTemplatePickerOpen={setTemplatePickerOpen}
             />
             {showUnpublishedBanner && (
                 <UnpublishedBanner onDismiss={() => setShowUnpublishedBanner(false)} />
@@ -548,7 +555,7 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
                 />
             )}
         </div>
-    ), [businessId, businessName, draftDirty, lastPublished, showUnpublishedBanner, preloadedTemplate, bannerDismissed])
+    ), [businessId, businessName, draftDirty, lastPublished, showUnpublishedBanner, templatePickerOpen, preloadedTemplate, bannerDismissed])
 
 
 
@@ -589,6 +596,29 @@ function Editor({ businessId, editorData, draftData, publishedAt, businessName, 
                     const meta = drawerItemStyleProps.get(name)
                     return (
                         <DrawerItemRow label={meta?.label ?? name} icon={meta?.icon} />
+                    )
+                },
+                preview: ({ children }) => {
+                    const usePuck = createUsePuck()
+                    const contentLength = usePuck(s => s.appState.data.content.length)
+                    const host = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co').replace(/^https?:\/\//, '')
+                    return (
+                        <div style={{ position: 'relative', height: '100%' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+                                <span style={{
+                                    display: 'inline-flex', alignItems: 'center',
+                                    padding: '4px 14px', borderRadius: 9999, fontSize: 11,
+                                    fontFamily: 'monospace', color: '#A09790',
+                                    backgroundColor: 'rgba(255,255,255,0.7)', border: '1px solid #E8E2D6',
+                                }}>
+                                    {host}/{businessName}
+                                </span>
+                            </div>
+                            {children}
+                            {contentLength === 0 && (
+                                <EmptyCanvasOverlay onBrowseTemplates={() => setTemplatePickerOpen(true)} />
+                            )}
+                        </div>
                     )
                 },
                 fields: ({ children, isLoading, itemSelector }) => {

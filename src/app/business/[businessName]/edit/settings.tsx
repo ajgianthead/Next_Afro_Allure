@@ -1,7 +1,7 @@
 
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import * as Accordion from '@radix-ui/react-accordion'
 import * as Popover from '@radix-ui/react-popover'
 import {
@@ -9,6 +9,8 @@ import {
     Info, LayoutDashboard, Maximize2, MousePointerClick, Move,
     PaintBucket, Play, Rows, Smartphone, Square, Type, Video,
 } from 'lucide-react'
+import { ElementHeader } from './components/elementHeader'
+import { BoxModelDiagram } from './components/boxModelDiagram'
 
 // ─── Info copy for specific fields ─────────────────────────────────────────
 
@@ -60,29 +62,37 @@ function InfoBubble({ text }: { text: string }) {
 
 // ─── Section definitions ───────────────────────────────────────────────────
 
+type Tab = 'style' | 'content' | 'advanced'
+
 interface Section {
     title: string
     icon: React.ReactNode
     fieldNames: string[]
     collapsedByDefault?: boolean
+    tab?: Tab
+    /** Rendered above the section's fields — used for the padding/margin box-model diagram. */
+    decoration?: React.ReactNode
 }
 
 const MOBILE_RESPONSIVE: Section = {
     title: 'Mobile',
     icon: <Smartphone size={12} />,
     fieldNames: ['size', 'spacing', 'mobileLayout', 'mobileWidth', 'mobileVisibility'],
+    tab: 'style',
 }
 
 const LAYOUT: Section = {
     title: 'Layout',
     icon: <LayoutDashboard size={12} />,
     fieldNames: ['flexDirection', 'mainAxisLayout', 'altAxisLayout', 'grow', 'responsiveDirection', 'hideBelow', 'hideAbove'],
+    tab: 'style',
 }
 
 const SIZE: Section = {
     title: 'Size',
     icon: <Maximize2 size={12} />,
     fieldNames: ['width', 'height', 'minHeight', 'maxWidth'],
+    tab: 'style',
 }
 
 const SPACING: Section = {
@@ -94,36 +104,43 @@ const SPACING: Section = {
         'marginExpanded',
         'aspectRatio', 'overflow', 'gridTemplateColumns',
     ],
+    tab: 'style',
+    decoration: <BoxModelDiagram />,
 }
 
 const FILL: Section = {
     title: 'Colors',
     icon: <PaintBucket size={12} />,
     fieldNames: ['backgroundColor'],
+    tab: 'style',
 }
 
 const BG_IMAGE: Section = {
     title: 'Background',
     icon: <ImageIcon size={12} />,
     fieldNames: ['backgroundImageUrl', 'backgroundObjectFit', 'backgroundPosition'],
+    tab: 'style',
 }
 
 const APPEARANCE: Section = {
     title: 'Appearance',
     icon: <Eye size={12} />,
     fieldNames: ['opacity'],
+    tab: 'style',
 }
 
 const BORDER: Section = {
     title: 'Border',
     icon: <Square size={12} />,
     fieldNames: ['borderExpanded'],
+    tab: 'style',
 }
 
 const RADIUS: Section = {
     title: 'Radius',
     icon: <Square size={12} />,
     fieldNames: ['borderRadiusExpanded'],
+    tab: 'style',
 }
 
 const POSITION: Section = {
@@ -131,18 +148,21 @@ const POSITION: Section = {
     icon: <Move size={12} />,
     fieldNames: ['positionType', 'rotation', 'zIndex'],
     collapsedByDefault: true,
+    tab: 'advanced',
 }
 
 const TYPOGRAPHY: Section = {
     title: 'Typography',
     icon: <Type size={12} />,
     fieldNames: ['fontFamily', 'fontSize', 'fontWeight', 'style', 'align', 'color', 'lineHeight', 'letterSpacing', 'textTransform', 'maxWidth'],
+    tab: 'style',
 }
 
 const CONTENT_TEXT: Section = {
     title: 'Content',
     icon: <AlignLeft size={12} />,
     fieldNames: ['text', 'isLink', 'linkType', 'url', 'sections'],
+    tab: 'content',
 }
 
 const COMPONENT_SECTIONS: Record<string, Section[]> = {
@@ -150,7 +170,7 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
     Container: [MOBILE_RESPONSIVE, LAYOUT, SIZE, SPACING, FILL, BG_IMAGE, BORDER, RADIUS, POSITION, APPEARANCE],
     Button: [
         MOBILE_RESPONSIVE,
-        { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'isLink', 'linkType', 'url', 'sections'] },
+        { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['text', 'isLink', 'linkType', 'url', 'sections'], tab: 'content' },
         TYPOGRAPHY,
         LAYOUT,
         SPACING,
@@ -162,32 +182,44 @@ const COMPONENT_SECTIONS: Record<string, Section[]> = {
     ],
     Image: [
         MOBILE_RESPONSIVE,
-        { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height', 'objectFit', 'aspectRatio'] },
+        { title: 'Source', icon: <ImageIcon size={12} />, fieldNames: ['url', 'alt', 'width', 'height', 'objectFit', 'aspectRatio'], tab: 'content' },
         BORDER, RADIUS, POSITION, APPEARANCE,
     ],
     Video: [
-        { title: 'Source', icon: <Video size={12} />, fieldNames: ['url'] },
-        { title: 'Playback', icon: <Play size={12} />, fieldNames: ['loop', 'controls', 'autoPlay', 'speed'] },
-        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'height'] },
-        BORDER, RADIUS, POSITION,
+        { title: 'Source', icon: <Video size={12} />, fieldNames: ['url'], tab: 'content' },
+        { title: 'Playback', icon: <Play size={12} />, fieldNames: ['loop', 'controls', 'autoPlay', 'speed'], tab: 'content' },
+        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'height'], tab: 'style' },
+        BORDER, RADIUS, POSITION, APPEARANCE,
     ],
     Row: [
         MOBILE_RESPONSIVE,
-        { title: 'Layout', icon: <Rows size={12} />, fieldNames: ['numberOfRows', 'gap', 'justifyItems'] },
+        { title: 'Layout', icon: <Rows size={12} />, fieldNames: ['numberOfRows', 'gap', 'justifyItems'], tab: 'style' },
+        APPEARANCE,
     ],
     Column: [
         MOBILE_RESPONSIVE,
-        { title: 'Layout', icon: <Columns size={12} />, fieldNames: ['numberOfColumns', 'gap', 'alignItems'] },
+        { title: 'Layout', icon: <Columns size={12} />, fieldNames: ['numberOfColumns', 'gap', 'alignItems'], tab: 'style' },
+        APPEARANCE,
     ],
     Grid: [
-        { title: 'Mobile', icon: <Smartphone size={12} />, fieldNames: ['mobileColumns'] },
-        { title: 'Layout', icon: <Grid2X2 size={12} />, fieldNames: ['numberOfColumns', 'numberOfRows', 'gapX', 'gapY', 'justifyItems', 'alignItems', 'firstCellRowSpan', 'firstCellColumnSpan'] },
+        { title: 'Mobile', icon: <Smartphone size={12} />, fieldNames: ['mobileColumns'], tab: 'style' },
+        { title: 'Layout', icon: <Grid2X2 size={12} />, fieldNames: ['numberOfColumns', 'numberOfRows', 'gapX', 'gapY', 'justifyItems', 'alignItems', 'firstCellRowSpan', 'firstCellColumnSpan'], tab: 'style' },
+        APPEARANCE,
     ],
     Section: [
-        { title: 'Settings', icon: <Box size={12} />, fieldNames: ['sectionName'] },
+        { title: 'Settings', icon: <Box size={12} />, fieldNames: ['sectionName'], tab: 'content' },
+        APPEARANCE,
     ],
     Card: [
-        { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['variant', 'cardCover', 'imageSource', 'videoSource', 'linkToService', 'service'] },
+        { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['variant', 'cardCover', 'imageSource', 'videoSource', 'linkToService', 'service'], tab: 'content' },
+        { title: 'Size', icon: <Maximize2 size={12} />, fieldNames: ['width', 'height'], tab: 'style' },
+        APPEARANCE,
+    ],
+    Navbar: [
+        { title: 'Content', icon: <AlignLeft size={12} />, fieldNames: ['menu'], tab: 'content' },
+        { title: 'Spacing', icon: <Maximize2 size={12} />, fieldNames: ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'], tab: 'style' },
+        { title: 'Colors', icon: <PaintBucket size={12} />, fieldNames: ['backgroundColor'], tab: 'style' },
+        { title: 'Border', icon: <Square size={12} />, fieldNames: ['borderBottomWidth', 'borderColor'], tab: 'style' },
     ],
 }
 
@@ -197,6 +229,12 @@ const TEXT_PRESET_NAMES = [
     'BodyLarge', 'BodyMedium', 'BodySmall', 'BodyExtraSmall',
 ]
 TEXT_PRESET_NAMES.forEach(name => { COMPONENT_SECTIONS[name] = [MOBILE_RESPONSIVE, CONTENT_TEXT, TYPOGRAPHY, APPEARANCE] })
+
+const TABS: { key: Tab; label: string }[] = [
+    { key: 'style', label: 'Style' },
+    { key: 'content', label: 'Content' },
+    { key: 'advanced', label: 'Advanced' },
+]
 
 // ─── Component meta ─────────────────────────────────────────────────────────
 
@@ -278,6 +316,7 @@ function SectionPanel({ section, fieldMap }: { section: Section; fieldMap: Map<s
 
             <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                 <div style={{ borderTop: '1px solid rgba(232,226,214,0.6)' }}>
+                    {section.decoration}
                     {rows.map(({ name, el }, i) => {
                         const info = FIELD_INFO[name]
                         return (
@@ -310,6 +349,8 @@ interface SettingsProps {
 }
 
 function Settings({ fields, componentName }: SettingsProps) {
+    const [activeTab, setActiveTab] = useState<Tab>('style')
+
     const fieldMap = useMemo(() => {
         const map = new Map<string, React.ReactNode>()
         fields.forEach(f => {
@@ -321,8 +362,20 @@ function Settings({ fields, componentName }: SettingsProps) {
         return map
     }, [fields])
 
-    const sections = COMPONENT_SECTIONS[componentName]
+    const allSections = COMPONENT_SECTIONS[componentName]
     const meta = COMPONENT_META[componentName] ?? { label: componentName, icon: <Box size={12} className="text-[#6F6863]" /> }
+
+    // Only show tabs the component actually has content for.
+    const sectionsByTab = useMemo(() => {
+        if (!allSections) return null
+        const byTab: Record<Tab, Section[]> = { style: [], content: [], advanced: [] }
+        allSections.forEach(s => { byTab[s.tab ?? 'style'].push(s) })
+        return byTab
+    }, [allSections])
+
+    const availableTabs = sectionsByTab ? TABS.filter(t => sectionsByTab[t.key].length > 0) : []
+    const currentTab: Tab = availableTabs.some(t => t.key === activeTab) ? activeTab : (availableTabs[0]?.key ?? 'style')
+    const visibleSections = sectionsByTab?.[currentTab] ?? []
 
     return (
         <div
@@ -332,29 +385,37 @@ function Settings({ fields, componentName }: SettingsProps) {
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
             }}
         >
-            {/* Header */}
-            <div
-                className="flex items-center gap-2 px-3 py-2 sticky top-0 z-10"
-                style={{ borderBottom: '1px solid #E8E2D6', backgroundColor: '#FFFFFF' }}
-            >
-                <div
-                    className="size-5 rounded flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: '#F0EBE3' }}
-                >
-                    {meta.icon}
+            <ElementHeader icon={meta.icon} label={meta.label} />
+
+            {/* Style / Content / Advanced tabs */}
+            {availableTabs.length > 1 && (
+                <div style={{ display: 'flex', gap: 2, padding: '8px 10px 0', backgroundColor: '#FFFFFF' }}>
+                    {availableTabs.map(t => (
+                        <button
+                            key={t.key}
+                            type="button"
+                            onClick={() => setActiveTab(t.key)}
+                            style={{
+                                flex: 1, height: 26, borderRadius: '6px 6px 0 0', fontSize: 11, fontWeight: 600,
+                                background: currentTab === t.key ? '#FAF7F2' : 'transparent',
+                                color: currentTab === t.key ? '#1A1818' : '#A09790',
+                                border: 'none', borderBottom: currentTab === t.key ? '2px solid #FC6161' : '2px solid transparent',
+                                cursor: 'pointer', transition: 'color 0.1s',
+                            }}
+                        >
+                            {t.label}
+                        </button>
+                    ))}
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#1A1818', lineHeight: 1 }}>
-                    {meta.label}
-                </span>
-            </div>
+            )}
 
             {/* Sections */}
             <div
                 className="flex-1 overflow-y-auto"
                 style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}
             >
-                {sections ? (
-                    sections.map(section => (
+                {allSections ? (
+                    visibleSections.map(section => (
                         <Accordion.Root
                             key={section.title}
                             type="single"

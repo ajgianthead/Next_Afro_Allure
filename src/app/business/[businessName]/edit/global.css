@@ -1,15 +1,40 @@
-/* ── Sidebar widths (Puck's own CSS custom properties) ───────────────── */
-/* These cascade into Puck's layout grid — no class name guessing needed  */
+/* Design tokens mirrored from src/lib/editor-tokens.ts (plain CSS can't
+   import the TS file directly — keep these two in sync by hand). */
 :root {
-  --puck-user-left-side-bar-width: 280px;
+  --aa-bg-canvas: #FAF7F2;
+  --aa-bg-panel: #FFFFFF;
+  --aa-bg-hover: #F5F6F8;
+  --aa-bg-pressed: #ECEEF1;
+  --aa-border-default: #E8E2D6;
+  --aa-border-strong: #D4CCC4;
+  --aa-accent: #FC6161;
+  --aa-text-secondary: #6F6863;
+  --aa-radius-lg: 12px;
+  --aa-shadow-floating: 0 4px 16px rgba(0,0,0,0.10);
+
+  /* Sidebar widths (Puck's own CSS custom properties) — cascade into      */
+  /* Puck's layout grid, no class-name guessing needed.                    */
+  --puck-user-left-side-bar-width: 260px;
   --puck-user-right-side-bar-width: 320px;
+
+  /* Selection outline — Puck's own azure blue, redefined to brand red.     */
+  --puck-color-azure-05: #FC6161;
+  --puck-color-azure-07: #FC6161;
+  --puck-color-azure-09: #FC6161;
 }
 
 /* ── Canvas background ───────────────────────────────────────────────── */
 /* Puck canvas class: _PuckCanvas_t6s9b_1 — "PuckCanvas" is always in it */
-/* Warm grey surround so the white preview iframe stands out clearly       */
 [class*="PuckCanvas"] {
-  background-color: #F0EDE8 !important;
+  background-color: var(--aa-bg-canvas) !important;
+}
+
+/* Canvas frame — white, rounded top corners, subtle shadow, so the page  */
+/* being edited reads as a distinct "sheet" floating on the cream canvas. */
+[class*="PuckCanvas-inner"] {
+  border-radius: var(--aa-radius-lg) var(--aa-radius-lg) 0 0;
+  box-shadow: var(--aa-shadow-floating);
+  overflow: hidden;
 }
 
 /* ── Mobile preview frame ────────────────────────────────────────────── */
@@ -65,6 +90,13 @@
   animation: aa-publish-pulse 2s ease-in-out infinite;
 }
 
+/* ── Buttons — subtle scale on press, everywhere in the editor chrome ──── */
+.aa-editor-header button:active,
+[class*="ViewportButton"]:active {
+  transform: scale(0.97);
+  transition: transform 100ms ease-out;
+}
+
 /* ── Mobile/tablet/desktop viewport switcher (Puck's built-in control) ─── */
 /* Puck ships this natively once a `viewports` prop is passed to <Puck>;   */
 /* we only restyle it to the pill-shaped, brand-red segmented control.     */
@@ -72,8 +104,8 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  background-color: #FFFFFF;
-  border: 1px solid #E8E2D6;
+  background-color: var(--aa-bg-panel);
+  border: 1px solid var(--aa-border-default);
   border-radius: 9999px;
   padding: 3px;
 }
@@ -82,17 +114,17 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 [class*="ViewportButton"] svg {
-  color: #6F6863;
+  color: var(--aa-text-secondary);
   transition: color 0.15s ease;
 }
 [class*="ViewportButton--isActive"] {
-  background-color: #FC6161 !important;
+  background-color: var(--aa-accent) !important;
 }
 [class*="ViewportButton--isActive"] svg {
   color: #FFFFFF !important;
 }
 [class*="ViewportControls-divider"] {
-  background-color: #E8E2D6 !important;
+  background-color: var(--aa-border-default) !important;
 }
 
 /* Smooth width transition when switching viewports (spring-ish easing)   */

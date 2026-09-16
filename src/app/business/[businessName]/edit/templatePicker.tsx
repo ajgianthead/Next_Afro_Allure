@@ -212,8 +212,10 @@ function InnerPicker({ onClose }: { onClose: () => void }) {
 
 // ─── TemplatePicker — the button + sheet ─────────────────────────────────────
 
-export const TemplatePicker = () => {
-    const [open, setOpen] = useState(false)
+export const TemplatePicker = ({ open: openProp, onOpenChange }: { open?: boolean; onOpenChange?: (open: boolean) => void } = {}) => {
+    const [internalOpen, setInternalOpen] = useState(false)
+    const open = openProp ?? internalOpen
+    const setOpen = onOpenChange ?? setInternalOpen
 
     return (
         <>
