@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import React, { useEffect, useRef, useState } from "react"
 import { ColorPickerPopover } from "./colorPickerPopover"
+import { FontBoldIcon, FontItalicIcon, UnderlineIcon } from "@radix-ui/react-icons"
 
 const inputBase = "h-[26px] w-full rounded-[3px] text-[11px] bg-[#F4F1EC] border-0 outline-none focus:ring-1 focus:ring-[#FC6161]/50 text-[#1A1818] placeholder:text-[#A09790]"
 
@@ -189,6 +190,40 @@ export const Checkbox = ({ checked, onChange, label }: {
         {label != null && <span style={{ fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' }}>{label}</span>}
     </label>
 )
+
+// [B] [I] [U] multi-toggle used by every text-style control (Button,
+// CustomizableText, text presets).
+export const StyleToggle = ({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) => {
+    const current: string[] = Array.isArray(value) ? value : []
+    const toggle = (v: string) => {
+        const next = current.includes(v) ? current.filter(s => s !== v) : [...current, v]
+        onChange(next)
+    }
+    return (
+        <div style={{ display: 'flex', gap: 2, padding: 2, borderRadius: 4, background: '#EEEBE4', width: '100%' }}>
+            {([
+                { v: 'bold', icon: <FontBoldIcon /> },
+                { v: 'italic', icon: <FontItalicIcon /> },
+                { v: 'underline', icon: <UnderlineIcon /> },
+            ] as const).map(({ v, icon }) => (
+                <button
+                    key={v}
+                    type="button"
+                    onClick={() => toggle(v)}
+                    style={{
+                        flex: 1, height: 22, borderRadius: 3, fontSize: 12,
+                        background: current.includes(v) ? '#FC6161' : 'transparent',
+                        color: current.includes(v) ? '#fff' : '#A09790',
+                        border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                >
+                    {icon}
+                </button>
+            ))}
+        </div>
+    )
+}
 
 export const SegToggle = ({ value, onChange, options, className = "col-span-3" }: {
     value: any; onChange: (v: any) => void; options: { label: React.ReactNode; value: string }[]; className?: string

@@ -4,8 +4,8 @@ import { ComponentConfig, ComponentData, DefaultComponentProps, Fields } from "@
 import { Text } from "../types"
 import { TEXT_SIZE_MAP, TEXT_SIZE_OPTIONS } from "@/features/editor/lib/responsive"
 import { PaintBucket, Type } from "lucide-react"
-import { FontBoldIcon, FontItalicIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
-import { KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS, Checkbox } from "../fieldPrimitives"
+import { LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon } from "@radix-ui/react-icons"
+import { KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS, Checkbox, StyleToggle } from "../fieldPrimitives"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
@@ -44,36 +44,7 @@ export const resolveTemplateTextFields: (data: Omit<ComponentData<Text, string, 
         },
         style: {
             type: 'custom',
-            render: ({ value, onChange }) => {
-                const current: string[] = Array.isArray(value) ? value : []
-                const toggle = (v: string) => {
-                    const next = current.includes(v) ? current.filter(s => s !== v) : [...current, v]
-                    onChange(next)
-                }
-                return (
-                    <div className="flex gap-1 w-full">
-                        {([
-                            { v: 'bold', icon: <FontBoldIcon /> },
-                            { v: 'italic', icon: <FontItalicIcon /> },
-                            { v: 'underline', icon: <UnderlineIcon /> },
-                        ] as const).map(({ v, icon }) => (
-                            <button
-                                key={v}
-                                type="button"
-                                onClick={() => toggle(v)}
-                                className={cn(
-                                    'flex-1 flex items-center justify-center py-1 rounded border text-sm transition-colors',
-                                    current.includes(v)
-                                        ? 'bg-primary text-primary-foreground border-primary'
-                                        : 'bg-background border-input hover:bg-accent'
-                                )}
-                            >
-                                {icon}
-                            </button>
-                        ))}
-                    </div>
-                )
-            }
+            render: ({ value, onChange }) => <StyleToggle value={Array.isArray(value) ? value : []} onChange={onChange} />
         },
         lineHeight: {
             type: 'custom',

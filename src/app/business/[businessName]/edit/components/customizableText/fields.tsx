@@ -1,9 +1,9 @@
 import { PaintBucket, Type } from "lucide-react"
 import { ComponentData, DefaultComponentProps, Fields, useGetPuck } from "@puckeditor/core"
-import { FontBoldIcon, FontItalicIcon, FontSizeIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon, UnderlineIcon } from "@radix-ui/react-icons"
+import { FontSizeIcon, LetterSpacingIcon, LineHeightIcon, TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon } from "@radix-ui/react-icons"
 import { RegularText } from "../types"
 import { useEditorContext } from "@/app/utils/context/EditorContext"
-import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS, Checkbox } from "../fieldPrimitives"
+import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, TEXT_TRANSFORM_OPTIONS, Checkbox, StyleToggle } from "../fieldPrimitives"
 import { OpacityField } from "../compoundFields"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FontSelector } from "../FontSelector"
@@ -19,38 +19,6 @@ const ColorField = ({ value, onChange, label }: { value: string, onChange: (v: s
         </div>
     </div>
 )
-
-const StyleToggle = ({ value, onChange }: { value: string[], onChange: (v: string[]) => void }) => {
-    const current: string[] = Array.isArray(value) ? value : []
-    const toggle = (v: string) => {
-        const next = current.includes(v) ? current.filter(s => s !== v) : [...current, v]
-        onChange(next)
-    }
-    return (
-        <div style={{ display: 'flex', gap: 2, padding: 2, borderRadius: 4, background: '#EEEBE4' }}>
-            {([
-                { v: 'bold', icon: <FontBoldIcon /> },
-                { v: 'italic', icon: <FontItalicIcon /> },
-                { v: 'underline', icon: <UnderlineIcon /> },
-            ] as const).map(({ v, icon }) => (
-                <button
-                    key={v}
-                    type="button"
-                    onClick={() => toggle(v)}
-                    style={{
-                        flex: 1, height: 22, borderRadius: 3, fontSize: 12,
-                        background: current.includes(v) ? '#FC6161' : 'transparent',
-                        color: current.includes(v) ? '#fff' : '#A09790',
-                        border: 'none', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                >
-                    {icon}
-                </button>
-            ))}
-        </div>
-    )
-}
 
 const AlignField = ({ value, onChange }: { value: string, onChange: (v: string) => void }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

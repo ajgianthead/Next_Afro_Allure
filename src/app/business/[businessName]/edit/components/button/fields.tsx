@@ -1,49 +1,18 @@
 import { Type } from "lucide-react";
 import { MOBILE_WIDTH_OPTIONS } from "@/features/editor/lib/responsive";
 import {
-    FontBoldIcon, FontItalicIcon,
     FontSizeIcon,
     TextAlignCenterIcon, TextAlignJustifyIcon, TextAlignLeftIcon, TextAlignRightIcon,
-    UnderlineIcon,
 } from "@radix-ui/react-icons";
 import { ButtonContainer } from "../types";
 import { Fields } from "@puckeditor/core";
-import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, ColorPicker, Checkbox } from "../fieldPrimitives";
+import { FONT_WEIGHT_OPTIONS, KVSelect, NumInput, ColorPicker, Checkbox, StyleToggle } from "../fieldPrimitives";
 import { BorderField, MarginField, OpacityField, PaddingField, PositionField, RadiusField, SimpleBorderField } from "../compoundFields";
-import { EditorConxtextProps, useEditorContext } from "@/app/utils/context/EditorContext";
-import { GoogleFont, loadGoogleFont } from "useGoogleFonts";
-import { useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SectionsField } from "../customizableText/fields";
+import { FontSelector } from "../FontSelector";
 
 const lbl = { fontSize: 11, color: '#A09790', whiteSpace: 'nowrap' as const }
-
-const StyleToggle = ({ value, onChange }: { value: string[], onChange: (v: string[]) => void }) => {
-    const current: string[] = Array.isArray(value) ? value : []
-    const toggle = (v: string) => {
-        const next = current.includes(v) ? current.filter(s => s !== v) : [...current, v]
-        onChange(next)
-    }
-    return (
-        <div className="flex gap-0.5 w-full p-0.5 rounded-[4px]" style={{ background: '#EEEBE4' }}>
-            {([
-                { v: 'bold', icon: <FontBoldIcon /> },
-                { v: 'italic', icon: <FontItalicIcon /> },
-                { v: 'underline', icon: <UnderlineIcon /> },
-            ] as const).map(({ v, icon }) => (
-                <button
-                    key={v}
-                    type="button"
-                    onClick={() => toggle(v)}
-                    className="flex-1 flex items-center justify-center rounded-[3px] text-[11px] transition-colors"
-                    style={{ height: 22, background: current.includes(v) ? '#FC6161' : 'transparent', color: current.includes(v) ? '#fff' : '#A09790', border: 'none' }}
-                >
-                    {icon}
-                </button>
-            ))}
-        </div>
-    )
-}
 
 const AlignBtns = ({ value, onChange, options }: {
     value: string; onChange: (v: string) => void; options: { v: string; icon: React.ReactNode; title: string }[]
@@ -146,28 +115,14 @@ const sharedLayoutFields = (data: any): Partial<Fields<ButtonContainer, {}>> => 
     },
     fontFamily: {
         type: 'custom', label: 'Font Family',
-        render: ({ onChange, value, id }) => {
-            const { editorState }: { editorState: EditorConxtextProps } = useEditorContext()
-            useEffect(() => { if (value) loadGoogleFont(value) }, [value])
-            return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={lbl}>Font</span>
-                    <div style={{ flex: 1 }}>
-                        <input
-                            list={`font-list-btn-${id}`}
-                            style={{ width: '100%', height: 26, borderRadius: 3, padding: '0 8px', fontSize: 11, background: '#F4F1EC', border: 'none', color: '#1A1818' }}
-                            value={value ?? ''}
-                            onChange={(e) => { onChange(e.target.value); loadGoogleFont(e.target.value) }}
-                        />
-                        <datalist id={`font-list-btn-${id}`}>
-                            {editorState.fonts?.map((font: GoogleFont) => (
-                                <option key={font.family} value={font.family} />
-                            ))}
-                        </datalist>
-                    </div>
+        render: ({ onChange, value }) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={lbl}>Font</span>
+                <div style={{ flex: 1 }}>
+                    <FontSelector value={value ?? ''} onChange={onChange} />
                 </div>
-            )
-        }
+            </div>
+        )
     },
     fontWeight: {
         type: 'custom', label: 'Font Weight',
