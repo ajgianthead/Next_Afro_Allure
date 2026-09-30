@@ -380,6 +380,10 @@ export type Database = {
           upgrade_prompt_dismissed_at: string | null
           url_name: string
           user_id: string
+          tos_accepted_at: string | null
+          tos_ip_address: string | null
+          marketing_opt_in: boolean
+          unsubscribe_token: string | null
         }
         Insert: {
           account_settings?: Json | null
@@ -413,6 +417,10 @@ export type Database = {
           upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
+          tos_accepted_at?: string | null
+          tos_ip_address?: string | null
+          marketing_opt_in?: boolean
+          unsubscribe_token?: string | null
         }
         Update: {
           account_settings?: Json | null
@@ -446,6 +454,10 @@ export type Database = {
           upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
+          tos_accepted_at?: string | null
+          tos_ip_address?: string | null
+          marketing_opt_in?: boolean
+          unsubscribe_token?: string | null
         }
         Relationships: []
       }

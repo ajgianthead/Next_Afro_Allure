@@ -407,8 +407,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                 onClick={async () => {
                     setIsLoading(true)
                     const clone = { ...bookingPolicy, bookAheadValue: `${bookingAdvanceValue} ${unitOfTime}` }
-                    const res = await handleBookingSettings(clone, businessUser.business_id, paymentConfigId!, paymentMethodConfig!, { ...paymentConfig })
-                    if (res === false) console.log('Stripe onboarding must be completed before enabling deposits')
+                    await handleBookingSettings(clone, businessUser.business_id, paymentConfigId!, paymentMethodConfig!, { ...paymentConfig })
                     setIsLoading(false)
                 }}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-opacity disabled:opacity-50"

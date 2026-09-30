@@ -9,6 +9,10 @@ const DOMAIN = process.env.NEXT_PUBLIC_BASE_URL
 const SUCCESS_URL = `${DOMAIN}/dashboard?success=true`
 const CANCEL_URL = `${DOMAIN}/dashboard`
 
+if (!process.env.STRIPE_GROWTH_PRICE_ID) {
+    throw new Error('STRIPE_GROWTH_PRICE_ID env var not set')
+}
+
 export const createSubscriptionForExistingCustomer = async (customerID: string) => {
     const supabase = await createClient()
     const { data, error } = await supabase

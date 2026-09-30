@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 
 import { createClient } from '../utils/supabase/server'
 import { Database } from '../../../lib/database.types'
@@ -12,10 +13,12 @@ import Stripe from 'stripe'
 import { BusinessUser } from '@lib/businessUser/BusinessUser'
 
 
-export const createBusinessUser = async (email: string, name: string, password: string) => {
+export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false) => {
     try {
         const supabase = await createClient()
-        const businessUser = await BusinessUser.create(supabase, email, password, name)
+        const headerList = await headers()
+        const ipAddress = headerList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
+        const businessUser = await BusinessUser.create(supabase, email, password, name, marketingOptIn, ipAddress)
         return businessUser.toClient()
     } catch (error: any) {
         return Error(error.message)

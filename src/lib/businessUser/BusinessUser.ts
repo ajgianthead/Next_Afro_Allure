@@ -128,7 +128,7 @@ export class BusinessUser {
         }
     }
 
-    static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string) {
+    static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string, marketingOptIn: boolean = false, ipAddress: string | null = null) {
         try {
             if (await this.businessNameExists(name, supabase)) {
                 throw Error('Business name already exists')
@@ -151,6 +151,9 @@ export class BusinessUser {
                     stripe_customer_id: customer.id,
                     url_name: name.split(" ").join("").toLowerCase(),
                     current_onboarding_link: onboardingLink,
+                    tos_accepted_at: new Date().toISOString(),
+                    tos_ip_address: ipAddress,
+                    marketing_opt_in: marketingOptIn,
                     account_settings: {
                         "app_reminders": {
                             "email_1": false,

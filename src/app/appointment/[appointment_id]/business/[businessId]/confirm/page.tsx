@@ -14,7 +14,6 @@ export default async function Page({ params }: { params: { appointment_id: strin
 
     let appointment = await Appointment.fetchById(supabase, appointment_id) as Appointment
     const appointmentObj = Object.assign({}, appointment)
-    console.log(appointmentObj);
 
     if (!Array.isArray(appointmentObj)) {
         return <ConfirmAppClient appointment={appointment.toClient()} business={business.toClient()} />;

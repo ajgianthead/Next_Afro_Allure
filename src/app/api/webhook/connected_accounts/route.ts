@@ -70,7 +70,7 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, client: 
       `DELETE FROM appointments WHERE deposit_charge_id = $1 AND status = 'PROCESSING' RETURNING *`,
       [paymentIntent.id]
     );
-    if (result.rowCount === 0) {
+    if (result.rowCount === 0 && process.env.NODE_ENV === 'development') {
       console.log(`No processing appointment found for PaymentIntent ${paymentIntent.id}`);
     }
     await client.query('COMMIT');

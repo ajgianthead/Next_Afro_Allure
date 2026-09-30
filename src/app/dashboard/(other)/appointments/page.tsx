@@ -73,7 +73,6 @@ export default async function Page() {
         })
     }
     serviceClient = await assignAddons(supabase, serviceClient as any)
-    console.log(serviceClient);
 
     const [planRes, monthlyCountRes] = await Promise.all([
         supabase.from('business_users').select('plan_type, had_trial, stripe_customer_id').eq('business_id', business.id).single(),

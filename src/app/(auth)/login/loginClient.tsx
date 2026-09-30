@@ -60,6 +60,7 @@ export default function Login() {
 
                     {error && (
                         <div
+                            role="alert"
                             className="flex items-center gap-2 text-sm rounded-xl px-3.5 py-3 mb-5"
                             style={{ backgroundColor: 'rgba(252,97,97,0.08)', color: '#DC2626' }}
                         >
