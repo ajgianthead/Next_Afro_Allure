@@ -34,6 +34,8 @@ import {
     IconSettings,
     IconHelpCircle,
     IconLogout,
+    IconMessage2,
+    IconLifebuoy,
     type Icon,
 } from '@tabler/icons-react'
 import { signOutAction } from '@/app/(auth)/actions'
@@ -80,6 +82,8 @@ const NAV_GROUPS: NavGroup[] = [
 
 const BOTTOM_ITEMS: NavItem[] = [
     { title: 'Settings', url: '/dashboard/settings', icon: IconSettings },
+    { title: 'Feedback', url: '/feedback', icon: IconMessage2 },
+    { title: 'Support', url: '/support', icon: IconLifebuoy },
 ]
 
 export default function LayoutComp({ children, businessData }: { children: React.ReactNode; businessData: any }) {

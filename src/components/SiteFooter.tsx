@@ -7,6 +7,8 @@ const links = [
     { href: '/cookies', label: 'Cookies' },
     { href: '/beta-agreement', label: 'Beta Agreement' },
     { href: '/data-deletion', label: 'Delete My Data' },
+    { href: '/feedback', label: 'Feedback' },
+    { href: '/support', label: 'Support' },
 ]
 
 // Slim legal bar shown on every page, underneath whatever page-specific

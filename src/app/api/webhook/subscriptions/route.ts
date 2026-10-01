@@ -8,10 +8,26 @@ import { Database } from "../../../../../lib/database.types";
 import PausedSubscription from "../../../../../emails/subscription-paused";
 import CancelledSubscription from "../../../../../emails/subscription-cancelled";
 import NewSubscription from "../../../../../emails/subscription-welcome";
+import FounderNotification from "../../../../../emails/FounderNotification";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'AfroAllure <noreply@reminder.afroallure.co>';
+const NOTIFY_FROM = 'AfroAllure <notifications@beta.afroallure.co>';
 const SOCIALS = { instagram: 'https://instagram.com/afroallure_' };
+
+async function notifyFounder(subject: string, props: Parameters<typeof FounderNotification>[0]) {
+    if (!process.env.FOUNDER_EMAIL) return
+    try {
+        await resend.emails.send({
+            from: NOTIFY_FROM,
+            to: process.env.FOUNDER_EMAIL,
+            subject,
+            react: FounderNotification(props),
+        })
+    } catch (e) {
+        console.error('Failed to send founder notification:', e)
+    }
+}
 
 export async function POST(request: NextRequest) {
     const endpointSecret = process.env.SUB_WEBHOOK_SECRET!;
@@ -31,6 +47,23 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         const failedCustomerId = invoice.customer?.toString();
         console.warn(`invoice.payment_failed: customer=${failedCustomerId} invoice=${invoice.id}`);
+        if (failedCustomerId) {
+            const supabase = await createClient();
+            const { data: business } = await supabase
+                .from('business_users')
+                .select('business_name, email')
+                .eq('stripe_customer_id', failedCustomerId)
+                .maybeSingle();
+            if (business) {
+                await notifyFounder(`Payment failed: ${business.business_name}`, {
+                    eventType: 'payment_failed',
+                    businessName: business.business_name,
+                    email: business.email,
+                    amount: invoice.amount_due,
+                    timestamp: new Date().toISOString(),
+                });
+            }
+        }
         return webhookAck();
     }
 
@@ -40,7 +73,7 @@ export async function POST(request: NextRequest) {
     try {
         switch (event.type) {
             case 'customer.subscription.created':
-                await handleSubscriptionCreated(customerId, subscription.status);
+                await handleSubscriptionCreated(customerId, subscription.status, subscription.items.data[0]?.price.unit_amount ?? undefined);
                 break;
             case 'customer.subscription.updated':
                 // Handles trial→active (trial ends with payment), paused→active (payment added),
@@ -73,17 +106,17 @@ async function handleSubscriptionActivated(customerId: string) {
     const supabase = await createClient();
     const { error } = await supabase
         .from('business_users')
-        .update({ plan_type: 'GROWTH' })
+        .update({ plan_type: 'GROWTH', subscription_plan: 'GROWTH', subscription_status: 'active' })
         .eq('stripe_customer_id', customerId);
     if (error) throw error;
 }
 
-async function handleSubscriptionCreated(customerId: string, status: string) {
+async function handleSubscriptionCreated(customerId: string, status: string, amount?: number) {
     if (status === 'active') {
         const supabase = await createClient();
         const { data: business, error } = await supabase
             .from('business_users')
-            .update({ plan_type: 'GROWTH' })
+            .update({ plan_type: 'GROWTH', subscription_plan: 'GROWTH', subscription_status: 'active' })
             .eq('stripe_customer_id', customerId)
             .select()
             .maybeSingle();
@@ -102,11 +135,22 @@ async function handleSubscriptionCreated(customerId: string, status: string) {
         } catch (e) {
             console.error('Failed to send subscription welcome email:', e);
         }
+
+        if (business) {
+            await notifyFounder(`New subscriber: ${business.business_name} → GROWTH`, {
+                eventType: 'new_subscriber',
+                businessName: business.business_name,
+                email: business.email,
+                plan: 'GROWTH',
+                amount,
+                timestamp: new Date().toISOString(),
+            });
+        }
     } else if (status === 'trialing') {
         const supabase = await createClient();
         const { error } = await supabase
             .from('business_users')
-            .update({ plan_type: 'GROWTH', had_trial: true })
+            .update({ plan_type: 'GROWTH', had_trial: true, subscription_plan: 'GROWTH', subscription_status: 'trialing' })
             .eq('stripe_customer_id', customerId);
         if (error) throw error;
     }
@@ -116,7 +160,7 @@ async function handleSubscriptionPaused(customerId: string) {
     const supabase = await createClient();
     const { data: business, error } = await supabase
         .from('business_users')
-        .update({ plan_type: 'STARTER' })
+        .update({ plan_type: 'STARTER', subscription_status: 'paused' })
         .eq('stripe_customer_id', customerId)
         .select()
         .maybeSingle();
@@ -141,7 +185,7 @@ async function handleSubscriptionDeleted(customerId: string) {
     const supabase = await createClient();
     const { data: business, error } = await supabase
         .from('business_users')
-        .update({ plan_type: 'STARTER' })
+        .update({ plan_type: 'STARTER', subscription_status: 'canceled' })
         .eq('stripe_customer_id', customerId)
         .select()
         .maybeSingle();
@@ -160,5 +204,15 @@ async function handleSubscriptionDeleted(customerId: string) {
         });
     } catch (e) {
         console.error('Failed to send subscription cancelled email:', e);
+    }
+
+    if (business) {
+        await notifyFounder(`Cancellation: ${business.business_name}`, {
+            eventType: 'cancellation',
+            businessName: business.business_name,
+            email: business.email,
+            plan: 'GROWTH',
+            timestamp: new Date().toISOString(),
+        });
     }
 }

@@ -14,6 +14,8 @@ import { Client } from "@lib/clients/Client";
 import { Appointment } from "@/features/manualBooking/server/models/Appointment";
 import { Notification } from "@lib/notifications/Notification";
 import { checkAndAssignFoundingMember } from "@/lib/foundingMember";
+import { Resend } from "resend";
+import FounderNotification from "../../../emails/FounderNotification";
 
 export interface BusinessType {
     id: string,
@@ -187,6 +189,25 @@ export class BusinessUser {
                 .eq('business_id', business.business_id)
 
             await checkAndAssignFoundingMember(business.business_id).catch(console.error)
+
+            if (process.env.FOUNDER_EMAIL) {
+                try {
+                    const resend = new Resend(process.env.RESEND_API_KEY)
+                    await resend.emails.send({
+                        from: 'AfroAllure <notifications@beta.afroallure.co>',
+                        to: process.env.FOUNDER_EMAIL,
+                        subject: `New beta signup: ${business.business_name}`,
+                        react: FounderNotification({
+                            eventType: 'new_signup',
+                            businessName: business.business_name,
+                            email: business.email,
+                            timestamp: new Date().toISOString(),
+                        }),
+                    })
+                } catch (e) {
+                    console.error('Failed to send founder new-signup notification:', e)
+                }
+            }
 
             return BusinessUser.fromRow(business)
 

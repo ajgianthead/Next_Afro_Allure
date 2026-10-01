@@ -384,6 +384,10 @@ export type Database = {
           tos_ip_address: string | null
           marketing_opt_in: boolean
           unsubscribe_token: string | null
+          last_checkin_sent_at: string | null
+          total_booking_volume: number | null
+          subscription_plan: string | null
+          subscription_status: string | null
         }
         Insert: {
           account_settings?: Json | null
@@ -421,6 +425,10 @@ export type Database = {
           tos_ip_address?: string | null
           marketing_opt_in?: boolean
           unsubscribe_token?: string | null
+          last_checkin_sent_at?: string | null
+          total_booking_volume?: number | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
         }
         Update: {
           account_settings?: Json | null
@@ -458,6 +466,91 @@ export type Database = {
           tos_ip_address?: string | null
           marketing_opt_in?: boolean
           unsubscribe_token?: string | null
+          last_checkin_sent_at?: string | null
+          total_booking_volume?: number | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          id: string
+          business_id: string | null
+          business_name: string | null
+          email: string | null
+          type: string
+          message: string
+          status: string
+          created_at: string | null
+          resolved_at: string | null
+          founder_notes: string | null
+        }
+        Insert: {
+          id?: string
+          business_id?: string | null
+          business_name?: string | null
+          email?: string | null
+          type: string
+          message: string
+          status?: string
+          created_at?: string | null
+          resolved_at?: string | null
+          founder_notes?: string | null
+        }
+        Update: {
+          id?: string
+          business_id?: string | null
+          business_name?: string | null
+          email?: string | null
+          type?: string
+          message?: string
+          status?: string
+          created_at?: string | null
+          resolved_at?: string | null
+          founder_notes?: string | null
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          id: string
+          business_id: string | null
+          business_name: string | null
+          email: string | null
+          subject: string
+          message: string
+          status: string
+          priority: string
+          created_at: string | null
+          resolved_at: string | null
+          founder_reply: string | null
+        }
+        Insert: {
+          id?: string
+          business_id?: string | null
+          business_name?: string | null
+          email?: string | null
+          subject: string
+          message: string
+          status?: string
+          priority?: string
+          created_at?: string | null
+          resolved_at?: string | null
+          founder_reply?: string | null
+        }
+        Update: {
+          id?: string
+          business_id?: string | null
+          business_name?: string | null
+          email?: string | null
+          subject?: string
+          message?: string
+          status?: string
+          priority?: string
+          created_at?: string | null
+          resolved_at?: string | null
+          founder_reply?: string | null
         }
         Relationships: []
       }
