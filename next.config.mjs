@@ -19,6 +19,7 @@ const nextConfig = {
             { source: '/privacy-policy', destination: '/privacy', permanent: true },
             { source: '/terms-of-service', destination: '/terms', permanent: true },
             { source: '/beta-user-agreement', destination: '/beta-agreement', permanent: true },
+            { source: '/cookie-policy', destination: '/cookies', permanent: true },
         ]
     },
 }

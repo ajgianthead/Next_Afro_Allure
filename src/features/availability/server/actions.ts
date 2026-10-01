@@ -61,6 +61,7 @@ export const updateAvailabilityAction = async (
         .from('availabilities')
         .select('id, business_users(default_availability)')
         .eq('id', id)
+        .eq('business_id', businessId)
     if (fetchError) throw new Error(fetchError.message)
     if (!old?.length) throw new Error('Availability not found')
 
@@ -68,6 +69,7 @@ export const updateAvailabilityAction = async (
         .from('availabilities')
         .update({ availability_data: availability })
         .eq('id', id)
+        .eq('business_id', businessId)
         .select('*')
         .single()
     if (error) throw new Error(error.message)
@@ -91,6 +93,16 @@ export const deleteAvailabilityAction = async (businessId: string, availabilityI
         .eq('availability', availabilityId)
     if (serviceError) throw new Error(serviceError.message)
     if (attached?.length) throw new Error('Cannot delete availability with attached services')
+
+    // Keep businesses from deleting their last remaining availability — enforced
+    // client-side too, but that can be bypassed by a stale tab or a direct call.
+    const { count } = await supabase
+        .from('availabilities')
+        .select('id', { count: 'exact', head: true })
+        .eq('business_id', businessId)
+    if ((count ?? 0) <= 1) {
+        throw new Error('You must have at least one availability.')
+    }
 
     const { data, error } = await supabase
         .from('availabilities')

@@ -19,6 +19,17 @@ export const createBusinessUser = async (email: string, name: string, password: 
         const headerList = await headers()
         const ipAddress = headerList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
         const businessUser = await BusinessUser.create(supabase, email, password, name, marketingOptIn, ipAddress)
+
+        // This is the main signup path (the ad-funnel path has its own
+        // specialty/city/service wizard that sets is_onboarded itself on
+        // completion — don't touch that one). Without this, is_onboarded
+        // stays false forever for anyone who signs up here, which silently
+        // disables every dashboard product tour (they're all gated on it).
+        await supabase
+            .from('business_users')
+            .update({ is_onboarded: true })
+            .eq('business_id', businessUser.id)
+
         return businessUser.toClient()
     } catch (error: any) {
         return Error(error.message)

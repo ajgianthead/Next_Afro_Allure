@@ -19,6 +19,7 @@ const STRIP: Record<Status, string> = {
     DENIED:     '#D9C9B0',
     PROCESSING: '#C9974A',
     INCOMPLETE: '#C9974A',
+    REFUNDED:   '#9A9088',
 }
 
 interface Props {

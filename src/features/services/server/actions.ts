@@ -76,6 +76,7 @@ export const updateServiceAction = async (
             availability: serviceData.availability,
         })
         .eq('id', serviceData.id)
+        .eq('business', businessId)
         .select()
         .single()
     if (error) throw new Error(error.message)
@@ -84,10 +85,22 @@ export const updateServiceAction = async (
 
 export const deleteServiceAction = async (businessId: string, serviceId: string) => {
     const supabase = await createClient()
+
+    // Keep businesses from deleting their last remaining service — enforced
+    // client-side too, but that can be bypassed by a stale tab or a direct call.
+    const { count } = await supabase
+        .from('services')
+        .select('id', { count: 'exact', head: true })
+        .eq('business', businessId)
+    if ((count ?? 0) <= 1) {
+        throw new Error('You must have at least one service.')
+    }
+
     const { data: deleted, error: deleteError } = await supabase
         .from('services')
         .delete()
         .eq('id', serviceId)
+        .eq('business', businessId)
         .select()
         .single()
     if (deleteError) throw new Error(deleteError.message)
@@ -125,23 +138,25 @@ export const createAddonAction = async (
     return data as AddonData
 }
 
-export const updateAddonAction = async (addon: AddonData): Promise<AddonData> => {
+export const updateAddonAction = async (businessId: string, addon: AddonData): Promise<AddonData> => {
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('service_addons')
         .update({ name: addon.name, price: Math.round(addon.price) })
         .eq('id', addon.id)
+        .eq('business_id', businessId)
         .select('id, name, price, business_id')
         .single()
     if (error) throw new Error(error.message)
     return data as AddonData
 }
 
-export const deleteAddonAction = async (addonId: string): Promise<void> => {
+export const deleteAddonAction = async (businessId: string, addonId: string): Promise<void> => {
     const supabase = await createClient()
     const { error } = await supabase
         .from('service_addons')
         .delete()
         .eq('id', addonId)
+        .eq('business_id', businessId)
     if (error) throw new Error(error.message)
 }

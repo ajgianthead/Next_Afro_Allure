@@ -25,9 +25,16 @@ export const createCheckoutAction = async (params: {
     const supabase = await createClient()
     const { data } = await supabase
         .from('business_users')
-        .select('payment_method_config_id, account_settings')
+        .select('payment_method_config_id, account_settings, completed_stripe_onboarding')
         .eq('stripe_acc_id', connectedAccountId)
         .maybeSingle()
+
+    // Without this, a business can publish and accept bookings before Stripe
+    // Connect is actually finished, and the client only finds out when the
+    // PaymentIntent create call below fails with an opaque Stripe error.
+    if (!data?.completed_stripe_onboarding) {
+        throw new Error('This business hasn\'t finished setting up payments yet. Please check back soon or contact them directly.')
+    }
 
     const intent = await stripe.paymentIntents.create({
         amount: price,

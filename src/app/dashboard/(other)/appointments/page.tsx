@@ -5,7 +5,6 @@ import { fetchBusinessUser, fetchUser } from "../actions";
 import { assignAddons } from "./actions";
 import { BusinessUser } from "@/lib/businessUser/BusinessUser";
 import { DateTime } from "luxon";
-import { AppointmentsTable } from "../../../../features/manualBooking/components/AppointmentsTable";
 import { AppointmentEvent, AppointmentTableData } from "@/features/manualBooking/types";
 import { AppointmentsClient } from "@/features/manualBooking/components";
 import { getBusinessPermissions } from "@/lib/permissions";

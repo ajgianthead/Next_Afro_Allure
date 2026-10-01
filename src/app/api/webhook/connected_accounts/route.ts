@@ -36,6 +36,9 @@ export async function POST(request: NextRequest) {
       case 'payment_intent.succeeded':
         await handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent, client);
         break;
+      case 'charge.refunded':
+        await handleChargeRefunded(event.data.object as Stripe.Charge, client);
+        break;
     }
   } catch (error: any) {
     client.release();
@@ -49,8 +52,14 @@ export async function POST(request: NextRequest) {
 async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent, client: any) {
   try {
     await client.query('BEGIN');
+    // Scoped to status='PROCESSING' — that's only ever a placeholder row for
+    // an automated-booking session that hasn't completed payment yet (see
+    // createNewManualAppointment / the automated-session flow). Without this
+    // scope, canceling the PaymentIntent behind a real, already-created
+    // manual-booking appointment would delete that appointment outright
+    // instead of just clearing its charge reference.
     await client.query(
-      `DELETE FROM appointments app WHERE app.deposit_charge_id = $1 RETURNING *`,
+      `DELETE FROM appointments app WHERE app.deposit_charge_id = $1 AND app.status = 'PROCESSING' RETURNING *`,
       [paymentIntent.id]
     );
     await client.query('COMMIT');
@@ -60,23 +69,89 @@ async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent, client
   }
 }
 
-async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, client: any) {
-  const { purpose, appointmentType } = paymentIntent.metadata;
-  if (appointmentType !== 'automated' || purpose === 'EOA') return;
+// Refunds are issued entirely through Stripe's embedded Connect UI
+// (ConnectPayments, see EarningsTab.tsx) — there is no app code that calls
+// stripe.refunds.create. Previously nothing listened for charge.refunded at
+// all, so a business refunding a client through that widget never updated
+// the appointment record: status stayed CONFIRMED/COMPLETED and paid_amount
+// was untouched, even though the money had actually moved back to the
+// client. NOTE: the Stripe webhook endpoint config also needs
+// 'charge.refunded' added to its listened-events list for this to fire —
+// that's a Stripe dashboard/API setting, not something this file controls.
+async function handleChargeRefunded(charge: Stripe.Charge, client: any) {
+  const paymentIntentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id;
+  if (!paymentIntentId) return;
+
+  const refund = charge.refunds?.data[0];
+  const isFullRefund = charge.amount_refunded >= charge.amount;
 
   try {
     await client.query('BEGIN');
-    const result = await client.query(
-      `DELETE FROM appointments WHERE deposit_charge_id = $1 AND status = 'PROCESSING' RETURNING *`,
-      [paymentIntent.id]
+    await client.query(
+      `UPDATE appointments
+       SET status = CASE WHEN $1 THEN 'REFUNDED' ELSE status END,
+           refund_id = $2,
+           refunded_amount = $3,
+           refunded_at = now()
+       WHERE deposit_charge_id = $4 OR service_charge_id = $4`,
+      [isFullRefund, refund?.id ?? null, charge.amount_refunded, paymentIntentId]
     );
-    if (result.rowCount === 0 && process.env.NODE_ENV === 'development') {
-      console.log(`No processing appointment found for PaymentIntent ${paymentIntent.id}`);
-    }
     await client.query('COMMIT');
   } catch (error: any) {
-    console.error('handlePaymentFailed failed:', error.message);
+    console.error('handleChargeRefunded failed:', error.message);
     await client.query('ROLLBACK');
+  }
+}
+
+async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, client: any) {
+  const { purpose, appointmentType } = paymentIntent.metadata;
+
+  // Automated-booking deposit failures: the appointment row is just a
+  // PROCESSING placeholder until the deposit succeeds, so clean it up.
+  if (appointmentType === 'automated' && purpose !== 'EOA') {
+    try {
+      await client.query('BEGIN');
+      const result = await client.query(
+        `DELETE FROM appointments WHERE deposit_charge_id = $1 AND status = 'PROCESSING' RETURNING *`,
+        [paymentIntent.id]
+      );
+      if (result.rowCount === 0 && process.env.NODE_ENV === 'development') {
+        console.log(`No processing appointment found for PaymentIntent ${paymentIntent.id}`);
+      }
+      await client.query('COMMIT');
+    } catch (error: any) {
+      console.error('handlePaymentFailed failed:', error.message);
+      await client.query('ROLLBACK');
+    }
+    return;
+  }
+
+  // Manual-booking deposit failures, and EOA (balance-due) failures for
+  // either booking type: the appointment already exists as a real row, so
+  // don't touch it — just let the business know the charge didn't go
+  // through, since previously this branch did nothing at all.
+  try {
+    const chargeColumn = purpose === 'EOA' ? 'service_charge_id' : 'deposit_charge_id';
+    const result = await client.query(
+      `SELECT id, business, client_metadata, service_data FROM appointments WHERE ${chargeColumn} = $1`,
+      [paymentIntent.id]
+    );
+    const appt = result.rows[0];
+    if (!appt) return;
+
+    const cm = appt.client_metadata;
+    const label = purpose === 'EOA' ? 'balance payment' : 'deposit';
+    const supabase = await createClient();
+    await supabase.from('notifications').insert({
+      body: `${cm.firstName} ${cm.lastName}'s ${label} for their ${appt.service_data.name} appointment failed to process.`,
+      title: 'Payment Failed',
+      read: false,
+      business_id: appt.business,
+      type: 'payment-failed',
+      appointment_id: appt.id,
+    });
+  } catch (error: any) {
+    console.error('handlePaymentFailed (manual/EOA) failed:', error.message);
   }
 }
 
@@ -252,6 +327,12 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
 async function scheduleReminders(res: any, appointmentId: string, client: any) {
   const settings = res.account_settings;
 
+  // Note: this runs inside the caller's try/catch (handlePaymentSucceeded,
+  // which only logs on failure — the appointment is already confirmed, so a
+  // retry here must never be signaled back to Stripe). The BEGIN/COMMIT
+  // below previously had no local rollback: if the UPDATE threw, the
+  // transaction stayed open and the pooled connection went back to the pool
+  // mid-transaction instead of being rolled back.
   const ids = await AppointmentReminders.schedule({
     appointmentId: appointmentId,
     start: DateTime.fromJSDate(res.start).toISO()!,
@@ -275,19 +356,24 @@ async function scheduleReminders(res: any, appointmentId: string, client: any) {
     },
   });
 
-  await client.query('BEGIN');
-  await client.query(
-    `UPDATE appointments SET reminder_ids = $1, payment_link_id = $2 WHERE appointments.id = $3 RETURNING *`,
-    [
-      {
-        business: { hour: ids.business.hour, day: ids.business.day },
-        client: { hour: ids.client.hour, day: ids.client.day },
-        paymentCheck: ids.paymentCheck,
-      },
-      ids.paymentLink,
-      appointmentId,
-    ]
-  );
-  await client.query('COMMIT');
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE appointments SET reminder_ids = $1, payment_link_id = $2 WHERE appointments.id = $3 RETURNING *`,
+      [
+        {
+          business: { hour: ids.business.hour, day: ids.business.day },
+          client: { hour: ids.client.hour, day: ids.client.day },
+          paymentCheck: ids.paymentCheck,
+        },
+        ids.paymentLink,
+        appointmentId,
+      ]
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  }
 }
 

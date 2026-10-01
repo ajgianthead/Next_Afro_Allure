@@ -20,6 +20,7 @@ const STATUS_CONFIG: Record<Status, { strip: string; badgeBg: string; badgeText:
     DENIED:     { strip: '#D9C9B0', badgeBg: 'rgba(217,201,176,0.3)',   badgeText: '#6F6863', label: 'Denied' },
     PROCESSING: { strip: '#C9974A', badgeBg: 'rgba(201,151,74,0.1)',    badgeText: '#C9974A', label: 'Processing' },
     INCOMPLETE: { strip: '#C9974A', badgeBg: 'rgba(201,151,74,0.1)',    badgeText: '#C9974A', label: 'Incomplete' },
+    REFUNDED:   { strip: '#9A9088', badgeBg: 'rgba(154,144,136,0.12)',  badgeText: '#6F6863', label: 'Refunded' },
 }
 
 interface Props {

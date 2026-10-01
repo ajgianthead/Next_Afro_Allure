@@ -22,6 +22,14 @@ export const createCheckout = async (
         const supabase = await createClient()
         const business = await BusinessUser.fetch(supabase, businessId)
 
+        // Without this, a business can publish and accept bookings before
+        // Stripe Connect is actually finished, and the client only finds out
+        // when the PaymentIntent create call below fails with an opaque
+        // Stripe error.
+        if (!business.completedStripeOnboarding) {
+            throw new Error('This business hasn\'t finished setting up payments yet. Please check back soon or contact them directly.')
+        }
+
         // ── Automated booking: session-only path ──────────────────────────────
         if (sessionId && !appointmentId) {
             const session = await getBookingSession(sessionId)

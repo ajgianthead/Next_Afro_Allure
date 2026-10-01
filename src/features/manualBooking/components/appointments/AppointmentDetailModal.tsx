@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import {
     Dialog,
@@ -42,6 +43,7 @@ const STATUS_CONFIG: Record<Status, { badgeBg: string; badgeText: string; label:
     DENIED:     { badgeBg: 'rgba(217,201,176,0.3)',  badgeText: '#6F6863', label: 'Denied' },
     PROCESSING: { badgeBg: 'rgba(201,151,74,0.1)',   badgeText: '#C9974A', label: 'Processing' },
     INCOMPLETE: { badgeBg: 'rgba(201,151,74,0.1)',   badgeText: '#C9974A', label: 'Incomplete' },
+    REFUNDED:   { badgeBg: 'rgba(154,144,136,0.12)', badgeText: '#6F6863', label: 'Refunded' },
 }
 
 interface Props {
@@ -85,6 +87,7 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
             await confirmAppointmentAction(event.id, '')
             updateEventInContext({ status: 'CONFIRMED' })
             handleClose()
+            toast.success('Appointment confirmed')
         } catch (err: any) {
             setFeedback({ type: 'error', message: err?.message ?? 'Failed to confirm appointment.' })
             setLoading('idle')
@@ -124,7 +127,7 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
         setLoading('markingPaid')
         setFeedback(null)
         try {
-            await markAppointmentAs('COMPLETED', event.amountDue, event.id)
+            await markAppointmentAs(event.serviceData.business, 'COMPLETED', event.amountDue, event.id)
             updateEventInContext({
                 status: 'COMPLETED',
                 servicePaid: true,
@@ -133,6 +136,7 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
                 amountDue: 0,
             })
             handleClose()
+            toast.success('Marked as paid')
         } catch (err: any) {
             setFeedback({ type: 'error', message: err?.message ?? 'Failed to mark as paid.' })
             setLoading('idle')
@@ -147,6 +151,7 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
             await cancelAppointmentAction(event.id)
             updateEventInContext({ status: 'CANCELLED' })
             handleClose()
+            toast.success('Appointment cancelled')
         } catch (err: any) {
             setFeedback({ type: 'error', message: err?.message ?? 'Failed to cancel appointment.' })
             setCancelStep(false)

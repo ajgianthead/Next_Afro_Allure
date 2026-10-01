@@ -45,6 +45,9 @@ export type Database = {
           substraction: boolean
           time_range: unknown
           updated_at: string
+          refund_id: string | null
+          refunded_amount: number | null
+          refunded_at: string | null
         }
         Insert: {
           amount_due?: number
@@ -76,6 +79,9 @@ export type Database = {
           substraction?: boolean
           time_range?: unknown
           updated_at?: string
+          refund_id?: string | null
+          refunded_amount?: number | null
+          refunded_at?: string | null
         }
         Update: {
           amount_due?: number
@@ -107,6 +113,9 @@ export type Database = {
           substraction?: boolean
           time_range?: unknown
           updated_at?: string
+          refund_id?: string | null
+          refunded_amount?: number | null
+          refunded_at?: string | null
         }
         Relationships: [
           {
@@ -2184,6 +2193,7 @@ export type Database = {
         | "PROCESSING"
         | "INCOMPLETE"
         | "NO_SHOW"
+        | "REFUNDED"
       web_editor: "SECTIONS" | "CUSTOM"
     }
     CompositeTypes: {
@@ -2340,6 +2350,7 @@ export const Constants = {
         "PROCESSING",
         "INCOMPLETE",
         "NO_SHOW",
+        "REFUNDED",
       ],
       web_editor: ["SECTIONS", "CUSTOM"],
     },

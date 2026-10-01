@@ -6,7 +6,14 @@ import { Database } from "../../../../../lib/database.types";
 
 export const updateStripeOnboardInfo = async (stripeId: string) => {
     const account = await stripe.accounts.retrieve(stripeId);
-    if (account.requirements!.currently_due!.length === 0) {
+    // currently_due alone misses past_due (should be treated as still
+    // outstanding, not complete) and can also flag a business as unfinished
+    // over purely optional eventually_due fields — check both explicitly.
+    const requirements = account.requirements
+    const hasOutstandingRequirements =
+        (requirements?.currently_due?.length ?? 0) > 0 ||
+        (requirements?.past_due?.length ?? 0) > 0
+    if (!hasOutstandingRequirements) {
         const supabase = await createClient<Database>();
         const paymentConfig = await stripe.paymentMethodConfigurations.create({
             name: `aa-${stripeId}`,

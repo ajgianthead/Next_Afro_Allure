@@ -485,7 +485,14 @@ function TodaySchedule({ appointments, businessData }: { appointments: Appointme
 function UpcomingList({ appointments, businessData }: { appointments: Appointment[]; businessData: Business }) {
   const [selected, setSelected] = useState<Appointment | null>(null)
 
-  if (appointments.length === 0) return null
+  if (appointments.length === 0) {
+    return (
+      <div>
+        <p className="text-xs font-medium mb-3" style={{ color: BRAND.warm }}>Upcoming confirmed</p>
+        <p className="text-sm py-4 text-center" style={{ color: BRAND.warm }}>No upcoming appointments</p>
+      </div>
+    )
+  }
 
   return (
     <div>

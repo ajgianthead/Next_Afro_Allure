@@ -21,6 +21,7 @@ const STATUS_COLORS: Record<Status, { bg: string; border: string; text: string }
     DENIED:     { bg: 'rgba(217,201,176,0.25)',  border: '#D9C9B0', text: '#6F6863' },
     PROCESSING: { bg: 'rgba(201,151,74,0.12)',   border: '#C9974A', text: '#92400E' },
     INCOMPLETE: { bg: 'rgba(201,151,74,0.12)',   border: '#C9974A', text: '#92400E' },
+    REFUNDED:   { bg: 'rgba(154,144,136,0.15)',  border: '#9A9088', text: '#6F6863' },
 }
 
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
