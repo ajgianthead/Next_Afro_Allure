@@ -18,6 +18,7 @@ const nextConfig = {
         return [
             { source: '/privacy-policy', destination: '/privacy', permanent: true },
             { source: '/terms-of-service', destination: '/terms', permanent: true },
+            { source: '/beta-user-agreement', destination: '/beta-agreement', permanent: true },
         ]
     },
 }

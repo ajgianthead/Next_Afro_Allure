@@ -5,6 +5,7 @@ const links = [
     { href: '/terms', label: 'Terms' },
     { href: '/refunds', label: 'Refunds' },
     { href: '/cookies', label: 'Cookies' },
+    { href: '/beta-agreement', label: 'Beta Agreement' },
     { href: '/data-deletion', label: 'Delete My Data' },
 ]
 

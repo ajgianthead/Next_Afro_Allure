@@ -234,7 +234,7 @@ export default function Register() {
                                 disabled={loading}
                             >
                                 I agree to the{' '}
-                                <Link href="/beta-user-agreement" target="_blank" className="font-semibold hover:opacity-70" style={{ color: '#FC6161' }}>
+                                <Link href="/beta-agreement" target="_blank" className="font-semibold hover:opacity-70" style={{ color: '#FC6161' }}>
                                     Beta Participation Agreement
                                 </Link>{' '}
                                 and{' '}
