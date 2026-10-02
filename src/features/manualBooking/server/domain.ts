@@ -330,6 +330,9 @@ export const createNewManualAppointment = async (appointmentData: AppointmentDat
             servicePaid: appointment.servicePaid ?? false,
             servicePaidType: appointment.servicePaidType ?? null,
             selectedAddons: addOns,
+            refundStatus: 'NONE',
+            refundedAmount: 0,
+            hasOnlinePayment: false,
         }
         return appointmentEvent
     } catch (error: any) {

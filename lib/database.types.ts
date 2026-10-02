@@ -48,6 +48,7 @@ export type Database = {
           refund_id: string | null
           refunded_amount: number | null
           refunded_at: string | null
+          refund_status: Database["public"]["Enums"]["refund_status"]
         }
         Insert: {
           amount_due?: number
@@ -82,6 +83,7 @@ export type Database = {
           refund_id?: string | null
           refunded_amount?: number | null
           refunded_at?: string | null
+          refund_status?: Database["public"]["Enums"]["refund_status"]
         }
         Update: {
           amount_due?: number
@@ -116,6 +118,7 @@ export type Database = {
           refund_id?: string | null
           refunded_amount?: number | null
           refunded_at?: string | null
+          refund_status?: Database["public"]["Enums"]["refund_status"]
         }
         Relationships: [
           {
@@ -765,6 +768,72 @@ export type Database = {
           },
         ]
       }
+      refunds: {
+        Row: {
+          amount: number
+          appointment_id: string
+          business_id: string
+          charge_type: "DEPOSIT" | "SERVICE"
+          created_at: string
+          failure_reason: string | null
+          id: string
+          initiated_by: string | null
+          note: string | null
+          payment_intent_id: string
+          reason: string | null
+          status: "pending" | "requires_action" | "succeeded" | "failed" | "canceled"
+          stripe_refund_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          appointment_id: string
+          business_id: string
+          charge_type: "DEPOSIT" | "SERVICE"
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          initiated_by?: string | null
+          note?: string | null
+          payment_intent_id: string
+          reason?: string | null
+          status: "pending" | "requires_action" | "succeeded" | "failed" | "canceled"
+          stripe_refund_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string
+          business_id?: string
+          charge_type?: "DEPOSIT" | "SERVICE"
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          initiated_by?: string | null
+          note?: string | null
+          payment_intent_id?: string
+          reason?: string | null
+          status?: "pending" | "requires_action" | "succeeded" | "failed" | "canceled"
+          stripe_refund_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           business_id: string
@@ -1073,6 +1142,10 @@ export type Database = {
       }
     }
     Functions: {
+      refresh_appointment_refund_totals: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
@@ -2184,6 +2257,7 @@ export type Database = {
         | "date_selected"
       paid_type: "PLATFORM" | "CASH"
       plan_type: "STARTER" | "GROWTH"
+      refund_status: "NONE" | "PARTIAL" | "FULL"
       status:
         | "PENDING"
         | "CONFIRMED"
@@ -2341,6 +2415,7 @@ export const Constants = {
       ],
       paid_type: ["PLATFORM", "CASH"],
       plan_type: ["STARTER", "GROWTH"],
+      refund_status: ["NONE", "PARTIAL", "FULL"],
       status: [
         "PENDING",
         "CONFIRMED",

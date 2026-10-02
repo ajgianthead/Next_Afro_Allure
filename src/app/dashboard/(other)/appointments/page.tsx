@@ -47,6 +47,10 @@ export default async function Page() {
                 selectedAddons: (appointment.selectedAddons ?? []).map((a: any) => ({
                     id: a.id, name: a.name, price: a.price
                 })),
+                refundStatus: appointment.refundStatus,
+                refundedAmount: appointment.refundedAmount,
+                hasOnlinePayment: (appointment.paidDeposit && !!appointment.depositChargeId)
+                    || (appointment.servicePaid && appointment.servicePaidType === 'PLATFORM' && !!appointment.serviceChargeId),
             }
         })
         tableFormattedData = appointments.map((appointment) => {

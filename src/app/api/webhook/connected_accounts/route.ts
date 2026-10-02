@@ -10,6 +10,8 @@ import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import { trackAppointmentBooked } from "../../../../../lib/analytics";
 import { addCreateNewClient } from "app/dashboard/(other)/clients/actions";
+import { syncStripeRefund } from "@/features/refunds/server/sync";
+import { createAdminClient } from "@/app/utils/supabase/admin";
 
 export async function POST(request: NextRequest) {
   const endpointSecret = process.env.CONNECTED_ACCOUNT_WEBHOOK_SECRET!;
@@ -37,7 +39,12 @@ export async function POST(request: NextRequest) {
         await handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent, client);
         break;
       case 'charge.refunded':
-        await handleChargeRefunded(event.data.object as Stripe.Charge, client);
+        await handleChargeRefunded(event.data.object as Stripe.Charge, event.account);
+        break;
+      case 'refund.created':
+      case 'refund.updated':
+      case 'refund.failed':
+        await handleRefundEvent(event.data.object as Stripe.Refund, event.account);
         break;
     }
   } catch (error: any) {
@@ -69,37 +76,57 @@ async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent, client
   }
 }
 
-// Refunds are issued entirely through Stripe's embedded Connect UI
-// (ConnectPayments, see EarningsTab.tsx) — there is no app code that calls
-// stripe.refunds.create. Previously nothing listened for charge.refunded at
-// all, so a business refunding a client through that widget never updated
-// the appointment record: status stayed CONFIRMED/COMPLETED and paid_amount
-// was untouched, even though the money had actually moved back to the
-// client. NOTE: the Stripe webhook endpoint config also needs
-// 'charge.refunded' added to its listened-events list for this to fire —
-// that's a Stripe dashboard/API setting, not something this file controls.
-async function handleChargeRefunded(charge: Stripe.Charge, client: any) {
-  const paymentIntentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id;
-  if (!paymentIntentId) return;
+// Refunds are issued from the appointment detail modal (src/features/refunds),
+// which records them immediately. These events keep those records in step
+// with Stripe — pending → succeeded/failed — and catch any refund made
+// outside the app so appointment totals stay accurate.
+// NOTE: the connected-account webhook endpoint in Stripe must listen for
+// charge.refunded, refund.created, refund.updated and refund.failed — that's
+// a Stripe dashboard setting, not something this file controls.
+//
+// Errors are rethrown so Stripe retries; syncStripeRefund is idempotent.
+async function handleRefundEvent(eventRefund: Stripe.Refund, account: string | undefined) {
+  // Re-fetch so out-of-order events can't regress a refund's status.
+  const refund = account
+    ? await stripe.refunds.retrieve(eventRefund.id, {}, { stripeAccount: account })
+    : eventRefund;
+  const synced = await syncStripeRefund(refund);
+  if (synced?.newlyFailed) await notifyRefundFailed(synced.appointmentId, synced.businessId, synced.amount, refund.failure_reason);
+}
 
-  const refund = charge.refunds?.data[0];
-  const isFullRefund = charge.amount_refunded >= charge.amount;
+async function handleChargeRefunded(charge: Stripe.Charge, account: string | undefined) {
+  if (!account) return;
+  // charge.refunds isn't included on Charge objects in current API
+  // versions, so list them explicitly.
+  const refunds = await stripe.refunds.list({ charge: charge.id, limit: 100 }, { stripeAccount: account });
+  for (const refund of refunds.data) {
+    const synced = await syncStripeRefund(refund);
+    if (synced?.newlyFailed) await notifyRefundFailed(synced.appointmentId, synced.businessId, synced.amount, refund.failure_reason);
+  }
+}
 
+async function notifyRefundFailed(appointmentId: string, businessId: string, amount: number, failureReason: string | null | undefined) {
   try {
-    await client.query('BEGIN');
-    await client.query(
-      `UPDATE appointments
-       SET status = CASE WHEN $1 THEN 'REFUNDED' ELSE status END,
-           refund_id = $2,
-           refunded_amount = $3,
-           refunded_at = now()
-       WHERE deposit_charge_id = $4 OR service_charge_id = $4`,
-      [isFullRefund, refund?.id ?? null, charge.amount_refunded, paymentIntentId]
-    );
-    await client.query('COMMIT');
-  } catch (error: any) {
-    console.error('handleChargeRefunded failed:', error.message);
-    await client.query('ROLLBACK');
+    // Service role: there's no signed-in user in a webhook request.
+    const supabase = createAdminClient();
+    const { data: appt } = await supabase
+      .from('appointments')
+      .select('client_metadata, service_data')
+      .eq('id', appointmentId)
+      .single();
+    const cm = appt?.client_metadata as any;
+    const serviceName = (appt?.service_data as any)?.name ?? 'appointment';
+    const reason = failureReason ? ` (${failureReason.replace(/_/g, ' ')})` : '';
+    await supabase.from('notifications').insert({
+      body: `Your $${(amount / 100).toFixed(2)} refund to ${cm?.firstName ?? 'your client'} ${cm?.lastName ?? ''} for their ${serviceName} appointment failed${reason}. The money was returned to your balance.`,
+      title: 'Refund Failed',
+      read: false,
+      business_id: businessId,
+      type: 'refund-failed',
+      appointment_id: appointmentId,
+    });
+  } catch (error) {
+    console.error('notifyRefundFailed failed:', error);
   }
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import {
@@ -17,6 +17,8 @@ import {
     sendPaymentLinkAction,
 } from '../../server'
 import { markAppointmentAs } from '@/app/dashboard/(other)/appointments/actions'
+import { RefundPanel, RefundHistory, RefundRecord, IssueRefundResult } from '@/features/refunds'
+import { listRefundsAction } from '@/features/refunds/server'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 const MONO = 'ui-monospace, monospace'
@@ -56,6 +58,22 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
     const [loading, setLoading] = useState<LoadingState>('idle')
     const [cancelStep, setCancelStep] = useState(false)
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+    const [view, setView] = useState<'details' | 'refund'>('details')
+    const [refunds, setRefunds] = useState<RefundRecord[]>([])
+
+    const hasRefunds = !!event && event.refundStatus !== 'NONE'
+    const canRefund = !!event && event.hasOnlinePayment && event.refundStatus !== 'FULL'
+
+    const eventId = event?.id
+    useEffect(() => {
+        setRefunds([])
+        if (!eventId || !hasRefunds) return
+        let active = true
+        listRefundsAction(eventId)
+            .then(r => { if (active) setRefunds(r) })
+            .catch(err => console.error('Failed to load refunds:', err))
+        return () => { active = false }
+    }, [eventId, hasRefunds])
 
     const status = (event?.status ?? 'PENDING') as Status
     const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.PENDING
@@ -169,7 +187,23 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
         handleClose()
     }
 
+    const handleRefunded = (result: Extract<IssueRefundResult, { ok: true }>) => {
+        updateEventInContext({
+            refundStatus: result.refundStatus,
+            refundedAmount: result.refundedAmount,
+            status: result.status,
+            amountDue: result.amountDue,
+        })
+        handleClose()
+        toast.success(
+            `Refunded ${fmt(result.refundedNow)}${result.cancelled ? ' and cancelled the appointment' : ''}`,
+            { description: result.pending ? "The refund is still processing with the client's bank." : undefined }
+        )
+        if (result.warning) toast.warning(result.warning)
+    }
+
     const handleClose = () => {
+        setView('details')
         setCancelStep(false)
         setFeedback(null)
         setLoading('idle')
@@ -182,7 +216,15 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
                 className="flex flex-col gap-0 p-0 overflow-hidden"
                 style={{ maxWidth: 480, border: '1px solid #E8E2D6', borderRadius: 20, backgroundColor: '#FFFFFF' }}
             >
-                {event && (
+                {event && view === 'refund' && (
+                    <RefundPanel
+                        appointmentId={event.id}
+                        onBack={() => setView('details')}
+                        onRefunded={handleRefunded}
+                    />
+                )}
+
+                {event && view === 'details' && (
                     <>
                         {/* Header */}
                         <div className="flex flex-col gap-2 p-5 pb-4" style={{ borderBottom: '1px solid #F0EBE3' }}>
@@ -190,12 +232,22 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
                                 <p style={{ fontFamily: SERIF, fontSize: 18, color: '#1A1818', lineHeight: 1.3 }}>
                                     {event.serviceData.name}
                                 </p>
-                                <span
-                                    className="px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 mt-0.5"
-                                    style={{ backgroundColor: config.badgeBg, color: config.badgeText }}
-                                >
-                                    {config.label}
-                                </span>
+                                <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+                                    {hasRefunds && (
+                                        <span
+                                            className="px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                            style={{ backgroundColor: 'rgba(154,144,136,0.12)', color: '#6F6863' }}
+                                        >
+                                            {event.refundStatus === 'FULL' ? 'Refunded' : 'Partially refunded'}
+                                        </span>
+                                    )}
+                                    <span
+                                        className="px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                        style={{ backgroundColor: config.badgeBg, color: config.badgeText }}
+                                    >
+                                        {config.label}
+                                    </span>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span style={{ fontFamily: MONO, fontSize: 12, color: '#6F6863' }}>
@@ -293,7 +345,25 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
                                             </span>
                                         </div>
                                     )}
+
+                                    {event.refundedAmount > 0 && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium" style={{ color: '#6F6863' }}>Refunded</span>
+                                            <span style={{ fontFamily: SERIF, fontSize: 15, color: '#6F6863', fontWeight: 600 }}>
+                                                −{fmt(event.refundedAmount)}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
+
+                                {refunds.length > 0 && (
+                                    <div className="flex flex-col gap-2 pt-3" style={{ borderTop: '1px solid #F0EBE3' }}>
+                                        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6F6863' }}>
+                                            Refunds
+                                        </p>
+                                        <RefundHistory refunds={refunds} />
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -386,6 +456,17 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
                                                 Cancel
                                             </button>
                                         </>
+                                    )}
+
+                                    {canRefund && (
+                                        <button
+                                            disabled={busy}
+                                            onClick={() => { setFeedback(null); setView('refund') }}
+                                            className="flex items-center gap-1.5 rounded-full text-sm font-medium px-4 h-9 transition-colors hover:bg-[#F0EBE3] disabled:opacity-50"
+                                            style={{ border: '1px solid #E8E2D6', color: '#1A1818', backgroundColor: 'transparent' }}
+                                        >
+                                            Refund
+                                        </button>
                                     )}
                                 </div>
                             ) : (

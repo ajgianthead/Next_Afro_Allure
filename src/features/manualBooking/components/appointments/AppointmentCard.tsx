@@ -66,12 +66,22 @@ export function AppointmentCard({ event, onSelect }: Props) {
                     <span style={{ fontFamily: MONO, fontSize: 12, color: '#6F6863' }}>
                         {start.toFormat('h:mm a')} – {end.toFormat('h:mm a')}
                     </span>
-                    <span
-                        className="px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
-                        style={{ backgroundColor: config.badgeBg, color: config.badgeText }}
-                    >
-                        {config.label}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {event.refundStatus && event.refundStatus !== 'NONE' && (
+                            <span
+                                className="px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                style={{ backgroundColor: 'rgba(154,144,136,0.12)', color: '#6F6863' }}
+                            >
+                                {event.refundStatus === 'FULL' ? 'Refunded' : 'Part. refunded'}
+                            </span>
+                        )}
+                        <span
+                            className="px-2.5 py-0.5 rounded-full text-xs font-medium"
+                            style={{ backgroundColor: config.badgeBg, color: config.badgeText }}
+                        >
+                            {config.label}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Client + service */}

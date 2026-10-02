@@ -86,7 +86,10 @@ export const createAccountSessionAction = async (accountId: string) => {
             payments: {
                 enabled: true,
                 features: {
-                    refund_management: true,
+                    // Refunds are only issued from the appointment detail
+                    // modal (src/features/refunds) so they stay tied to the
+                    // appointment record, client email and refund history.
+                    refund_management: false,
                     dispute_management: true,
                     capture_payments: true,
                     destination_on_behalf_of_charge_management: false,

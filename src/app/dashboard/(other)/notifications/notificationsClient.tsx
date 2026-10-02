@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
     CalendarPlus, CheckCircle2, XCircle, RefreshCw, DollarSign,
-    AlertTriangle, Clock, ChevronLeft, Trash2, Bell,
+    AlertTriangle, Clock, ChevronLeft, Trash2, Bell, Undo2,
 } from 'lucide-react'
 import { DateTime } from 'luxon'
 import { deleteNotification, markAllAsRead, updateNotificationState } from './actions'
@@ -22,7 +22,7 @@ interface PageProps {
 }
 
 const BOOKING_TYPES = ['new-booking', 'booking-confirmed', 'cancelled-booking', 'rescheduled-booking']
-const PAYMENT_TYPES = ['payment-received', 'payment-incomplete', 'no-show']
+const PAYMENT_TYPES = ['payment-received', 'payment-incomplete', 'payment-failed', 'refund-issued', 'refund-failed', 'no-show']
 
 function getTypeConfig(type: string): { icon: React.ReactNode; accent: string } {
     switch (type) {
@@ -32,6 +32,9 @@ function getTypeConfig(type: string): { icon: React.ReactNode; accent: string } 
         case 'rescheduled-booking': return { icon: <RefreshCw size={15} />, accent: '#3B82F6' }
         case 'payment-received':    return { icon: <DollarSign size={15} />, accent: '#22C55E' }
         case 'payment-incomplete':  return { icon: <Clock size={15} />, accent: '#C9974A' }
+        case 'payment-failed':      return { icon: <AlertTriangle size={15} />, accent: '#FC6161' }
+        case 'refund-issued':       return { icon: <Undo2 size={15} />, accent: '#6F6863' }
+        case 'refund-failed':       return { icon: <AlertTriangle size={15} />, accent: '#FC6161' }
         case 'no-show':             return { icon: <AlertTriangle size={15} />, accent: '#C9974A' }
         default:                    return { icon: <Bell size={15} />, accent: '#C9974A' }
     }
