@@ -2,6 +2,7 @@
 
 import { FinancialSummary } from '../actions'
 import { ActualPlatformFees } from '../stripeActions'
+import { OnlinePaymentTotals } from '../actions'
 import { fmt } from '../analytics-client'
 import { InfoTooltip } from './InfoTooltip'
 
@@ -46,16 +47,17 @@ function StatRow({
 interface Props {
     financial: FinancialSummary
     platformFees: ActualPlatformFees
+    onlinePayments: OnlinePaymentTotals
 }
 
-export function FinancialSummarySection({ financial, platformFees }: Props) {
-    const stripeFeesThisYear =
-        Math.round(financial.total_earned_this_year * 0.029) +
-        financial.booking_count_this_year * 30
+// Stripe's standard card rate. Only applied to money that went through
+// Stripe — cash payments have no processing fee.
+const stripeFee = (t: { amount: number; charges: number }) =>
+    Math.round(t.amount * 0.029) + t.charges * 30
 
-    const stripeFeesAllTime =
-        Math.round(financial.total_earned_all_time * 0.029) +
-        financial.booking_count_all_time * 30
+export function FinancialSummarySection({ financial, platformFees, onlinePayments }: Props) {
+    const stripeFeesThisYear = stripeFee(onlinePayments.thisYear)
+    const stripeFeesAllTime = stripeFee(onlinePayments.allTime)
 
     const netThisYear = Math.max(
         0,
@@ -92,9 +94,9 @@ export function FinancialSummarySection({ financial, platformFees }: Props) {
                 />
                 <StatRow
                     label="Stripe Processing"
-                    value={`~${fmt(stripeFeesThisYear)}`}
+                    value={stripeFeesThisYear > 0 ? `~${fmt(stripeFeesThisYear)}` : fmt(0)}
                     highlight="muted"
-                    tip="Stripe's 2.9% + $0.30 per transaction, estimated from your booking count. Exact amounts are in your Stripe dashboard."
+                    tip="Stripe's 2.9% + $0.30 per online payment (deposits and payment links). Cash payments have no processing fee. Exact amounts are in your Stripe dashboard."
                 />
                 <StatRow
                     label="Net Earnings"
@@ -135,9 +137,9 @@ export function FinancialSummarySection({ financial, platformFees }: Props) {
                 />
                 <StatRow
                     label="Stripe Processing"
-                    value={`~${fmt(stripeFeesAllTime)}`}
+                    value={stripeFeesAllTime > 0 ? `~${fmt(stripeFeesAllTime)}` : fmt(0)}
                     highlight="muted"
-                    tip="Stripe's 2.9% + $0.30 per transaction, estimated from your booking count. Exact amounts are in your Stripe dashboard."
+                    tip="Stripe's 2.9% + $0.30 per online payment (deposits and payment links). Cash payments have no processing fee. Exact amounts are in your Stripe dashboard."
                 />
                 <StatRow
                     label="Net Earnings"

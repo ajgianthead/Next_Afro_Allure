@@ -1,4 +1,4 @@
-import { createContext, Dispatch, SetStateAction, useState } from "react";
+import { createContext, Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { ManualBookingData, WrapperProps } from "../types";
 
 
@@ -39,6 +39,15 @@ export const ManualBookingWrapper = ({ appointmentEvents, services, policy, chil
         openRescheduleConfirmation: false,
         currSelectedEvent: null
     })
+    // Server data changes (router.refresh after an action, a client confirming
+    // from their email) arrive as new props — sync them into context so the
+    // views update without a full page reload.
+    const firstRender = useRef(true)
+    useEffect(() => {
+        if (firstRender.current) { firstRender.current = false; return }
+        setManualBookingData(prev => ({ ...prev, appointmentEvents, services, policy }))
+    }, [appointmentEvents, services, policy])
+
     return (
         <ManualBookingContext.Provider value={{ manualBookingData, setManualBookingData }}>
             {children}

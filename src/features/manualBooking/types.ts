@@ -18,6 +18,22 @@ export interface AppointmentData {
     selectedAddons: Set<string>
 }
 
+/** What the create-appointment modal sends to the server. Times are ISO instants computed in the browser. */
+export interface CreateAppointmentPayload {
+    startISO: string
+    endISO: string
+    serviceId: string
+    clientData: {
+        firstName: string
+        lastName: string
+        email: string
+        phoneNumber: string
+    }
+    deposit: boolean
+    selectedAddons: string[]
+    timezone?: string
+}
+
 export interface WrapperProps {
     appointmentEvents: AppointmentEvent[]
     services: ServiceType[]

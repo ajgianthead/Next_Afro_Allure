@@ -68,9 +68,10 @@ export default function ConfirmAppClient({ appointment, business }: PageProps) {
         setConfirmError('')
         try {
             const result = await confirmAppointment(appointment.id, appointment.businessId)
-            if (!Array.isArray(result)) setCompleted(true)
-        } catch (err: any) {
-            setConfirmError(err?.message ?? 'Something went wrong. Please try again.')
+            if (result.ok) setCompleted(true)
+            else setConfirmError(result.error)
+        } catch {
+            setConfirmError('Something went wrong. Please try again.')
         } finally {
             setConfirming(false)
         }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DateTime } from 'luxon'
+import { useRouter } from 'next/navigation'
 import { ManualBookingWrapper } from '../context/ManualBookingContext'
 import { AppointmentEvent, AppointmentTableData } from '../types'
 import { BusinessPolicyType } from '@/lib/businessPolicy/BusinessPolicy'
@@ -33,12 +34,14 @@ interface Props {
     hadTrial: boolean
     stripeCustomerId: string | null
     businessId: string
+    canTakeOnlinePayments: boolean
 }
 
 export function AppointmentsClient({
     events, services, policy, data, planType,
-    monthlyBookingCount, hadTrial, stripeCustomerId, businessId,
+    monthlyBookingCount, hadTrial, stripeCustomerId, businessId, canTakeOnlinePayments,
 }: Props) {
+    const router = useRouter()
     // SSR-safe: always 'list' on first render, switch to saved/desktop preference after mount
     const [view, setView] = useState<AppointmentView>('list')
     const [currentDate, setCurrentDate] = useState(new Date())
@@ -52,6 +55,21 @@ export function AppointmentsClient({
         if (saved) { setView(saved); return }
         if (window.innerWidth >= 1024) setView('day')
     }, [])
+
+    // Pick up changes made outside this tab (e.g. a client confirming or
+    // cancelling from their email) when the business comes back to the page,
+    // and periodically while it's open.
+    useEffect(() => {
+        const refresh = () => { if (document.visibilityState === 'visible') router.refresh() }
+        document.addEventListener('visibilitychange', refresh)
+        window.addEventListener('focus', refresh)
+        const interval = setInterval(refresh, 60_000)
+        return () => {
+            document.removeEventListener('visibilitychange', refresh)
+            window.removeEventListener('focus', refresh)
+            clearInterval(interval)
+        }
+    }, [router])
 
     // When the tour needs to highlight the list view but a different view is active,
     // switch to list so the target element is in the DOM.
@@ -80,6 +98,7 @@ export function AppointmentsClient({
     return (
         <ManualBookingWrapper appointmentEvents={events} services={services} policy={policy}>
             <CreateAppointmentModal
+                canTakeOnlinePayments={canTakeOnlinePayments}
                 planType={planType}
                 monthlyBookingCount={monthlyBookingCount}
                 hadTrial={hadTrial}
@@ -90,6 +109,7 @@ export function AppointmentsClient({
             <AppointmentDetailModal
                 event={selectedEvent}
                 onClose={() => setSelectedEvent(null)}
+                canTakeOnlinePayments={canTakeOnlinePayments}
             />
 
             <AppointmentsTour />

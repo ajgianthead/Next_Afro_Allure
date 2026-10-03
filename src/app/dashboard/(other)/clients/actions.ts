@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from "@/app/utils/supabase/server"
+import { upsertBusinessClient } from "@/features/shared/clients/upsertBusinessClient"
 
 export interface Client {
     client_id?: string
@@ -94,68 +95,23 @@ export const addCreateNewClient = async (
     businessId: string
 ) => {
     const supabase = await createClient()
-
-    // Look up existing client_users by email or phone
-    const { data: existingUser } = await supabase
-        .from('client_users')
-        .select('client_id')
-        .or(`email.eq.${client.email},phone_number.eq.${client.phone_number}`)
-        .maybeSingle()
-
-    if (existingUser) {
-        // Check if banned from this business
-        const { data: bannedEntry } = await supabase
-            .from('banned_clients')
-            .select('id')
-            .eq('business_id', businessId)
-            .eq('client_id', existingUser.client_id)
-            .maybeSingle()
-        if (bannedEntry) return "Client is banned from this business"
-
-        // Check if already linked to this business
-        const { data: alreadyLinked } = await supabase
-            .from('business_clients')
-            .select('id')
-            .eq('business', businessId)
-            .eq('client', existingUser.client_id)
-            .maybeSingle()
-        if (alreadyLinked) return "Client already exists for this business"
-
-        // Link to business
-        const { error: linkError } = await supabase
-            .from('business_clients')
-            .insert({ business: businessId, client: existingUser.client_id, banned: false })
-        if (linkError) return linkError
-
-        const { data: full, error: fetchError } = await supabase
-            .from('client_users')
-            .select('*')
-            .eq('client_id', existingUser.client_id)
-            .single()
-        if (fetchError) return fetchError
-        return full
-    } else {
-        // Create new client_users record
-        const { data: newUser, error: insertError } = await supabase
-            .from('client_users')
-            .insert({
-                first_name: client.first_name,
-                last_name: client.last_name,
-                email: client.email,
-                phone_number: client.phone_number,
-            })
-            .select()
-            .single()
-        if (insertError) return insertError
-
-        // Link to business
-        const { error: linkError } = await supabase
-            .from('business_clients')
-            .insert({ business: businessId, client: newUser.client_id, banned: false })
-        if (linkError) return linkError
-
-        return newUser
+    const result = await upsertBusinessClient(supabase, client, businessId)
+    // Errors come back as strings: a PostgrestError loses its prototype when it
+    // crosses the server-action boundary, so `instanceof` checks never matched.
+    if (!result.ok) {
+        if (result.reason === 'banned') return "Client is banned from this business"
+        if (result.reason === 'missing-contact') return "Please enter an email or phone number"
+        return result.message ?? "Failed to add client"
     }
+    if (!result.linked) return "Client already exists for this business"
+
+    const { data: full, error: fetchError } = await supabase
+        .from('client_users')
+        .select('*')
+        .eq('client_id', result.clientId)
+        .single()
+    if (fetchError) return fetchError.message
+    return full
 }
 
 export const updateClientInfo = async (

@@ -29,8 +29,8 @@ export interface EmailTemplate {
 }
 
 export default function ReminderClient({ serviceName, clientData, businessData, appointmentData }: EmailTemplate) {
-    const date = DateTime.fromISO(appointmentData.start).toFormat('cccc, LLLL d, yyyy')
-    const time = DateTime.fromISO(appointmentData.start).toFormat('h:mm a')
+    const date = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('cccc, LLLL d, yyyy')
+    const time = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('h:mm a')
     const rescheduleUrl = `${BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/reschedule`
     const cancelUrl = `${BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/cancel`
 

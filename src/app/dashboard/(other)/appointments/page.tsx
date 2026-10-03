@@ -97,5 +97,6 @@ export default async function Page() {
         hadTrial={hadTrial}
         stripeCustomerId={stripeCustomerId}
         businessId={business.id}
+        canTakeOnlinePayments={business.completedStripeOnboarding}
     />
 }

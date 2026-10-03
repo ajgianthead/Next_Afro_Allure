@@ -176,13 +176,14 @@ export default function EventCard({ event }: EventProps) {
                                                         e.preventDefault()
                                                         setCancellingAppointment(true)
                                                         try {
-                                                            const cancelled = await cancelAppointmentAction(event.id)
-                                                            setManualBookingData!({
-                                                                ...manualBookingData!,
-                                                                appointmentEvents: manualBookingData!.appointmentEvents.map(ev =>
-                                                                    ev.id === cancelled?.id ? { ...ev, status: cancelled.status } : ev
+                                                            const res = await cancelAppointmentAction(event.id)
+                                                            if (!res.ok) throw new Error(res.error)
+                                                            setManualBookingData!(prev => ({
+                                                                ...prev,
+                                                                appointmentEvents: prev.appointmentEvents.map(ev =>
+                                                                    ev.id === res.data.id ? { ...ev, status: 'CANCELLED' } : ev
                                                                 )
-                                                            })
+                                                            }))
                                                             setOpenCancelAlert(false)
                                                             toast.success('Appointment cancelled')
                                                         } catch (err: any) {

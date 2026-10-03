@@ -5,7 +5,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Lock } from 'lucide-react'
 import { toast } from 'sonner'
-import { PostgrestError } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -15,6 +14,7 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog'
 import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
+import { validateBusinessAddress, normalizeBusinessAddress } from '@/lib/businessAddress'
 import { saveAccountSettings, cancelSubscription, reactivateSubscription, createBillingPortalSession } from './actions'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
@@ -37,6 +37,8 @@ export interface AccountSettings {
         email_24: boolean
         email_1: boolean
     }
+    /** IANA timezone used to show the right times in emails and reminders. */
+    timezone?: string
 }
 
 export interface SubscriptionInfo {
@@ -51,6 +53,24 @@ const DEFAULT_SETTINGS: AccountSettings = {
     business_address: { no_address: false, line_1: '', line_2: '', city: '', state: '', zip_code: '' },
     notifications: { email: true, email_24: false, email_1: false },
     app_reminders: { email_24: false, email_1: false },
+}
+
+// Older accounts can be missing whole sections; fill them so the form never
+// reads undefined and the save writes a complete object.
+function withDefaults(stored: Partial<AccountSettings> | null | undefined): AccountSettings {
+    return {
+        ...DEFAULT_SETTINGS,
+        ...(stored ?? {}),
+        business_address: { ...DEFAULT_SETTINGS.business_address, ...(stored?.business_address ?? {}) },
+        notifications: { ...DEFAULT_SETTINGS.notifications, ...(stored?.notifications ?? {}) },
+        app_reminders: { ...DEFAULT_SETTINGS.app_reminders, ...(stored?.app_reminders ?? {}) },
+    }
+}
+
+function validateAddress(addr: AccountSettings['business_address']): string | null {
+    const errors = validateBusinessAddress(addr)
+    const first = Object.values(errors)[0]
+    return first ? `Business address: ${first}, or check "I don't have a fixed location".` : null
 }
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
@@ -734,7 +754,7 @@ export default function SettingsClient({
     const router = useRouter()
     const [activeTab, setActiveTab] = useState<Tab>('account')
     const [accountSettings, setAccountSettings] = useState<AccountSettings>(
-        (business.account_settings as unknown as AccountSettings) ?? DEFAULT_SETTINGS
+        withDefaults(business.account_settings as unknown as Partial<AccountSettings>)
     )
     const [currentEmail, setCurrentEmail] = useState(business.email)
     const [saving, setSaving] = useState(false)
@@ -742,14 +762,31 @@ export default function SettingsClient({
     const [subscription, setSubscription] = useState<SubscriptionInfo | null>(initialSubscription)
 
     const handleSave = async () => {
+        const addressError = validateAddress(accountSettings.business_address)
+        if (addressError) {
+            setActiveTab('account')
+            toast.error(addressError)
+            return
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(currentEmail.trim())) {
+            setActiveTab('account')
+            toast.error('Please enter a valid email address.')
+            return
+        }
         setSaving(true)
         try {
-            const result = await saveAccountSettings(accountSettings, business.business_id, currentEmail)
-            if (result instanceof PostgrestError) {
-                toast.error('Failed to save settings. Please try again.')
+            const result = await saveAccountSettings(
+                { ...accountSettings, business_address: normalizeBusinessAddress(accountSettings.business_address) },
+                business.business_id,
+                currentEmail
+            )
+            if (!result.ok) {
+                toast.error(result.error || 'Failed to save settings. Please try again.')
             } else {
-                setAccountSettings((result.account_settings as unknown as AccountSettings) ?? accountSettings)
+                setAccountSettings(withDefaults(result.accountSettings))
+                setCurrentEmail(result.email)
                 toast.success('Settings saved.')
+                router.refresh()
             }
         } catch {
             toast.error('Something went wrong. Please try again.')

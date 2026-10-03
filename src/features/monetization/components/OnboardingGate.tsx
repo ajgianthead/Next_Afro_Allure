@@ -5,9 +5,15 @@ const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 interface OnboardingGateProps {
     onboardingLink: string | null
+    status?: 'incomplete' | 'error' | null
 }
 
-export function OnboardingGate({ onboardingLink }: OnboardingGateProps) {
+const STATUS_MESSAGES = {
+    incomplete: "Your Stripe setup isn't finished yet. Pick up where you left off whenever you're ready.",
+    error: "We couldn't confirm your Stripe setup. Please try again.",
+}
+
+export function OnboardingGate({ onboardingLink, status }: OnboardingGateProps) {
     return (
         <div className="p-4 sm:p-6 max-w-xl">
             <div className="mb-6">
@@ -34,14 +40,23 @@ export function OnboardingGate({ onboardingLink }: OnboardingGateProps) {
                     </p>
                 </div>
 
+                {status && (
+                    <div
+                        className="rounded-xl px-3 py-2.5"
+                        style={{ backgroundColor: 'rgba(201,151,74,0.08)', border: '1px solid rgba(201,151,74,0.25)' }}
+                    >
+                        <p className="text-xs" style={{ color: '#6F6863' }}>{STATUS_MESSAGES[status]}</p>
+                    </div>
+                )}
+
                 {onboardingLink ? (
                     <Button
                         asChild
                         className="w-fit rounded-xl px-5"
                         style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF', fontSize: '13px' }}
                     >
-                        <a href={onboardingLink} target="_blank" rel="noreferrer" className="flex items-center gap-2">
-                            Connect with Stripe <ExternalLink size={13} />
+                        <a href={onboardingLink} className="flex items-center gap-2">
+                            {status === 'incomplete' ? 'Continue Stripe setup' : 'Connect with Stripe'} <ExternalLink size={13} />
                         </a>
                     </Button>
                 ) : (

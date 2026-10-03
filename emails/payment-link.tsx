@@ -8,7 +8,7 @@ import { AppointmentDetailBlock } from './components/AppointmentDetailBlock'
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co'
 
 export default function PaymentLinkEmail(props: PaymentLinkProps) {
-    const payUrl = `${BASE_URL}/appointments/${props.appointmentID}/business/${props.businessData.id}/eoa-payment`
+    const payUrl = `${BASE_URL}/appointment/${props.appointmentID}/business/${props.businessData.id}/eoa-payment`
 
     return (
         <Html lang="en">

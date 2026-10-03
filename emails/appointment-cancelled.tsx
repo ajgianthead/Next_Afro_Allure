@@ -7,8 +7,8 @@ import { EmailFooter } from './components/EmailFooter'
 import { AppointmentDetailBlock } from './components/AppointmentDetailBlock'
 
 export default function AppointmentCancelled({ serviceName, clientData, businessData, appointmentData }: EmailTemplate) {
-    const date = DateTime.fromISO(appointmentData.start).toFormat('cccc, LLLL d, yyyy')
-    const time = DateTime.fromISO(appointmentData.start).toFormat('h:mm a')
+    const date = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('cccc, LLLL d, yyyy')
+    const time = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('h:mm a')
 
     return (
         <Html lang="en">

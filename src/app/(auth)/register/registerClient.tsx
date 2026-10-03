@@ -91,7 +91,9 @@ export default function Register() {
                 router.replace(sessionUrl)
                 return
             }
-            router.replace(`/onboarding/${result.stripeAccountId}`)
+            // Stripe accounts are still created in the background at signup;
+            // monetization setup is optional and lives in the dashboard.
+            router.replace('/dashboard')
         } catch {
             setError('Something went wrong. Please try again.')
             setLoading(false)

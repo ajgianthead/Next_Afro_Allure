@@ -27,6 +27,13 @@ export default function OnboardingClient() {
                 >
                     Try again
                 </button>
+                <button
+                    onClick={() => router.replace('/dashboard')}
+                    className="text-sm underline"
+                    style={{ color: '#6F6863' }}
+                >
+                    Back to dashboard
+                </button>
             </div>
         )
     }

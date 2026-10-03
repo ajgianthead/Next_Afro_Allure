@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation'
 import { fetchBusinessUser, fetchUser } from '../actions'
-import { createAccountLinkAction } from '@/features/stripe/actions'
 import { MonetizationClient, OnboardingGate } from '@/features/monetization/components'
 import { checkCompletedOnboarding } from '@/features/monetization/server/actions'
 
 export const dynamic = 'force-dynamic'
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ onboarding?: string }> }) {
     const user = await fetchUser()
     if (!user) redirect('/login')
 
@@ -18,8 +17,11 @@ export default async function Page() {
         return <MonetizationClient stripeId={business.stripe_acc_id!} />
     }
 
-    const onboardingLink = business?.current_onboarding_link
-        ?? (business?.stripe_acc_id ? await createAccountLinkAction(business.stripe_acc_id) : null)
+    const { onboarding } = await searchParams
+    // Account links are single-use and expire within minutes, so never reuse
+    // the one stored at signup — /onboarding/[id] mints a fresh link.
+    const onboardingLink = business?.stripe_acc_id ? `/onboarding/${business.stripe_acc_id}` : null
+    const status = onboarding === 'incomplete' || onboarding === 'error' ? onboarding : null
 
-    return <OnboardingGate onboardingLink={onboardingLink} />
+    return <OnboardingGate onboardingLink={onboardingLink} status={status} />
 }

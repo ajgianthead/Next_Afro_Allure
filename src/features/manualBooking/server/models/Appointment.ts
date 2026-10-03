@@ -11,7 +11,8 @@ import ConfirmAppointmentTemplate from "../../../../../emails/confirm-appointmen
 import AppointmentConfirmed from "../../../../../emails/appointment-confirmed";
 import AppointmentRescheduled from "../../../../../emails/appointment-rescheduled";
 import AppointmentCancelled from "../../../../../emails/appointment-cancelled";
-import { Email } from "@lib/appointmentEmails/AppointmentEmails";
+import { Email, formatBusinessAddress } from "@lib/appointmentEmails/AppointmentEmails";
+import { toZonedISO } from "@/lib/timezone";
 
 export interface AppointmentType {
     id: string,
@@ -367,188 +368,61 @@ export class Appointment {
             throw Error(error.message)
         }
     }
-    async sendBusinessConfirmationEmail(resend: Resend, supabase: SupabaseClient<Database, any>) {
+    // Shared props for the appointment email templates. Times are re-expressed
+    // in the business's timezone — the server runs in UTC, so without this the
+    // emails would print UTC wall-clock times.
+    private async emailProps(supabase: SupabaseClient<Database, any>) {
         const business = await BusinessUser.fetch(supabase, this.businessId)
-        const businessAddress = business.accountSettings.business_address
-        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
-        return Email.send(resend, NewAppointment({
-            socials: {
-                instagram: "https://instagram.com/afroallure_",
+        const tz = (business.accountSettings as any)?.timezone
+        return {
+            business,
+            props: {
+                socials: { instagram: "https://instagram.com/afroallure_" },
+                serviceName: this.serviceData.name,
+                clientData: {
+                    firstName: this.clientMetadata.firstName,
+                    lastName: this.clientMetadata.lastName,
+                },
+                businessData: {
+                    id: this.businessId,
+                    name: business.name,
+                    businessAddress: formatBusinessAddress(business.accountSettings?.business_address),
+                },
+                appointmentData: {
+                    id: this.id,
+                    start: toZonedISO(this.start, tz),
+                    end: toZonedISO(this.end, tz),
+                },
             },
-            serviceName: this.serviceData.name,
-            clientData: {
-                firstName: this.clientMetadata.firstName,
-                lastName: this.clientMetadata.lastName,
-            },
-            businessData: {
-                id: this.businessId,
-                name: business.name,
-                businessAddress: addressString
-            },
-            appointmentData: {
-                id: this.id,
-                start: this.start,
-                end: this.end
-            }
-
-        }), 'New Booking Alert', business.email)
+        }
+    }
+    async sendBusinessConfirmationEmail(resend: Resend, supabase: SupabaseClient<Database, any>) {
+        const { business, props } = await this.emailProps(supabase)
+        return Email.send(resend, NewAppointment(props), 'New Booking Alert', business.email)
     }
     async sendBusinessRescheduleEmail(resend: Resend, supabase: SupabaseClient<Database, any>) {
-        const business = await BusinessUser.fetch(supabase, this.businessId)
-        const businessAddress = business.accountSettings.business_address
-        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
-        return Email.send(resend, RescheduledAppointment({
-            socials: {
-                instagram: "https://instagram.com/afroallure_",
-            },
-            serviceName: this.serviceData.name,
-            clientData: {
-                firstName: this.clientMetadata.firstName,
-                lastName: this.clientMetadata.lastName,
-            },
-            businessData: {
-                id: this.businessId,
-                name: business.name,
-                businessAddress: addressString
-            },
-            appointmentData: {
-                id: this.id,
-                start: this.start,
-                end: this.end
-            }
-
-        }), 'Appointment Rescheduled', business.email)
+        const { business, props } = await this.emailProps(supabase)
+        return Email.send(resend, RescheduledAppointment(props), 'Appointment Rescheduled', business.email)
     }
     async sendBusinessCancellationEmail(resend: Resend, supabase: SupabaseClient<Database, any>) {
-        const business = await BusinessUser.fetch(supabase, this.businessId)
-        const businessAddress = business.accountSettings.business_address
-        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
-        return Email.send(resend, CancelledAppointment({
-            socials: {
-                instagram: "https://instagram.com/afroallure_",
-            },
-            serviceName: this.serviceData.name,
-            clientData: {
-                firstName: this.clientMetadata.firstName,
-                lastName: this.clientMetadata.lastName,
-            },
-            businessData: {
-                id: this.businessId,
-                name: business.name,
-                businessAddress: addressString
-            },
-            appointmentData: {
-                id: this.id,
-                start: this.start,
-                end: this.end
-            }
-
-        }), 'Appointment Cancelled', business.email)
+        const { business, props } = await this.emailProps(supabase)
+        return Email.send(resend, CancelledAppointment(props), 'Appointment Cancelled', business.email)
     }
-
     async sendConfirmAppointmentEmail(resend: Resend, supabase: SupabaseClient<Database, any>) {
-        const business = await BusinessUser.fetch(supabase, this.businessId)
-        const businessAddress = business.accountSettings.business_address
-        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
-        return Email.send(resend, ConfirmAppointmentTemplate({
-            socials: {
-                instagram: "https://instagram.com/afroallure_",
-            },
-            serviceName: this.serviceData.name,
-            clientData: {
-                firstName: this.clientMetadata.firstName,
-                lastName: this.clientMetadata.lastName,
-            },
-            businessData: {
-                id: this.businessId,
-                name: business.name,
-                businessAddress: addressString
-            },
-            appointmentData: {
-                id: this.id,
-                start: this.start,
-                end: this.end
-            }
-
-        }), 'Confirm Appointment', this.clientMetadata.email)
+        const { props } = await this.emailProps(supabase)
+        return Email.send(resend, ConfirmAppointmentTemplate(props), 'Confirm Appointment', this.clientMetadata.email)
     }
     async sendClientConfirmationEmail(resend: Resend, supabase: SupabaseClient<Database, any>) {
-        const business = await BusinessUser.fetch(supabase, this.businessId)
-        const businessAddress = business.accountSettings.business_address
-        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
-        return Email.send(resend, AppointmentConfirmed({
-            socials: {
-                instagram: "https://instagram.com/afroallure_",
-            },
-            serviceName: this.serviceData.name,
-            clientData: {
-                firstName: this.clientMetadata.firstName,
-                lastName: this.clientMetadata.lastName,
-            },
-            businessData: {
-                id: this.businessId,
-                name: business.name,
-                businessAddress: addressString
-            },
-            appointmentData: {
-                id: this.id,
-                start: this.start,
-                end: this.end
-            }
-
-        }), 'Appointment Confirmed', this.clientMetadata.email)
+        const { props } = await this.emailProps(supabase)
+        return Email.send(resend, AppointmentConfirmed(props), 'Appointment Confirmed', this.clientMetadata.email)
     }
     async sendClientRescheduleEmail(resend: Resend, supabase: SupabaseClient<Database, any>) {
-        const business = await BusinessUser.fetch(supabase, this.businessId)
-        const businessAddress = business.accountSettings.business_address
-        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
-        return Email.send(resend, AppointmentRescheduled({
-            socials: {
-                instagram: "https://instagram.com/afroallure_",
-            },
-            serviceName: this.serviceData.name,
-            clientData: {
-                firstName: this.clientMetadata.firstName,
-                lastName: this.clientMetadata.lastName,
-            },
-            businessData: {
-                id: this.businessId,
-                name: business.name,
-                businessAddress: addressString
-            },
-            appointmentData: {
-                id: this.id,
-                start: this.start,
-                end: this.end
-            }
-
-        }), 'Appointment Rescheduled', this.clientMetadata.email)
+        const { props } = await this.emailProps(supabase)
+        return Email.send(resend, AppointmentRescheduled(props), 'Appointment Rescheduled', this.clientMetadata.email)
     }
     async sendClientCancellationEmail(resend: Resend, supabase: SupabaseClient<Database, any>) {
-        const business = await BusinessUser.fetch(supabase, this.businessId)
-        const businessAddress = business.accountSettings.business_address
-        const addressString = businessAddress.no_address ? 'No business address' : `${businessAddress.line_1}, ${businessAddress.line_2}, ${businessAddress.city}, ${businessAddress.state} ${businessAddress.zip_code}`
-        return Email.send(resend, AppointmentCancelled({
-            socials: {
-                instagram: "https://instagram.com/afroallure_",
-            },
-            serviceName: this.serviceData.name,
-            clientData: {
-                firstName: this.clientMetadata.firstName,
-                lastName: this.clientMetadata.lastName,
-            },
-            businessData: {
-                id: this.businessId,
-                name: business.name,
-                businessAddress: addressString
-            },
-            appointmentData: {
-                id: this.id,
-                start: this.start,
-                end: this.end
-            }
-
-        }), 'Appointment Cancelled', this.clientMetadata.email)
+        const { props } = await this.emailProps(supabase)
+        return Email.send(resend, AppointmentCancelled(props), 'Appointment Cancelled', this.clientMetadata.email)
     }
 }
 
