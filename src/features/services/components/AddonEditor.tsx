@@ -55,7 +55,7 @@ export function AddonEditor({
         setIsSaving(true)
         try {
             if (isEditing && initialData) {
-                const updated = await updateAddonAction({
+                const updated = await updateAddonAction(businessId, {
                     ...initialData,
                     name: form.name.trim(),
                     price: parsedPrice,
@@ -79,7 +79,7 @@ export function AddonEditor({
         if (!initialData) return
         setIsSaving(true)
         try {
-            await deleteAddonAction(initialData.id)
+            await deleteAddonAction(businessId, initialData.id)
             onDeleted(initialData.id)
             toast.success('Add-on deleted')
             onClose()

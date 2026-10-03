@@ -5,7 +5,7 @@ import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmail
 import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders"
 import { NotificationType } from "@/lib/notifications/Notification"
 import { trackAppointmentBooked, trackAppointmentCancelled } from "../../../../lib/analytics"
-import { addCreateNewClient } from "app/dashboard/(other)/clients/actions"
+import { addCreateNewClient, isClientBannedFromBusiness } from "app/dashboard/(other)/clients/actions"
 import { DateTime } from "luxon"
 import { runs } from "@trigger.dev/sdk/v3"
 
@@ -137,6 +137,13 @@ export const createAppointmentAction = async (body: {
     deposit_price: number | null
     selected_addons: any[]
 }) => {
+    const isBanned = await isClientBannedFromBusiness(
+        body.client_metadata?.email,
+        body.client_metadata?.phoneNumber,
+        body.business
+    )
+    if (isBanned) throw new Error('This business is not accepting bookings from you.')
+
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('appointments')

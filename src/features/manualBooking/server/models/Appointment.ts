@@ -48,6 +48,8 @@ export interface AppointmentType {
     endOfAppointmentTaxTransaction: string,
     paidAmount: number,
     subtraction: boolean,
+    refundStatus: Database['public']['Enums']['refund_status'],
+    refundedAmount: number,
 }
 
 export class Appointment {
@@ -86,8 +88,8 @@ export class Appointment {
         public endOfAppointmentTaxTransaction: string,
         public paidAmount: number,
         public subtraction: boolean,
-
-
+        public refundStatus: Database['public']['Enums']['refund_status'] = 'NONE',
+        public refundedAmount: number = 0,
     ) { }
     toClient() {
         return {
@@ -124,7 +126,9 @@ export class Appointment {
             depositTaxTransaction: this.depositTaxTransaction,
             endOfAppointmentTaxTransaction: this.endOfAppointmentTaxTransaction,
             paidAmount: this.paidAmount,
-            subtraction: this.subtraction
+            subtraction: this.subtraction,
+            refundStatus: this.refundStatus,
+            refundedAmount: this.refundedAmount,
         }
     }
     private static fromRows(row: Database['public']['Tables']['appointments']['Row'][] | Database['public']['Tables']['appointments']['Row']) {
@@ -176,7 +180,9 @@ export class Appointment {
                 item.deposit_tax_transaction!,
                 item.eoa_tax_transaction!,
                 item.paid_amount,
-                item.substraction
+                item.substraction,
+                item.refund_status ?? 'NONE',
+                Number(item.refunded_amount ?? 0),
             ))
         }
         return new Appointment(
@@ -226,7 +232,9 @@ export class Appointment {
             row.deposit_tax_transaction!,
             row.eoa_tax_transaction!,
             row.paid_amount,
-            row.substraction
+            row.substraction,
+            row.refund_status ?? 'NONE',
+            Number(row.refunded_amount ?? 0),
         )
     }
     static async create(supabase: SupabaseClient<Database, any>, businessId: string, appointmentData: {

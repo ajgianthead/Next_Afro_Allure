@@ -7,6 +7,8 @@ import { AppointmentType as Appointment, CheckoutType } from "../../shared/appoi
 import Stripe from "stripe";
 import { AppointmentType } from "@/features/manualBooking/server/models/Appointment";
 import { getTotalAmountDue } from "./actions";
+import { BusinessUser } from "@/lib/businessUser/BusinessUser";
+import { isClientBannedFromBusiness } from "app/dashboard/(other)/clients/actions";
 
 // Helper function to build booking session data for insert/update
 const buildBookingSessionData = (data: BookingSessionData) => ({
@@ -91,9 +93,23 @@ export const attachPaymentIntent = async (id: string, selectedService: string, s
         const session = await getBookingSession(id);
         if (!session) throw new Error("Session not found");
 
+        // Block here, before a PaymentIntent (and thus a payment form) is
+        // ever created — nothing earlier in the automated-booking flow
+        // checked bans at all, so a banned client could simply re-book.
+        const clientInfo = session.clientInfo as { email?: string; phoneNumber?: string } | null
+        const isBanned = await isClientBannedFromBusiness(clientInfo?.email, clientInfo?.phoneNumber, session.businessId)
+        if (isBanned) throw new Error('This business is not accepting bookings from you.')
+
         let paymentIntent: Stripe.Response<Stripe.PaymentIntent>;
         if (session.paymentIntentId) {
-            paymentIntent = await stripe.paymentIntents.retrieve(session.paymentIntentId);
+            // The PI was created under the connected account's namespace
+            // (createCheckout always passes stripeAccount), so retrieving it
+            // from the platform account context throws "No such payment_intent".
+            const supabase = await createClient();
+            const business = await BusinessUser.fetch(supabase, session.businessId);
+            paymentIntent = await stripe.paymentIntents.retrieve(session.paymentIntentId, {
+                stripeAccount: business.stripeAccountId,
+            });
             if (paymentIntent.status === 'canceled') {
                 paymentIntent = (await createCheckout(CheckoutType.DEPOSIT, Appointment.AUTOMATED, paymentIntent.amount, session.businessId, undefined, session.id)) as Stripe.Response<Stripe.PaymentIntent>;
             }
@@ -127,6 +143,15 @@ export const markSessionConfirmed = async (id: string, appointmentData: Appointm
     try {
         const session = await getBookingSession(id);
         if (session?.status === 'confirmed') return;
+
+        // Redundant with the check in attachPaymentIntent, in case clientInfo
+        // wasn't populated on the session yet at that earlier step — this is
+        // the terminal step that actually creates the appointment, so it's
+        // the last chance to stop a banned client from ending up with a
+        // confirmed booking.
+        const clientInfo = session?.clientInfo as { email?: string; phoneNumber?: string } | null
+        const isBanned = await isClientBannedFromBusiness(clientInfo?.email, clientInfo?.phoneNumber, session?.businessId || '')
+        if (isBanned) throw new Error('This business is not accepting bookings from you.')
 
         const supabase = await createClient();
         const { error } = await supabase.rpc('confirm_booking_session', {

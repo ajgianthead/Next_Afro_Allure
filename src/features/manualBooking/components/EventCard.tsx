@@ -36,6 +36,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import { AppointmentEvent } from "../types";
 import { cancelAppointmentAction } from "../server/actions";
 import { useManualBooking } from "../hooks/useManualBooking";
@@ -73,7 +74,7 @@ export default function EventCard({ event }: EventProps) {
         if (updatingStatus) return
         setUpdatingStatus(true)
         try {
-            const result = await markAppointmentAs(newStatus, event.amountDue, event.id)
+            const result = await markAppointmentAs(event.serviceData.business, newStatus, event.amountDue, event.id)
             if (result) {
                 setManualBookingData!({
                     ...manualBookingData!,
@@ -83,9 +84,10 @@ export default function EventCard({ event }: EventProps) {
                             : ev
                     )
                 })
+                toast.success(newStatus === 'COMPLETED' ? 'Marked as completed' : 'Marked as no-show')
             }
-        } catch {
-            // silent — user can retry from dropdown
+        } catch (err: any) {
+            toast.error(err?.message ?? 'Failed to update appointment status')
         } finally {
             setUpdatingStatus(false)
         }
@@ -182,8 +184,9 @@ export default function EventCard({ event }: EventProps) {
                                                                 )
                                                             })
                                                             setOpenCancelAlert(false)
-                                                        } catch {
-                                                            // keep dialog open
+                                                            toast.success('Appointment cancelled')
+                                                        } catch (err: any) {
+                                                            toast.error(err?.message ?? 'Failed to cancel appointment')
                                                         } finally {
                                                             setCancellingAppointment(false)
                                                         }

@@ -5,9 +5,11 @@ import "./globals.scss";
 import '../styles/globals.css'
 import { UserWrapper } from "@/app/utils/context/UserContext";
 import Script from 'next/script'
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as gtag from '../../lib/gtag';
 import { usePathname, useRouter } from "next/navigation";
+import { CookieBanner, COOKIE_CONSENT_KEY, COOKIE_CONSENT_EVENT } from "@/components/CookieBanner";
+import { SiteFooter } from "@/components/SiteFooter";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -22,13 +24,24 @@ export default function RootLayout({
     const pathname = usePathname();
     const previousPathname = useRef(pathname);
 
+    // GA4 must only load after the visitor accepts analytics cookies.
+    const [analyticsConsent, setAnalyticsConsent] = useState(false)
+    useEffect(() => {
+        try {
+            setAnalyticsConsent(localStorage.getItem(COOKIE_CONSENT_KEY) === 'all')
+        } catch {
+            // localStorage unavailable — treat as no consent
+        }
+        const onConsentChange = (e: Event) => {
+            setAnalyticsConsent((e as CustomEvent).detail === 'all')
+        }
+        window.addEventListener(COOKIE_CONSENT_EVENT, onConsentChange)
+        return () => window.removeEventListener(COOKIE_CONSENT_EVENT, onConsentChange)
+    }, [])
+
     useEffect(() => {
         if (previousPathname.current !== pathname) {
-            // Path changed — track pageview here
-
-
-            // e.g., call your GA pageview function
-            // gtag.pageview(pathname);
+            // Path changed — track pageview here (no-ops until gtag is actually loaded)
             gtag.pageview(pathname)
 
             previousPathname.current = pathname;
@@ -39,7 +52,7 @@ export default function RootLayout({
         <UserWrapper>
             <html lang="en">
                 <head>
-                    {GA_ID && (
+                    {GA_ID && analyticsConsent && (
                         <>
                             <Script
                                 src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
@@ -64,7 +77,17 @@ export default function RootLayout({
                     )}
                 </head>
                 <body className={`${inter.className} ${fraunces.variable}`}>
-                    {children}
+                    <a
+                        href="#main-content"
+                        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded"
+                    >
+                        Skip to main content
+                    </a>
+                    <div id="main-content">
+                        {children}
+                    </div>
+                    <SiteFooter />
+                    <CookieBanner />
                 </body>
             </html>
 

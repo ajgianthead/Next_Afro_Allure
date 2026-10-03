@@ -74,6 +74,10 @@ export interface AppointmentEvent {
     servicePaid: boolean
     servicePaidType: Database['public']['Enums']['paid_type'] | null
     selectedAddons: { id: string; name: string; price: number }[]
+    refundStatus: Database['public']['Enums']['refund_status']
+    refundedAmount: number
+    /** A deposit or balance was paid through Stripe, so it can be refunded in-app. */
+    hasOnlinePayment: boolean
 }
 
 export interface AppointmentTableData {

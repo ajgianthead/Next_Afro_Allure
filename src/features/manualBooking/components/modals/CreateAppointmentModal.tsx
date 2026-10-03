@@ -315,6 +315,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
                                 const appointment = await createManualAppointmentAction(manualBookingData?.newAppointmentData!) as AppointmentEvent
                                 setManualBookingData!({ ...manualBookingData!, appointmentEvents: [...manualBookingData?.appointmentEvents!, appointment], creatingAppointment: false })
                                 handleClose()
+                                toast.success('Appointment created')
                             } catch (err: any) {
                                 setManualBookingData!({ ...manualBookingData!, creatingAppointment: false, error: { hasError: true, message: err?.message ?? 'Failed to create appointment. Please try again.' } })
                             }

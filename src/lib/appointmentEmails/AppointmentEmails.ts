@@ -8,6 +8,7 @@ import AppointmentCancelled from "../../../emails/appointment-cancelled";
 import CancelledAppointment from "../../../emails/cancelled-appointment";
 import ConfirmAppointmentTemplate from "../../../emails/confirm-appointment";
 import EOAReceiptEmail from "../../../emails/eoa-receipt";
+import RefundIssuedEmail from "../../../emails/refund-issued";
 
 const FROM_NOTIFICATION = 'notifications <noreply@reminder.afroallure.co>';
 const FROM_BOOKING_ALERT = 'Booking Alert <noreply@reminder.afroallure.co>';
@@ -98,6 +99,16 @@ export class AppointmentEmails {
             to: data.clientMetadata.email,
             subject: 'Payment Received — Appointment Receipt',
             react: EOAReceiptEmail(props),
+        });
+    }
+
+    static async sendRefundIssued(data: AppointmentEmailData & { amountRefunded: number; pending: boolean; cancelled: boolean }): Promise<void> {
+        const props = { ...buildEmailProps(data), amountRefunded: data.amountRefunded, pending: data.pending, cancelled: data.cancelled };
+        await trySend({
+            from: FROM_NOTIFICATION,
+            to: data.clientMetadata.email,
+            subject: `Refund from ${data.businessData.name}`,
+            react: RefundIssuedEmail(props),
         });
     }
 

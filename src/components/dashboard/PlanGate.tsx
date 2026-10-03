@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
+import { FeeDisclosure } from '@/components/FeeDisclosure'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -56,6 +57,7 @@ export function PlanGateCard({ featureName, description, businessData }: {
                 <p className="text-sm font-medium" style={{ color: '#1A1818' }}>$25/month · 14-day free trial</p>
                 <p className="text-xs mt-0.5" style={{ color: '#6F6863' }}>No credit card required</p>
             </div>
+            <FeeDisclosure planName="AfroAllure Growth" monthlyAmount={25} />
             <button
                 onClick={handleUpgrade}
                 disabled={loading}

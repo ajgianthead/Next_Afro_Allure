@@ -12,9 +12,24 @@ type Params = {
     reason?: string;
 }
 
-const analyticsDataClient = new BetaAnalyticsDataClient({
-    credentials: JSON.parse(process.env.GOOGLE_ANALYTICS_KEY!.split(String.raw`\\n`).join('\\n'))
-})
+// Lazily constructed — this module is imported by the Stripe Connect
+// webhook (for the write-side trackAppointmentBooked/etc. helpers below),
+// so building this client at module scope would crash that unrelated,
+// payment-critical import chain if GOOGLE_ANALYTICS_KEY is ever unset or
+// malformed. Only the (currently unused) GA4 report-reading functions in
+// this file need it, so only they pay the cost of constructing it.
+let _analyticsDataClient: BetaAnalyticsDataClient | null = null
+function getAnalyticsDataClient(): BetaAnalyticsDataClient {
+    if (!_analyticsDataClient) {
+        if (!process.env.GOOGLE_ANALYTICS_KEY) {
+            throw new Error('GOOGLE_ANALYTICS_KEY env var not set')
+        }
+        _analyticsDataClient = new BetaAnalyticsDataClient({
+            credentials: JSON.parse(process.env.GOOGLE_ANALYTICS_KEY.split(String.raw`\\n`).join('\\n'))
+        })
+    }
+    return _analyticsDataClient
+}
 
 const MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 const API_SECRET = process.env.NEXT_PUBLIC_ANALYTICS_API_SECRET

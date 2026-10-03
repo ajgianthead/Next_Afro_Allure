@@ -125,6 +125,7 @@ export const ClientsTable = ({
             } else {
                 setClients(prev => prev.map(c => (c.client_id === res.client_id ? (res as Client) : c)))
                 resetForm()
+                toast.success('Client updated')
             }
         } else {
             const res = await addCreateNewClient(
@@ -141,6 +142,7 @@ export const ClientsTable = ({
             } else {
                 setClients(prev => [...prev, res as Client])
                 resetForm()
+                toast.success('Client added')
             }
         }
 
@@ -156,6 +158,7 @@ export const ClientsTable = ({
         } else {
             setClients(prev => prev.filter(c => c.client_id !== selectedClient.client_id))
             resetForm()
+            toast.success('Client deleted')
         }
         setDeleting(false)
     }
@@ -183,6 +186,7 @@ export const ClientsTable = ({
             ])
             setClients(prev => prev.filter(c => c.client_id !== selectedClient.client_id))
             resetForm()
+            toast.success('Client banned')
         }
         setBanning(false)
     }
@@ -194,6 +198,7 @@ export const ClientsTable = ({
             toast.error(res.message)
         } else {
             setBanned(prev => prev.filter(b => b.id !== client.id))
+            toast.success('Client unbanned')
         }
         setUnbanning(null)
     }

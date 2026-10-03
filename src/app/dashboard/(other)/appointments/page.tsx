@@ -1,11 +1,11 @@
 
+import { effectivePlanType } from '@/lib/beta'
 import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import { fetchBusinessUser, fetchUser } from "../actions";
 import { assignAddons } from "./actions";
 import { BusinessUser } from "@/lib/businessUser/BusinessUser";
 import { DateTime } from "luxon";
-import { AppointmentsTable } from "../../../../features/manualBooking/components/AppointmentsTable";
 import { AppointmentEvent, AppointmentTableData } from "@/features/manualBooking/types";
 import { AppointmentsClient } from "@/features/manualBooking/components";
 import { getBusinessPermissions } from "@/lib/permissions";
@@ -48,6 +48,10 @@ export default async function Page() {
                 selectedAddons: (appointment.selectedAddons ?? []).map((a: any) => ({
                     id: a.id, name: a.name, price: a.price
                 })),
+                refundStatus: appointment.refundStatus,
+                refundedAmount: appointment.refundedAmount,
+                hasOnlinePayment: (appointment.paidDeposit && !!appointment.depositChargeId)
+                    || (appointment.servicePaid && appointment.servicePaidType === 'PLATFORM' && !!appointment.serviceChargeId),
             }
         })
         tableFormattedData = appointments.map((appointment) => {
@@ -73,13 +77,12 @@ export default async function Page() {
         })
     }
     serviceClient = await assignAddons(supabase, serviceClient as any)
-    console.log(serviceClient);
 
     const [planRes, monthlyCountRes] = await Promise.all([
         supabase.from('business_users').select('plan_type, had_trial, stripe_customer_id').eq('business_id', business.id).single(),
         supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('business', business.id).neq('status', 'CANCELLED').gte('created_at', DateTime.now().startOf('month').toISO()),
     ])
-    const planType = (planRes.data?.plan_type ?? 'STARTER') as 'STARTER' | 'GROWTH'
+    const planType = effectivePlanType(planRes.data?.plan_type)
     const monthlyBookingCount = monthlyCountRes.count ?? 0
     const hadTrial = planRes.data?.had_trial ?? false
     const stripeCustomerId = planRes.data?.stripe_customer_id ?? null

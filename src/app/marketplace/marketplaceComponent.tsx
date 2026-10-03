@@ -20,7 +20,6 @@ export const MarketplaceComponent = () => {
     const [popularServices, setPopularServices] = useState<any[] | null>(null)
     const getPopularServices = async (businesses: any[]) => {
         const services = await getPopularServicesFromMultipleBusinesses(businesses, Intl.DateTimeFormat().resolvedOptions().timeZone)
-        console.log(services)
         return services
     }
     useEffect(() => {

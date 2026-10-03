@@ -88,7 +88,6 @@ export const getCoordsFromAddress = async (address: string) => {
         })
         const lat = response.data.results[0].geometry.location.lat;
         const lng = response.data.results[0].geometry.location.lng
-        console.log(response.data.results[0].geometry.location);
         return [lat, lng];
     } catch (err) {
         console.error(err);
@@ -149,7 +148,6 @@ export const getPopularServicesFromBusiness = async (
         .eq("business", businessId)
         .gte("created_at", thirtyDaysAgo)
         .lte("created_at", rightNow);
-    console.log(data)
 
     if (error) {
         console.error("Error fetching appointments:", error);

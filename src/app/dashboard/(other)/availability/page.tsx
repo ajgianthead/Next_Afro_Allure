@@ -1,3 +1,4 @@
+import { effectivePlanType } from '@/lib/beta'
 import { redirect } from "next/navigation";
 import { fetchBusinessUser, fetchUser } from "../actions";
 import { AvailabilityClient } from "@/features/availability/components";
@@ -16,7 +17,7 @@ export default async function Page() {
         <AvailabilityClient
             availabilitiesData={availabilities ?? []}
             defaultAvailabilityData={defaultAvailability ?? ''}
-            planType={business?.plan_type ?? 'STARTER'}
+            planType={effectivePlanType(business?.plan_type)}
             hadTrial={business?.had_trial ?? false}
             businessId={business?.business_id ?? ''}
             stripeCustomerId={business?.stripe_customer_id ?? null}

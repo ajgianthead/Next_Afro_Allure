@@ -121,10 +121,10 @@ export const ClientInfo = ({
                     <div className="flex flex-col gap-3 pt-3" style={{ borderTop: '1px solid var(--t-border)' }}>
                         <BookingCheckbox id="afroallure-ci" checked={agreedAfroAllure} onChange={setAgreedAfroAllure}>
                             I agree to AfroAllure&apos;s{' '}
-                            <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="font-semibold hover:opacity-70" style={{ color: 'var(--t-primary)' }}>
+                            <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-semibold hover:opacity-70" style={{ color: 'var(--t-primary)' }}>
                                 Terms & Conditions
                             </a>{' '}and{' '}
-                            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="font-semibold hover:opacity-70" style={{ color: 'var(--t-primary)' }}>
+                            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold hover:opacity-70" style={{ color: 'var(--t-primary)' }}>
                                 Privacy Policy
                             </a>
                         </BookingCheckbox>

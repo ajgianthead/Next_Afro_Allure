@@ -30,7 +30,14 @@
       "Bash(ls src/app/api/webhook/)",
       "Bash(Remove-Item \"c:\\\\Users\\\\abija\\\\Documents\\\\afroallure\\\\Next_Afro_Allure\\\\src\\\\components\\\\UserDropdown.tsx\")",
       "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies['@vercel/analytics'] || 'NOT INSTALLED'\\)\")",
-      "Bash(Select-String \"dm-booking|dmBooking\")"
+      "Bash(Select-String \"dm-booking|dmBooking\")",
+      "Bash(git checkout *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(git restore *)",
+      "Bash(git push *)",
+      "Bash(node -e \"const icons = require\\('lucide-react'\\); console.log\\('CircleDot' in icons, 'Monitor' in icons, 'Tablet' in icons, 'Smartphone' in icons\\)\")",
+      "Bash(grep -n \"AlignBtns\\\\|{ v: 'start', icon:\" \"src/app/business/[businessName]/edit/components/button/fields.tsx\")"
     ]
   }
 }

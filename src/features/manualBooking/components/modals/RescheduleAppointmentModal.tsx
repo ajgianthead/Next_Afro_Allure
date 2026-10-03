@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
 import { format } from "date-fns"
+import { toast } from "sonner"
 import { useManualBooking } from "../../hooks/useManualBooking"
 import { rescheduleAppointmentAction } from "../../server"
 
@@ -180,6 +181,7 @@ export const RescheduleConfirmation = () => {
                                     })
                                 }
                                 handleClose()
+                                toast.success('Appointment rescheduled')
                             } catch (err: any) {
                                 setError(err?.message ?? 'Failed to reschedule. Please try again.')
                             } finally {

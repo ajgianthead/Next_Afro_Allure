@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { SimpleEditor } from '@tailus-ui/components/tiptap-templates/simple/simple-editor';
 import React, { useRef } from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface PageProps {
     editorState: any[];
@@ -52,10 +53,9 @@ const TextSection = ({ editorState, index, setEditorState }: PageProps) => {
     }
 
     return (
-        // TipTap output is sanitized by its extension model
         <div
             className="w-full min-h-[2.5rem] text-sm leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: editorState[index].html }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editorState[index].html) }}
         />
     );
 };

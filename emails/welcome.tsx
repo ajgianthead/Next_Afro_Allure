@@ -3,6 +3,8 @@ import { Html, Head, Body, Container, Section, Row, Column, Text, Link, Preview 
 import { EmailHeader } from './components/EmailHeader'
 import { EmailFooter } from './components/EmailFooter'
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co'
+
 interface WelcomeEmailProps {
     firstName: string
 }
@@ -75,7 +77,7 @@ export default function WelcomeEmail({ firstName }: WelcomeEmailProps) {
                                 <Row>
                                     <Column style={{ textAlign: 'center' }}>
                                         <Link
-                                            href="https://beta.afroallure.co/onboarding"
+                                            href={`${BASE_URL}/onboarding`}
                                             style={{
                                                 display: 'inline-block',
                                                 backgroundColor: '#FC6161',

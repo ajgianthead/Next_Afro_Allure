@@ -234,7 +234,7 @@ function Hero({ isLoggedIn, foundingMemberCount }: { isLoggedIn: boolean; foundi
                         display: 'inline-flex', alignItems: 'center', gap: 8,
                         textDecoration: 'none',
                     }}>
-                        Start Free — No Credit Card
+                        Join the Beta — Free
                         <Icon d={ICONS.arrow} size={16} stroke={2} />
                     </a>
                     <a href="#pricing" style={{
@@ -244,7 +244,7 @@ function Hero({ isLoggedIn, foundingMemberCount }: { isLoggedIn: boolean; foundi
                         padding: '13.5px 22px', borderRadius: 999, cursor: 'pointer',
                         textDecoration: 'none',
                     }}>
-                        See Pricing
+                        Free During Beta
                     </a>
 
                     <span style={{
@@ -671,21 +671,21 @@ function WhyAfroAllure() {
 // PRICING
 // ─────────────────────────────────────────────────────────────
 function Pricing() {
-    const starter = [
-        '10 monthly bookings',
-        'Basic booking page',
-        'Confirmation emails',
-        'Client management',
-        'Booking notifications',
-        'Card payment processing',
-    ];
-    const growth = [
-        'Everything in Starter',
+    const included = [
         'Unlimited bookings',
+        'Unlimited availability schedules',
         'Drag & drop page builder',
+        'Deposits, payments & refunds',
         'Apple Pay · Google Pay · Cash App',
         'Automated email reminders',
         'Booking analytics',
+        'Client management',
+    ];
+    const afterBeta = [
+        'Founding members keep $25/mo forever',
+        'First-listed in the marketplace',
+        'Founding-member badge on your page',
+        'We’ll give you plenty of notice first',
     ];
 
     return (
@@ -701,71 +701,18 @@ function Pricing() {
                         fontSize: 'clamp(40px, 5.2vw, 68px)', lineHeight: 1,
                         letterSpacing: '-.025em', margin: '0 0 18px', color: INK,
                     }}>
-                        Plans &amp; <em style={{ fontStyle: 'italic' }}>Pricing</em>
+                        Free during <em style={{ fontStyle: 'italic' }}>beta</em>
                     </h2>
                     <p style={{
                         fontFamily: SANS, fontSize: 16, lineHeight: 1.5, color: MUTED,
                         margin: 0, fontWeight: 400,
                     }}>
-                        Select a plan and start growing your business.
+                        Every beta member gets full access to everything — no paywalls, no trial clock, no credit card.
                     </p>
                 </div>
 
                 <div className="aa-pricing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                    {/* STARTER */}
-                    <div className="aa-pricing-card" style={{
-                        background: '#fff', borderRadius: 24, padding: '40px 36px',
-                        border: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column',
-                    }}>
-                        <div style={{
-                            fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
-                            color: MUTED, marginBottom: 18, fontWeight: 600,
-                        }}>Starter</div>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                            <span style={{
-                                fontFamily: SERIF, fontSize: 60, fontWeight: 400, color: INK,
-                                letterSpacing: '-.03em', lineHeight: 1
-                            }}>Free</span>
-                        </div>
-                        <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginTop: 8 }}>
-                            Free Forever · for trying things out
-                        </div>
-
-                        <a href="/register" style={{
-                            marginTop: 28, fontFamily: SANS, fontWeight: 600, fontSize: 14,
-                            background: WARM, color: INK, border: `1.5px solid ${INK}`,
-                            padding: '14px 22px', borderRadius: 999, cursor: 'pointer',
-                            display: 'inline-block', textDecoration: 'none', textAlign: 'center',
-                        }}>Join for Free</a>
-
-                        <div style={{
-                            fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
-                            color: MUTED, margin: '32px 0 16px', fontWeight: 600,
-                        }}>Includes</div>
-                        <ul style={{
-                            listStyle: 'none', padding: 0, margin: 0,
-                            display: 'flex', flexDirection: 'column', gap: 12
-                        }}>
-                            {starter.map((f, i) => (
-                                <li key={i} style={{
-                                    display: 'flex', alignItems: 'center', gap: 12,
-                                    fontFamily: SANS, fontSize: 14, color: INK, fontWeight: 400,
-                                }}>
-                                    <span style={{
-                                        width: 18, height: 18, borderRadius: '50%',
-                                        background: WARM, color: INK,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        flexShrink: 0,
-                                    }}>
-                                        <Icon d={ICONS.check} size={11} stroke={2.5} />
-                                    </span>
-                                    {f}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* GROWTH — recommended */}
+                    {/* BETA — everything, free */}
                     <div className="aa-pricing-card" style={{
                         background: '#fff', borderRadius: 24, padding: '40px 36px',
                         border: `2px solid ${RED}`,
@@ -780,22 +727,22 @@ function Pricing() {
                             display: 'inline-flex', alignItems: 'center', gap: 6,
                         }}>
                             <Icon d={ICONS.spark} size={11} fill="currentColor" />
-                            Recommended
+                            Open now
                         </span>
 
                         <div style={{
                             fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
                             color: RED, marginBottom: 18, fontWeight: 600,
-                        }}>Growth</div>
+                        }}>Beta access</div>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
                             <span style={{
                                 fontFamily: SERIF, fontSize: 60, fontWeight: 400, color: INK,
                                 letterSpacing: '-.03em', lineHeight: 1
-                            }}>$25</span>
+                            }}>$0</span>
                             <span style={{ fontFamily: SANS, fontSize: 14, color: MUTED, fontWeight: 500 }}>/month</span>
                         </div>
                         <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginTop: 8 }}>
-                            14-day free trial · no credit card required
+                            Full access for the whole beta · no credit card required
                         </div>
 
                         <a href="/register" style={{
@@ -805,27 +752,80 @@ function Pricing() {
                             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                             textDecoration: 'none',
                         }}>
-                            Start 14-day Free Trial
+                            Join the Beta — Free
                             <Icon d={ICONS.arrow} size={14} stroke={2} />
                         </a>
 
                         <div style={{
                             fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
                             color: MUTED, margin: '32px 0 16px', fontWeight: 600,
-                        }}>Everything you need</div>
+                        }}>Everything included</div>
                         <ul style={{
                             listStyle: 'none', padding: 0, margin: 0,
                             display: 'flex', flexDirection: 'column', gap: 12
                         }}>
-                            {growth.map((f, i) => (
+                            {included.map((f, i) => (
                                 <li key={i} style={{
                                     display: 'flex', alignItems: 'center', gap: 12,
-                                    fontFamily: SANS, fontSize: 14, color: INK,
-                                    fontWeight: i === 0 ? 600 : 400,
+                                    fontFamily: SANS, fontSize: 14, color: INK, fontWeight: 400,
                                 }}>
                                     <span style={{
                                         width: 18, height: 18, borderRadius: '50%',
                                         background: RED, color: '#fff',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        flexShrink: 0,
+                                    }}>
+                                        <Icon d={ICONS.check} size={11} stroke={2.5} />
+                                    </span>
+                                    {f}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* AFTER BETA — founding rate */}
+                    <div className="aa-pricing-card" style={{
+                        background: '#fff', borderRadius: 24, padding: '40px 36px',
+                        border: `1px solid ${LINE}`, display: 'flex', flexDirection: 'column',
+                    }}>
+                        <div style={{
+                            fontFamily: MONO, fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase',
+                            color: MUTED, marginBottom: 18, fontWeight: 600,
+                        }}>After beta</div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                            <span style={{
+                                fontFamily: SERIF, fontSize: 60, fontWeight: 400, color: INK,
+                                letterSpacing: '-.03em', lineHeight: 1
+                            }}>$25</span>
+                            <span style={{ fontFamily: SANS, fontSize: 14, color: MUTED, fontWeight: 500 }}>/month</span>
+                        </div>
+                        <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginTop: 8 }}>
+                            Nothing to pay today · join during beta to lock this in
+                        </div>
+
+                        <a href="/founding-members" style={{
+                            marginTop: 28, fontFamily: SANS, fontWeight: 600, fontSize: 14,
+                            background: WARM, color: INK, border: `1.5px solid ${INK}`,
+                            padding: '14px 22px', borderRadius: 999, cursor: 'pointer',
+                            display: 'inline-block', textDecoration: 'none', textAlign: 'center',
+                        }}>About Founding Members</a>
+
+                        <div style={{
+                            fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase',
+                            color: MUTED, margin: '32px 0 16px', fontWeight: 600,
+                        }}>When beta ends</div>
+                        <ul style={{
+                            listStyle: 'none', padding: 0, margin: 0,
+                            display: 'flex', flexDirection: 'column', gap: 12
+                        }}>
+                            {afterBeta.map((f, i) => (
+                                <li key={i} style={{
+                                    display: 'flex', alignItems: 'center', gap: 12,
+                                    fontFamily: SANS, fontSize: 14, color: INK, fontWeight: 400,
+                                }}>
+                                    <span style={{
+                                        width: 18, height: 18, borderRadius: '50%',
+                                        background: WARM, color: INK,
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         flexShrink: 0,
                                     }}>
@@ -857,7 +857,7 @@ function FeeTransparency() {
 
     const rows: [string, string, string][] = [
         ['Platform fee', '3%', '25–35%'],
-        ['Monthly fee', '$25/mo', '$35+/mo'],
+        ['Monthly fee', '$0 in beta', '$35+/mo'],
         ['You keep', `$${payout.toFixed(2)}`, `$${styleSeatLow.toFixed(2)} – $${styleSeatHigh.toFixed(2)}`],
         ['Marketplace', 'Coming soon', '✓'],
         ['Built for Black beauty', '✓', '✗'],
@@ -1090,9 +1090,10 @@ function Founding({ foundingMemberCount }: { foundingMemberCount: number }) {
                             marginTop: 28, fontWeight: 400, maxWidth: 560,
                         }}>
                             <p style={{ margin: '0 0 14px' }}>
-                                Founding members get a rate that never changes — no matter what AfroAllure charges
-                                in the future. First in the marketplace when it launches. Your badge on your
-                                public page, permanently.
+                                AfroAllure is free with full access for everyone during beta. When paid plans
+                                arrive, founding members keep a $25/mo rate that never changes — no matter what
+                                AfroAllure charges later. First in the marketplace when it launches. Your badge on
+                                your public page, permanently.
                             </p>
                             <p style={{ margin: 0, color: MUTED }}>
                                 Only 250 spots. Once they're gone, this offer doesn't come back.
@@ -1134,7 +1135,8 @@ function Founding({ foundingMemberCount }: { foundingMemberCount: number }) {
                         }}>
                             {[
                                 ['First-listed in marketplace', 'When it opens'],
-                                ['Rate locked forever', '$25/mo — always'],
+                                ['Free full access', 'For the entire beta'],
+                                ['Rate locked forever', '$25/mo after beta — always'],
                                 ['Founding-member badge', 'On your public page'],
                                 ['Priority support', 'Direct access to the team'],
                             ].map(([t, d], i) => (
@@ -1191,8 +1193,8 @@ function FinalCTA() {
                     color: 'rgba(250,247,242,.75)',
                     margin: '24px auto 40px', maxWidth: 560, fontWeight: 400,
                 }}>
-                    Lock in your founding-member rate now. First in the marketplace at launch.
-                    Your badge, your rate — locked forever. No credit card required.
+                    Full access to every feature, free for the entire beta. Join now to lock in your
+                    founding-member rate for later and be first in the marketplace at launch.
                 </p>
 
                 <a href="/register" style={{
@@ -1210,7 +1212,7 @@ function FinalCTA() {
                     marginTop: 24, fontFamily: SANS, fontSize: 13,
                     color: 'rgba(250,247,242,.55)',
                 }}>
-                    No credit card · Cancel anytime · Built in Florida
+                    No credit card · No paywalls during beta · Built in Florida
                 </div>
             </div>
         </section>

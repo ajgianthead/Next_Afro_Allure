@@ -45,6 +45,10 @@ export type Database = {
           substraction: boolean
           time_range: unknown
           updated_at: string
+          refund_id: string | null
+          refunded_amount: number | null
+          refunded_at: string | null
+          refund_status: Database["public"]["Enums"]["refund_status"]
         }
         Insert: {
           amount_due?: number
@@ -76,6 +80,10 @@ export type Database = {
           substraction?: boolean
           time_range?: unknown
           updated_at?: string
+          refund_id?: string | null
+          refunded_amount?: number | null
+          refunded_at?: string | null
+          refund_status?: Database["public"]["Enums"]["refund_status"]
         }
         Update: {
           amount_due?: number
@@ -107,6 +115,10 @@ export type Database = {
           substraction?: boolean
           time_range?: unknown
           updated_at?: string
+          refund_id?: string | null
+          refunded_amount?: number | null
+          refunded_at?: string | null
+          refund_status?: Database["public"]["Enums"]["refund_status"]
         }
         Relationships: [
           {
@@ -380,6 +392,14 @@ export type Database = {
           upgrade_prompt_dismissed_at: string | null
           url_name: string
           user_id: string
+          tos_accepted_at: string | null
+          tos_ip_address: string | null
+          marketing_opt_in: boolean
+          unsubscribe_token: string | null
+          last_checkin_sent_at: string | null
+          total_booking_volume: number | null
+          subscription_plan: string | null
+          subscription_status: string | null
         }
         Insert: {
           account_settings?: Json | null
@@ -413,6 +433,14 @@ export type Database = {
           upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
+          tos_accepted_at?: string | null
+          tos_ip_address?: string | null
+          marketing_opt_in?: boolean
+          unsubscribe_token?: string | null
+          last_checkin_sent_at?: string | null
+          total_booking_volume?: number | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
         }
         Update: {
           account_settings?: Json | null
@@ -446,6 +474,95 @@ export type Database = {
           upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
+          tos_accepted_at?: string | null
+          tos_ip_address?: string | null
+          marketing_opt_in?: boolean
+          unsubscribe_token?: string | null
+          last_checkin_sent_at?: string | null
+          total_booking_volume?: number | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          id: string
+          business_id: string | null
+          business_name: string | null
+          email: string | null
+          type: string
+          message: string
+          status: string
+          created_at: string | null
+          resolved_at: string | null
+          founder_notes: string | null
+        }
+        Insert: {
+          id?: string
+          business_id?: string | null
+          business_name?: string | null
+          email?: string | null
+          type: string
+          message: string
+          status?: string
+          created_at?: string | null
+          resolved_at?: string | null
+          founder_notes?: string | null
+        }
+        Update: {
+          id?: string
+          business_id?: string | null
+          business_name?: string | null
+          email?: string | null
+          type?: string
+          message?: string
+          status?: string
+          created_at?: string | null
+          resolved_at?: string | null
+          founder_notes?: string | null
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          id: string
+          business_id: string | null
+          business_name: string | null
+          email: string | null
+          subject: string
+          message: string
+          status: string
+          priority: string
+          created_at: string | null
+          resolved_at: string | null
+          founder_reply: string | null
+        }
+        Insert: {
+          id?: string
+          business_id?: string | null
+          business_name?: string | null
+          email?: string | null
+          subject: string
+          message: string
+          status?: string
+          priority?: string
+          created_at?: string | null
+          resolved_at?: string | null
+          founder_reply?: string | null
+        }
+        Update: {
+          id?: string
+          business_id?: string | null
+          business_name?: string | null
+          email?: string | null
+          subject?: string
+          message?: string
+          status?: string
+          priority?: string
+          created_at?: string | null
+          resolved_at?: string | null
+          founder_reply?: string | null
         }
         Relationships: []
       }
@@ -644,6 +761,72 @@ export type Database = {
           },
           {
             foreignKeyName: "notifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      refunds: {
+        Row: {
+          amount: number
+          appointment_id: string
+          business_id: string
+          charge_type: "DEPOSIT" | "SERVICE"
+          created_at: string
+          failure_reason: string | null
+          id: string
+          initiated_by: string | null
+          note: string | null
+          payment_intent_id: string
+          reason: string | null
+          status: "pending" | "requires_action" | "succeeded" | "failed" | "canceled"
+          stripe_refund_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          appointment_id: string
+          business_id: string
+          charge_type: "DEPOSIT" | "SERVICE"
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          initiated_by?: string | null
+          note?: string | null
+          payment_intent_id: string
+          reason?: string | null
+          status: "pending" | "requires_action" | "succeeded" | "failed" | "canceled"
+          stripe_refund_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string
+          business_id?: string
+          charge_type?: "DEPOSIT" | "SERVICE"
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          initiated_by?: string | null
+          note?: string | null
+          payment_intent_id?: string
+          reason?: string | null
+          status?: "pending" | "requires_action" | "succeeded" | "failed" | "canceled"
+          stripe_refund_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_users"
@@ -959,6 +1142,10 @@ export type Database = {
       }
     }
     Functions: {
+      refresh_appointment_refund_totals: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
@@ -2070,6 +2257,7 @@ export type Database = {
         | "date_selected"
       paid_type: "PLATFORM" | "CASH"
       plan_type: "STARTER" | "GROWTH"
+      refund_status: "NONE" | "PARTIAL" | "FULL"
       status:
         | "PENDING"
         | "CONFIRMED"
@@ -2079,6 +2267,7 @@ export type Database = {
         | "PROCESSING"
         | "INCOMPLETE"
         | "NO_SHOW"
+        | "REFUNDED"
       web_editor: "SECTIONS" | "CUSTOM"
     }
     CompositeTypes: {
@@ -2226,6 +2415,7 @@ export const Constants = {
       ],
       paid_type: ["PLATFORM", "CASH"],
       plan_type: ["STARTER", "GROWTH"],
+      refund_status: ["NONE", "PARTIAL", "FULL"],
       status: [
         "PENDING",
         "CONFIRMED",
@@ -2235,6 +2425,7 @@ export const Constants = {
         "PROCESSING",
         "INCOMPLETE",
         "NO_SHOW",
+        "REFUNDED",
       ],
       web_editor: ["SECTIONS", "CUSTOM"],
     },

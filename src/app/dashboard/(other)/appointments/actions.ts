@@ -11,17 +11,19 @@ import { ServiceData } from "@/features/services/types";
 
 
 //TODO: Fix this to update when a user changes status from PAID WITH CASH to something else
-export const markAppointmentAs = async (status: Enums<'status'>, amount_due: number, id: string) => {
+export const markAppointmentAs = async (businessId: string, status: Enums<'status'>, amount_due: number, id: string) => {
     const supabase = await createClient()
 
     if (status === 'COMPLETED' && amount_due > 0) {
-        const { data: current } = await supabase
+        const { data: current, error: fetchError } = await supabase
             .from('appointments')
             .select('paid_amount')
             .eq('id', id)
+            .eq('business', businessId)
             .single()
+        if (fetchError) throw new Error(fetchError.message)
 
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('appointments')
             .update({
                 status,
@@ -31,12 +33,14 @@ export const markAppointmentAs = async (status: Enums<'status'>, amount_due: num
                 paid_amount: (current?.paid_amount ?? 0) + amount_due,
             })
             .eq('id', id)
+            .eq('business', businessId)
             .select('id, status, amount_due')
             .single()
+        if (error) throw new Error(error.message)
         return data
     }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
         .from('appointments')
         .update({
             status,
@@ -45,8 +49,10 @@ export const markAppointmentAs = async (status: Enums<'status'>, amount_due: num
             amount_due: status === 'COMPLETED' ? 0 : amount_due,
         })
         .eq('id', id)
+        .eq('business', businessId)
         .select('id, status, amount_due')
         .single()
+    if (error) throw new Error(error.message)
     return data
 }
 

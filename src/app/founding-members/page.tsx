@@ -79,7 +79,8 @@ export default async function FoundingMembersPage() {
                     color: MUTED, margin: '0 auto', maxWidth: 520,
                 }}>
                     These professionals joined AfroAllure before there was a crowd.
-                    Their rate is locked forever. Their spot in the marketplace is first.
+                    Free full access during beta, a rate locked forever after it, and the first
+                    spots in the marketplace.
                 </p>
 
                 <div style={{

@@ -121,7 +121,7 @@ function Greeting({ businessData }: { businessData: Business }) {
                 Founding Member #{padded}
               </p>
               <p style={{ fontSize: 12, color: '#6F6863', margin: '0 0 8px', lineHeight: 1.5 }}>
-                You&apos;re one of the first 250 professionals on AfroAllure. Your $25/mo rate is locked forever, and you&apos;ll be first-listed in the marketplace.
+                You&apos;re one of the first 250 professionals on AfroAllure. You have full access free during beta, your $25/mo rate is locked forever after it, and you&apos;ll be first-listed in the marketplace.
               </p>
               <a href="/founding-members" style={{ fontSize: 12, fontWeight: 600, color: '#C9974A', textDecoration: 'none' }}>
                 See the founding members wall →
@@ -485,7 +485,14 @@ function TodaySchedule({ appointments, businessData }: { appointments: Appointme
 function UpcomingList({ appointments, businessData }: { appointments: Appointment[]; businessData: Business }) {
   const [selected, setSelected] = useState<Appointment | null>(null)
 
-  if (appointments.length === 0) return null
+  if (appointments.length === 0) {
+    return (
+      <div>
+        <p className="text-xs font-medium mb-3" style={{ color: BRAND.warm }}>Upcoming confirmed</p>
+        <p className="text-sm py-4 text-center" style={{ color: BRAND.warm }}>No upcoming appointments</p>
+      </div>
+    )
+  }
 
   return (
     <div>

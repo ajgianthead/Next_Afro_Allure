@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Loader2, AlertCircle, Check } from 'lucide-react'
 import { createBusinessUser } from '../actions'
 import { createSubscriptionCheckout } from 'app/for-businesses/actions'
+import { FeeDisclosure } from '@/components/FeeDisclosure'
+import { BETA_FULL_ACCESS } from '@/lib/beta'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -55,10 +57,13 @@ function AgreementCheckbox({
 export default function Register() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const subscription = searchParams.get('subscription')
+    // During beta everyone gets full access, so old ?subscription links skip
+    // the paid checkout and go straight to onboarding.
+    const subscription = BETA_FULL_ACCESS ? null : searchParams.get('subscription')
 
     const [formData, setFormData] = useState({ name: '', email: '', password: '' })
     const [agreement, setAgreement] = useState({ terms: false, privacy: false })
+    const [marketingOptIn, setMarketingOptIn] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
 
@@ -75,7 +80,7 @@ export default function Register() {
         setLoading(true)
         setError(null)
         try {
-            const result = await createBusinessUser(formData.email, formData.name, formData.password)
+            const result = await createBusinessUser(formData.email, formData.name, formData.password, marketingOptIn)
             if (result instanceof Error) {
                 setError(result.message)
                 setLoading(false)
@@ -120,6 +125,7 @@ export default function Register() {
 
                     {error && (
                         <div
+                            role="alert"
                             className="flex items-center gap-2 text-sm rounded-xl px-3.5 py-3 mb-5"
                             style={{ backgroundColor: 'rgba(252,97,97,0.08)', color: '#DC2626' }}
                         >
@@ -231,11 +237,11 @@ export default function Register() {
                                 disabled={loading}
                             >
                                 I agree to the{' '}
-                                <Link href="/beta-user-agreement" target="_blank" className="font-semibold hover:opacity-70" style={{ color: '#FC6161' }}>
+                                <Link href="/beta-agreement" target="_blank" className="font-semibold hover:opacity-70" style={{ color: '#FC6161' }}>
                                     Beta Participation Agreement
                                 </Link>{' '}
                                 and{' '}
-                                <Link href="/terms-of-service" target="_blank" className="font-semibold hover:opacity-70" style={{ color: '#FC6161' }}>
+                                <Link href="/terms" target="_blank" className="font-semibold hover:opacity-70" style={{ color: '#FC6161' }}>
                                     Terms of Service
                                 </Link>.
                             </AgreementCheckbox>
@@ -247,12 +253,23 @@ export default function Register() {
                                 disabled={loading}
                             >
                                 I have read the{' '}
-                                <Link href="/privacy-policy" target="_blank" className="font-semibold hover:opacity-70" style={{ color: '#FC6161' }}>
+                                <Link href="/privacy" target="_blank" className="font-semibold hover:opacity-70" style={{ color: '#FC6161' }}>
                                     Privacy Policy
                                 </Link>{' '}
                                 and understand how my data will be used.
                             </AgreementCheckbox>
+
+                            <AgreementCheckbox
+                                id="marketing"
+                                checked={marketingOptIn}
+                                onChange={setMarketingOptIn}
+                                disabled={loading}
+                            >
+                                I&rsquo;d like to receive marketing emails and product updates.
+                            </AgreementCheckbox>
                         </div>
+
+                        {subscription && <FeeDisclosure planName="AfroAllure Growth" monthlyAmount={25} />}
 
                         <button
                             type="submit"

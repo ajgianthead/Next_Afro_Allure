@@ -12,6 +12,42 @@ export interface Client {
     updated_at?: string | null
 }
 
+// Checks the live ban mechanism (banned_clients, keyed by client_id) by
+// resolving the submitted email/phone to a client_users row first — public
+// bookers aren't authenticated, so there's no client_id on the request
+// itself. Call this before creating any appointment from client-submitted
+// contact info. Previously nothing in the booking-creation paths checked
+// this at all, so a banned client could simply re-book.
+export const isClientBannedFromBusiness = async (
+    email: string | null | undefined,
+    phoneNumber: string | null | undefined,
+    businessId: string
+): Promise<boolean> => {
+    if (!email && !phoneNumber) return false
+    const supabase = await createClient()
+
+    const orFilter = [
+        email ? `email.eq.${email}` : null,
+        phoneNumber ? `phone_number.eq.${phoneNumber}` : null,
+    ].filter(Boolean).join(',')
+
+    const { data: existingUser } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .or(orFilter)
+        .maybeSingle()
+    if (!existingUser) return false
+
+    const { data: bannedEntry } = await supabase
+        .from('banned_clients')
+        .select('id')
+        .eq('business_id', businessId)
+        .eq('client_id', existingUser.client_id)
+        .maybeSingle()
+
+    return !!bannedEntry
+}
+
 export interface BannedClientDisplay {
     id: string
     business_id: string | null

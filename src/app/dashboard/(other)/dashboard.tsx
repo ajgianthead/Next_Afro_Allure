@@ -1,3 +1,4 @@
+import { effectivePlanType } from '@/lib/beta'
 import { StackedCards } from '@components/dashboard/Overview'
 import { createClient } from '@/app/utils/supabase/server'
 import { fetchDashboardAnalytics, fetchUser, getDashboardGrowth } from './actions'
@@ -61,7 +62,7 @@ export default async function Dashboard() {
                         dashboardAnalytics={dashboardAnalytics}
                         growth={growth.data?.[0] ?? null}
                         monthlyBookingCount={monthlyCountRes.count ?? 0}
-                        planType={businessData.plan_type ?? 'STARTER'}
+                        planType={effectivePlanType(businessData.plan_type)}
                     />
                 </div>
             </main>

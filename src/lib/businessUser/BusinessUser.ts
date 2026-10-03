@@ -1,3 +1,4 @@
+import { effectivePlanType } from '@/lib/beta'
 import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../lib/database.types";
 import { stripe } from '../stripe/stripeClient'
@@ -14,6 +15,8 @@ import { Client } from "@lib/clients/Client";
 import { Appointment } from "@/features/manualBooking/server/models/Appointment";
 import { Notification } from "@lib/notifications/Notification";
 import { checkAndAssignFoundingMember } from "@/lib/foundingMember";
+import { Resend } from "resend";
+import FounderNotification from "../../../emails/FounderNotification";
 
 export interface BusinessType {
     id: string,
@@ -111,7 +114,7 @@ export class BusinessUser {
             row.url_name,
             row.current_onboarding_link!,
             row.account_settings as unknown as AccountSettings,
-            row.plan_type,
+            effectivePlanType(row.plan_type),
             row.had_trial,
             row.published_site,
             row.payment_method_config_id
@@ -128,7 +131,7 @@ export class BusinessUser {
         }
     }
 
-    static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string) {
+    static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string, marketingOptIn: boolean = false, ipAddress: string | null = null) {
         try {
             if (await this.businessNameExists(name, supabase)) {
                 throw Error('Business name already exists')
@@ -151,6 +154,9 @@ export class BusinessUser {
                     stripe_customer_id: customer.id,
                     url_name: name.split(" ").join("").toLowerCase(),
                     current_onboarding_link: onboardingLink,
+                    tos_accepted_at: new Date().toISOString(),
+                    tos_ip_address: ipAddress,
+                    marketing_opt_in: marketingOptIn,
                     account_settings: {
                         "app_reminders": {
                             "email_1": false,
@@ -184,6 +190,25 @@ export class BusinessUser {
                 .eq('business_id', business.business_id)
 
             await checkAndAssignFoundingMember(business.business_id).catch(console.error)
+
+            if (process.env.FOUNDER_EMAIL) {
+                try {
+                    const resend = new Resend(process.env.RESEND_API_KEY)
+                    await resend.emails.send({
+                        from: 'AfroAllure <notifications@beta.afroallure.co>',
+                        to: process.env.FOUNDER_EMAIL,
+                        subject: `New beta signup: ${business.business_name}`,
+                        react: FounderNotification({
+                            eventType: 'new_signup',
+                            businessName: business.business_name,
+                            email: business.email,
+                            timestamp: new Date().toISOString(),
+                        }),
+                    })
+                } catch (e) {
+                    console.error('Failed to send founder new-signup notification:', e)
+                }
+            }
 
             return BusinessUser.fromRow(business)
 
