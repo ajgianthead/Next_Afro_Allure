@@ -1,3 +1,4 @@
+import { effectivePlanType } from '@/lib/beta'
 import { redirect } from 'next/navigation'
 import { fetchBusinessUser, fetchUser } from '../actions'
 import { getAnalyticsPageData } from './actions'
@@ -12,7 +13,7 @@ export default async function Page() {
 
     const business = await fetchBusinessUser(user.id)
 
-    if (business.plan_type !== 'GROWTH') {
+    if (effectivePlanType(business.plan_type) !== 'GROWTH') {
         return <LockedAnalytics business={business} />
     }
 

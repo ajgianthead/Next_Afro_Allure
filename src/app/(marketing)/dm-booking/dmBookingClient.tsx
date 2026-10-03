@@ -429,16 +429,17 @@ function WhatYouGet({ foundingMemberCount }: { foundingMemberCount: number }) {
               fontFamily: SERIF, fontSize: 'clamp(32px, 4vw, 44px)', fontWeight: 400,
               color: GOLD, letterSpacing: '-.025em', lineHeight: 1.05, marginBottom: 18,
             }}>
-              $25/month<br />
-              <span style={{ color: WARM, fontSize: '0.72em' }}>locked forever.</span>
+              Free in beta.<br />
+              <span style={{ color: WARM, fontSize: '0.72em' }}>$25/mo after — locked forever.</span>
             </div>
 
             <p style={{
               fontFamily: SANS, fontSize: 15, lineHeight: 1.6,
               color: 'rgba(250,247,242,.75)', margin: '0 0 28px',
             }}>
-              The first 250 stylists get founding member pricing for life — plus reserved
-              listing in the AfroAllure marketplace when it launches.
+              Everything is free with full access during beta. When paid plans arrive, the first
+              250 stylists keep founding member pricing for life — plus reserved listing in the
+              AfroAllure marketplace when it launches.
             </p>
 
             <div style={{

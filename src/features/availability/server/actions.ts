@@ -1,5 +1,6 @@
 'use server'
 
+import { effectivePlanType } from '@/lib/beta'
 import { createClient } from "@/app/utils/supabase/server"
 
 
@@ -37,7 +38,7 @@ export const createAvailabilityAction = async (businessId: string, availabilityD
         supabase.from('availabilities').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
     ])
 
-    if (planData?.plan_type === 'STARTER' && (count ?? 0) >= 1) {
+    if (effectivePlanType(planData?.plan_type) === 'STARTER' && (count ?? 0) >= 1) {
         throw new Error('AVAILABILITY_LIMIT_REACHED')
     }
 

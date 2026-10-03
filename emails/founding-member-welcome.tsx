@@ -81,7 +81,7 @@ export default function FoundingMemberWelcome({ firstName, memberNumber, booking
                                         borderLeft: '2px solid #C9974A',
                                     }}
                                 >
-                                    <strong style={{ color: '#1A1818' }}>Your rate is locked.</strong> No matter what AfroAllure charges in the future, you pay $25/mo. Always.
+                                    <strong style={{ color: '#1A1818' }}>Your rate is locked.</strong> Everything is free with full access during beta. After that, no matter what AfroAllure charges, you pay $25/mo. Always.
                                 </Text>
                                 <Text
                                     style={{

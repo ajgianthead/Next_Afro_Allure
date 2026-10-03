@@ -1,5 +1,6 @@
 'use client'
 
+import { BETA_FULL_ACCESS, effectivePlanType } from '@/lib/beta'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Lock } from 'lucide-react'
@@ -474,6 +475,23 @@ function SubscriptionSection({
         }
     }
 
+    // Beta: everyone has full access, nothing to buy. Existing subscribers
+    // still fall through to the sections below so they can manage/cancel.
+    if (BETA_FULL_ACCESS && (!subscription || subscription.status === 'canceled' || subscription.status === 'incomplete_expired')) {
+        return (
+            <Section title="Current Plan" last>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold" style={{ color: '#1A1818' }}>Beta</span>
+                    <StatusBadge label="Full access" color="green" />
+                </div>
+                <p className="text-xs" style={{ color: '#6F6863' }}>
+                    Every feature is unlocked and free while AfroAllure is in beta — unlimited bookings,
+                    automated reminders, analytics and more. No payment needed.
+                </p>
+            </Section>
+        )
+    }
+
     // Starter / cancelled
     if (!subscription || subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
         return (
@@ -811,7 +829,7 @@ export default function SettingsClient({
                         <PreferencesSection
                             accountSettings={accountSettings}
                             setAccountSettings={setAccountSettings}
-                            planType={(business.plan_type as 'STARTER' | 'GROWTH') ?? 'STARTER'}
+                            planType={effectivePlanType(business.plan_type)}
                             onUpgrade={handleUpgrade}
                             upgradeLoading={upgradeLoading}
                         />

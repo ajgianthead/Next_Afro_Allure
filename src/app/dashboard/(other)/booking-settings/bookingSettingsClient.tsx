@@ -1,5 +1,6 @@
 'use client'
 
+import { effectivePlanType } from '@/lib/beta'
 import { CircularProgress, CssVarsProvider, Divider, FormControl, FormHelperText, Input as JoyInput, Option, Select } from '@mui/joy'
 import { Info, Check, Lock } from 'lucide-react'
 import { BookingSettingsTour } from '@/features/tour/tours/BookingSettingsTour'
@@ -132,7 +133,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
     }
 
     const interceptPaymentToggle = (value: PaymentValue, checked: boolean) => {
-        if (businessUser.plan_type === 'STARTER') {
+        if (effectivePlanType(businessUser.plan_type) === 'STARTER') {
             setOpen(true)
             return
         }
@@ -273,7 +274,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         checked={paymentMethodConfig?.google_pay.display_preference.preference === 'on'}
                         disabled={!isOnboarded}
                         onChange={(checked) => interceptPaymentToggle(PaymentValue.GooglePay, checked)}
-                        locked={businessUser.plan_type === 'STARTER'}
+                        locked={effectivePlanType(businessUser.plan_type) === 'STARTER'}
                     />
                     <PaymentMethodRow
                         logo="https://img.icons8.com/ios-glyphs/90/apple-pay.png"
@@ -281,7 +282,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         checked={paymentMethodConfig?.apple_pay.display_preference.preference === 'on'}
                         disabled={!isOnboarded}
                         onChange={(checked) => interceptPaymentToggle(PaymentValue.ApplePay, checked)}
-                        locked={businessUser.plan_type === 'STARTER'}
+                        locked={effectivePlanType(businessUser.plan_type) === 'STARTER'}
                     />
                     <PaymentMethodRow
                         logo="https://img.icons8.com/windows/32/amazon-pay.png"
@@ -289,7 +290,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         checked={paymentMethodConfig?.amazon_pay.display_preference.preference === 'on'}
                         disabled={!isOnboarded}
                         onChange={(checked) => interceptPaymentToggle(PaymentValue.AmazonPay, checked)}
-                        locked={businessUser.plan_type === 'STARTER'}
+                        locked={effectivePlanType(businessUser.plan_type) === 'STARTER'}
                     />
                     <PaymentMethodRow
                         logo="https://img.icons8.com/fluency/48/cash-app--v1.png"
@@ -297,7 +298,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         checked={paymentMethodConfig?.cashapp.display_preference.preference === 'on'}
                         disabled={!isOnboarded}
                         onChange={(checked) => interceptPaymentToggle(PaymentValue.CashApp, checked)}
-                        locked={businessUser.plan_type === 'STARTER'}
+                        locked={effectivePlanType(businessUser.plan_type) === 'STARTER'}
                     />
                 </div>
             </Section>

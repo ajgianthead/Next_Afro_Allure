@@ -250,7 +250,7 @@ function Hero({ openWaitlist }: { openWaitlist: () => void }) {
                 }}>
                     {[
                         ['250', 'Founding stylist spots'],
-                        ['$0', 'Setup fees'],
+                        ['$0', 'Full access during beta'],
                         ['2', 'Communities we serve'],
                     ].map(([n, l], i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
@@ -861,7 +861,7 @@ function BetaCTA() {
                     color: 'rgba(255,255,255,.88)',
                     margin: '24px auto 40px', maxWidth: 540, fontWeight: 400,
                 }}>
-                    Full Growth-plan access during beta. Founding member listing in the
+                    Every feature, no paywalls, free for the entire beta. Founding member listing in the
                     marketplace at launch. Direct line to the team building this. No card required.
                 </p>
 

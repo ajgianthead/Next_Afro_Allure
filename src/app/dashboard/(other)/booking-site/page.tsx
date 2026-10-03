@@ -1,3 +1,4 @@
+import { effectivePlanType } from '@/lib/beta'
 import React from 'react';
 import SelectEditorType from './selectEditorType';
 import { fetchBusinessUser, fetchUser } from '../actions';
@@ -14,7 +15,7 @@ const Page = async ({ searchParams }: { searchParams?: { 'switch-editor': string
     const user = await fetchUser();
     const { 'switch-editor': switchEditor } = await searchParams!
     const businessUser: any = await fetchBusinessUser(user?.id!)
-    const planType = (businessUser.plan_type ?? 'STARTER') as 'STARTER' | 'GROWTH'
+    const planType = effectivePlanType(businessUser.plan_type)
     const gatableData = { hadTrial: businessUser.had_trial, stripeCustomerId: businessUser.stripe_customer_id, businessId: businessUser.business_id }
 
     if (switchEditor === 'true') {

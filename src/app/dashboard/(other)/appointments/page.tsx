@@ -1,4 +1,5 @@
 
+import { effectivePlanType } from '@/lib/beta'
 import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import { fetchBusinessUser, fetchUser } from "../actions";
@@ -81,7 +82,7 @@ export default async function Page() {
         supabase.from('business_users').select('plan_type, had_trial, stripe_customer_id').eq('business_id', business.id).single(),
         supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('business', business.id).neq('status', 'CANCELLED').gte('created_at', DateTime.now().startOf('month').toISO()),
     ])
-    const planType = (planRes.data?.plan_type ?? 'STARTER') as 'STARTER' | 'GROWTH'
+    const planType = effectivePlanType(planRes.data?.plan_type)
     const monthlyBookingCount = monthlyCountRes.count ?? 0
     const hadTrial = planRes.data?.had_trial ?? false
     const stripeCustomerId = planRes.data?.stripe_customer_id ?? null

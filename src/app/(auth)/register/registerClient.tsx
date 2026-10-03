@@ -7,6 +7,7 @@ import { Loader2, AlertCircle, Check } from 'lucide-react'
 import { createBusinessUser } from '../actions'
 import { createSubscriptionCheckout } from 'app/for-businesses/actions'
 import { FeeDisclosure } from '@/components/FeeDisclosure'
+import { BETA_FULL_ACCESS } from '@/lib/beta'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -56,7 +57,9 @@ function AgreementCheckbox({
 export default function Register() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const subscription = searchParams.get('subscription')
+    // During beta everyone gets full access, so old ?subscription links skip
+    // the paid checkout and go straight to onboarding.
+    const subscription = BETA_FULL_ACCESS ? null : searchParams.get('subscription')
 
     const [formData, setFormData] = useState({ name: '', email: '', password: '' })
     const [agreement, setAgreement] = useState({ terms: false, privacy: false })

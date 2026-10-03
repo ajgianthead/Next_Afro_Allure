@@ -1,3 +1,4 @@
+import { effectivePlanType } from '@/lib/beta'
 import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../lib/database.types";
 import { stripe } from '../stripe/stripeClient'
@@ -113,7 +114,7 @@ export class BusinessUser {
             row.url_name,
             row.current_onboarding_link!,
             row.account_settings as unknown as AccountSettings,
-            row.plan_type,
+            effectivePlanType(row.plan_type),
             row.had_trial,
             row.published_site,
             row.payment_method_config_id
