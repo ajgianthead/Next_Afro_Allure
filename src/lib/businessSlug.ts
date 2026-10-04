@@ -16,6 +16,9 @@ export const RESERVED_SUBDOMAINS = new Set([
     'dev', 'staging', 'preview', 'test', 'demo', 'docs', 'cdn', 'assets', 'static', 'images',
     'login', 'register', 'auth', 'account', 'billing', 'pay', 'payments', 'stripe', 'marketplace',
     'afroallure', 'aa', 'business', 'businesses', 'for-businesses', 'founding-members', 'waitlist',
+    // Hostnames that already have their own DNS records (email/Stripe); a
+    // specific record beats the wildcard, so a business could never use them.
+    'bounce', 'mte1', 'mte2',
 ])
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/

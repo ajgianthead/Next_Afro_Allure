@@ -51,3 +51,6 @@ node_modules/
 
 # Supabase schema dumps (local only)
 prod_schema*.sql
+
+# Local typecheck scratch config
+tsconfig.tmpcheck.json
