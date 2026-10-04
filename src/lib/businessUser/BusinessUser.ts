@@ -35,6 +35,8 @@ export interface BusinessType {
     paymentMethodConfigId: string
 }
 
+export type PublicBusinessType = Pick<BusinessType, 'id' | 'name' | 'email' | 'urlName' | 'stripeAccountId' | 'planType'>
+
 interface AccountSettings {
     business_address: {
         no_address: boolean
@@ -81,6 +83,18 @@ export class BusinessUser {
     private static async emailInUse(email: string, supabase: SupabaseClient<Database>) {
         const { data } = await supabase.from('business_users').select().eq('email', email).maybeSingle()
         return data !== null
+    }
+
+    /** Only what public booking pages need — no settings, Stripe customer id or onboarding links. */
+    toPublicBooking(): PublicBusinessType {
+        return {
+            id: this.id,
+            name: this.name,
+            email: this.email,
+            urlName: this.urlName,
+            stripeAccountId: this.stripeAccountId,
+            planType: this.planType,
+        }
     }
 
     toClient() {

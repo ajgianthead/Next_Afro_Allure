@@ -9,6 +9,7 @@ import { isClientBannedFromBusiness } from "app/dashboard/(other)/clients/action
 import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient"
 import { scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation"
 import { DateTime } from "luxon"
+import { getBusyIntervals } from "./busyIntervals"
 import { resolveTimezone } from "@/lib/timezone"
 
 export const getAppointmentByIdAction = async (id: string) => {
@@ -253,15 +254,25 @@ export const createAppointmentAction = async (body: {
     return data
 }
 
+/**
+ * Public pages (reschedule, payment) look a business up by the id in the
+ * link, so this is effectively a public endpoint — return only public fields.
+ */
 export const getBusinessByIdAction = async (businessId: string) => {
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('business_users')
-        .select('*')
+        .select('business_id, business_name, url_name, stripe_acc_id')
         .eq('business_id', businessId)
         .single()
     if (error) throw new Error(error.message)
     return data
+}
+
+/** Busy start/end times for the public reschedule page — no client details. */
+export const getBusyIntervalsAction = async (businessId: string) => {
+    const supabase = await createClient()
+    return getBusyIntervals(supabase, businessId)
 }
 
 export const getPolicyByIdAction = async (policyId: string) => {

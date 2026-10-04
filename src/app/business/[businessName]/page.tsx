@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { fetchBusinessData } from './actions';
+import { fetchBusinessData } from './data';
 import { PostgrestError } from '@supabase/supabase-js';
 import { PuckRenderer } from './puckRenderer';
 import { buildGoogleFontsUrl, extractFontsFromPuckData, normalizeFont } from '@lib/extractFonts';

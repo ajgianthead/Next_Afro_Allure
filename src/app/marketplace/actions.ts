@@ -144,7 +144,8 @@ export const getPopularServicesFromBusiness = async (
 
     const { data, error } = await supabase
         .from("appointments")
-        .select("service_data, business_users(*)")
+        // Public page: only public business fields (this used to return the full business row).
+        .select("service_data, business_users(business_id, business_name, url_name)")
         .eq("business", businessId)
         .gte("created_at", thirtyDaysAgo)
         .lte("created_at", rightNow);

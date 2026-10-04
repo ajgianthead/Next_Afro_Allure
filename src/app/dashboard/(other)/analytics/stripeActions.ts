@@ -1,4 +1,5 @@
 'use server'
+import { requireBusinessOwner } from '@/lib/auth/requireBusinessOwner'
 
 import Stripe from 'stripe'
 import { stripe } from '@/lib/stripe/stripeClient'
@@ -31,6 +32,7 @@ async function paginateFees(
 }
 
 export async function getActualPlatformFees(businessId: string): Promise<ActualPlatformFees> {
+    await requireBusinessOwner(businessId)
     try {
         const supabase = await createClient()
         const { data } = await supabase

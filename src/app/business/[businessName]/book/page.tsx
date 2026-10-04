@@ -1,10 +1,10 @@
 import { PostgrestError } from "@supabase/supabase-js";
-import { fetchBusinessData, fetchBusinessPolicies } from "../actions";
+
 import { BusinessUser } from "@/lib/businessUser/BusinessUser";
 import { createClient } from "@/app/utils/supabase/server";
 import { BusinessPolicy, BusinessPolicyType } from "@/lib/businessPolicy/BusinessPolicy";
 import { Availability, AvailabilityType } from "@/features/availability/server/models/Availability";
-import { Appointment, AppointmentType } from "@/features/manualBooking/server/models/Appointment";
+import { getBusyIntervals } from "@/features/shared/appointments/busyIntervals";
 import { Service, ServiceType } from "@/lib/service/Service";
 import { BookClient } from "@/features/automatedBooking/components";
 import { assignAddons } from "@/app/dashboard/(other)/appointments/actions";
@@ -28,7 +28,10 @@ export default async function Page({ params, searchParams }: {
     const supabase = await createClient();
 
     const business = await BusinessUser.fetchByURLName(supabase, businessName)
-    const clientBusinessData = business.toClient()
+    // Everything passed to <BookClient> is embedded in the page HTML, so only
+    // send public fields. This used to include every appointment (client
+    // names, emails, phones, payments) and the business's private settings.
+    const clientBusinessData = business.toPublicBooking()
 
     const availabilities = (await Availability.fetch(supabase, business.id)) as Availability[]
     let availabilitiesClient: AvailabilityType[] = []
@@ -36,11 +39,7 @@ export default async function Page({ params, searchParams }: {
         availabilitiesClient.push(availability.toClient())
     })
 
-    const appointments = (await Appointment.fetch(supabase, business.id)) as Appointment[]
-    let appointmentsClient: AppointmentType[] = []
-    appointments.forEach((appointment) => {
-        appointmentsClient.push(appointment.toClient())
-    })
+    const busyIntervals = await getBusyIntervals(supabase, business.id)
 
     const services = (await Service.fetch(supabase, business.id)) as Service[]
     let serviceClient: ServiceType[] = []
@@ -51,7 +50,7 @@ export default async function Page({ params, searchParams }: {
 
     const policy = (await BusinessPolicy.fetch(supabase, business.id)).toClient()
 
-    const permissions = getBusinessPermissions(clientBusinessData.planType as 'STARTER' | 'GROWTH')
+    const permissions = getBusinessPermissions(business.planType as 'STARTER' | 'GROWTH')
     let bookingLimitReached = false
     if (permissions.maxMonthlyBookings !== Infinity) {
         const { count } = await supabase
@@ -76,6 +75,6 @@ export default async function Page({ params, searchParams }: {
         ? (serviceClient.find(s => s.id === serviceParam)?.id)
         : undefined
 
-    return <BookClient services={serviceClient} policy={policy} appointments={appointmentsClient} businessData={clientBusinessData} availabilities={availabilitiesClient} bookingLimitReached={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} />;
+    return <BookClient services={serviceClient} policy={policy} appointments={busyIntervals} businessData={clientBusinessData} availabilities={availabilitiesClient} bookingLimitReached={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} />;
 
 }

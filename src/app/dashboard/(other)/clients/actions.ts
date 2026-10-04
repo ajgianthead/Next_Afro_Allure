@@ -1,4 +1,5 @@
 'use server'
+import { requireBusinessOwner, requireOwnBusinessId } from "@/lib/auth/requireBusinessOwner"
 
 import { createClient } from "@/app/utils/supabase/server"
 import { upsertBusinessClient } from "@/features/shared/clients/upsertBusinessClient"
@@ -61,6 +62,7 @@ export interface BannedClientDisplay {
 }
 
 export const getBusinessClients = async (businessId: string) => {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('business_clients')
@@ -72,6 +74,7 @@ export const getBusinessClients = async (businessId: string) => {
 }
 
 export const getBannedClients = async (businessId: string) => {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('banned_clients')
@@ -94,6 +97,7 @@ export const addCreateNewClient = async (
     client: { first_name: string; last_name: string; email: string; phone_number: string },
     businessId: string
 ) => {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const result = await upsertBusinessClient(supabase, client, businessId)
     // Errors come back as strings: a PostgrestError loses its prototype when it
@@ -118,6 +122,7 @@ export const updateClientInfo = async (
     client: { client_id: string; first_name: string; last_name: string; email: string; phone_number: string },
     businessId: string
 ) => {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
 
     // Check if another client_users record has the same email/phone
@@ -155,6 +160,7 @@ export const updateClientInfo = async (
 }
 
 export const deleteClient = async (clientId: string, businessId: string) => {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { error } = await supabase
         .from('business_clients')
@@ -166,6 +172,7 @@ export const deleteClient = async (clientId: string, businessId: string) => {
 }
 
 export const banClientFromList = async (clientId: string, businessId: string) => {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
 
     // Remove from active clients
@@ -191,6 +198,7 @@ export const banClient = async (
     phone_number: string | null,
     businessId: string
 ) => {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
 
     let query = supabase.from('client_users').select('client_id')
@@ -210,11 +218,13 @@ export const banClient = async (
 }
 
 export const unbanClient = async (bannedClientId: string) => {
+    const businessId = await requireOwnBusinessId()
     const supabase = await createClient()
     const { error } = await supabase
         .from('banned_clients')
         .delete()
         .eq('id', bannedClientId)
+        .eq('business_id', businessId)
     if (error) return error
     return { id: bannedClientId }
 }
