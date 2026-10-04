@@ -21,8 +21,8 @@ export default function Login() {
         setError(null)
         try {
             const res = await loginBusinessUser(cred.email, cred.password)
-            if (res instanceof Error) {
-                setError(res.message)
+            if (!res.ok) {
+                setError(res.error)
                 setLoading(false)
                 return
             }

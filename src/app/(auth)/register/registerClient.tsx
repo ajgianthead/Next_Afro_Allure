@@ -80,12 +80,13 @@ export default function Register() {
         setLoading(true)
         setError(null)
         try {
-            const result = await createBusinessUser(formData.email, formData.name, formData.password, marketingOptIn)
-            if (result instanceof Error) {
-                setError(result.message)
+            const res = await createBusinessUser(formData.email, formData.name, formData.password, marketingOptIn)
+            if (!res.ok) {
+                setError(res.error)
                 setLoading(false)
                 return
             }
+            const result = res.data
             if (subscription) {
                 const sessionUrl = (await createSubscriptionCheckout(result.hadTrial, result.id, result.stripeCustomerId)).url!
                 router.replace(sessionUrl)

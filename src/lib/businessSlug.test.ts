@@ -23,6 +23,7 @@ describe('validateSlug', () => {
         expect(validateSlug('Kayla')).not.toBeNull()
         expect(validateSlug('beta')).toMatch(/reserved/)
         expect(validateSlug('reminder')).toMatch(/reserved/)
+        expect(validateSlug('bounce')).toMatch(/reserved/)
     })
 })
 

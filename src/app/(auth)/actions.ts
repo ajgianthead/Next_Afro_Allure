@@ -14,7 +14,12 @@ import Stripe from 'stripe'
 import { BusinessUser } from '@lib/businessUser/BusinessUser'
 
 
-export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false) => {
+// Server actions return plain { ok, error } objects: in production Next.js
+// hides the message of any Error passed to the browser, so a failed login or
+// signup only showed "An error occurred in the Server Components render".
+export type AuthActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string }
+
+export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false): Promise<AuthActionResult<ReturnType<BusinessUser['toClient']>>> => {
     try {
         const supabase = await createClient()
         const headerList = await headers()
@@ -33,24 +38,30 @@ export const createBusinessUser = async (email: string, name: string, password: 
             .update({ is_onboarded: true })
             .eq('business_id', businessUser.id)
 
-        return businessUser.toClient()
+        return { ok: true, data: businessUser.toClient() }
     } catch (error: any) {
-        return Error(error.message)
+        console.error('Signup failed:', error)
+        return { ok: false, error: error?.message || 'Could not create your account. Please try again.' }
     }
 
 }
-export const loginBusinessUser = async (email: string, password: string) => {
+export const loginBusinessUser = async (email: string, password: string): Promise<AuthActionResult> => {
     try {
         const supabase = await createClient()
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw Error(error.message)
+        if (error) {
+            console.error('Login failed:', error.message)
+            return { ok: false, error: error.message }
+        }
         if (data.user?.user_metadata?.account_type !== 'business') {
             await supabase.auth.signOut()
-            throw Error('No business account found for this email.')
+            return { ok: false, error: 'No business account found for this email.' }
         }
-        return data
+        // The session is set as a cookie; no need to send tokens to the browser.
+        return { ok: true, data: undefined }
     } catch (error: any) {
-        return Error(error.message)
+        console.error('Login failed:', error)
+        return { ok: false, error: error?.message || 'Something went wrong. Please try again.' }
     }
 }
 

@@ -24,7 +24,8 @@ declare
         'dashboard', 'support', 'help', 'status', 'blog', 'book', 'booking', 'send', 'smtp', 'ftp',
         'dev', 'staging', 'preview', 'test', 'demo', 'docs', 'cdn', 'assets', 'static', 'images',
         'login', 'register', 'auth', 'account', 'billing', 'pay', 'payments', 'stripe', 'marketplace',
-        'afroallure', 'aa', 'business', 'businesses', 'for-businesses', 'founding-members', 'waitlist'
+        'afroallure', 'aa', 'business', 'businesses', 'for-businesses', 'founding-members', 'waitlist',
+        'bounce', 'mte1', 'mte2'
     ];
 begin
     -- Oldest accounts keep their name when two businesses would collide.
