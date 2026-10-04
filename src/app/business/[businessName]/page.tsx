@@ -2,7 +2,6 @@
 import React from 'react'
 import { headers } from 'next/headers'
 import { businessSitePath } from '@/lib/businessHost'
-import { fetchBusinessData } from './actions';
 import { fetchBusinessData } from './data';
 import { PostgrestError } from '@supabase/supabase-js';
 import { PuckRenderer } from './puckRenderer';
