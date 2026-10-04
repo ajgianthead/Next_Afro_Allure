@@ -52,6 +52,7 @@ In the Vercel dashboard under **Project → Settings → Environment Variables**
 | `NEXT_PUBLIC_GOOGLE_FONTS_API_KEY` | `src/useGoogleFonts.ts` | Google Fonts API |
 | `NEXT_PUBLIC_MAILCHIMP_API_KEY` | `src/app/utils/bull_mq.ts` | Mailchimp |
 | `NEXT_PUBLIC_BASE_URL` | Multiple files | `http://localhost:3000` locally, `https://beta.afroallure.co` in Vercel prod |
+| `NEXT_PUBLIC_BOOKING_ROOT_DOMAIN` | `middleware.ts`, `src/lib/bookingUrl.ts`, `src/lib/businessHost.ts` | Root domain for business booking subdomains (`kayla.afroallure.co`). `afroallure.co` in Vercel Production, unset in Preview (falls back to `/business/<name>`), optionally `localhost:3000` locally |
 | `NEXT_PUBLIC_SECRET` | `src/app/business/[businessName]/edit/components/prebuitComponents/card/index.tsx` | Encryption key |
 
 ### Variables that no longer exist

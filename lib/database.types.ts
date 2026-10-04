@@ -380,6 +380,7 @@ export type Database = {
           has_marketplace_profile: boolean | null
           is_onboarded: boolean
           latitude: number | null
+          legacy_url_names: string[]
           location: unknown
           longitude: number | null
           payment_method_config_id: string
@@ -421,6 +422,7 @@ export type Database = {
           has_marketplace_profile?: boolean | null
           is_onboarded?: boolean
           latitude?: number | null
+          legacy_url_names?: string[]
           location?: unknown
           longitude?: number | null
           payment_method_config_id?: string
@@ -462,6 +464,7 @@ export type Database = {
           has_marketplace_profile?: boolean | null
           is_onboarded?: boolean
           latitude?: number | null
+          legacy_url_names?: string[]
           location?: unknown
           longitude?: number | null
           payment_method_config_id?: string

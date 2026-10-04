@@ -1,5 +1,7 @@
 
 import React from 'react'
+import { headers } from 'next/headers'
+import { businessSitePath } from '@/lib/businessHost'
 import { fetchBusinessData } from './actions';
 import { PostgrestError } from '@supabase/supabase-js';
 import { PuckRenderer } from './puckRenderer';
@@ -68,6 +70,9 @@ export default async function Page({ params }: PageProps) {
         )
     }
 
+    // Keep visitors on the host they came in on (kayla.afroallure.co vs the app domain).
+    const basePath = businessSitePath(result.result.url_name, '', (await headers()).get('host')).replace(/\/$/, '')
+
     const isFoundingMember = result.result.founding_member === true
     const memberNumber = result.result.founding_member_number as number | null
 
@@ -77,11 +82,11 @@ export default async function Page({ params }: PageProps) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                 <SectionsRenderer
                     sections={result.result.web_editors[0].section_data ?? []}
-                    urlName={result.result.url_name}
+                    basePath={basePath}
                     brandColor={brandColor}
                     services={result.result.services ?? []}
                 />
-                <a href={`/business/${result.result.url_name}/book`}>
+                <a href={`${basePath}/book`}>
                     <Button className='my-10'>Book Now</Button>
                 </a>
                 {isFoundingMember && memberNumber && <FoundingMemberBadge memberNumber={memberNumber} />}

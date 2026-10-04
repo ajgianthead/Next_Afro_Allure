@@ -1,5 +1,6 @@
 import { createClient } from '@/app/utils/supabase/server'
 import Image from 'next/image'
+import { bookingUrl } from '@/lib/bookingUrl'
 import LOGO from '../../../public/images/logo_transparent_background.png'
 
 const GOLD = '#C9974A'
@@ -116,7 +117,7 @@ export default async function FoundingMembersPage() {
                             return (
                                 <a
                                     key={m.founding_member_number}
-                                    href={`/business/${m.url_name}`}
+                                    href={bookingUrl(m.url_name)}
                                     style={{ textDecoration: 'none' }}
                                 >
                                     <div className="fm-card" style={{
