@@ -3,6 +3,7 @@ import React from 'react'
 import { headers } from 'next/headers'
 import { businessSitePath } from '@/lib/businessHost'
 import { fetchBusinessData } from './actions';
+import { fetchBusinessData } from './data';
 import { PostgrestError } from '@supabase/supabase-js';
 import { PuckRenderer } from './puckRenderer';
 import { buildGoogleFontsUrl, extractFontsFromPuckData, normalizeFont } from '@lib/extractFonts';
@@ -62,7 +63,9 @@ export default async function Page({ params }: PageProps) {
         )
     }
 
-    if (!result.result) {
+    // A business that hasn't built its booking site yet has no editor row —
+    // this used to crash the page (web_editors[0] is undefined).
+    if (!result.result || !result.result.web_editors?.[0]) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <p className="text-muted-foreground">This booking page is not yet published.</p>

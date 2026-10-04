@@ -2,6 +2,7 @@
 
 import { stripe } from "@/lib/stripe/stripeClient";
 import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from "@/app/utils/supabase/admin";
 
 export type OnboardingReturnResult = 'complete' | 'incomplete'
 
@@ -50,7 +51,9 @@ export const updateStripeOnboardInfo = async (stripeId: string): Promise<Onboard
         }
     }
 
-    const { error } = await supabase.from('business_users').update({
+    // Stripe/onboarding columns can't be written by the business itself under
+    // row-level security; ownership was verified above, so use the service role.
+    const { error } = await createAdminClient().from('business_users').update({
         completed_stripe_onboarding: true,
         current_onboarding_link: null,
         ...(paymentConfigId ? { payment_method_config_id: paymentConfigId } : {}),

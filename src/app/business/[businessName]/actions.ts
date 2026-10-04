@@ -5,7 +5,7 @@ import { Resend } from "resend";
 import { getSlots, OutputSlot } from "slot-calculator";
 import AppointmentRescheduled from "../../../../emails/appointment-rescheduled";
 import RescheduledAppointment from "../../../../emails/rescheduled-appointment";
-import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { assignAddons } from "app/api/util/transformServices";
 import { trackAppointmentRescheduled } from "../../../../lib/analytics";
 import { NotificationType } from "@/lib/notifications/Notification";
@@ -16,18 +16,8 @@ import { AppointmentReminders } from "@/features/shared/appointments/Appointment
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export const fetchBusinessData = async (businessName: string) => {
-    const supabase = await createClient();
-    const { data, error } = await supabase.from("business_users").select("*, availabilities(*), services(*), appointments(*), web_editors(*)").eq("url_name", `${businessName}`).single();
-    const services = data?.services
-    if (error) {
-        return error
-    }
-    return { result: { ...data, services: await assignAddons(supabase, services!) } }
-}
-
 export const fetchBusinessPolicies = async (policyId: string) => {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: policy, error } = await supabase.from('business_policies').select('*').eq('id', policyId).single()
     return policy
 }
@@ -200,7 +190,7 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
         // rescheduled-booking notification — non-critical
         ;(async () => {
             try {
-                const supabase = await createClient()
+                const supabase = createAdminClient()
                 await supabase.from('notifications').insert({
                     body: `${appointment.client_metadata.firstName} ${appointment.client_metadata.lastName} rescheduled their ${appointment.service_data.name} appointment to ${DateTime.fromJSDate(appointment.start).setZone(resolveTimezone(business.account_settings?.timezone)).toFormat('LLLL dd, yyyy')} at ${DateTime.fromJSDate(appointment.start).setZone(resolveTimezone(business.account_settings?.timezone)).toLocaleString(DateTime.TIME_SIMPLE)}.`,
                     title: 'Appointment Rescheduled',
@@ -219,7 +209,7 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
             try {
                 await AppointmentReminders.cancelAll(ogAppointment.reminder_ids, ogAppointment.payment_link_id)
 
-                const supabase = await createClient()
+                const supabase = createAdminClient()
                 await scheduleAndStoreReminders(supabase, {
                     id: appointment.id,
                     start: DateTime.fromJSDate(appointment.start).toISO()!,

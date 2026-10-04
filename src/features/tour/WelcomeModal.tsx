@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Loader2, ArrowLeft, ArrowRight, PlayCircle, Check } from 'lucide-react'
 import {
     IconCalendarEvent,
@@ -397,8 +397,9 @@ function AddressSlide({
                         />
                         <div className="grid grid-cols-2 sm:contents gap-3">
                             <div className="flex flex-col gap-1 min-w-0">
-                                <label className="text-xs font-medium" style={{ color: BRAND.warm }}>State</label>
+                                <label htmlFor="welcome-address-state" className="text-xs font-medium" style={{ color: BRAND.warm }}>State</label>
                                 <select
+                                    id="welcome-address-state"
                                     value={address.state.toUpperCase()}
                                     onChange={e => onChange('state', e.target.value)}
                                     onBlur={onBlur}
@@ -444,11 +445,13 @@ function AddressField({
     onChange: (v: string) => void
     onBlur: () => void
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'onBlur'>) {
+    const id = useId()
     return (
         <div className="flex flex-col gap-1 min-w-0">
-            <label className="text-xs font-medium" style={{ color: BRAND.warm }}>{label}</label>
+            <label htmlFor={id} className="text-xs font-medium" style={{ color: BRAND.warm }}>{label}</label>
             <input
                 {...inputProps}
+                id={id}
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 onBlur={onBlur}

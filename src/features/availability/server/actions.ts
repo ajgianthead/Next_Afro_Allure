@@ -2,6 +2,7 @@
 
 import { effectivePlanType } from '@/lib/beta'
 import { createClient } from "@/app/utils/supabase/server"
+import { createAdminClient } from "@/app/utils/supabase/admin"
 
 
 export const checkAvailabilityToServices = async (availabilityId: string) => {
@@ -17,8 +18,10 @@ export const checkAvailabilityToServices = async (availabilityId: string) => {
     return { attachedServices: false }
 }
 
+// Business hours are public (booking and reschedule pages need them), so
+// this reads with the service role; it returns schedules only.
 export const getAvailabilitiesAction = async (businessId: string) => {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
         .from('availabilities')
         .select('business_users(default_availability), *')

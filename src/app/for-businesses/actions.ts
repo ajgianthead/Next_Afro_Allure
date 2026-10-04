@@ -2,6 +2,7 @@
 
 import { stripe } from "@/lib/stripe/stripeClient";
 import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from "@/app/utils/supabase/admin";
 
 const DOMAIN = process.env.NEXT_PUBLIC_BASE_URL
 
@@ -57,12 +58,17 @@ export const createSubscriptionCheckout = async (had_trial: boolean, businessID?
     // If no Stripe customer exists yet, create one and persist the ID so future
     // upgrades correctly go through createSubscriptionForExistingCustomer.
     if (!customerID && businessID) {
-        const supabase = await createClient()
+        // Service role: this runs right after signup (possibly before a session
+        // exists) and stripe_customer_id is a protected column. Only ever fills
+        // an empty value, so it can't overwrite another business's customer.
+        const supabase = createAdminClient()
         const { data: biz } = await supabase
             .from('business_users')
-            .select('email, business_name')
+            .select('email, business_name, stripe_customer_id')
             .eq('business_id', businessID)
             .single()
+        if (!biz) throw new Error('Business not found')
+        if (biz.stripe_customer_id) return createSubscriptionForExistingCustomer(biz.stripe_customer_id)
         const customer = await stripe.customers.create({
             email: biz?.email ?? undefined,
             name: biz?.business_name ?? undefined,
@@ -72,6 +78,7 @@ export const createSubscriptionCheckout = async (had_trial: boolean, businessID?
             .from('business_users')
             .update({ stripe_customer_id: customer.id })
             .eq('business_id', businessID)
+            .or('stripe_customer_id.is.null,stripe_customer_id.eq.')
         effectiveCustomerId = customer.id
     }
 

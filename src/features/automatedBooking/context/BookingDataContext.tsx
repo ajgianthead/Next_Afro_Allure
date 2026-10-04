@@ -4,9 +4,9 @@ import { createClient } from "@/app/utils/supabase/client";
 import { UserAuthContext } from "@/app/utils/types/user";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Database, Json } from "../../../../lib/database.types";
-import { BusinessType } from "@/lib/businessUser/BusinessUser";
+import { PublicBusinessType } from "@/lib/businessUser/BusinessUser";
+import type { BusyInterval } from "@/features/shared/appointments/busyIntervals";
 import { AvailabilityType } from "@/features/availability/server/models/Availability";
-import { AppointmentType } from "@/features/manualBooking/server/models/Appointment";
 import { ServiceType } from "@/lib/service/Service";
 import { BusinessPolicyType } from "@/lib/businessPolicy/BusinessPolicy";
 import { BookingSessionData } from "../types";
@@ -14,10 +14,10 @@ import { BookingSessionData } from "../types";
 export const BookingDataContext = createContext<any>(false);
 
 type Props = {
-    businessData: BusinessType,
+    businessData: PublicBusinessType,
     availabilities: AvailabilityType[],
     children: any,
-    appointments: AppointmentType[],
+    appointments: BusyInterval[],
     services: ServiceType[],
     policy: BusinessPolicyType
 }
@@ -25,7 +25,8 @@ export type BookingData = {
     business_id: string;
     availabilities: AvailabilityType[];
     booking_policy: BusinessPolicyType
-    appointments?: AppointmentType[];
+    /** Busy times only (start/end) — never full appointment records. */
+    appointments?: BusyInterval[];
     services: ServiceType[];
     stripe_id: string;
     selectedService: string;

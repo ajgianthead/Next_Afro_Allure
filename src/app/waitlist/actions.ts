@@ -1,8 +1,8 @@
 'use server'
-import { createClient } from '@/app/utils/supabase/server'
 
+import { createAdminClient } from '@/app/utils/supabase/admin'
 export async function joinClientWaitlist(email: string, city?: string) {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { error } = await supabase
         .from('client_waitlist')
         .insert({ email, city: city || null })
@@ -14,7 +14,7 @@ export async function joinClientWaitlist(email: string, city?: string) {
 }
 
 export async function getWaitlistCount(): Promise<number> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { count } = await supabase
         .from('client_waitlist')
         .select('*', { count: 'exact', head: true })

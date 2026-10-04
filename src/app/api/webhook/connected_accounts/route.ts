@@ -6,7 +6,6 @@ import { DateTime } from "luxon";
 import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails";
 import { AppointmentReminders, reminderSettingsFrom } from "@/features/shared/appointments/AppointmentReminders";
 import Stripe from "stripe";
-import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import { trackAppointmentBooked } from "../../../../../lib/analytics";
 import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient";
@@ -168,7 +167,7 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, client: 
 
     const cm = appt.client_metadata;
     const label = purpose === 'EOA' ? 'balance payment' : 'deposit';
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     await supabase.from('notifications').insert({
       body: `${cm.firstName} ${cm.lastName}'s ${label} for their ${appt.service_data.name} appointment failed to process.`,
       title: 'Payment Failed',
@@ -237,7 +236,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
 
       // Notify business in-app that EOA payment was received
       try {
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const cm = eoaRes.client_metadata;
         await supabase.from('notifications').insert({
           body: `${cm.firstName} ${cm.lastName} just paid for their ${eoaRes.service_data.name} appointment.`,
@@ -308,7 +307,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
     // Mark booking session confirmed if this was a session-based automated booking
     const { bookingSessionId } = paymentIntent.metadata;
     if (bookingSessionId) {
-      const supabase = await createClient();
+      const supabase = createAdminClient();
       await supabase
         .from('booking_sessions')
         .update({ status: 'confirmed', confirmed_at: DateTime.now().toISO() })
@@ -320,7 +319,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
 
   // booking-confirmed notification — non-critical, never throw back to Stripe
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const cm = res.client_metadata;
     await supabase.from('notifications').insert({
       body: `${cm.firstName} ${cm.lastName}'s deposit was received. Their ${res.service_data.name} appointment is now confirmed.`,
