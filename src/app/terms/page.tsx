@@ -21,7 +21,7 @@ export default function TermsOfServicePage() {
             <div className="max-w-3xl mx-auto px-6 py-16" style={{ fontFamily: 'Inter, sans-serif' }}>
                 <p className="text-xs uppercase tracking-widest text-[#A09790] mb-3">Legal</p>
                 <h1 style={{ fontFamily: SERIF }} className="text-4xl text-[#1A1818] mb-2">Terms of Service</h1>
-                <p className="text-sm text-[#6F6863] mb-10">Effective September 30, 2026</p>
+                <p className="text-sm text-[#6F6863] mb-10">Effective October 4, 2026</p>
 
                 <p className="text-[15px] leading-relaxed text-[#3A3634]">
                     These Terms of Service (&ldquo;Terms&rdquo;) govern your use of the AfroAllure platform, operated by AfroAllure LLC
@@ -42,9 +42,11 @@ export default function TermsOfServicePage() {
 
                 <Section title="3. Platform Fee on Bookings">
                     <p>
-                        In addition to your subscription fee, AfroAllure charges a 3% platform fee on each booking payment processed
-                        through the platform via Stripe Connect. This fee is deducted from the payout to your connected Stripe account
-                        and is disclosed before you complete checkout.
+                        In addition to your subscription fee, AfroAllure charges a 1% platform fee on each booking payment processed
+                        through the platform via Stripe Connect. Stripe&rsquo;s card processing fee (2.9% + $0.30 per payment) is
+                        also passed through to you at cost, with no markup. Both are deducted from the payout to your connected
+                        Stripe account and are disclosed before you complete checkout. Payments you collect in cash outside the
+                        platform have no fees.
                     </p>
                 </Section>
 

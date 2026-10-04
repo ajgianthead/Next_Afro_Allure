@@ -177,51 +177,6 @@ export async function getFinancialSummary(businessId: string): Promise<Financial
     return data[0] as unknown as FinancialSummary
 }
 
-export interface OnlinePaymentTotals {
-    thisYear: { amount: number; charges: number }
-    allTime: { amount: number; charges: number }
-}
-
-/**
- * Money that actually went through Stripe (deposits and online balance
- * payments). Cash payments never touch Stripe, so they must not be included
- * when estimating Stripe processing fees — previously the estimate used all
- * revenue and every booking, so cash-only businesses were shown Stripe fees.
- */
-export async function getOnlinePaymentTotals(businessId: string): Promise<OnlinePaymentTotals> {
-    await requireBusinessOwner(businessId)
-    const supabase = await createClient()
-    const { data, error } = await supabase
-        .from('appointments')
-        .select('start, paid_amount, paid_deposit, deposit_price, deposit_charge_id, service_paid, service_paid_type, service_charge_id')
-        .eq('business', businessId)
-        .or('paid_deposit.eq.true,service_paid_type.eq.PLATFORM')
-    if (error) throw new Error(`Online payments failed: ${error.message}`)
-
-    const startOfYear = DateTime.now().startOf('year')
-    const totals: OnlinePaymentTotals = { thisYear: { amount: 0, charges: 0 }, allTime: { amount: 0, charges: 0 } }
-    for (const a of data ?? []) {
-        const depositOnline = !!a.paid_deposit && !!a.deposit_charge_id
-        let amount = 0
-        let charges = 0
-        if (a.service_paid_type === 'PLATFORM') {
-            amount = a.paid_amount ?? 0
-            charges = (depositOnline ? 1 : 0) + (a.service_charge_id ? 1 : 0)
-        } else if (depositOnline) {
-            amount = Math.min(a.deposit_price ?? 0, a.paid_amount ?? 0) || (a.deposit_price ?? 0)
-            charges = 1
-        }
-        if (amount <= 0) continue
-        totals.allTime.amount += amount
-        totals.allTime.charges += charges
-        if (DateTime.fromISO(a.start) >= startOfYear) {
-            totals.thisYear.amount += amount
-            totals.thisYear.charges += charges
-        }
-    }
-    return totals
-}
-
 /**
  * Projected revenue for the current month = what's been earned so far plus
  * what's still due on confirmed appointments booked for the rest of the
@@ -269,7 +224,7 @@ async function withBookedProjection(businessId: string, growth: GrowthTrends): P
 
 export async function getAnalyticsPageData(businessId: string) {
     await requireBusinessOwner(businessId)
-    const [overview, byMonth, booking, service, client, clientList, rawGrowth, financial, platformFees, onlinePayments] =
+    const [overview, byMonth, booking, service, client, clientList, rawGrowth, financial, platformFees] =
         await Promise.all([
             getRevenueOverview(businessId),
             getRevenueByMonth(businessId),
@@ -280,10 +235,9 @@ export async function getAnalyticsPageData(businessId: string) {
             getGrowthTrends(businessId),
             getFinancialSummary(businessId),
             getActualPlatformFees(businessId),
-            getOnlinePaymentTotals(businessId),
         ])
     const growth = await withBookedProjection(businessId, rawGrowth)
-    return { overview, byMonth, booking, service, client, clientList, growth, financial, platformFees, onlinePayments }
+    return { overview, byMonth, booking, service, client, clientList, growth, financial, platformFees }
 }
 
 export type AnalyticsData = Awaited<ReturnType<typeof getAnalyticsPageData>>
