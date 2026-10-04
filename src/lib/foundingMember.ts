@@ -41,11 +41,27 @@ export async function checkAndAssignFoundingMember(
     return memberNumber as number
 }
 
+/**
+ * Shown on marketing pages that are pre-rendered at build time. business_users
+ * isn't readable with the public key (row-level security), so this needs the
+ * service role — but a missing key or a failed query must never fail the
+ * build or the page; fall back to 0.
+ */
 export async function getFoundingMemberCount(): Promise<number> {
-    const supabase = createAdminClient()
-    const { count } = await supabase
-        .from('business_users')
-        .select('*', { count: 'exact', head: true })
-        .eq('founding_member', true)
-    return count ?? 0
+    if (!process.env.SUPABASE_ROLE_SECRET_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        console.warn('getFoundingMemberCount: SUPABASE_ROLE_SECRET_KEY is not set; showing 0')
+        return 0
+    }
+    try {
+        const supabase = createAdminClient()
+        const { count, error } = await supabase
+            .from('business_users')
+            .select('*', { count: 'exact', head: true })
+            .eq('founding_member', true)
+        if (error) throw error
+        return count ?? 0
+    } catch (err) {
+        console.error('getFoundingMemberCount failed:', err)
+        return 0
+    }
 }
