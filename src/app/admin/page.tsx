@@ -194,7 +194,7 @@ export default async function AdminPage() {
                         <div className="flex flex-wrap gap-3 mb-8">
                             <StatTile label="Active Paying Businesses" value={String(counts.paying)} color={RED} />
                             <StatTile label="MRR" value={money(mrrData.mrr)} color={GOLD} />
-                            <StatTile label="Platform Fees This Month" value={money(fees.thisMonth)} color={GREEN} />
+                            <StatTile label="Application Fees This Month (incl. card processing)" value={money(fees.thisMonth)} color={GREEN} />
                             <StatTile label="Total Businesses" value={String(counts.total)} color={MUTED} />
                         </div>
 
@@ -233,7 +233,7 @@ export default async function AdminPage() {
                         <div className="flex flex-wrap gap-3 mb-8">
                             <StatTile label="MRR" value={money(mrrData.mrr)} color={GOLD} />
                             <StatTile label="ARR" value={money(mrrData.arr)} color={GOLD} />
-                            <StatTile label="Platform Fees All Time" value={money(fees.allTime)} color={GREEN} />
+                            <StatTile label="Application Fees All Time (incl. card processing)" value={money(fees.allTime)} color={GREEN} />
                             <StatTile label="ARPU" value={money(arpu)} color={RED} />
                         </div>
 

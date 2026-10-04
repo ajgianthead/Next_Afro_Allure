@@ -2,7 +2,6 @@
 
 import { FinancialSummary } from '../actions'
 import { ActualPlatformFees } from '../stripeActions'
-import { OnlinePaymentTotals } from '../actions'
 import { fmt } from '../analytics-client'
 import { InfoTooltip } from './InfoTooltip'
 
@@ -47,27 +46,18 @@ function StatRow({
 interface Props {
     financial: FinancialSummary
     platformFees: ActualPlatformFees
-    onlinePayments: OnlinePaymentTotals
 }
 
-// Stripe's standard card rate. Only applied to money that went through
-// Stripe — cash payments have no processing fee.
-const stripeFee = (t: { amount: number; charges: number }) =>
-    Math.round(t.amount * 0.029) + t.charges * 30
+// Everything taken from a business's payouts — the 1% platform fee and card
+// processing passed through at cost — is a Stripe application fee, so the
+// real total comes straight from Stripe (platformFees). Businesses aren't
+// billed by Stripe separately, so nothing else is subtracted. Cash payments
+// have no fees.
+const FEES_TIP = "1% AfroAllure fee + card processing (Stripe's 2.9% + $0.30, at cost) on payments clients made online. Actual amounts from Stripe. Cash payments have no fees."
 
-export function FinancialSummarySection({ financial, platformFees, onlinePayments }: Props) {
-    const stripeFeesThisYear = stripeFee(onlinePayments.thisYear)
-    const stripeFeesAllTime = stripeFee(onlinePayments.allTime)
-
-    const netThisYear = Math.max(
-        0,
-        financial.total_earned_this_year - platformFees.thisYear - stripeFeesThisYear
-    )
-
-    const netAllTime = Math.max(
-        0,
-        financial.total_earned_all_time - platformFees.allTime - stripeFeesAllTime
-    )
+export function FinancialSummarySection({ financial, platformFees }: Props) {
+    const netThisYear = Math.max(0, financial.total_earned_this_year - platformFees.thisYear)
+    const netAllTime = Math.max(0, financial.total_earned_all_time - platformFees.allTime)
 
     return (
         <div className="flex flex-col sm:flex-row gap-4">
@@ -87,22 +77,16 @@ export function FinancialSummarySection({ financial, platformFees, onlinePayment
                     tip="Sum of all deposit amounts collected at booking this year."
                 />
                 <StatRow
-                    label="AfroAllure Fee (3%)"
+                    label="Fees (platform + card processing)"
                     value={fmt(platformFees.thisYear)}
                     highlight="muted"
-                    tip="Actual AfroAllure platform fee pulled from Stripe application fees."
-                />
-                <StatRow
-                    label="Stripe Processing"
-                    value={stripeFeesThisYear > 0 ? `~${fmt(stripeFeesThisYear)}` : fmt(0)}
-                    highlight="muted"
-                    tip="Stripe's 2.9% + $0.30 per online payment (deposits and payment links). Cash payments have no processing fee. Exact amounts are in your Stripe dashboard."
+                    tip={FEES_TIP}
                 />
                 <StatRow
                     label="Net Earnings"
                     value={fmt(netThisYear)}
                     hero
-                    tip="Gross earned minus AfroAllure fee and estimated Stripe processing."
+                    tip="Gross earned minus the fees taken from your payouts."
                 />
                 {financial.total_outstanding_balances > 0 && (
                     <StatRow
@@ -130,22 +114,16 @@ export function FinancialSummarySection({ financial, platformFees, onlinePayment
                     tip="Sum of all deposit amounts collected at booking across all time."
                 />
                 <StatRow
-                    label="AfroAllure Fee (3%)"
+                    label="Fees (platform + card processing)"
                     value={fmt(platformFees.allTime)}
                     highlight="muted"
-                    tip="Actual AfroAllure platform fee pulled from Stripe application fees."
-                />
-                <StatRow
-                    label="Stripe Processing"
-                    value={stripeFeesAllTime > 0 ? `~${fmt(stripeFeesAllTime)}` : fmt(0)}
-                    highlight="muted"
-                    tip="Stripe's 2.9% + $0.30 per online payment (deposits and payment links). Cash payments have no processing fee. Exact amounts are in your Stripe dashboard."
+                    tip={FEES_TIP}
                 />
                 <StatRow
                     label="Net Earnings"
                     value={fmt(netAllTime)}
                     hero
-                    tip="Gross earned minus AfroAllure fee and estimated Stripe processing."
+                    tip="Gross earned minus the fees taken from your payouts."
                 />
                 <StatRow
                     label="Avg Monthly Revenue"

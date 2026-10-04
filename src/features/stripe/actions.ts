@@ -2,7 +2,7 @@
 
 import { stripe } from "@/lib/stripe/stripeClient"
 import { createAdminClient } from '@/app/utils/supabase/admin'
-import { calculatePlatformFee } from "@/lib/fees"
+import { calculateApplicationFee } from "@/lib/fees"
 import { requireOwnStripeAccount } from "@/lib/auth/requireOwnStripeAccount"
 
 export const createCheckoutAction = async (params: {
@@ -47,7 +47,7 @@ export const createCheckoutAction = async (params: {
             type: appointmentType ?? '',
         },
         payment_method_configuration: data?.payment_method_config_id ?? undefined,
-        application_fee_amount: calculatePlatformFee(price),
+        application_fee_amount: calculateApplicationFee(price),
     }, { stripeAccount: connectedAccountId })
 
     if (purpose === 'EOA') {

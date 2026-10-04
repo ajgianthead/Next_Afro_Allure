@@ -850,13 +850,13 @@ function FeeTransparency() {
 
     const safe = Math.max(0, amount || 0)
     const stripeFee = safe * 0.029 + 0.30
-    const aaFee = safe * 0.03
+    const aaFee = safe * 0.01
     const payout = Math.max(0, safe - stripeFee - aaFee)
     const styleSeatLow = Math.round(safe * 0.65)
     const styleSeatHigh = Math.round(safe * 0.75)
 
     const rows: [string, string, string][] = [
-        ['Platform fee', '3%', '25–35%'],
+        ['Platform fee', '1%', '25–35%'],
         ['Monthly fee', '$0 in beta', '$35+/mo'],
         ['You keep', `$${payout.toFixed(2)}`, `$${styleSeatLow.toFixed(2)} – $${styleSeatHigh.toFixed(2)}`],
         ['Marketplace', 'Coming soon', '✓'],
@@ -936,8 +936,8 @@ function FeeTransparency() {
 
                             {[
                                 { label: 'Client pays', value: `$${safe.toFixed(2)}`, muted: false },
-                                { label: 'Stripe processing (2.9% + $0.30)', value: `-$${stripeFee.toFixed(2)}`, muted: true },
-                                { label: 'AfroAllure fee (3%)', value: `-$${aaFee.toFixed(2)}`, muted: true },
+                                { label: 'Card processing (Stripe, at cost: 2.9% + $0.30)', value: `-$${stripeFee.toFixed(2)}`, muted: true },
+                                { label: 'AfroAllure fee (1%)', value: `-$${aaFee.toFixed(2)}`, muted: true },
                             ].map(({ label, value, muted }, i) => (
                                 <div key={i} style={{
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -1029,7 +1029,7 @@ function FeeTransparency() {
                 }}>
                     <Sparkles size={18} color="#C9974A" style={{ flexShrink: 0, marginTop: 2 }} />
                     <p style={{ fontFamily: SANS, fontSize: 14, color: '#3A3532', lineHeight: 1.6, margin: 0 }}>
-                        Why we charge a fee at all: the 3% keeps AfroAllure running — the servers, the
+                        Why we charge a fee at all: the 1% keeps AfroAllure running — the servers, the
                         payments infrastructure, the reminder emails, the analytics, the marketplace
                         we're building. No investor pressure to extract more from your earnings.
                         Just enough to build something that lasts for this community.

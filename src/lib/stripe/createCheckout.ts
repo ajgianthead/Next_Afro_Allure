@@ -8,7 +8,7 @@ import Stripe from "stripe"
 import { AppointmentType, CheckoutType } from "../../features/shared/appointments/types"
 import { getBookingSession, updateBookingSession } from "@/features/automatedBooking/server/domain"
 import { DateTime } from "luxon"
-import { calculatePlatformFee } from "@/lib/fees"
+import { calculateApplicationFee } from "@/lib/fees"
 
 export const createCheckout = async (
     checkoutType: CheckoutType,
@@ -58,7 +58,7 @@ export const createCheckout = async (
                     purpose: checkoutType === CheckoutType.EOA ? 'EOA' : 'DEPOSIT',
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
-                application_fee_amount: calculatePlatformFee(price),
+                application_fee_amount: calculateApplicationFee(price),
             }, {
                 stripeAccount: business.stripeAccountId,
             })
@@ -108,7 +108,7 @@ export const createCheckout = async (
                     purpose: 'DEPOSIT',
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
-                application_fee_amount: calculatePlatformFee(price),
+                application_fee_amount: calculateApplicationFee(price),
             }, {
                 stripeAccount: business.stripeAccountId,
             })
@@ -150,7 +150,7 @@ export const createCheckout = async (
                     purpose: 'EOA',
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
-                application_fee_amount: calculatePlatformFee(price),
+                application_fee_amount: calculateApplicationFee(price),
             }, {
                 stripeAccount: business.stripeAccountId,
             })

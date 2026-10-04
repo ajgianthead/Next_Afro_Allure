@@ -21,7 +21,7 @@ export default function RefundPolicyPage() {
             <div className="max-w-3xl mx-auto px-6 py-16" style={{ fontFamily: 'Inter, sans-serif' }}>
                 <p className="text-xs uppercase tracking-widest text-[#A09790] mb-3">Legal</p>
                 <h1 style={{ fontFamily: SERIF }} className="text-4xl text-[#1A1818] mb-2">Refund Policy</h1>
-                <p className="text-sm text-[#6F6863] mb-10">Effective September 30, 2026</p>
+                <p className="text-sm text-[#6F6863] mb-10">Effective October 4, 2026</p>
 
                 <Section title="1. Subscription Fees">
                     <p>
@@ -39,8 +39,10 @@ export default function RefundPolicyPage() {
 
                 <Section title="3. Booking Transaction Fees">
                     <p>
-                        The 3% platform fee charged on booking payments is non-refundable once a payment has been processed,
-                        regardless of whether the underlying appointment is later cancelled or refunded by you to your client.
+                        The fees taken from booking payments — the 1% platform fee and the card processing fee (Stripe&rsquo;s 2.9% + $0.30,
+                        passed through at cost) — are non-refundable once a payment has been processed, regardless of whether the
+                        underlying appointment is later cancelled or refunded by you to your client. Stripe does not return its
+                        processing fee on refunds.
                     </p>
                 </Section>
 
