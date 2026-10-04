@@ -85,3 +85,8 @@ create unique index if not exists business_users_url_name_key
 
 create index if not exists business_users_legacy_url_names_idx
     on public.business_users using gin (legacy_url_names);
+
+-- Businesses update this column themselves when they change their URL. If the
+-- row-level-security migration (column-level update grants) has already run,
+-- this column needs its own grant; harmless otherwise.
+grant update (legacy_url_names) on public.business_users to authenticated;
