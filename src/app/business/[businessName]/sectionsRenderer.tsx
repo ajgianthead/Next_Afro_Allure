@@ -1,6 +1,6 @@
 import { Fraunces } from 'next/font/google'
 import Image from 'next/image'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeHtml } from '@/lib/sanitizeHtml'
 import { formatDuration, formatPrice } from '@/features/services/utils'
 
 const fraunces = Fraunces({ subsets: ['latin'], weight: ['400', '700'], display: 'swap' })
@@ -60,7 +60,7 @@ export function SectionsRenderer({
                             <div
                                 key={index}
                                 style={{ width: '100%', maxWidth: '48rem', margin: '0 auto', padding: '2.5rem 1.5rem' }}
-                                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.html) }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(section.html) }}
                             />
                         )
                     }
