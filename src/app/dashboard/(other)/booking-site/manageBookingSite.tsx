@@ -15,6 +15,8 @@ import { toast } from 'sonner'
 import { WebBuilderManageTour } from '@/features/tour/tours/WebBuilderManageTour'
 import { TemplateCardList } from '@/app/business/[businessName]/edit/templatePicker'
 import { Template } from '@/features/editor/templates'
+import { bookingUrl, bookingUrlDisplayParts } from '@/lib/bookingUrl'
+import { validateSlug } from '@/lib/businessSlug'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -130,12 +132,15 @@ const ManageBookingSite = ({ urlName, editorData }: PageProps) => {
     const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
 
     const isCustom = editorData.type === 'CUSTOM'
-    const bookingPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/${newUrlName}`
+    // Was `${BASE_URL}/${name}` — missing /business/, so "Visit Site" 404'd.
+    const bookingPageUrl = bookingUrl(newUrlName)
+    const urlParts = bookingUrlDisplayParts()
     const editPageLink = isCustom
         ? `${process.env.NEXT_PUBLIC_BASE_URL}/business/${newUrlName}/edit`
         : `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/booking-site/upload-sections`
-    const isInvalid = editedUrlName.length > 0 && !/^[a-z]+$/.test(editedUrlName)
-    const previewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/${editedUrlName || '…'}`
+    const slugError = editedUrlName.length > 0 ? validateSlug(editedUrlName) : null
+    const isInvalid = !!slugError
+    const previewUrl = editedUrlName ? bookingUrl(editedUrlName) : `${urlParts.prefix}…${urlParts.suffix}`
 
     const setColor = (key: keyof ThemeSettings, value: string) =>
         setThemeSettings(prev => ({ ...prev, [key]: value }))
@@ -155,15 +160,19 @@ const ManageBookingSite = ({ urlName, editorData }: PageProps) => {
     const handleUpdateUrl = async () => {
         setLoading(true)
         try {
-            const available = await isURLNameAvailable(editedUrlName)
+            const available = await isURLNameAvailable(editedUrlName, editorData.business_id!)
             if (!available) {
                 setError('This URL name is already taken')
                 return
             }
-            const updateError = await updateBusinessURL(editorData.business_id!, editedUrlName)
-            if (updateError) throw updateError
+            const res = await updateBusinessURL(editorData.business_id!, editedUrlName)
+            if (!res.ok) {
+                setError(res.error)
+                return
+            }
             setEditUrlName(false)
-            setNewUrlName(editedUrlName)
+            setNewUrlName(res.urlName)
+            toast.success('Booking URL updated. Old links will redirect to the new one.')
         } catch {
             setError('Something went wrong. Please try again.')
         } finally {
@@ -191,27 +200,35 @@ const ManageBookingSite = ({ urlName, editorData }: PageProps) => {
                         <div className="space-y-1.5">
                             <Label>URL slug</Label>
                             <ul className="list-disc list-inside text-xs text-muted-foreground space-y-0.5">
-                                <li>Lowercase letters only (a–z)</li>
-                                <li>No spaces, numbers, or special characters</li>
+                                <li>Lowercase letters, numbers and hyphens (3–63 characters)</li>
+                                <li>No spaces or special characters; can't start or end with a hyphen</li>
+                                <li>Links you've already shared will redirect to the new URL</li>
                             </ul>
                         </div>
                         <div className="space-y-2">
-                            <div className="flex items-center gap-1">
-                                <p className="text-sm text-muted-foreground whitespace-nowrap shrink-0">
-                                    {process.env.NEXT_PUBLIC_BASE_URL}/
-                                </p>
+                            <div className="flex items-center gap-1 min-w-0">
+                                {urlParts.prefix && (
+                                    <p className="text-sm text-muted-foreground whitespace-nowrap shrink-0 truncate max-w-[50%]">
+                                        {urlParts.prefix}
+                                    </p>
+                                )}
                                 <Input
                                     value={editedUrlName}
                                     onChange={(e) => {
-                                        setEditedUrlName(e.target.value)
+                                        setEditedUrlName(e.target.value.toLowerCase().replace(/\s+/g, '-'))
                                         setError(null)
                                     }}
                                     className={isInvalid ? 'border-destructive focus-visible:ring-destructive' : ''}
                                     placeholder="yourbusiness"
                                 />
+                                {urlParts.suffix && (
+                                    <p className="text-sm text-muted-foreground whitespace-nowrap shrink-0">
+                                        {urlParts.suffix}
+                                    </p>
+                                )}
                             </div>
                             {isInvalid && (
-                                <p className="text-xs text-destructive">Only lowercase letters (a–z) allowed</p>
+                                <p className="text-xs text-destructive">{slugError}</p>
                             )}
                             {error && (
                                 <p className="text-xs text-destructive">{error}</p>

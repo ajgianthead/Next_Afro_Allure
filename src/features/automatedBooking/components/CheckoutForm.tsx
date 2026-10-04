@@ -1,5 +1,6 @@
 'use client'
 
+import { businessSitePath } from '@/lib/businessHost'
 import { BookingData } from "@/features/automatedBooking/context/BookingDataContext";
 import { ServiceType } from "@/lib/service/Service";
 import { PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
@@ -84,11 +85,11 @@ export const CheckoutForm = ({
                 elements,
                 redirect: 'if_required',
                 confirmParams: {
-                    return_url: `${window.location.origin}/business/${businessName}/book/complete`,
+                    return_url: `${window.location.origin}${businessSitePath(businessName, '/book/complete', window.location.host)}`,
                 },
             })
             if (error) throw new Error(error.message)
-            router.push(`/business/${businessName}/book/complete`)
+            router.push(businessSitePath(businessName, '/book/complete', window.location.host))
         } catch (err: any) {
             setError(err.message ?? 'Something went wrong. Please try again.')
             setOpenErrorDialog(true)

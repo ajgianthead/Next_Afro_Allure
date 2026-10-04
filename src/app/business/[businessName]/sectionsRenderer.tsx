@@ -9,12 +9,13 @@ const COL: React.CSSProperties = { display: 'flex', flexDirection: 'column' }
 
 export function SectionsRenderer({
     sections,
-    urlName,
+    basePath,
     brandColor,
     services = [],
 }: {
     sections: any[]
-    urlName: string
+    /** '' on the business's own subdomain, '/business/<name>' on the app domain. */
+    basePath: string
     brandColor: string
     services?: any[]
 }) {
@@ -24,16 +25,16 @@ export function SectionsRenderer({
                 .filter((s: any) => s.visible !== false)
                 .map((section: any, index: number) => {
                     if (section.type === 'hero') {
-                        return <HeroSection key={index} data={section.data} urlName={urlName} brandColor={brandColor} />
+                        return <HeroSection key={index} data={section.data} basePath={basePath} brandColor={brandColor} />
                     }
                     if (section.type === 'about') {
                         return <AboutSection key={index} data={section.data} />
                     }
                     if (section.type === 'services') {
-                        return <ServicesSection key={index} data={section.data} services={services} urlName={urlName} brandColor={brandColor} />
+                        return <ServicesSection key={index} data={section.data} services={services} basePath={basePath} brandColor={brandColor} />
                     }
                     if (section.type === 'book_cta') {
-                        return <BookCtaSection key={index} data={section.data} urlName={urlName} brandColor={brandColor} />
+                        return <BookCtaSection key={index} data={section.data} basePath={basePath} brandColor={brandColor} />
                     }
                     if (section.type === 'announcement') {
                         return <AnnouncementSection key={index} data={section.data} />
@@ -151,7 +152,7 @@ function LocationSection({ data }: { data: any }) {
     )
 }
 
-function BookCtaSection({ data, urlName, brandColor }: { data: any; urlName: string; brandColor: string }) {
+function BookCtaSection({ data, basePath, brandColor }: { data: any; basePath: string; brandColor: string }) {
     return (
         <div style={{ ...COL, alignItems: 'center', background: brandColor, padding: '80px 24px', textAlign: 'center', width: '100%' }}>
             <h2
@@ -166,7 +167,7 @@ function BookCtaSection({ data, urlName, brandColor }: { data: any; urlName: str
                 </p>
             )}
             <a
-                href={`/business/${urlName}/book`}
+                href={`${basePath}/book`}
                 style={{ display: 'inline-block', background: '#fff', color: brandColor, padding: '14px 36px', borderRadius: 8, fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 700, fontSize: '1rem', textDecoration: 'none' }}
             >
                 {data.cta_label || 'Book Now'}
@@ -218,7 +219,7 @@ function TestimonialsSection({ data }: { data: any }) {
     )
 }
 
-function ServicesSection({ data, services, urlName, brandColor }: { data: any; services: any[]; urlName: string; brandColor: string }) {
+function ServicesSection({ data, services, basePath, brandColor }: { data: any; services: any[]; basePath: string; brandColor: string }) {
     return (
         <div style={{ ...COL, width: '100%', padding: '4rem 1.5rem' }}>
             <div style={{ ...COL, maxWidth: '56rem', margin: '0 auto', width: '100%' }}>
@@ -234,7 +235,7 @@ function ServicesSection({ data, services, urlName, brandColor }: { data: any; s
                     {services.map((service: any) => (
                         <a
                             key={service.id}
-                            href={`/business/${urlName}/book?service=${service.id}`}
+                            href={`${basePath}/book?service=${service.id}`}
                             style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
                         >
                             <div style={{
@@ -311,7 +312,7 @@ function AboutSection({ data }: { data: any }) {
     )
 }
 
-function HeroSection({ data, urlName, brandColor }: { data: any; urlName: string; brandColor: string }) {
+function HeroSection({ data, basePath, brandColor }: { data: any; basePath: string; brandColor: string }) {
     const bg = data.image_url
         ? `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(${data.image_url}) center/cover no-repeat`
         : (data.background_color ?? '#1A1818')
@@ -353,7 +354,7 @@ function HeroSection({ data, urlName, brandColor }: { data: any; urlName: string
                 </p>
             )}
             <a
-                href={`/business/${urlName}/book`}
+                href={`${basePath}/book`}
                 style={{
                     display: 'inline-block',
                     backgroundColor: brandColor,

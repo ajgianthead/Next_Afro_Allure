@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/app/utils/supabase/admin'
 import { Resend } from 'resend'
+import { bookingUrl } from '@/lib/bookingUrl'
 
 const FROM = 'AfroAllure <noreply@reminder.afroallure.co>'
 
@@ -23,7 +24,7 @@ export async function checkAndAssignFoundingMember(
 
     if (business) {
         const firstName = business.business_name.split(' ')[0]
-        const bookingUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/business/${business.url_name}`
+        const bookingLink = bookingUrl(business.url_name)
         try {
             const resend = new Resend(process.env.RESEND_API_KEY)
             const { default: FoundingMemberWelcome } = await import('../../emails/founding-member-welcome')
@@ -31,7 +32,7 @@ export async function checkAndAssignFoundingMember(
                 from: FROM,
                 to: business.email,
                 subject: `You're founding member #${String(memberNumber).padStart(3, '0')} — your rate is locked forever`,
-                react: FoundingMemberWelcome({ firstName, memberNumber: memberNumber as number, bookingUrl }),
+                react: FoundingMemberWelcome({ firstName, memberNumber: memberNumber as number, bookingUrl: bookingLink }),
             })
         } catch (e) {
             console.error('Failed to send founding member welcome email:', e)

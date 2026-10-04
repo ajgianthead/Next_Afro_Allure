@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { DateTime } from 'luxon'
+import { bookingUrl } from '@/lib/bookingUrl'
 import { TrendingDown, TrendingUp, Copy, Check, Plus, CreditCard, AlertCircle, X, ChevronRight } from 'lucide-react'
 
 import { PostgrestSingleResponse } from '@supabase/supabase-js'
@@ -57,7 +58,7 @@ export const StackedCards = ({ weekAppointments, upcomingAppointments, businessD
     DateTime.fromISO(a.start).hasSame(today, 'day')
   )
   const pendingAppointments = weekAppointments.filter(a => a.status === 'PENDING')
-  const bookingUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/business/${businessData.url_name}`
+  const bookingLink = bookingUrl(businessData.url_name)
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -76,7 +77,7 @@ export const StackedCards = ({ weekAppointments, upcomingAppointments, businessD
       )}
 
       <Greeting businessData={businessData} />
-      <BookingLinkBar url={bookingUrl} />
+      <BookingLinkBar url={bookingLink} />
       <QuickActions />
       <BookingLimitBanner monthlyBookingCount={monthlyBookingCount} planType={planType} businessData={businessData} />
       <StatRow dashboardAnalytics={dashboardAnalytics} growth={growth} />
@@ -582,7 +583,7 @@ function AppointmentDetailsModal({ appointment, businessData, onClose }: { appoi
                     <QRCode
                       size={256}
                       style={{ height: '100%', maxWidth: '100%', width: '100%' }}
-                      value={`/appointments/${apt.id}/business/${apt.business}/eoa-payment`}
+                      value={`${process.env.NEXT_PUBLIC_BASE_URL}/appointment/${apt.id}/business/${apt.business}/eoa-payment`}
                       viewBox="0 0 256 256"
                     />
                   </div>

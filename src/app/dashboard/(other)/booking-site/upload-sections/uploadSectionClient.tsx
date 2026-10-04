@@ -6,6 +6,7 @@ import { deleteUploadedImg, saveBrandColor, saveSectionData, uploadImgSectionCha
 import { ChevronLeft, Eye, EyeOff, GripVertical, ImageIcon, Loader2, Pencil, Smartphone, Trash, Type, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { bookingUrl } from '@/lib/bookingUrl';
 import content from "@tailus-ui/components/tiptap-templates/simple/data/content.json";
 import { closestCorners, DndContext, DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -132,11 +133,11 @@ const UploadSectionClient = ({ businessId, editorId, url_name, section_data, upl
                 <p className="text-xs text-muted-foreground flex items-center gap-1 min-w-0">
                     <span className="shrink-0">Booking site:</span>
                     <Link
-                        href={`${process.env.NEXT_PUBLIC_BASE_URL}/business/${url_name}`}
+                        href={bookingUrl(url_name)}
                         target="_blank"
                         className="font-medium text-foreground underline-offset-2 hover:underline truncate"
                     >
-                        {`${process.env.NEXT_PUBLIC_BASE_URL}/business/${url_name}`}
+                        {bookingUrl(url_name)}
                     </Link>
                 </p>
             </div>

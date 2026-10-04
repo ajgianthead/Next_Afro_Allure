@@ -12,6 +12,7 @@ import { Availability } from "@/features/availability/server/models/Availability
 import { Service } from "@lib/service/Service";
 import { BusinessPolicy } from "@lib/businessPolicy/BusinessPolicy";
 import { createStripeOnboardingLink } from "@lib/stripe/createStripeOnboardingLink";
+import { RESERVED_SUBDOMAINS, SLUG_MIN_LENGTH, slugify, validateSlug } from "@/lib/businessSlug";
 import { Client } from "@lib/clients/Client";
 import { Appointment } from "@/features/manualBooking/server/models/Appointment";
 import { Notification } from "@lib/notifications/Notification";
@@ -79,6 +80,36 @@ export class BusinessUser {
     private static async businessNameExists(name: string, supabase: SupabaseClient<Database>): Promise<boolean> {
         const { data } = await supabase.from('business_users').select().eq('business_name', name).maybeSingle()
         return data !== null
+    }
+
+    /**
+     * Subdomain-safe, unique url_name for a new business ("Kayla's Braids" →
+     * "kaylas-braids", then "kaylas-braids-2", … if taken).
+     */
+    private static async uniqueUrlName(name: string, supabase: SupabaseClient<Database>): Promise<string> {
+        let base = slugify(name).slice(0, 56).replace(/-+$/g, '')
+        if (base.length < SLUG_MIN_LENGTH) base = 'business'
+        if (RESERVED_SUBDOMAINS.has(base)) base = `${base}-beauty`
+        for (let n = 1; n < 1000; n++) {
+            const candidate = n === 1 ? base : `${base}-${n}`
+            if (validateSlug(candidate)) continue
+            const { data: taken, error } = await supabase
+                .from('business_users')
+                .select('business_id')
+                .eq('url_name', candidate)
+                .limit(1)
+            if (error) throw Error(error.message)
+            if (taken && taken.length > 0) continue
+            // Don't hand out a name another business used to have (old links redirect there).
+            // Errors are ignored so signup still works before the slug migration runs.
+            const { data: legacy } = await supabase
+                .from('business_users')
+                .select('business_id')
+                .contains('legacy_url_names', [candidate])
+                .limit(1)
+            if (!legacy || legacy.length === 0) return candidate
+        }
+        return `${base}-${Date.now().toString(36)}`
     }
 
     private static async emailInUse(email: string, supabase: SupabaseClient<Database>) {
@@ -172,7 +203,7 @@ export class BusinessUser {
                     stripe_acc_id: account.id,
                     default_availability: "",
                     stripe_customer_id: customer.id,
-                    url_name: name.split(" ").join("").toLowerCase(),
+                    url_name: await this.uniqueUrlName(name, supabase),
                     current_onboarding_link: onboardingLink,
                     tos_accepted_at: new Date().toISOString(),
                     tos_ip_address: ipAddress,

@@ -3,6 +3,7 @@ import Image from 'next/image'
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { ArrowLeftCircleIcon, Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { businessSitePath } from '@/lib/businessHost'
 import { DateTime } from 'luxon'
 import { createAppointmentAction } from '@/features/shared/appointments/actions'
 import { BookingData, BookingWrapper } from '@/features/automatedBooking/context/BookingDataContext';
@@ -149,6 +150,11 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     preSelectedServiceId?: string
 }) => {
     const theme = { ...DEFAULT_BOOKING_THEME, ...themeData }
+    // Links stay on the host the client is on (kayla.afroallure.co or the app
+    // domain). Resolved after mount so server and client render the same HTML.
+    const [siteHost, setSiteHost] = useState<string | null>(null)
+    useEffect(() => { setSiteHost(window.location.host) }, [])
+    const sitePath = (path: string) => businessSitePath(businessName, path, siteHost ?? window.location.host)
 
     useEffect(() => {
         const font = theme.fontFamily
@@ -335,7 +341,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
         localStorage.removeItem('bookingSessionId')
         setData((prev) => ({ ...prev, selectedService: '', selectedAddons: [], bookingSession: null }))
         setPreSelected(false)
-        router.push(`/business/${businessName}/book`)
+        router.push(sitePath('/book'))
     }
 
     const canGoNext =
@@ -436,7 +442,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                 style={{ borderBottom: '1px solid var(--t-border)' }}
             >
                 <Link
-                    href={`/business/${businessName}`}
+                    href={siteHost ? businessSitePath(businessName, '', siteHost) : `/business/${businessName}`}
                     className="flex items-center gap-2 text-sm transition-opacity hover:opacity-70"
                     style={{ color: 'var(--t-muted)' }}
                 >
@@ -499,7 +505,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                                                 setSubmitting(true)
                                                 try {
                                                     const res = await handleSubmit()
-                                                    if (res) router.push(`/business/${businessName}/book/complete`)
+                                                    if (res) router.push(sitePath('/book/complete'))
                                                 } catch (err: any) {
                                                     if (err?.message?.includes('BOOKING_LIMIT_REACHED')) {
                                                         setBookingLimitReached(true)

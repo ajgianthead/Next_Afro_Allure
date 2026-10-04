@@ -6,6 +6,7 @@ import { resolveCardFields, defaultCardfields } from "./fields"
 import { Card } from "../../types"
 import { useRouter, usePathname } from "next/navigation"
 import { useState } from "react"
+import { businessSitePath } from "@/lib/businessHost"
 
 
 export const CardComponent: ComponentConfig<Card> = {
@@ -61,7 +62,7 @@ export const CardComponent: ComponentConfig<Card> = {
                 onMouseLeave={() => setHovered(false)}
                 onClick={() => {
                     if (linkToService) {
-                        router.push(`/business/${businessName}/book?service=${service}`)
+                        router.push(businessSitePath(businessName, `/book?service=${service}`, window.location.host))
                     }
                 }}
             >
