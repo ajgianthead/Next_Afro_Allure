@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from "@/app/utils/supabase/server"
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails"
 import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders"
 import { NotificationType } from "@/lib/notifications/Notification"
@@ -13,7 +13,7 @@ import { getBusyIntervals } from "./busyIntervals"
 import { resolveTimezone } from "@/lib/timezone"
 
 export const getAppointmentByIdAction = async (id: string) => {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data: appointment, error } = await supabase
         .from('appointments')
         .select('*, business_users(business_name)')
@@ -29,7 +29,7 @@ export const cancelClientAppointmentAction = async (
     end: string,
     reasons: string[]
 ) => {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Enforce cancel_day_limit before proceeding
     const { data: apptCheck } = await supabase
@@ -140,24 +140,86 @@ export const createAppointmentAction = async (body: {
     )
     if (isBanned) throw new Error('This business is not accepting bookings from you.')
 
-    const supabase = await createClient()
+    // This is a public endpoint writing with the service role, so nothing the
+    // browser sends about price, deposit or status is trusted: the service,
+    // add-ons, policy and amount owed all come from the database.
+    const supabase = createAdminClient()
+
+    const start = DateTime.fromISO(body.start)
+    const end = DateTime.fromISO(body.end)
+    if (!start.isValid || !end.isValid || end <= start) throw new Error('Please pick a valid time.')
+    if (start < DateTime.now().minus({ minutes: 5 })) throw new Error('That time has already passed. Please pick another.')
+
+    const cm = body.client_metadata ?? {}
+    const clientMetadata = {
+        firstName: String(cm.firstName ?? '').trim().slice(0, 100),
+        lastName: String(cm.lastName ?? '').trim().slice(0, 100),
+        email: String(cm.email ?? '').trim().slice(0, 254),
+        phoneNumber: String(cm.phoneNumber ?? '').trim().slice(0, 40),
+    }
+    if (!clientMetadata.firstName || !clientMetadata.lastName || !clientMetadata.email || !clientMetadata.phoneNumber) {
+        throw new Error('Please fill in all contact information fields')
+    }
+
+    const { data: business } = await supabase
+        .from('business_users')
+        .select('business_id, booking_policies, completed_stripe_onboarding')
+        .eq('business_id', body.business)
+        .single()
+    if (!business) throw new Error('Business not found.')
+
+    const { data: service } = await supabase
+        .from('services')
+        .select('*')
+        .eq('id', body.service_data?.id)
+        .eq('business', business.business_id)
+        .single()
+    if (!service) throw new Error('Service not found.')
+
+    const { data: policy } = await supabase
+        .from('business_policies')
+        .select('id, deposit, reschedule_limit')
+        .eq('id', business.booking_policies)
+        .maybeSingle()
+    if ((policy?.deposit as any)?.enabled && business.completed_stripe_onboarding) {
+        throw new Error('This business requires a deposit to book.')
+    }
+
+    const addonIds = (Array.isArray(body.selected_addons) ? body.selected_addons : [])
+        .map((a: any) => (typeof a === 'string' ? a : a?.id))
+        .filter((id: unknown): id is string => typeof id === 'string')
+    const { data: addons } = addonIds.length
+        ? await supabase.from('service_addons').select('id, name, price').in('id', addonIds).eq('business_id', business.business_id)
+        : { data: [] as { id: string; name: string; price: number }[] }
+    const addonTotal = (addons ?? []).reduce((sum, a) => sum + Number(a.price ?? 0), 0)
+
+    const { data: conflicts } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('business', business.business_id)
+        .in('status', ['CONFIRMED', 'PENDING'])
+        .lt('start', end.toUTC().toISO()!)
+        .gt('end', start.toUTC().toISO()!)
+        .limit(1)
+    if (conflicts && conflicts.length > 0) throw new Error('That time was just booked. Please pick another.')
+
     const { data, error } = await supabase
         .from('appointments')
         .insert([{
-            business: body.business,
-            client_metadata: body.client_metadata,
-            start: body.start,
-            end: body.end,
-            status: body.status as any,
-            service_data: body.service_data,
-            policy_id: body.policy_id,
-            require_deposit: body.require_deposit,
-            paid_deposit: body.paid_deposit,
-            deposit_charge_id: body.deposit_charge_id,
-            reschedules: body.reschedules,
-            deposit_price: body.deposit_price,
-            selected_addons: body.selected_addons,
-            amount_due: body.service_data.price,
+            business: business.business_id,
+            client_metadata: clientMetadata,
+            start: start.toUTC().toISO()!,
+            end: end.toUTC().toISO()!,
+            status: 'CONFIRMED',
+            service_data: service,
+            policy_id: policy?.id ?? null,
+            require_deposit: false,
+            paid_deposit: false,
+            deposit_charge_id: '',
+            reschedules: Number(policy?.reschedule_limit ?? 0),
+            deposit_price: null,
+            selected_addons: addons ?? [],
+            amount_due: Number(service.price) + addonTotal,
         }])
         .select('*, business_users(*)')
         .single()
@@ -259,7 +321,7 @@ export const createAppointmentAction = async (body: {
  * link, so this is effectively a public endpoint — return only public fields.
  */
 export const getBusinessByIdAction = async (businessId: string) => {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
         .from('business_users')
         .select('business_id, business_name, url_name, stripe_acc_id')
@@ -271,12 +333,12 @@ export const getBusinessByIdAction = async (businessId: string) => {
 
 /** Busy start/end times for the public reschedule page — no client details. */
 export const getBusyIntervalsAction = async (businessId: string) => {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     return getBusyIntervals(supabase, businessId)
 }
 
 export const getPolicyByIdAction = async (policyId: string) => {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
         .from('business_policies')
         .select('*')

@@ -1,4 +1,4 @@
-import { createClient } from '@/app/utils/supabase/server'
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import Image from 'next/image'
 import LOGO from '../../../public/images/logo_transparent_background.png'
 
@@ -21,7 +21,7 @@ interface FoundingMember {
 }
 
 async function getFoundingMembers(): Promise<FoundingMember[]> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data } = await supabase
         .from('business_users')
         .select('business_name, url_name, founding_member_number, founding_member_since, account_settings')

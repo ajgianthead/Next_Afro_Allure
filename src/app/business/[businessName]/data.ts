@@ -1,4 +1,4 @@
-import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { assignAddons } from "app/api/util/transformServices";
 
 /**
@@ -9,7 +9,7 @@ import { assignAddons } from "app/api/util/transformServices";
  * page, so they're no longer fetched at all.
  */
 export const fetchBusinessData = async (businessName: string) => {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
         .from("business_users")
         .select("business_id, business_name, url_name, brand_color, founding_member, founding_member_number, published_site, services(*), web_editors(*)")

@@ -1,7 +1,7 @@
 'use server'
 
 import { stripe } from "@/lib/stripe/stripeClient"
-import { createClient } from "@/app/utils/supabase/server"
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { calculatePlatformFee } from "@/lib/fees"
 import { requireOwnStripeAccount } from "@/lib/auth/requireOwnStripeAccount"
 
@@ -23,7 +23,7 @@ export const createCheckoutAction = async (params: {
         return { clientSecret: intent.client_secret, id: intent.id }
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data } = await supabase
         .from('business_users')
         .select('payment_method_config_id, account_settings, completed_stripe_onboarding')
@@ -71,7 +71,7 @@ export const createAccountLinkAction = async (accountId: string) => {
         collection_options: { fields: 'eventually_due' },
     })
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     await supabase
         .from('business_users')
         .update({ current_onboarding_link: accountLink.url })

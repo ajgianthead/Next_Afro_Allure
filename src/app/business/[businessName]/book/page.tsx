@@ -1,7 +1,7 @@
 import { PostgrestError } from "@supabase/supabase-js";
 
 import { BusinessUser } from "@/lib/businessUser/BusinessUser";
-import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { BusinessPolicy, BusinessPolicyType } from "@/lib/businessPolicy/BusinessPolicy";
 import { Availability, AvailabilityType } from "@/features/availability/server/models/Availability";
 import { getBusyIntervals } from "@/features/shared/appointments/busyIntervals";
@@ -25,7 +25,7 @@ export default async function Page({ params, searchParams }: {
 
     const { businessName } = await params
     const { service: serviceParam } = await searchParams
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const business = await BusinessUser.fetchByURLName(supabase, businessName)
     // Everything passed to <BookClient> is embedded in the page HTML, so only

@@ -1,4 +1,4 @@
-import { createClient } from '@/app/utils/supabase/server'
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { Resend } from 'resend'
 
 const FROM = 'AfroAllure <noreply@reminder.afroallure.co>'
@@ -6,7 +6,7 @@ const FROM = 'AfroAllure <noreply@reminder.afroallure.co>'
 export async function checkAndAssignFoundingMember(
     businessId: string
 ): Promise<number | null> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { data: memberNumber, error } = await supabase
         .rpc('assign_founding_member', { p_business_id: businessId })
@@ -42,7 +42,7 @@ export async function checkAndAssignFoundingMember(
 }
 
 export async function getFoundingMemberCount(): Promise<number> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { count } = await supabase
         .from('business_users')
         .select('*', { count: 'exact', head: true })

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from "@/app/utils/supabase/server"
+import { createAdminClient } from "@/app/utils/supabase/admin"
 import { Database } from "../../../lib/database.types"
 import { Client } from "@googlemaps/google-maps-services-js";
 import { DateTime } from "luxon";
@@ -127,8 +128,8 @@ export const getCityAndStateFromCoords = async (latLng: {
 }
 
 export const getBusinessesInCityAndState = async ({ city, state }: { city: string, state: string }) => {
-    const supabase = await createClient<Database>()
-    const { data, error } = await supabase.from('business_users').select('*, marketplace_profile(*)').eq('has_marketplace_profile', true).eq('account_settings->business_address->>city', city).eq('account_settings->business_address->>state', state)
+    const supabase = createAdminClient()
+    const { data, error } = await supabase.from('business_users').select('business_id, business_name, url_name, marketplace_profile(*)').eq('has_marketplace_profile', true).eq('account_settings->business_address->>city', city).eq('account_settings->business_address->>state', state)
     if (error) return error
     return data
 }
@@ -137,7 +138,7 @@ export const getPopularServicesFromBusiness = async (
     businessId: string,
     timezone: string
 ) => {
-    const supabase = await createClient<Database>();
+    const supabase = createAdminClient();
 
     const thirtyDaysAgo = DateTime.now().setZone(timezone).minus({ days: 30 }).toISO();
     const rightNow = DateTime.now().setZone(timezone).toISO();
@@ -293,7 +294,7 @@ export const createMarketplaceProfile = async (profileData: MarketplaceProfile) 
 
 // Create Review
 export const createReview = async (reviewData: Review) => {
-    const supabase = await createClient<Database>()
+    const supabase = createAdminClient()
     const { data, error } = await supabase.from('reviews').insert({
         business_id: reviewData.businessId,
         details: reviewData.details,
@@ -304,26 +305,37 @@ export const createReview = async (reviewData: Review) => {
 }
 // Get Reviews based on business
 export const getReviews = async (businessId: string) => {
-    const supabase = await createClient<Database>()
+    const supabase = createAdminClient()
     const { data, error } = await supabase.from('reviews').select('*').eq('business_id', businessId)
     if (error) return error
     return data
 }
 
 export const findNearbyStylists = async (lat: number, lng: number, radius: number) => {
-    const supabase = await createClient<Database>()
+    const supabase = createAdminClient()
     const { data: businesses, error } = await supabase.rpc('search_stylists_nearby', {
         user_lat: lat,
         user_lon: lng,
         radius_km: radius
     });
     if (error) return error
-    return businesses
+    // Public results: never return emails, settings or Stripe/onboarding state.
+    return (businesses ?? []).map((b: any) => ({
+        business_id: b.business_id,
+        business_name: b.business_name,
+        url_name: b.url_name,
+        latitude: b.latitude,
+        longitude: b.longitude,
+        distance_meters: b.distance_meters,
+        has_marketplace_profile: b.has_marketplace_profile,
+        city: b.account_settings?.business_address?.city ?? null,
+        state: b.account_settings?.business_address?.state ?? null,
+    }))
 }
 
 export const stylistFilter = async (filter: FilterProps) => {
     let result;
-    const supabase = await createClient<Database>()
+    const supabase = createAdminClient()
     if (filter.filterBy === 'stylist') {
         // Get all businesses in the current location
         const { data: businesses, error } = await supabase.rpc('search_stylists_nearby', {

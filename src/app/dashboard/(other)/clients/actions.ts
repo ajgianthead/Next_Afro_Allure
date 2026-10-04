@@ -2,6 +2,7 @@
 import { requireBusinessOwner, requireOwnBusinessId } from "@/lib/auth/requireBusinessOwner"
 
 import { createClient } from "@/app/utils/supabase/server"
+import { createAdminClient } from "@/app/utils/supabase/admin"
 import { upsertBusinessClient } from "@/features/shared/clients/upsertBusinessClient"
 
 export interface Client {
@@ -26,7 +27,8 @@ export const isClientBannedFromBusiness = async (
     businessId: string
 ): Promise<boolean> => {
     if (!email && !phoneNumber) return false
-    const supabase = await createClient()
+    // Called from public booking flows (no session) — service role, returns a boolean only.
+    const supabase = createAdminClient()
 
     const orFilter = [
         email ? `email.eq.${email}` : null,
@@ -98,7 +100,9 @@ export const addCreateNewClient = async (
     businessId: string
 ) => {
     await requireBusinessOwner(businessId)
-    const supabase = await createClient()
+    // Matching an existing client record (possibly created by another
+    // business's booking) needs the service role; ownership is checked above.
+    const supabase = createAdminClient()
     const result = await upsertBusinessClient(supabase, client, businessId)
     // Errors come back as strings: a PostgrestError loses its prototype when it
     // crosses the server-action boundary, so `instanceof` checks never matched.
@@ -201,11 +205,16 @@ export const banClient = async (
     await requireBusinessOwner(businessId)
     const supabase = await createClient()
 
-    let query = supabase.from('client_users').select('client_id')
-    if (email) query = (query as any).eq('email', email)
-    else if (phone_number) query = (query as any).eq('phone_number', phone_number)
+    // The client may only exist through another business's booking, which
+    // this business can't see under row-level security — look up with the
+    // service role (ownership checked above), then write as the business.
+    let query = createAdminClient().from('client_users').select('client_id')
+    if (email) query = query.eq('email', email)
+    else if (phone_number) query = query.eq('phone_number', phone_number)
+    else return "Client not found"
 
-    const { data: clientUser } = await (query as any).maybeSingle()
+    const { data: matches } = await query.limit(1)
+    const clientUser = matches?.[0]
     if (!clientUser) return "Client not found"
 
     const { data, error } = await supabase

@@ -1,5 +1,6 @@
 import { effectivePlanType } from '@/lib/beta'
 import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from "@/app/utils/supabase/admin";
 import { Database } from "../../../lib/database.types";
 import { stripe } from '../stripe/stripeClient'
 import { Time } from "@internationalized/date";
@@ -147,10 +148,15 @@ export class BusinessUser {
 
     static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string, marketingOptIn: boolean = false, ipAddress: string | null = null) {
         try {
-            if (await this.businessNameExists(name, supabase)) {
+            // The visitor isn't signed in yet, and row-level security only lets a
+            // business touch its own rows — so the account's database records are
+            // created with the service role. `supabase` is still used for auth
+            // signUp so the session cookie is set on this request.
+            const db = createAdminClient()
+            if (await this.businessNameExists(name, db)) {
                 throw Error('Business name already exists')
             }
-            if (await this.emailInUse(email, supabase)) {
+            if (await this.emailInUse(email, db)) {
                 throw Error('Email is already in use')
             }
             const user = await UserAuth.register(supabase, email, password)
@@ -158,7 +164,7 @@ export class BusinessUser {
             const customer = await createStripeCustomer(email)
             const onboardingLink = await createStripeOnboardingLink(account.id)
 
-            const { data: businessUser } = await supabase.from('business_users').insert(
+            const { data: businessUser } = await db.from('business_users').insert(
                 {
                     business_name: name,
                     user_id: user?.id,
@@ -194,11 +200,11 @@ export class BusinessUser {
             ).select().maybeSingle()
 
             const business = businessUser!
-            const availability = await Availability.createDefault(supabase, business?.business_id!)
-            await Service.createDefault(supabase, businessUser?.business_id!, Array.isArray(availability) ? availability[0].id : availability.id
+            const availability = await Availability.createDefault(db, business?.business_id!)
+            await Service.createDefault(db, businessUser?.business_id!, Array.isArray(availability) ? availability[0].id : availability.id
             )
-            const policy = await BusinessPolicy.createDefault(supabase, business.business_id)
-            await supabase
+            const policy = await BusinessPolicy.createDefault(db, business.business_id)
+            await db
                 .from('business_users')
                 .update({ booking_policies: policy.id })
                 .eq('business_id', business.business_id)
