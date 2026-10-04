@@ -3,6 +3,7 @@
 import { stripe } from "@/lib/stripe/stripeClient"
 import { createClient } from "@/app/utils/supabase/server"
 import { calculatePlatformFee } from "@/lib/fees"
+import { requireOwnStripeAccount } from "@/lib/auth/requireOwnStripeAccount"
 
 export const createCheckoutAction = async (params: {
     connectedAccountId: string
@@ -59,6 +60,7 @@ export const createCheckoutAction = async (params: {
 }
 
 export const createAccountLinkAction = async (accountId: string) => {
+    await requireOwnStripeAccount(accountId)
     const base = process.env.NEXT_PUBLIC_BASE_URL
 
     const accountLink = await stripe.accountLinks.create({
@@ -79,6 +81,7 @@ export const createAccountLinkAction = async (accountId: string) => {
 }
 
 export const createAccountSessionAction = async (accountId: string) => {
+    await requireOwnStripeAccount(accountId)
     const accountSession = await stripe.accountSessions.create({
         account: accountId,
         components: {

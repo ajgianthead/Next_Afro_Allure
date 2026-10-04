@@ -2,6 +2,7 @@
 
 import { stripe } from '@/lib/stripe/stripeClient'
 import { createClient } from '@/app/utils/supabase/server'
+import { requireOwnStripeAccount } from '@/lib/auth/requireOwnStripeAccount'
 
 export const checkCompletedOnboarding = async (businessId: string): Promise<boolean> => {
     const supabase = await createClient()
@@ -14,6 +15,7 @@ export const checkCompletedOnboarding = async (businessId: string): Promise<bool
 }
 
 export const createStripeLoginLink = async (connectedAccountId: string): Promise<string> => {
+    await requireOwnStripeAccount(connectedAccountId)
     const loginLink = await stripe.accounts.createLoginLink(connectedAccountId)
     return loginLink.url
 }
