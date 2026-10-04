@@ -1,4 +1,4 @@
-import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { BookingSessionData } from "../types";
 import { DateTime } from "luxon";
 import { stripe } from "@/lib/stripe/stripeClient";
@@ -28,7 +28,7 @@ const buildBookingSessionData = (data: BookingSessionData) => ({
 
 export const updateBookingSession = async (data: BookingSessionData) => {
     try {
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const { data: row, error } = await supabase
             .from('booking_sessions')
             .update(buildBookingSessionData(data))
@@ -44,7 +44,7 @@ export const updateBookingSession = async (data: BookingSessionData) => {
 
 export const createBookingSession = async (data: BookingSessionData) => {
     try {
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const { data: row, error } = await supabase
             .from('booking_sessions')
             .insert(buildBookingSessionData(data))
@@ -59,7 +59,7 @@ export const createBookingSession = async (data: BookingSessionData) => {
 
 export const getBookingSession = async (id: string) => {
     try {
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const { data: row, error } = await supabase
             .from('booking_sessions')
             .select()
@@ -105,7 +105,7 @@ export const attachPaymentIntent = async (id: string, selectedService: string, s
             // The PI was created under the connected account's namespace
             // (createCheckout always passes stripeAccount), so retrieving it
             // from the platform account context throws "No such payment_intent".
-            const supabase = await createClient();
+            const supabase = createAdminClient();
             const business = await BusinessUser.fetch(supabase, session.businessId);
             paymentIntent = await stripe.paymentIntents.retrieve(session.paymentIntentId, {
                 stripeAccount: business.stripeAccountId,
@@ -153,7 +153,7 @@ export const markSessionConfirmed = async (id: string, appointmentData: Appointm
         const isBanned = await isClientBannedFromBusiness(clientInfo?.email, clientInfo?.phoneNumber, session?.businessId || '')
         if (isBanned) throw new Error('This business is not accepting bookings from you.')
 
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const { error } = await supabase.rpc('confirm_booking_session', {
             p_booking_session_id: id,
             p_business: session?.businessId || '',

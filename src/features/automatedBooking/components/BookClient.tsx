@@ -6,9 +6,9 @@ import Link from 'next/link'
 import { DateTime } from 'luxon'
 import { createAppointmentAction } from '@/features/shared/appointments/actions'
 import { BookingData, BookingWrapper } from '@/features/automatedBooking/context/BookingDataContext';
-import { BusinessType } from '@/lib/businessUser/BusinessUser';
+import { PublicBusinessType } from '@/lib/businessUser/BusinessUser';
+import type { BusyInterval } from '@/features/shared/appointments/busyIntervals';
 import { AvailabilityType } from '@/features/availability/server/models/Availability';
-import { AppointmentType } from '@/features/manualBooking/server/models/Appointment';
 import { ServiceType } from '@/lib/service/Service';
 import { BusinessPolicyType } from '@/lib/businessPolicy/BusinessPolicy';
 import { ServiceSelection } from './ServiceSelection';
@@ -22,9 +22,9 @@ import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBo
 import { useRouter } from 'next/navigation'
 
 export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId }: {
-    businessData: BusinessType,
+    businessData: PublicBusinessType,
     availabilities: AvailabilityType[],
-    appointments: AppointmentType[],
+    appointments: BusyInterval[],
     services: ServiceType[],
     policy: BusinessPolicyType,
     bookingLimitReached?: boolean
@@ -38,7 +38,7 @@ export function BookClient({ businessData, availabilities, appointments, service
     )
 }
 
-function BookingFullMessage({ businessData }: { businessData: BusinessType }) {
+function BookingFullMessage({ businessData }: { businessData: PublicBusinessType }) {
     return (
         <div className="flex flex-col items-center text-center py-16 px-6 max-w-md mx-auto">
             <div className="w-14 h-14 rounded-full flex items-center justify-center mb-5" style={{ backgroundColor: 'var(--t-bg)' }}>
@@ -143,7 +143,7 @@ function PreSelectionBar({ onChangeService }: { onChangeService: () => void }) {
 
 const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeData, preSelectedServiceId }: {
     businessName: string
-    businessData: BusinessType
+    businessData: PublicBusinessType
     bookingLimitReachedInitial?: boolean
     themeData?: BookingTheme | null
     preSelectedServiceId?: string

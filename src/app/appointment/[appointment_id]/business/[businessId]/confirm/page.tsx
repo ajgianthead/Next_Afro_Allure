@@ -1,4 +1,4 @@
-import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import ConfirmAppClient from "./confirmClient";
 import { Database } from "../../../../../../../lib/database.types";
 import { Appointment } from "@/features/manualBooking/server/models/Appointment";
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export default async function Page({ params }: { params: { appointment_id: string, businessId: string } }) {
     // Get all my data
     const { businessId, appointment_id } = await params
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const business = await BusinessUser.fetch(supabase, businessId)
 
     let appointment = await Appointment.fetchById(supabase, appointment_id) as Appointment

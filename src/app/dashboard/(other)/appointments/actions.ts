@@ -1,4 +1,5 @@
 'use server'
+import { requireBusinessOwner } from "@/lib/auth/requireBusinessOwner"
 
 import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/app/utils/supabase/server";
@@ -12,6 +13,7 @@ import { ServiceData } from "@/features/services/types";
 
 //TODO: Fix this to update when a user changes status from PAID WITH CASH to something else
 export const markAppointmentAs = async (businessId: string, status: Enums<'status'>, amount_due: number, id: string) => {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
 
     if (status === 'COMPLETED' && amount_due > 0) {
@@ -70,6 +72,17 @@ export const assignAddons = async (supabase: SupabaseClient, services: ServiceDa
 
 export const getBusinessAppointmentsAction = async (businessId: string, status?: Database['public']['Enums']['status']) => {
     const supabase = await createClient()
+    // Full appointment records (client contact + payment info) — owner only.
+    // This used to be callable by anyone with a business id.
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+    const { data: owned } = await supabase
+        .from('business_users')
+        .select('business_id')
+        .eq('business_id', businessId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+    if (!owned) throw new Error('Unauthorized')
     let query = supabase.from('appointments').select('*').eq('business', businessId)
     if (status) {
         query = query.eq('status', status).order('start', { ascending: true }).limit(5) as any

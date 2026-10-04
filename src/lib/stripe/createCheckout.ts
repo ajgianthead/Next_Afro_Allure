@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from "@/app/utils/supabase/server"
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { BusinessUser } from "../businessUser/BusinessUser"
 import { Appointment } from "../../features/manualBooking/server/models/Appointment"
 import { stripe } from "./stripeClient"
@@ -19,7 +19,7 @@ export const createCheckout = async (
     sessionId?: string
 ): Promise<Stripe.PaymentIntent> => {
     try {
-        const supabase = await createClient()
+        const supabase = createAdminClient()
         const business = await BusinessUser.fetch(supabase, businessId)
 
         // Without this, a business can publish and accept bookings before

@@ -9,8 +9,7 @@ import { useParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { getSlots } from 'slot-calculator'
 import { getAvailabilitiesAction } from '@/features/availability/server/actions'
-import { getBusinessAppointmentsAction } from '@/app/dashboard/(other)/appointments/actions'
-import { getBusinessByIdAction } from '@/features/shared/appointments/actions'
+import { getAppointmentByIdAction, getBusinessByIdAction, getBusyIntervalsAction } from '@/features/shared/appointments/actions'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -33,8 +32,9 @@ export default function RescheduleClient() {
     const [rescheduleError, setRescheduleError] = useState('')
     const [isDisabled, setIsDisabled] = useState(true)
 
-    const computeSlots = async (startDate: string, endDate: string, avs: any[], appts: any[]) => {
-        const appt = appts.find((a: any) => a.id === appointment_id)
+    // `busy` is start/end times only; this client's own appointment comes from
+    // its id (the link they were emailed), never from a list of everyone's.
+    const computeSlots = async (startDate: string, endDate: string, avs: any[], busy: any[], appt: any) => {
         if (!appt) return
         const av = avs.find((a: any) => a.id === appt.service_data.availability)
         if (!av) return
@@ -56,7 +56,9 @@ export default function RescheduleClient() {
             Intl.DateTimeFormat().resolvedOptions().timeZone
         )
         const formattedUnav = await getUnavailability(
-            startDate, endDate, appts,
+            startDate, endDate,
+            // Their current slot shouldn't block itself.
+            busy.filter((b: any) => !(new Date(b.start).getTime() === new Date(appt.start).getTime() && new Date(b.end).getTime() === new Date(appt.end).getTime())),
             Intl.DateTimeFormat().resolvedOptions().timeZone
         )
         const { availableSlotsByDay } = getSlots({
@@ -89,10 +91,11 @@ export default function RescheduleClient() {
 
     useEffect(() => {
         const init = async () => {
-            const [{ availabilities: avs }, appts, business] = await Promise.all([
+            const [{ availabilities: avs }, appts, business, ownAppointment] = await Promise.all([
                 getAvailabilitiesAction(businessId),
-                getBusinessAppointmentsAction(businessId),
+                getBusyIntervalsAction(businessId),
                 getBusinessByIdAction(businessId).catch(() => null),
+                getAppointmentByIdAction(appointment_id).catch(() => null),
             ])
             setAvailabilities(avs as any)
             setAppointments(appts as any)
@@ -100,14 +103,14 @@ export default function RescheduleClient() {
 
             const startDate = DateTime.now().startOf('day').toISO()!
             const endDate = DateTime.now().endOf('month').toISO()!
-            await computeSlots(startDate, endDate, avs as any, appts as any)
+            await computeSlots(startDate, endDate, avs as any, appts as any, ownAppointment)
             setIsLoading(false)
         }
         init()
     }, [])
 
     const handleMonthChange = async (month: Date) => {
-        if (!appointments.length || !Object.keys(availability).length) return
+        if (!Object.keys(availability).length) return
         setIsLoading(true)
         const lMonth = DateTime.fromJSDate(month)
         const startDate =
@@ -115,7 +118,7 @@ export default function RescheduleClient() {
                 ? DateTime.now().startOf('day').toISO()!
                 : lMonth.toISO()!
         const endDate = lMonth.endOf('month').toISO()!
-        await computeSlots(startDate, endDate, availabilities, appointments)
+        await computeSlots(startDate, endDate, availabilities, appointments, appointment)
         setIsLoading(false)
     }
 

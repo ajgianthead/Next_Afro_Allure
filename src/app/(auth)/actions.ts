@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 
 import { createClient } from '../utils/supabase/server'
+import { createAdminClient } from '../utils/supabase/admin'
 import { Database } from '../../../lib/database.types'
 import { Time } from '@internationalized/date'
 import { stripe } from '@/lib/stripe/stripeClient'
@@ -25,7 +26,9 @@ export const createBusinessUser = async (email: string, name: string, password: 
         // completion — don't touch that one). Without this, is_onboarded
         // stays false forever for anyone who signs up here, which silently
         // disables every dashboard product tour (they're all gated on it).
-        await supabase
+        // Service role: right after signUp there may be no session yet (email
+        // confirmation), and row-level security would block the update.
+        await createAdminClient()
             .from('business_users')
             .update({ is_onboarded: true })
             .eq('business_id', businessUser.id)

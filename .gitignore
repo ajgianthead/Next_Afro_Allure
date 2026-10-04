@@ -48,3 +48,6 @@ node_modules/
 /playwright/.cache/
 
 .trigger
+
+# Supabase schema dumps (local only)
+prod_schema*.sql

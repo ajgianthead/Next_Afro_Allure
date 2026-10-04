@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { BookingSessionData } from "../types";
 import { attachPaymentIntent, createBookingSession, getBookingSession, updateBookingSession } from "./domain";
 import { DateTime } from "luxon";
@@ -41,7 +41,7 @@ export const createBookingSessionAction = async (businessId: string, serviceId: 
 
 export const getTotalAmountDue = async (selectedAddons: string[], serviceId: string) => {
     try {
-        const supabase = await createClient()
+        const supabase = createAdminClient()
         const { data: serviceData, error: serviceError } = await supabase.from('services').select('price').eq('id', serviceId).single()
         if (serviceError) throw new Error(serviceError.message)
         const servicePrice = serviceData?.price || 0
@@ -124,7 +124,7 @@ export const createPaymentIntentAction = async (sessionId: string, selectedServi
 
 export const confirmBookingSessionAction = async (sessionId: string) => {
     try {
-        const supabase = await createClient()
+        const supabase = createAdminClient()
         const { error } = await supabase
             .from('booking_sessions')
             .update({ status: 'confirmed', confirmed_at: DateTime.now().toISO() })

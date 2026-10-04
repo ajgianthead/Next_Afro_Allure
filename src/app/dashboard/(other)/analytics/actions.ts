@@ -1,4 +1,5 @@
 'use server'
+import { requireBusinessOwner } from "@/lib/auth/requireBusinessOwner"
 import { createClient } from '@/app/utils/supabase/server'
 import { getActualPlatformFees } from './stripeActions'
 import { DateTime } from 'luxon'
@@ -113,6 +114,7 @@ export interface FinancialSummary {
 // ─── Individual actions ───────────────────────────────────────────────────────
 
 export async function getRevenueOverview(businessId: string): Promise<RevenueOverview> {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase.rpc('get_revenue_overview', { p_business_id: businessId })
     if (error) throw new Error(`Revenue overview failed: ${error.message}`)
@@ -120,6 +122,7 @@ export async function getRevenueOverview(businessId: string): Promise<RevenueOve
 }
 
 export async function getRevenueByMonth(businessId: string): Promise<RevenueByMonth[]> {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase.rpc('get_revenue_by_month', { p_business_id: businessId })
     if (error) throw new Error(`Revenue by month failed: ${error.message}`)
@@ -127,6 +130,7 @@ export async function getRevenueByMonth(businessId: string): Promise<RevenueByMo
 }
 
 export async function getBookingPerformance(businessId: string): Promise<BookingPerformance> {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase.rpc('get_booking_performance', { p_business_id: businessId })
     if (error) throw new Error(`Booking performance failed: ${error.message}`)
@@ -134,6 +138,7 @@ export async function getBookingPerformance(businessId: string): Promise<Booking
 }
 
 export async function getServiceAnalytics(businessId: string): Promise<ServiceAnalytics[]> {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase.rpc('get_service_analytics', { p_business_id: businessId })
     if (error) throw new Error(`Service analytics failed: ${error.message}`)
@@ -141,6 +146,7 @@ export async function getServiceAnalytics(businessId: string): Promise<ServiceAn
 }
 
 export async function getClientAnalytics(businessId: string): Promise<ClientAnalytics> {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase.rpc('get_client_analytics', { p_business_id: businessId })
     if (error) throw new Error(`Client analytics failed: ${error.message}`)
@@ -148,6 +154,7 @@ export async function getClientAnalytics(businessId: string): Promise<ClientAnal
 }
 
 export async function getClientList(businessId: string): Promise<ClientListItem[]> {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase.rpc('get_client_list', { p_business_id: businessId })
     if (error) throw new Error(`Client list failed: ${error.message}`)
@@ -155,6 +162,7 @@ export async function getClientList(businessId: string): Promise<ClientListItem[
 }
 
 export async function getGrowthTrends(businessId: string): Promise<GrowthTrends> {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase.rpc('get_growth_trends', { p_business_id: businessId })
     if (error) throw new Error(`Growth trends failed: ${error.message}`)
@@ -162,6 +170,7 @@ export async function getGrowthTrends(businessId: string): Promise<GrowthTrends>
 }
 
 export async function getFinancialSummary(businessId: string): Promise<FinancialSummary> {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase.rpc('get_financial_summary', { p_business_id: businessId })
     if (error) throw new Error(`Financial summary failed: ${error.message}`)
@@ -180,6 +189,7 @@ export interface OnlinePaymentTotals {
  * revenue and every booking, so cash-only businesses were shown Stripe fees.
  */
 export async function getOnlinePaymentTotals(businessId: string): Promise<OnlinePaymentTotals> {
+    await requireBusinessOwner(businessId)
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('appointments')
@@ -258,6 +268,7 @@ async function withBookedProjection(businessId: string, growth: GrowthTrends): P
 // ─── Aggregator ───────────────────────────────────────────────────────────────
 
 export async function getAnalyticsPageData(businessId: string) {
+    await requireBusinessOwner(businessId)
     const [overview, byMonth, booking, service, client, clientList, rawGrowth, financial, platformFees, onlinePayments] =
         await Promise.all([
             getRevenueOverview(businessId),

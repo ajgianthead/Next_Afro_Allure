@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { requireOwnBusinessId } from '@/lib/auth/requireBusinessOwner'
 import { DateTime } from "luxon";
 import { stripe } from "@/lib/stripe/stripeClient";
 import { createClient } from "@/app/utils/supabase/server";
@@ -131,15 +132,16 @@ export async function getRefundSummary(appointmentId: string): Promise<RefundSum
 
 /** Refund history only — reads our records, no Stripe calls. RLS scopes it to the signed-in business. */
 export async function listRefunds(appointmentId: string): Promise<RefundRecord[]> {
+    // business_id is the business's id, not the auth user id — filtering on
+    // user.id meant refund history always came back empty.
+    const businessId = await requireOwnBusinessId()
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
 
     const { data, error } = await supabase
         .from('refunds')
         .select('*')
         .eq('appointment_id', appointmentId)
-        .eq('business_id', user.id)
+        .eq('business_id', businessId)
         .order('created_at', { ascending: false })
     if (error) throw new Error(error.message)
     return (data ?? []).map(toRefundRecord)

@@ -1,4 +1,4 @@
-import { createClient } from '@/app/utils/supabase/server'
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import Image from 'next/image'
 import LOGO from '../../../public/images/logo_transparent_background.png'
 
@@ -20,14 +20,24 @@ interface FoundingMember {
     account_settings: { business_address?: { city?: string; state?: string } } | null
 }
 
+// Rendered per request, not at build time: business_users needs the service
+// role (row-level security), and the build environment may not have the key.
+export const dynamic = 'force-dynamic'
+
 async function getFoundingMembers(): Promise<FoundingMember[]> {
-    const supabase = await createClient()
-    const { data } = await supabase
-        .from('business_users')
-        .select('business_name, url_name, founding_member_number, founding_member_since, account_settings')
-        .eq('founding_member', true)
-        .order('founding_member_number', { ascending: true })
-    return (data ?? []) as FoundingMember[]
+    if (!process.env.SUPABASE_ROLE_SECRET_KEY) return []
+    try {
+        const supabase = createAdminClient()
+        const { data } = await supabase
+            .from('business_users')
+            .select('business_name, url_name, founding_member_number, founding_member_since, account_settings')
+            .eq('founding_member', true)
+            .order('founding_member_number', { ascending: true })
+        return (data ?? []) as FoundingMember[]
+    } catch (err) {
+        console.error('getFoundingMembers failed:', err)
+        return []
+    }
 }
 
 export default async function FoundingMembersPage() {

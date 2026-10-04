@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { apiError, webhookAck } from "@/lib/api/response";
 import { Resend } from "resend";
 import Stripe from "stripe";
-import { createClient } from "@/app/utils/supabase/server";
+import { createAdminClient } from '@/app/utils/supabase/admin'
 import { Database } from "../../../../../lib/database.types";
 import PausedSubscription from "../../../../../emails/subscription-paused";
 import CancelledSubscription from "../../../../../emails/subscription-cancelled";
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         const failedCustomerId = invoice.customer?.toString();
         console.warn(`invoice.payment_failed: customer=${failedCustomerId} invoice=${invoice.id}`);
         if (failedCustomerId) {
-            const supabase = await createClient();
+            const supabase = createAdminClient();
             const { data: business } = await supabase
                 .from('business_users')
                 .select('business_name, email')
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleSubscriptionActivated(customerId: string) {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { error } = await supabase
         .from('business_users')
         .update({ plan_type: 'GROWTH', subscription_plan: 'GROWTH', subscription_status: 'active' })
@@ -113,7 +113,7 @@ async function handleSubscriptionActivated(customerId: string) {
 
 async function handleSubscriptionCreated(customerId: string, status: string, amount?: number) {
     if (status === 'active') {
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const { data: business, error } = await supabase
             .from('business_users')
             .update({ plan_type: 'GROWTH', subscription_plan: 'GROWTH', subscription_status: 'active' })
@@ -147,7 +147,7 @@ async function handleSubscriptionCreated(customerId: string, status: string, amo
             });
         }
     } else if (status === 'trialing') {
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const { error } = await supabase
             .from('business_users')
             .update({ plan_type: 'GROWTH', had_trial: true, subscription_plan: 'GROWTH', subscription_status: 'trialing' })
@@ -157,7 +157,7 @@ async function handleSubscriptionCreated(customerId: string, status: string, amo
 }
 
 async function handleSubscriptionPaused(customerId: string) {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: business, error } = await supabase
         .from('business_users')
         .update({ plan_type: 'STARTER', subscription_status: 'paused' })
@@ -182,7 +182,7 @@ async function handleSubscriptionPaused(customerId: string) {
 }
 
 async function handleSubscriptionDeleted(customerId: string) {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: business, error } = await supabase
         .from('business_users')
         .update({ plan_type: 'STARTER', subscription_status: 'canceled' })
