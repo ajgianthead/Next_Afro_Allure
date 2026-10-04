@@ -9,8 +9,8 @@ import { AppointmentDetailBlock } from './components/AppointmentDetailBlock'
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co'
 
 export default function CancelledAppointment({ serviceName, clientData, businessData, appointmentData }: EmailTemplate) {
-    const date = DateTime.fromISO(appointmentData.start).toFormat('cccc, LLLL d, yyyy')
-    const time = DateTime.fromISO(appointmentData.start).toFormat('h:mm a')
+    const date = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('cccc, LLLL d, yyyy')
+    const time = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('h:mm a')
 
     return (
         <Html lang="en">

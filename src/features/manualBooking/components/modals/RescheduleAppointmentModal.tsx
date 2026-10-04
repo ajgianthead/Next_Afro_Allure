@@ -22,6 +22,7 @@ import { format } from "date-fns"
 import { toast } from "sonner"
 import { useManualBooking } from "../../hooks/useManualBooking"
 import { rescheduleAppointmentAction } from "../../server"
+import { combineDateAndTime, minStartTimeFor, validateAppointmentTimes } from "../../utils/appointmentTime"
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -57,23 +58,15 @@ export const RescheduleConfirmation = () => {
     const [error, setError] = useState('')
 
     const handleClose = () => {
-        setManualBookingData!({ ...manualBookingData!, openRescheduleConfirmation: false })
+        setManualBookingData!(prev => ({ ...prev, openRescheduleConfirmation: false, newAppointmentEvent: null }))
         setEditedAppointmentData({ date: new Date(), start: '', end: '' })
         setError('')
     }
 
     const validateInputs = () => {
-        if (!editedAppointmentData.start || !editedAppointmentData.end) {
-            setError('Please enter a start and end time.')
-            return false
-        }
-        const d = editedAppointmentData.date
-        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
-            Number(editedAppointmentData.start.split(':')[0]), Number(editedAppointmentData.start.split(':')[1]))
-        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
-            Number(editedAppointmentData.end.split(':')[0]), Number(editedAppointmentData.end.split(':')[1]))
-        if (end <= start) {
-            setError('End time must be after start time.')
+        const timeError = validateAppointmentTimes(editedAppointmentData.date, editedAppointmentData.start, editedAppointmentData.end)
+        if (timeError) {
+            setError(timeError)
             return false
         }
         return true
@@ -81,7 +74,7 @@ export const RescheduleConfirmation = () => {
 
     return (
         <Dialog open={manualBookingData?.openRescheduleConfirmation} onOpenChange={(open) => { if (!open) handleClose() }}>
-            <DialogContent style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D6', borderRadius: '16px', maxWidth: 480 }}>
+            <DialogContent className="w-[calc(100vw-2rem)] overflow-x-hidden p-4 sm:p-6" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D6', borderRadius: '16px', maxWidth: 480 }}>
                 <DialogHeader>
                     <DialogTitle style={{ fontFamily: SERIF, color: '#1A1818', fontSize: '1.1rem' }}>
                         Reschedule Appointment
@@ -118,7 +111,7 @@ export const RescheduleConfirmation = () => {
                                     mode="single"
                                     required
                                     selected={editedAppointmentData.date}
-                                    disabled={(date) => date < new Date()}
+                                    disabled={(date) => date < DateTime.now().startOf('day').toJSDate()}
                                     onSelect={(e) => setEditedAppointmentData({ ...editedAppointmentData, date: e! })}
                                 />
                             </PopoverContent>
@@ -126,23 +119,27 @@ export const RescheduleConfirmation = () => {
                     </div>
 
                     {/* Start / End time */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-1.5">
+                    <div className="grid grid-cols-2 gap-3 min-w-0">
+                        <div className="flex flex-col gap-1.5 min-w-0">
                             <label className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6F6863' }}>Start Time</label>
                             <Input
                                 type="time"
                                 value={editedAppointmentData.start}
+                                min={minStartTimeFor(editedAppointmentData.date)}
                                 onChange={(e) => setEditedAppointmentData({ ...editedAppointmentData, start: e.target.value })}
-                                style={{ borderColor: '#E8E2D6', fontSize: 14 }}
+                                className="h-10 w-full min-w-0 max-w-full appearance-none text-base sm:text-sm [&::-webkit-date-and-time-value]:text-left"
+                                style={{ borderColor: '#E8E2D6' }}
                             />
                         </div>
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-1.5 min-w-0">
                             <label className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6F6863' }}>End Time</label>
                             <Input
                                 type="time"
                                 value={editedAppointmentData.end}
+                                min={editedAppointmentData.start || undefined}
                                 onChange={(e) => setEditedAppointmentData({ ...editedAppointmentData, end: e.target.value })}
-                                style={{ borderColor: '#E8E2D6', fontSize: 14 }}
+                                className="h-10 w-full min-w-0 max-w-full appearance-none text-base sm:text-sm [&::-webkit-date-and-time-value]:text-left"
+                                style={{ borderColor: '#E8E2D6' }}
                             />
                         </div>
                     </div>
@@ -164,22 +161,22 @@ export const RescheduleConfirmation = () => {
                             setReschedulingAppointment(true)
                             setError('')
                             try {
-                                const appointment = await rescheduleAppointmentAction({
+                                const res = await rescheduleAppointmentAction({
                                     appointmentId: manualBookingData?.newAppointmentEvent?.id ?? manualBookingData?.currSelectedEvent!.id!,
-                                    start: editedAppointmentData.start,
-                                    end: editedAppointmentData.end,
-                                    date: editedAppointmentData.date,
+                                    startISO: combineDateAndTime(editedAppointmentData.date, editedAppointmentData.start).toISO()!,
+                                    endISO: combineDateAndTime(editedAppointmentData.date, editedAppointmentData.end).toISO()!,
                                 })
-                                if (appointment && !Array.isArray(appointment)) {
-                                    setManualBookingData!({
-                                        ...manualBookingData!,
-                                        appointmentEvents: manualBookingData!.appointmentEvents.map(e =>
-                                            e.id === appointment.id
-                                                ? { ...e, start: new Date(appointment.start), end: new Date(appointment.end) }
-                                                : e
-                                        ),
-                                    })
-                                }
+                                if (!res.ok) throw new Error(res.error)
+                                const appointment = res.data
+                                // Functional update so the close below can't overwrite it with a stale snapshot.
+                                setManualBookingData!(prev => ({
+                                    ...prev,
+                                    appointmentEvents: prev.appointmentEvents.map(e =>
+                                        e.id === appointment.id
+                                            ? { ...e, start: new Date(appointment.start), end: new Date(appointment.end) }
+                                            : e
+                                    ),
+                                }))
                                 handleClose()
                                 toast.success('Appointment rescheduled')
                             } catch (err: any) {

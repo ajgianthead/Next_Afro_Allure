@@ -4,12 +4,12 @@ import { NextRequest } from "next/server";
 import { apiError, webhookAck } from "@/lib/api/response";
 import { DateTime } from "luxon";
 import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails";
-import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders";
+import { AppointmentReminders, reminderSettingsFrom } from "@/features/shared/appointments/AppointmentReminders";
 import Stripe from "stripe";
 import { createClient } from "@/app/utils/supabase/server";
 import { Database } from "../../../../../lib/database.types";
 import { trackAppointmentBooked } from "../../../../../lib/analytics";
-import { addCreateNewClient } from "app/dashboard/(other)/clients/actions";
+import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient";
 import { syncStripeRefund } from "@/features/refunds/server/sync";
 import { createAdminClient } from "@/app/utils/supabase/admin";
 
@@ -220,7 +220,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
             id: eoaRes.business,
             name: eoaRes.business_name,
             email: eoaRes.email,
-            address: formatBusinessAddress(eoaRes.account_settings.business_address),
+            address: formatBusinessAddress(eoaRes.account_settings?.business_address),
           },
           appointmentData: {
             id: eoaRes.id,
@@ -291,7 +291,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
         id: res.business,
         name: res.business_name,
         email: res.email,
-        address: formatBusinessAddress(res.account_settings.business_address),
+        address: formatBusinessAddress(res.account_settings?.business_address),
       },
       appointmentData: {
         id: res.id,
@@ -299,7 +299,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
         end: DateTime.fromJSDate(res.end).toISO()!,
       },
       serviceName: res.service_data.name,
-      notifyBusiness: res.account_settings.notifications.email,
+      notifyBusiness: res.account_settings?.notifications?.email === true,
     });
     // Use res.id (the confirmed appointment's DB id) — appointmentID from PI metadata
     // is undefined for automated bookings where only bookingSessionId is in metadata.
@@ -343,12 +343,13 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
     appointmentType: '',
   }).catch(console.error);
 
-  addCreateNewClient({
+  // No business session in a webhook — the service-role helper does the insert.
+  await upsertBusinessClientAsAdmin({
     first_name: res.client_metadata.firstName,
     last_name: res.client_metadata.lastName,
     email: res.client_metadata.email,
     phone_number: res.client_metadata.phoneNumber,
-  }, res.business).catch(console.error);
+  }, res.business);
 }
 
 async function scheduleReminders(res: any, appointmentId: string, client: any) {
@@ -369,7 +370,7 @@ async function scheduleReminders(res: any, appointmentId: string, client: any) {
       id: res.business,
       name: res.business_name,
       email: res.email,
-      address: formatBusinessAddress(settings.business_address),
+      address: formatBusinessAddress(settings?.business_address),
     },
     clientData: {
       firstName: res.client_metadata.firstName,
@@ -377,10 +378,9 @@ async function scheduleReminders(res: any, appointmentId: string, client: any) {
       email: res.client_metadata.email,
       phoneNumber: res.client_metadata.phoneNumber,
     },
-    settings: {
-      clientReminders: { email_1: settings.app_reminders.email_1, email_24: settings.app_reminders.email_24 },
-      businessReminders: { enabled: settings.notifications.email, email_1: settings.notifications.email_1, email_24: settings.notifications.email_24 },
-    },
+    settings: reminderSettingsFrom(settings),
+    // A deposit just succeeded through Stripe, so online payments work.
+    canTakeOnlinePayments: true,
   });
 
   try {
@@ -392,8 +392,9 @@ async function scheduleReminders(res: any, appointmentId: string, client: any) {
           business: { hour: ids.business.hour, day: ids.business.day },
           client: { hour: ids.client.hour, day: ids.client.day },
           paymentCheck: ids.paymentCheck,
+          noShowCheck: ids.noShowCheck,
         },
-        ids.paymentLink,
+        ids.paymentLink ?? '',
         appointmentId,
       ]
     );

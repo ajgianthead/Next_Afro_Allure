@@ -9,6 +9,8 @@ import CancelledAppointment from "../../../emails/cancelled-appointment";
 import ConfirmAppointmentTemplate from "../../../emails/confirm-appointment";
 import EOAReceiptEmail from "../../../emails/eoa-receipt";
 import RefundIssuedEmail from "../../../emails/refund-issued";
+import { getBusinessTimezone } from "@/lib/businessTimezone";
+import { toZonedISO } from "@/lib/timezone";
 
 const FROM_NOTIFICATION = 'notifications <noreply@reminder.afroallure.co>';
 const FROM_BOOKING_ALERT = 'Booking Alert <noreply@reminder.afroallure.co>';
@@ -35,16 +37,20 @@ export interface AppointmentEmailData {
     notifyBusiness: boolean;
 }
 
-export function formatBusinessAddress(addr: {
+export function formatBusinessAddress(addr?: {
     no_address?: boolean;
     line_1?: string;
     line_2?: string;
     city?: string;
     state?: string;
     zip_code?: string;
-}): string {
-    if (addr.no_address) return 'No business address';
-    return `${addr.line_1}, ${addr.line_2}, ${addr.city}, ${addr.state} ${addr.zip_code}`;
+} | null): string {
+    if (!addr || addr.no_address) return 'No business address';
+    // Skip empty parts (an unused line 2 used to render as ", ,").
+    const street = [addr.line_1, addr.line_2].filter(p => p && p.trim()).join(', ');
+    const region = [addr.state, addr.zip_code].filter(p => p && p.trim()).join(' ');
+    const full = [street, addr.city, region].filter(p => p && p.trim()).join(', ');
+    return full || 'No business address';
 }
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -57,19 +63,25 @@ async function trySend(opts: Parameters<typeof resend.emails.send>[0]): Promise<
     }
 }
 
-function buildEmailProps(data: AppointmentEmailData) {
+async function buildEmailProps(data: AppointmentEmailData) {
+    // Times are stored in UTC; show them in the business's timezone.
+    const tz = await getBusinessTimezone(data.businessData.id);
     return {
         socials: SOCIALS,
         clientData: { firstName: data.clientMetadata.firstName, lastName: data.clientMetadata.lastName },
         businessData: { id: data.businessData.id, name: data.businessData.name, businessAddress: data.businessData.address },
-        appointmentData: { id: data.appointmentData.id, start: data.appointmentData.start, end: data.appointmentData.end },
+        appointmentData: {
+            id: data.appointmentData.id,
+            start: toZonedISO(data.appointmentData.start, tz),
+            end: toZonedISO(data.appointmentData.end, tz),
+        },
         serviceName: data.serviceName,
     };
 }
 
 export class AppointmentEmails {
     static async sendConfirmed(data: AppointmentEmailData): Promise<void> {
-        const props = buildEmailProps(data);
+        const props = await buildEmailProps(data);
         await trySend({ from: FROM_NOTIFICATION, to: data.clientMetadata.email, subject: 'Appointment Confirmed', react: AppointmentConfirmed(props) });
         if (data.notifyBusiness) {
             await trySend({ from: FROM_BOOKING_ALERT, to: data.businessData.email, subject: 'Booking Alert', react: NewAppointment(props) });
@@ -77,7 +89,7 @@ export class AppointmentEmails {
     }
 
     static async sendRescheduled(data: AppointmentEmailData): Promise<void> {
-        const props = buildEmailProps(data);
+        const props = await buildEmailProps(data);
         await trySend({ from: FROM_NOTIFICATION, to: data.clientMetadata.email, subject: 'Appointment Rescheduled', react: AppointmentRescheduled(props) });
         if (data.notifyBusiness) {
             await trySend({ from: FROM_BOOKING_ALERT, to: data.businessData.email, subject: 'Booking Alert', react: RescheduledAppointment(props) });
@@ -85,7 +97,7 @@ export class AppointmentEmails {
     }
 
     static async sendCancelled(data: AppointmentEmailData): Promise<void> {
-        const props = buildEmailProps(data);
+        const props = await buildEmailProps(data);
         await trySend({ from: FROM_NOTIFICATION, to: data.clientMetadata.email, subject: 'Appointment Cancelled', react: AppointmentCancelled(props) });
         if (data.notifyBusiness) {
             await trySend({ from: FROM_BOOKING_ALERT, to: data.businessData.email, subject: 'Booking Alert', react: CancelledAppointment(props) });
@@ -93,7 +105,7 @@ export class AppointmentEmails {
     }
 
     static async sendEOAReceipt(data: AppointmentEmailData & { amountPaid: number }): Promise<void> {
-        const props = { ...buildEmailProps(data), amountPaid: data.amountPaid };
+        const props = { ...(await buildEmailProps(data)), amountPaid: data.amountPaid };
         await trySend({
             from: FROM_NOTIFICATION,
             to: data.clientMetadata.email,
@@ -103,7 +115,7 @@ export class AppointmentEmails {
     }
 
     static async sendRefundIssued(data: AppointmentEmailData & { amountRefunded: number; pending: boolean; cancelled: boolean }): Promise<void> {
-        const props = { ...buildEmailProps(data), amountRefunded: data.amountRefunded, pending: data.pending, cancelled: data.cancelled };
+        const props = { ...(await buildEmailProps(data)), amountRefunded: data.amountRefunded, pending: data.pending, cancelled: data.cancelled };
         await trySend({
             from: FROM_NOTIFICATION,
             to: data.clientMetadata.email,
@@ -117,7 +129,7 @@ export class AppointmentEmails {
             from: 'confirm-appointment <noreply@reminder.afroallure.co>',
             to: data.clientMetadata.email,
             subject: 'Confirm Appointment',
-            react: ConfirmAppointmentTemplate(buildEmailProps(data)),
+            react: ConfirmAppointmentTemplate(await buildEmailProps(data)),
         });
     }
 

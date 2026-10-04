@@ -189,7 +189,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
             <div data-tour="settings-deposit">
             <Section label="Deposits">
                 {!isOnboarded && (
-                    <a href={businessUser.current_onboarding_link!} target="_blank" className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3" style={{ backgroundColor: 'rgba(201,151,74,0.08)', color: BRAND.gold }}>
+                    <a href={`/onboarding/${businessUser.stripe_acc_id}`} className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3" style={{ backgroundColor: 'rgba(201,151,74,0.08)', color: BRAND.gold }}>
                         <Info size={13} />
                         Complete Monetization Onboarding to enable deposits
                     </a>
@@ -254,7 +254,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
             {/* Payment Methods */}
             <Section label="Payment Methods">
                 {!isOnboarded && (
-                    <a href={businessUser.current_onboarding_link!} target="_blank" className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3" style={{ backgroundColor: 'rgba(201,151,74,0.08)', color: BRAND.gold }}>
+                    <a href={`/onboarding/${businessUser.stripe_acc_id}`} className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3" style={{ backgroundColor: 'rgba(201,151,74,0.08)', color: BRAND.gold }}>
                         <Info size={13} />
                         Complete Monetization Onboarding to enable payment methods
                     </a>

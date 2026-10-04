@@ -1,8 +1,8 @@
-import { AppointmentEvent } from "../../types";
 import { CalendarIcon, Check } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { DateTime } from "luxon";
 
 import { useManualBooking } from "../../hooks/useManualBooking";
 import { Caption } from "@/components/tailus-ui/typography";
@@ -18,58 +18,104 @@ import { createManualAppointmentAction } from "../../server";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from "app/for-businesses/actions";
 import { dismissUpgradePromptAction } from "app/dashboard/(other)/actions";
+import { AppointmentData } from "../../types";
+import { addMinutesToTime, combineDateAndTime, minStartTimeFor, validateAppointmentTimes } from "../../utils/appointmentTime";
+import { browserTimezone } from "@/lib/timezone";
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
-export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial, stripeCustomerId, businessId }: {
+// 16px text stops iOS Safari from zooming into focused inputs; min-w-0 +
+// appearance-none stop native time inputs from forcing their intrinsic
+// width and overflowing the modal on iPhones.
+const INPUT_CLASS = "h-10 w-full min-w-0 max-w-full appearance-none text-base sm:text-sm [&::-webkit-date-and-time-value]:text-left"
+
+export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial, stripeCustomerId, businessId, canTakeOnlinePayments }: {
     planType: 'STARTER' | 'GROWTH';
     monthlyBookingCount: number;
     hadTrial: boolean;
     stripeCustomerId: string | null;
     businessId: string;
+    canTakeOnlinePayments: boolean;
 }) => {
     const { manualBookingData, setManualBookingData } = useManualBooking()
     const router = useRouter()
     const [upgradeLoading, setUpgradeLoading] = useState(false)
+    // Once the business edits the end time by hand, stop overwriting it with
+    // the service-length default.
+    const [endEdited, setEndEdited] = useState(false)
 
     const atLimit = planType === 'STARTER' && monthlyBookingCount >= 10
     const isOpen = manualBookingData?.openCreateAppointment ?? false
+    const form = manualBookingData?.newAppointmentData
+    const depositAvailable = !!manualBookingData?.policy.deposit.enabled && canTakeOnlinePayments
+
+    const selectedService = useMemo(
+        () => manualBookingData?.services.find(s => s.id === form?.serviceId),
+        [manualBookingData?.services, form?.serviceId]
+    )
+
+    useEffect(() => { if (isOpen) setEndEdited(false) }, [isOpen])
+
+    const updateForm = (patch: Partial<AppointmentData>) => {
+        setManualBookingData!(prev => ({
+            ...prev,
+            newAppointmentData: { ...prev.newAppointmentData, ...patch },
+            error: { hasError: false, message: '' },
+        }))
+    }
+
+    const defaultEndFor = (start: string, serviceId: string) => {
+        const service = manualBookingData?.services.find(s => s.id === serviceId)
+        if (!start || !service?.length) return null
+        return addMinutesToTime(start, service.length)
+    }
+
+    const handleStartChange = (start: string) => {
+        const patch: Partial<AppointmentData> = { start }
+        if (!endEdited && form?.serviceId) {
+            const end = defaultEndFor(start, form.serviceId)
+            if (end) patch.end = end
+        }
+        updateForm(patch)
+    }
+
+    const handleServiceChange = (serviceId: string) => {
+        // Service length sets a default end time; the business can still change it.
+        const patch: Partial<AppointmentData> = { serviceId, selectedAddons: new Set() }
+        const end = defaultEndFor(form?.start ?? '', serviceId)
+        if (end) {
+            patch.end = end
+            setEndEdited(false)
+        }
+        updateForm(patch)
+    }
+
+    const handleEndChange = (end: string) => {
+        setEndEdited(true)
+        updateForm({ end })
+    }
+
+    const setError = (message: string) =>
+        setManualBookingData!(prev => ({ ...prev, error: { hasError: true, message } }))
 
     const validateInputs = () => {
-        const selectedDate = manualBookingData?.newAppointmentData.date ?? new Date()
-        const startParts = manualBookingData?.newAppointmentData.start.split(':')
-        const endParts = manualBookingData?.newAppointmentData.end.split(':')
-
-        if (manualBookingData?.newAppointmentData.start.length === 0 || manualBookingData?.newAppointmentData.end.length === 0) {
-            setManualBookingData!({ ...manualBookingData!, error: { hasError: true, message: 'Please enter a valid start and end time' } })
-            return false
+        const timeError = validateAppointmentTimes(form?.date, form?.start ?? '', form?.end ?? '')
+        if (timeError) { setError(timeError); return false }
+        if (!form?.serviceId) { setError('Please select a service'); return false }
+        const c = form.clientData
+        if (!c.firstName.trim() || !c.lastName.trim() || !c.email.trim() || !c.phoneNumber.trim()) {
+            setError('Please enter client information'); return false
         }
-
-        const start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), Number(startParts![0]), Number(startParts![1]))
-        const end = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), Number(endParts![0]), Number(endParts![1]))
-
-        if (end <= start) {
-            setManualBookingData!({ ...manualBookingData!, error: { hasError: true, message: 'End time must be after start time' } })
-            return false
-        }
-        if (manualBookingData?.newAppointmentData.serviceId.length === 0) {
-            setManualBookingData!({ ...manualBookingData!, error: { hasError: true, message: 'Please select a service' } })
-            return false
-        }
-        if (!manualBookingData?.newAppointmentData.clientData.firstName.length ||
-            !manualBookingData?.newAppointmentData.clientData.lastName.length ||
-            !manualBookingData?.newAppointmentData.clientData.email.length ||
-            !manualBookingData?.newAppointmentData.clientData.phoneNumber.length
-        ) {
-            setManualBookingData!({ ...manualBookingData!, error: { hasError: true, message: 'Please enter client information' } })
-            return false
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim())) {
+            setError('Please enter a valid client email'); return false
         }
         return true
     }
 
     const handleClose = () => {
-        setManualBookingData!({
-            ...manualBookingData!,
+        setEndEdited(false)
+        setManualBookingData!(prev => ({
+            ...prev,
             newAppointmentData: {
                 start: "",
                 end: "",
@@ -77,11 +123,40 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
                 serviceId: '',
                 clientData: { firstName: "", lastName: "", email: "", phoneNumber: "" },
                 selectedAddons: new Set(),
-                deposit: manualBookingData?.policy.deposit.enabled!
+                deposit: depositAvailable
             },
             openCreateAppointment: false,
+            creatingAppointment: false,
             error: { hasError: false, message: "" }
+        }))
+    }
+
+    const handleSubmit = async () => {
+        if (!form || !validateInputs()) return
+        setManualBookingData!(prev => ({ ...prev, creatingAppointment: true }))
+        const res = await createManualAppointmentAction({
+            startISO: combineDateAndTime(form.date, form.start).toISO()!,
+            endISO: combineDateAndTime(form.date, form.end).toISO()!,
+            serviceId: form.serviceId,
+            clientData: form.clientData,
+            deposit: depositAvailable && form.deposit,
+            selectedAddons: [...form.selectedAddons],
+            timezone: browserTimezone(),
         })
+        if (!res.ok) {
+            setManualBookingData!(prev => ({ ...prev, creatingAppointment: false, error: { hasError: true, message: res.error } }))
+            return
+        }
+        // Add the new appointment and close in one update — previously the
+        // close ran with a stale snapshot and wiped the new appointment out of
+        // the list until the page was refreshed.
+        setManualBookingData!(prev => ({
+            ...prev,
+            appointmentEvents: [...prev.appointmentEvents, res.data],
+        }))
+        handleClose()
+        toast.success('Appointment created')
+        router.refresh()
     }
 
     const handleUpgrade = async () => {
@@ -107,7 +182,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
     if (atLimit) {
         return (
             <Dialog open={isOpen} onOpenChange={open => { if (!open) handleClose() }}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
                     <DialogHeader>
                         <DialogTitle style={{ fontFamily: SERIF, fontSize: '1.35rem', color: '#1A1818' }}>
                             You've reached your monthly limit
@@ -157,16 +232,22 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
         )
     }
 
+    const today = DateTime.now().startOf('day').toJSDate()
+    const minStart = minStartTimeFor(form?.date)
+    const durationMins = form?.date && form.start && form.end
+        ? combineDateAndTime(form.date, form.end).diff(combineDateAndTime(form.date, form.start), 'minutes').minutes
+        : null
+
     return (
         <Dialog open={isOpen} onOpenChange={open => { if (!open) handleClose() }}>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[90dvh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
                 <DialogHeader>
                     <DialogTitle>Create Appointment</DialogTitle>
                     {manualBookingData?.error.hasError && (
                         <Caption size={'sm'} className="text-red-500">{manualBookingData.error.message}</Caption>
                     )}
                 </DialogHeader>
-                <div className="flex gap-5 flex-col">
+                <div className="flex gap-5 flex-col min-w-0">
                     <div className="flex flex-col gap-2">
                         <Caption className="font-semibold">Date</Caption>
                         <Popover>
@@ -174,89 +255,90 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
                                 <Button
                                     size={'sm'}
                                     variant="outline"
-                                    data-empty={!manualBookingData?.newAppointmentData.date}
-                                    className="w-70 justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+                                    data-empty={!form?.date}
+                                    className="h-10 w-full sm:w-70 justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
                                 >
                                     <CalendarIcon />
-                                    {manualBookingData?.newAppointmentData.date
-                                        ? <p className="text-sm">{format(manualBookingData.newAppointmentData.date, "PPP")}</p>
+                                    {form?.date
+                                        ? <p className="text-sm">{format(form.date, "PPP")}</p>
                                         : <span>Pick a date</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0 z-9999">
                                 <CalendarComponent
-                                    disabled={(date) => date < new Date()}
+                                    // Same-day bookings are allowed; only earlier days are blocked.
+                                    disabled={(date) => date < today}
                                     required
                                     mode="single"
-                                    selected={manualBookingData?.newAppointmentData.date}
-                                    onSelect={(e) => setManualBookingData!({
-                                        ...manualBookingData!,
-                                        newAppointmentData: { ...manualBookingData?.newAppointmentData!, date: e }
-                                    })}
+                                    selected={form?.date}
+                                    onSelect={(date) => { if (date) updateForm({ date }) }}
                                 />
                             </PopoverContent>
                         </Popover>
                     </div>
-                    <div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1.5">
+                        <div className="grid grid-cols-2 gap-3 min-w-0">
+                            <div className="flex flex-col gap-2 min-w-0">
                                 <Caption className="font-semibold">Start Time</Caption>
                                 <Input
                                     data-testid='start-time'
-                                    value={manualBookingData?.newAppointmentData.start}
-                                    onChange={(e) => setManualBookingData!({ ...manualBookingData!, newAppointmentData: { ...manualBookingData?.newAppointmentData!, start: e.target.value } })}
-                                    style={{ fontSize: 14 }}
+                                    value={form?.start ?? ''}
+                                    min={minStart}
+                                    onChange={(e) => handleStartChange(e.target.value)}
+                                    className={INPUT_CLASS}
                                     type='time'
                                 />
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2 min-w-0">
                                 <Caption className="font-semibold">End Time</Caption>
                                 <Input
                                     data-testid='end-time'
-                                    value={manualBookingData?.newAppointmentData.end}
-                                    onChange={(e) => setManualBookingData!({ ...manualBookingData!, newAppointmentData: { ...manualBookingData?.newAppointmentData!, end: e.target.value } })}
-                                    style={{ fontSize: 14 }}
+                                    value={form?.end ?? ''}
+                                    min={form?.start || undefined}
+                                    onChange={(e) => handleEndChange(e.target.value)}
+                                    className={INPUT_CLASS}
                                     type='time'
                                 />
                             </div>
                         </div>
+                        {durationMins !== null && durationMins > 0 && (
+                            <p className="text-xs" style={{ color: '#6F6863' }}>
+                                {durationMins >= 60 ? `${Math.floor(durationMins / 60)}h ` : ''}{durationMins % 60 ? `${durationMins % 60}m` : ''}
+                                {selectedService && !endEdited ? ` · based on ${selectedService.name}'s length — you can change the end time` : ''}
+                            </p>
+                        )}
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 min-w-0">
                         <Caption className="font-semibold">Service</Caption>
-                        <Select onValueChange={(value) => setManualBookingData!({ ...manualBookingData!, newAppointmentData: { ...manualBookingData?.newAppointmentData!, serviceId: value } })}>
-                            <SelectTrigger data-testid='select-service-btn' style={{ fontSize: 14 }} size="sm" className="w-45 text-sm">
+                        <Select value={form?.serviceId || undefined} onValueChange={handleServiceChange}>
+                            <SelectTrigger data-testid='select-service-btn' size="sm" className="h-10 w-full sm:w-60 text-base sm:text-sm">
                                 <SelectValue placeholder='Select a service' className="text-sm" />
                             </SelectTrigger>
                             <SelectContent data-testid='service-name' className="z-9999">
-                                {manualBookingData?.services.map((service, index) => (
-                                    <div key={index}>
-                                        <SelectItem data-testid='service-name' value={service.id}>{service.name}</SelectItem>
-                                    </div>
+                                {manualBookingData?.services.map((service) => (
+                                    <SelectItem key={service.id} data-testid='service-name' value={service.id}>{service.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </div>
 
-                    {manualBookingData?.newAppointmentData.serviceId.length! > 0 && manualBookingData?.services.filter((service) => service.id === manualBookingData.newAppointmentData.serviceId)[0].addons.length ? (
+                    {selectedService?.addons?.length ? (
                         <div className="flex flex-col gap-2">
                             <Caption className="font-semibold">Addon(s)</Caption>
                             <div>
                                 <FieldGroup>
-                                    {manualBookingData.services.filter((service) => service.id === manualBookingData.newAppointmentData.serviceId)[0].addons.map((addon, index) => {
+                                    {selectedService.addons.map((addon) => {
                                         const addonId = `addon-${addon.id}`
                                         return (
-                                            <div key={index}>
+                                            <div key={addon.id}>
                                                 <Field orientation={'horizontal'}>
                                                     <Checkbox
-                                                        checked={manualBookingData.newAppointmentData.selectedAddons.has(addon.id)}
-                                                        onCheckedChange={(checked: boolean) => {
-                                                            let newSet = new Set([...manualBookingData.newAppointmentData.selectedAddons])
-                                                            if (manualBookingData.newAppointmentData.selectedAddons.has(addon.id)) {
-                                                                newSet.delete(addon.id)
-                                                            } else {
-                                                                newSet.add(addon.id)
-                                                            }
-                                                            setManualBookingData!({ ...manualBookingData, newAppointmentData: { ...manualBookingData.newAppointmentData, selectedAddons: newSet } })
+                                                        checked={form!.selectedAddons.has(addon.id)}
+                                                        onCheckedChange={() => {
+                                                            const next = new Set(form!.selectedAddons)
+                                                            if (next.has(addon.id)) next.delete(addon.id)
+                                                            else next.add(addon.id)
+                                                            updateForm({ selectedAddons: next })
                                                         }}
                                                         id={addonId}
                                                     />
@@ -270,32 +352,37 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
                                 </FieldGroup>
                             </div>
                         </div>
-                    ) : <></>}
+                    ) : null}
 
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 min-w-0">
                         <Caption className="font-semibold">Client Information</Caption>
-                        <div className="grid grid-cols-2 grid-rows-2 gap-2">
-                            <Input data-testid={'first-name'} value={manualBookingData?.newAppointmentData.clientData.firstName} onChange={(e) => setManualBookingData!({ ...manualBookingData!, newAppointmentData: { ...manualBookingData?.newAppointmentData!, clientData: { ...manualBookingData?.newAppointmentData.clientData!, firstName: e.target.value } } })} style={{ fontSize: 14 }} placeholder='First Name' />
-                            <Input data-testid={'last-name'} value={manualBookingData?.newAppointmentData.clientData.lastName} onChange={(e) => setManualBookingData!({ ...manualBookingData!, newAppointmentData: { ...manualBookingData?.newAppointmentData!, clientData: { ...manualBookingData?.newAppointmentData.clientData!, lastName: e.target.value } } })} style={{ fontSize: 14 }} placeholder='Last Name' />
-                            <Input data-testid={'email'} value={manualBookingData?.newAppointmentData.clientData.email} onChange={(e) => setManualBookingData!({ ...manualBookingData!, newAppointmentData: { ...manualBookingData?.newAppointmentData!, clientData: { ...manualBookingData?.newAppointmentData.clientData!, email: e.target.value } } })} style={{ fontSize: 14 }} placeholder="Email" />
-                            <Input data-testid={'phone-number'} value={manualBookingData?.newAppointmentData.clientData.phoneNumber} onChange={(e) => setManualBookingData!({ ...manualBookingData!, newAppointmentData: { ...manualBookingData?.newAppointmentData!, clientData: { ...manualBookingData?.newAppointmentData.clientData!, phoneNumber: e.target.value } } })} style={{ fontSize: 14 }} placeholder="Phone Number" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
+                            <Input data-testid={'first-name'} autoComplete="off" value={form?.clientData.firstName ?? ''} onChange={(e) => updateForm({ clientData: { ...form!.clientData, firstName: e.target.value } })} className={INPUT_CLASS} placeholder='First Name' />
+                            <Input data-testid={'last-name'} autoComplete="off" value={form?.clientData.lastName ?? ''} onChange={(e) => updateForm({ clientData: { ...form!.clientData, lastName: e.target.value } })} className={INPUT_CLASS} placeholder='Last Name' />
+                            <Input data-testid={'email'} type="email" inputMode="email" autoComplete="off" value={form?.clientData.email ?? ''} onChange={(e) => updateForm({ clientData: { ...form!.clientData, email: e.target.value } })} className={INPUT_CLASS} placeholder="Email" />
+                            <Input data-testid={'phone-number'} type="tel" inputMode="tel" autoComplete="off" value={form?.clientData.phoneNumber ?? ''} onChange={(e) => updateForm({ clientData: { ...form!.clientData, phoneNumber: e.target.value } })} className={INPUT_CLASS} placeholder="Phone Number" />
                         </div>
                     </div>
                     <div>
                         <FieldGroup>
                             <Field orientation={'horizontal'}>
                                 <Checkbox
-                                    disabled={!manualBookingData?.policy.deposit.enabled}
-                                    checked={manualBookingData?.newAppointmentData.deposit}
-                                    onCheckedChange={(checked: boolean) => setManualBookingData!({ ...manualBookingData!, newAppointmentData: { ...manualBookingData?.newAppointmentData!, deposit: checked } })}
+                                    disabled={!depositAvailable}
+                                    checked={depositAvailable && !!form?.deposit}
+                                    onCheckedChange={(checked: boolean) => updateForm({ deposit: checked })}
                                     id='require-deposit'
                                 />
-                                <FieldLabel htmlFor="require-deposit">Require deposit</FieldLabel>
+                                <FieldLabel htmlFor="require-deposit">
+                                    Require deposit
+                                    {!canTakeOnlinePayments && (
+                                        <span className="text-xs font-normal" style={{ color: '#6F6863' }}> (set up Monetization to collect deposits)</span>
+                                    )}
+                                </FieldLabel>
                             </Field>
                         </FieldGroup>
                     </div>
                 </div>
-                <DialogFooter className="mt-2">
+                <DialogFooter className="mt-2 flex-col-reverse gap-2 sm:flex-row">
                     <Button
                         variant={'outline'}
                         disabled={manualBookingData?.creatingAppointment}
@@ -308,18 +395,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
                         data-testid={'submit-appointment'}
                         disabled={manualBookingData?.creatingAppointment}
                         style={{ fontSize: 14 }}
-                        onClick={async () => {
-                            if (!validateInputs()) return
-                            setManualBookingData!({ ...manualBookingData!, creatingAppointment: true })
-                            try {
-                                const appointment = await createManualAppointmentAction(manualBookingData?.newAppointmentData!) as AppointmentEvent
-                                setManualBookingData!({ ...manualBookingData!, appointmentEvents: [...manualBookingData?.appointmentEvents!, appointment], creatingAppointment: false })
-                                handleClose()
-                                toast.success('Appointment created')
-                            } catch (err: any) {
-                                setManualBookingData!({ ...manualBookingData!, creatingAppointment: false, error: { hasError: true, message: err?.message ?? 'Failed to create appointment. Please try again.' } })
-                            }
-                        }}
+                        onClick={handleSubmit}
                     >
                         {manualBookingData?.creatingAppointment ? 'Creating…' : 'Create Appointment'}
                     </Button>

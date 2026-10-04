@@ -5,6 +5,8 @@ import { Database } from "../../lib/database.types";
 import ReminderBusiness from "../../emails/reminder-business";
 import ReminderClient from "../../emails/reminder-client";
 import PaymentLinkEmail from "../../emails/payment-link";
+import { DateTime } from "luxon";
+import { toZonedISO } from "../lib/timezone";
 
 configure({
   secretKey: process.env.NEXT_PUBLIC_TRIGGER_API_KEY,
@@ -24,6 +26,7 @@ export type AppointmentReminderData = {
   appointmentId: string;
   start: string;
   end: string;
+  timezone?: string;
   clientData: {
     firstName: string;
     lastName: string;
@@ -31,6 +34,11 @@ export type AppointmentReminderData = {
     phoneNumber: string;
   }
 }
+
+const adminClient = () => createSupabaseClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_ROLE_SECRET_KEY!
+)
 
 const sendBusinessEmail = async (data: AppointmentReminderData) => {
   try {
@@ -41,8 +49,8 @@ const sendBusinessEmail = async (data: AppointmentReminderData) => {
       react: ReminderBusiness({
         appointmentData: {
           id: data.appointmentId,
-          start: data.start,
-          end: data.end
+          start: toZonedISO(data.start, data.timezone),
+          end: toZonedISO(data.end, data.timezone)
         }, socials: {
           instagram: 'https://instagram.com',
         }, serviceName: data.serviceName, clientData: {
@@ -70,8 +78,8 @@ const sendClientEmail = async (data: AppointmentReminderData) => {
       react: ReminderClient({
         appointmentData: {
           id: data.appointmentId,
-          start: data.start,
-          end: data.end
+          start: toZonedISO(data.start, data.timezone),
+          end: toZonedISO(data.end, data.timezone)
         }, socials: {
           instagram: 'https://instagram.com',
         }, serviceName: data.serviceName, clientData: {
@@ -95,6 +103,8 @@ const sendClientEmail = async (data: AppointmentReminderData) => {
 export type ReminderProps = {
   serviceName: string;
   delay: string;
+  /** 'hour' = 1 hour before, 'day' = 24 hours before. Older runs omit it. */
+  kind?: 'hour' | 'day';
   sendToType: string;
   sendBy: string;
   appointmentData: {
@@ -132,8 +142,34 @@ export type PaymentLinkProps = {
   appointmentID: string;
 }
 
+// Reminders are scheduled when an appointment is confirmed, but the business
+// can turn reminders off (or reschedule/cancel) afterwards. Re-check the live
+// state right before sending so a disabled reminder never goes out.
+const shouldSendReminder = async (props: ReminderProps): Promise<{ send: boolean; timezone?: string }> => {
+  const supabase = adminClient()
+  const [{ data: appt }, { data: business }] = await Promise.all([
+    supabase.from('appointments').select('status, start').eq('id', props.appointmentData.id).maybeSingle(),
+    supabase.from('business_users').select('account_settings').eq('business_id', props.businessData.id).maybeSingle(),
+  ])
+  if (!appt || appt.status !== 'CONFIRMED') return { send: false }
+  // Rescheduled since this run was queued — the new time has its own runs.
+  if (Math.abs(DateTime.fromISO(appt.start).toMillis() - DateTime.fromISO(props.appointmentData.start).toMillis()) > 60_000) {
+    return { send: false }
+  }
+  const settings = (business?.account_settings ?? {}) as any
+  const kind = props.kind ?? (
+    DateTime.fromISO(props.appointmentData.start).diff(DateTime.fromISO(props.delay), 'hours').hours > 2 ? 'day' : 'hour'
+  )
+  const key = kind === 'day' ? 'email_24' : 'email_1'
+  const enabled = props.sendToType === 'client'
+    ? settings?.app_reminders?.[key] === true
+    : settings?.notifications?.email === true && settings?.notifications?.[key] === true
+  return { send: enabled, timezone: settings?.timezone }
+}
+
 const configureReminder = async (props: ReminderProps) => {
-  // const supabase = createClient<Database>();
+  const { send, timezone } = await shouldSendReminder(props)
+  if (!send) return
 
   if (props.sendToType === 'business') {
     // Send to notification system
@@ -158,6 +194,7 @@ const configureReminder = async (props: ReminderProps) => {
         appointmentId: props.appointmentData.id,
         start: props.appointmentData.start,
         end: props.appointmentData.end,
+        timezone,
         clientData: {
           ...props.clientData
         },
@@ -184,6 +221,7 @@ const configureReminder = async (props: ReminderProps) => {
         appointmentId: props.appointmentData.id,
         start: props.appointmentData.start,
         end: props.appointmentData.end,
+        timezone,
         clientData: {
           ...props.clientData
         },
@@ -232,10 +270,7 @@ export const sendLink = async (props: PaymentLinkProps) => {
 }
 
 const checkNoShow = async (appointmentId: string) => {
-  const supabase = createSupabaseClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_ROLE_SECRET_KEY!
-  )
+  const supabase = adminClient()
   const { data: appt } = await supabase
     .from('appointments')
     .select('id, business, status, service_paid, service_data, client_metadata')
@@ -263,10 +298,7 @@ const checkNoShow = async (appointmentId: string) => {
 }
 
 const checkPaymentStatus = async (appointmentId: string) => {
-  const supabase = createSupabaseClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_ROLE_SECRET_KEY!
-  )
+  const supabase = adminClient()
   const { data: appt } = await supabase
     .from('appointments')
     .select('id, business, status, service_paid, service_data, client_metadata')
@@ -307,6 +339,15 @@ export const sendPaymentLink = task({
   id: `send-payment-link`,
   maxDuration: 300,
   run: async (payload: PaymentLinkProps) => {
+    // Only send if there's still something to pay online: the appointment is
+    // confirmed and unpaid, and the business can actually take card payments.
+    const supabase = adminClient()
+    const [{ data: appt }, { data: business }] = await Promise.all([
+      supabase.from('appointments').select('status, service_paid, amount_due').eq('id', payload.appointmentID).maybeSingle(),
+      supabase.from('business_users').select('completed_stripe_onboarding').eq('business_id', payload.businessData.id).maybeSingle(),
+    ])
+    if (!appt || appt.status !== 'CONFIRMED' || appt.service_paid || (appt.amount_due ?? 0) <= 0) return
+    if (!business?.completed_stripe_onboarding) return
     await sendLink(payload)
   }
 })

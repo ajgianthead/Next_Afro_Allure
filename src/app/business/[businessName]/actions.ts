@@ -10,7 +10,8 @@ import { assignAddons } from "app/api/util/transformServices";
 import { trackAppointmentRescheduled } from "../../../../lib/analytics";
 import { NotificationType } from "@/lib/notifications/Notification";
 import { formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails";
-import { runs } from "@trigger.dev/sdk/v3";
+import { scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation";
+import { resolveTimezone, toZonedISO } from "@/lib/timezone";
 import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -155,8 +156,8 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
                     },
                     appointmentData: {
                         id: appointment.id,
-                        start: DateTime.fromJSDate(appointment.start).toISO()!,
-                        end: DateTime.fromJSDate(appointment.end).toISO()!,
+                        start: toZonedISO(DateTime.fromJSDate(appointment.start).toISO()!, business.account_settings?.timezone),
+                        end: toZonedISO(DateTime.fromJSDate(appointment.end).toISO()!, business.account_settings?.timezone),
                     },
                     serviceName: appointment.service_data.name,
                 }),
@@ -178,8 +179,8 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
                     },
                     appointmentData: {
                         id: appointment.id,
-                        start: DateTime.fromJSDate(appointment.start).toISO()!,
-                        end: DateTime.fromJSDate(appointment.end).toISO()!,
+                        start: toZonedISO(DateTime.fromJSDate(appointment.start).toISO()!, business.account_settings?.timezone),
+                        end: toZonedISO(DateTime.fromJSDate(appointment.end).toISO()!, business.account_settings?.timezone),
                     },
                     serviceName: appointment.service_data.name,
                 }),
@@ -201,7 +202,7 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
             try {
                 const supabase = await createClient()
                 await supabase.from('notifications').insert({
-                    body: `${appointment.client_metadata.firstName} ${appointment.client_metadata.lastName} rescheduled their ${appointment.service_data.name} appointment to ${DateTime.fromJSDate(appointment.start).toFormat('LLLL dd, yyyy')} at ${DateTime.fromJSDate(appointment.start).toLocaleString(DateTime.TIME_SIMPLE)}.`,
+                    body: `${appointment.client_metadata.firstName} ${appointment.client_metadata.lastName} rescheduled their ${appointment.service_data.name} appointment to ${DateTime.fromJSDate(appointment.start).setZone(resolveTimezone(business.account_settings?.timezone)).toFormat('LLLL dd, yyyy')} at ${DateTime.fromJSDate(appointment.start).setZone(resolveTimezone(business.account_settings?.timezone)).toLocaleString(DateTime.TIME_SIMPLE)}.`,
                     title: 'Appointment Rescheduled',
                     read: false,
                     business_id: appointment.business,
@@ -216,55 +217,27 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
         // Cancel old reminder jobs and schedule new ones — fire-and-forget, non-critical
         ;(async () => {
             try {
-                const reminders = ogAppointment.reminder_ids as any
-                if (reminders?.business?.hour) await runs.cancel(reminders.business.hour)
-                if (reminders?.business?.day) await runs.cancel(reminders.business.day)
-                if (reminders?.client?.hour) await runs.cancel(reminders.client.hour)
-                if (reminders?.client?.day) await runs.cancel(reminders.client.day)
-                if (ogAppointment.payment_link_id) await runs.cancel(ogAppointment.payment_link_id)
-                if (reminders?.paymentCheck) await runs.cancel(reminders.paymentCheck)
-                if (reminders?.noShowCheck) await runs.cancel(reminders.noShowCheck)
+                await AppointmentReminders.cancelAll(ogAppointment.reminder_ids, ogAppointment.payment_link_id)
 
-                const settings = business.account_settings ?? {}
-                const ids = await AppointmentReminders.schedule({
-                    appointmentId: appointment.id,
+                const supabase = await createClient()
+                await scheduleAndStoreReminders(supabase, {
+                    id: appointment.id,
                     start: DateTime.fromJSDate(appointment.start).toISO()!,
                     end: DateTime.fromJSDate(appointment.end).toISO()!,
                     serviceName: appointment.service_data.name,
-                    businessData: {
-                        id: business.business_id,
-                        name: business.business_name,
-                        email: business.email,
-                        address: formatBusinessAddress(business.account_settings?.business_address ?? {}),
-                    },
-                    clientData: {
+                    clientMetadata: {
                         firstName: appointment.client_metadata.firstName,
                         lastName: appointment.client_metadata.lastName,
                         email: appointment.client_metadata.email,
                         phoneNumber: appointment.client_metadata.phoneNumber,
                     },
-                    settings: {
-                        clientReminders: {
-                            email_1: settings.app_reminders?.email_1 ?? false,
-                            email_24: settings.app_reminders?.email_24 ?? false,
-                        },
-                        businessReminders: {
-                            enabled: settings.notifications?.email ?? false,
-                            email_1: settings.notifications?.email_1 ?? false,
-                            email_24: settings.notifications?.email_24 ?? false,
-                        },
-                    },
+                }, {
+                    id: business.business_id,
+                    name: business.business_name,
+                    email: business.email,
+                    accountSettings: business.account_settings,
+                    completedStripeOnboarding: !!business.completed_stripe_onboarding,
                 })
-                const supabase = await createClient()
-                await supabase.from('appointments').update({
-                    reminder_ids: {
-                        business: { hour: ids.business.hour, day: ids.business.day },
-                        client: { hour: ids.client.hour, day: ids.client.day },
-                        paymentCheck: ids.paymentCheck,
-                        noShowCheck: ids.noShowCheck,
-                    },
-                    payment_link_id: ids.paymentLink,
-                }).eq('id', appointment.id)
             } catch (err) {
                 console.error('Failed to manage reminders after public reschedule:', err)
             }

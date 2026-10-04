@@ -97,7 +97,7 @@ export function GrowthTrendsSection({ growth }: Props) {
                             <p className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>
                                 Projected This Month
                             </p>
-                            <InfoTooltip text="Estimated total revenue for this month based on your daily earnings rate so far." />
+                            <InfoTooltip text="What you've earned this month plus what's still due on confirmed appointments booked for the rest of the month." />
                         </div>
                         <p className="text-2xl font-semibold" style={{ fontFamily: SERIF, color: '#FFFFFF' }}>
                             {fmt(growth.projected_month_revenue)}

@@ -99,6 +99,9 @@ export default function LayoutComp({ children, businessData }: { children: React
             toursCompleted={(businessData?.tours_completed as Record<string, boolean>) ?? {}}
             businessId={businessData?.business_id ?? ''}
             isOnboarded={businessData?.is_onboarded ?? true}
+            businessName={businessData?.business_name ?? ''}
+            businessAddress={businessData?.account_settings?.business_address ?? null}
+            hasTimezone={!!businessData?.account_settings?.timezone}
         >
         <div lang="en" className="w-full">
             <SidebarProvider

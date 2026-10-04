@@ -51,9 +51,11 @@ const STATUS_CONFIG: Record<Status, { badgeBg: string; badgeText: string; label:
 interface Props {
     event: AppointmentEvent | null
     onClose: () => void
+    /** Stripe onboarding finished — online payment links only work after this. */
+    canTakeOnlinePayments: boolean
 }
 
-export function AppointmentDetailModal({ event, onClose }: Props) {
+export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }: Props) {
     const { manualBookingData, setManualBookingData } = useManualBooking()
     const [loading, setLoading] = useState<LoadingState>('idle')
     const [cancelStep, setCancelStep] = useState(false)
@@ -87,14 +89,16 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
 
     const busy = loading !== 'idle'
 
+    // Functional update: a stale snapshot here would overwrite other changes
+    // made in the same tick and leave the views showing old data.
     const updateEventInContext = (patch: Partial<AppointmentEvent>) => {
-        if (!event || !manualBookingData || !setManualBookingData) return
-        setManualBookingData({
-            ...manualBookingData,
-            appointmentEvents: manualBookingData.appointmentEvents.map(e =>
+        if (!event || !setManualBookingData) return
+        setManualBookingData(prev => ({
+            ...prev,
+            appointmentEvents: prev.appointmentEvents.map(e =>
                 e.id === event.id ? { ...e, ...patch } : e
             ),
-        })
+        }))
     }
 
     const handleConfirm = async () => {
@@ -102,7 +106,8 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
         setLoading('confirming')
         setFeedback(null)
         try {
-            await confirmAppointmentAction(event.id, '')
+            const res = await confirmAppointmentAction(event.id, '')
+            if (!res.ok) throw new Error(res.error)
             updateEventInContext({ status: 'CONFIRMED' })
             handleClose()
             toast.success('Appointment confirmed')
@@ -117,7 +122,8 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
         setLoading('sendingLink')
         setFeedback(null)
         try {
-            await sendConfirmationLinkAction(event.id)
+            const res = await sendConfirmationLinkAction(event.id)
+            if (!res.ok) throw new Error(res.error)
             setFeedback({ type: 'success', message: 'Confirmation link sent to client.' })
         } catch (err: any) {
             setFeedback({ type: 'error', message: err?.message ?? 'Failed to send link.' })
@@ -131,7 +137,8 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
         setLoading('sendingPaymentLink')
         setFeedback(null)
         try {
-            await sendPaymentLinkAction(event.id)
+            const res = await sendPaymentLinkAction(event.id)
+            if (!res.ok) throw new Error(res.error)
             setFeedback({ type: 'success', message: 'Payment link sent to client.' })
         } catch (err: any) {
             setFeedback({ type: 'error', message: err?.message ?? 'Failed to send payment link.' })
@@ -166,7 +173,8 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
         setLoading('cancelling')
         setFeedback(null)
         try {
-            await cancelAppointmentAction(event.id)
+            const res = await cancelAppointmentAction(event.id)
+            if (!res.ok) throw new Error(res.error)
             updateEventInContext({ status: 'CANCELLED' })
             handleClose()
             toast.success('Appointment cancelled')
@@ -178,12 +186,13 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
     }
 
     const handleReschedule = () => {
-        if (!event || !manualBookingData || !setManualBookingData) return
-        setManualBookingData({
-            ...manualBookingData,
+        if (!event || !setManualBookingData) return
+        setManualBookingData(prev => ({
+            ...prev,
             currSelectedEvent: event,
+            newAppointmentEvent: null,
             openRescheduleConfirmation: true,
-        })
+        }))
         handleClose()
     }
 
@@ -419,6 +428,7 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
                                         <>
                                             {event.amountDue > 0 && (
                                                 <>
+                                                    {canTakeOnlinePayments && (
                                                     <button
                                                         disabled={busy}
                                                         onClick={handleSendPaymentLink}
@@ -428,6 +438,7 @@ export function AppointmentDetailModal({ event, onClose }: Props) {
                                                         {loading === 'sendingPaymentLink' && <Loader2 size={13} className="animate-spin" />}
                                                         Send Payment Link
                                                     </button>
+                                                    )}
                                                     <button
                                                         disabled={busy}
                                                         onClick={handleMarkPaid}

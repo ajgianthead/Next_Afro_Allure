@@ -1,197 +1,192 @@
 import { createClient } from "@/app/utils/supabase/server"
 import { Resend } from "resend"
+import { DateTime } from "luxon"
 import { Appointment } from "./models/Appointment"
 import { Service } from "@/lib/service/Service"
 import { Addon } from "@/lib/addons/AddOn"
 import { BusinessPolicy, Type } from "@/lib/businessPolicy/BusinessPolicy"
 import { BusinessUser } from "@/lib/businessUser/BusinessUser"
 import { stripe } from "@/lib/stripe/stripeClient"
-import { convertInputToDateTime } from "./utils/convertInputToDateTime"
-import { AppointmentData, AppointmentEvent } from "../types"
+import { AppointmentEvent, CreateAppointmentPayload } from "../types"
 import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders"
+import { runConfirmationSideEffects, scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation"
 import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails"
-import { runs } from "@trigger.dev/sdk/v3"
-import { addCreateNewClient } from "app/dashboard/(other)/clients/actions"
+import { isValidTimezone } from "@/lib/timezone"
 
+// Small grace window so a time picked "right now" isn't rejected by clock skew.
+const PAST_GRACE_MINUTES = 2
 
-export const rescheduleAppointment = async (appointmentData: {
-    start: string
-    end: string
-    date: Date
+/** The signed-in user's business row. Every dashboard action is scoped to it. */
+async function requireOwnBusiness(supabase: Awaited<ReturnType<typeof createClient>>) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+    const { data: business } = await supabase
+        .from('business_users')
+        .select('business_id, account_settings, completed_stripe_onboarding')
+        .eq('user_id', user.id)
+        .single()
+    if (!business) throw new Error('Unauthorized')
+    return business
+}
+
+function assertBookableTimes(startISO: string, endISO: string) {
+    const start = DateTime.fromISO(startISO)
+    const end = DateTime.fromISO(endISO)
+    if (!start.isValid || !end.isValid) throw new Error('Please enter a valid start and end time.')
+    if (end <= start) throw new Error('End time must be after the start time.')
+    if (start < DateTime.now().minus({ minutes: PAST_GRACE_MINUTES })) {
+        throw new Error('That start time has already passed. Pick a later time.')
+    }
+}
+
+async function assertNoConflict(
+    supabase: Awaited<ReturnType<typeof createClient>>,
+    businessId: string,
+    startISO: string,
+    endISO: string,
+    ignoreId?: string
+) {
+    let query = supabase
+        .from('appointments')
+        .select('id')
+        .eq('business', businessId)
+        .in('status', ['CONFIRMED', 'PENDING'])
+        .lt('start', endISO)
+        .gt('end', startISO)
+    if (ignoreId) query = query.neq('id', ignoreId)
+    const { data: conflicts, error } = await query
+    if (error) throw new Error(error.message)
+    if (conflicts && conflicts.length > 0) throw new Error('This time slot conflicts with an existing appointment.')
+}
+
+/** Remembers the business's timezone (used to show correct times in emails) the first time we see it. */
+async function rememberTimezone(
+    supabase: Awaited<ReturnType<typeof createClient>>,
+    business: { business_id: string; account_settings: any },
+    timezone?: string
+) {
+    if (!isValidTimezone(timezone) || business.account_settings?.timezone) return
+    await supabase
+        .from('business_users')
+        .update({ account_settings: { ...(business.account_settings ?? {}), timezone } })
+        .eq('business_id', business.business_id)
+}
+
+export const rescheduleAppointment = async (data: {
     appointmentId: string
-}) => {
+    startISO: string
+    endISO: string
+}): Promise<{ id: string; start: string; end: string }> => {
     const supabase = await createClient()
+    const ownBusiness = await requireOwnBusiness(supabase)
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const { startDateToDateTime, endDateToDateTime } = convertInputToDateTime(appointmentData.date, appointmentData.start, appointmentData.end)
+    assertBookableTimes(data.startISO, data.endISO)
 
-    const appointment = await Appointment.fetchById(supabase, appointmentData.appointmentId)
+    const appointment = await Appointment.fetchById(supabase, data.appointmentId)
+    if (Array.isArray(appointment)) throw new Error('Appointment not found')
+    if (appointment.businessId !== ownBusiness.business_id) throw new Error('Unauthorized')
 
-    if (!Array.isArray(appointment)) {
-        // Fetch payment_link_id before rescheduling (not stored in Appointment model)
-        const { data: apptMeta } = await supabase
-            .from('appointments')
-            .select('reminder_ids, payment_link_id')
-            .eq('id', appointmentData.appointmentId)
-            .single()
+    const startISO = DateTime.fromISO(data.startISO).toUTC().toISO()!
+    const endISO = DateTime.fromISO(data.endISO).toUTC().toISO()!
+    await assertNoConflict(supabase, appointment.businessId, startISO, endISO, appointment.id)
 
-        const rescheduledAppointment = await appointment.reschedule(supabase, {
-            start: startDateToDateTime.toISO()!,
-            end: endDateToDateTime.toISO()!
-        })
-        if (!Array.isArray(rescheduledAppointment)) {
-            try {
-                await rescheduledAppointment.sendBusinessRescheduleEmail(resend, supabase)
-                await rescheduledAppointment.sendClientRescheduleEmail(resend, supabase)
-            } catch (emailErr) {
-                console.error('Failed to send reschedule emails:', emailErr)
-            }
+    // Fetch job ids before rescheduling (not stored in the Appointment model)
+    const { data: apptMeta } = await supabase
+        .from('appointments')
+        .select('reminder_ids, payment_link_id')
+        .eq('id', appointment.id)
+        .single()
 
-            // Cancel old reminder jobs and schedule new ones for the new time — non-critical
-            try {
-                const reminders = apptMeta?.reminder_ids as any
-                if (reminders?.business?.hour) runs.cancel(reminders.business.hour).catch(console.error)
-                if (reminders?.business?.day) runs.cancel(reminders.business.day).catch(console.error)
-                if (reminders?.client?.hour) runs.cancel(reminders.client.hour).catch(console.error)
-                if (reminders?.client?.day) runs.cancel(reminders.client.day).catch(console.error)
-                if (apptMeta?.payment_link_id) runs.cancel(apptMeta.payment_link_id).catch(console.error)
-                if (reminders?.paymentCheck) runs.cancel(reminders.paymentCheck).catch(console.error)
-                if (reminders?.noShowCheck) runs.cancel(reminders.noShowCheck).catch(console.error)
+    const rescheduled = await appointment.reschedule(supabase, { start: startISO, end: endISO })
+    if (Array.isArray(rescheduled)) throw new Error('Failed to reschedule appointment')
 
-                const business = await BusinessUser.fetch(supabase, rescheduledAppointment.businessId)
-                const ids = await AppointmentReminders.schedule({
-                    appointmentId: rescheduledAppointment.id,
-                    start: rescheduledAppointment.start,
-                    end: rescheduledAppointment.end,
-                    serviceName: rescheduledAppointment.serviceData.name,
-                    businessData: {
-                        id: business.id,
-                        name: business.name,
-                        email: business.email,
-                        address: formatBusinessAddress(business.accountSettings.business_address),
-                    },
-                    clientData: {
-                        firstName: rescheduledAppointment.clientMetadata.firstName,
-                        lastName: rescheduledAppointment.clientMetadata.lastName,
-                        email: rescheduledAppointment.clientMetadata.email,
-                        phoneNumber: rescheduledAppointment.clientMetadata.phoneNumber,
-                    },
-                    settings: {
-                        clientReminders: {
-                            email_1: business.accountSettings.app_reminders.email_1,
-                            email_24: business.accountSettings.app_reminders.email_24,
-                        },
-                        businessReminders: {
-                            enabled: business.accountSettings.notifications.email,
-                            email_1: business.accountSettings.notifications.email_1,
-                            email_24: business.accountSettings.notifications.email_24,
-                        },
-                    },
-                })
-                await supabase.from('appointments').update({
-                    reminder_ids: {
-                        business: { hour: ids.business.hour, day: ids.business.day },
-                        client: { hour: ids.client.hour, day: ids.client.day },
-                        paymentCheck: ids.paymentCheck,
-                        noShowCheck: ids.noShowCheck,
-                    },
-                    payment_link_id: ids.paymentLink,
-                }).eq('id', rescheduledAppointment.id)
-            } catch (err) {
-                console.error('Failed to manage reminders after manual reschedule:', err)
-            }
-        }
-        return rescheduledAppointment
+    try {
+        await rescheduled.sendBusinessRescheduleEmail(resend, supabase)
+        await rescheduled.sendClientRescheduleEmail(resend, supabase)
+    } catch (emailErr) {
+        console.error('Failed to send reschedule emails:', emailErr)
     }
-}
-export const confirmAppointment = async (appointmentId: string, depositChargeId: string) => {
-    const supabase = await createClient()
-    const resend = new Resend(process.env.RESEND_API_KEY)
-    const appointment = await Appointment.fetchById(supabase, appointmentId)
 
-    if (!Array.isArray(appointment)) {
-        const business = await BusinessUser.fetch(supabase, appointment.businessId)
-
-        if (!appointment.requireDeposit) {
-            await appointment.changeStatus(supabase, 'CONFIRMED')
-        } else {
-            const paymentData = await stripe.paymentIntents.retrieve(depositChargeId, {
-                stripeAccount: business.stripeAccountId
-            })
-            await appointment.confirmAppointment(supabase, paymentData.amount)
-        }
+    // Replace the old time's jobs with ones for the new time — non-critical.
+    // Only confirmed appointments have jobs; pending ones get them on confirm.
+    await AppointmentReminders.cancelAll(apptMeta?.reminder_ids, apptMeta?.payment_link_id)
+    if (rescheduled.status === 'CONFIRMED') {
         try {
-            await appointment.sendBusinessConfirmationEmail(resend, supabase)
-            await appointment.sendClientConfirmationEmail(resend, supabase)
-        } catch (emailErr) {
-            console.error('Failed to send confirmation emails:', emailErr)
-        }
-
-        // Schedule reminders — non-critical, must not throw back to caller
-        try {
-            const ids = await AppointmentReminders.schedule({
-                appointmentId: appointment.id,
-                start: appointment.start,
-                end: appointment.end,
-                serviceName: appointment.serviceData.name,
-                businessData: {
-                    id: business.id,
-                    name: business.name,
-                    email: business.email,
-                    address: formatBusinessAddress(business.accountSettings.business_address),
-                },
-                clientData: {
-                    firstName: appointment.clientMetadata.firstName,
-                    lastName: appointment.clientMetadata.lastName,
-                    email: appointment.clientMetadata.email,
-                    phoneNumber: appointment.clientMetadata.phoneNumber,
-                },
-                settings: {
-                    clientReminders: {
-                        email_1: business.accountSettings.app_reminders.email_1,
-                        email_24: business.accountSettings.app_reminders.email_24,
-                    },
-                    businessReminders: {
-                        enabled: business.accountSettings.notifications.email,
-                        email_1: business.accountSettings.notifications.email_1,
-                        email_24: business.accountSettings.notifications.email_24,
-                    },
-                },
+            const business = await BusinessUser.fetch(supabase, rescheduled.businessId)
+            await scheduleAndStoreReminders(supabase, {
+                id: rescheduled.id,
+                start: rescheduled.start,
+                end: rescheduled.end,
+                serviceName: rescheduled.serviceData.name,
+                clientMetadata: rescheduled.clientMetadata,
+            }, {
+                id: business.id,
+                name: business.name,
+                email: business.email,
+                accountSettings: business.accountSettings,
+                completedStripeOnboarding: business.completedStripeOnboarding,
             })
-            await supabase.from('appointments').update({
-                reminder_ids: {
-                    business: { hour: ids.business.hour, day: ids.business.day },
-                    client: { hour: ids.client.hour, day: ids.client.day },
-                    paymentCheck: ids.paymentCheck,
-                    noShowCheck: ids.noShowCheck,
-                },
-                payment_link_id: ids.paymentLink,
-            }).eq('id', appointment.id)
         } catch (err) {
-            console.error('Failed to schedule reminders after manual confirmation:', err)
+            console.error('Failed to manage reminders after manual reschedule:', err)
         }
-
-        // Add client to business_clients — non-critical, fire-and-forget
-        addCreateNewClient({
-            first_name: appointment.clientMetadata.firstName,
-            last_name: appointment.clientMetadata.lastName,
-            email: appointment.clientMetadata.email,
-            phone_number: appointment.clientMetadata.phoneNumber,
-        }, appointment.businessId).catch(err => console.error('Failed to add client after confirmation:', err))
     }
+
+    // Plain object — class instances can't cross the server-action boundary.
+    return { id: rescheduled.id, start: rescheduled.start, end: rescheduled.end }
 }
-export const updateAppointmentStatus = async () => { }
+
+export const confirmAppointment = async (appointmentId: string, depositChargeId: string): Promise<{ id: string; status: string }> => {
+    const supabase = await createClient()
+    const ownBusiness = await requireOwnBusiness(supabase)
+    const appointment = await Appointment.fetchById(supabase, appointmentId)
+    if (Array.isArray(appointment)) throw new Error('Appointment not found')
+    if (appointment.businessId !== ownBusiness.business_id) throw new Error('Unauthorized')
+    if (appointment.status !== 'PENDING') throw new Error('Only pending appointments can be confirmed')
+
+    const business = await BusinessUser.fetch(supabase, appointment.businessId)
+
+    if (!appointment.requireDeposit) {
+        await appointment.changeStatus(supabase, 'CONFIRMED')
+    } else {
+        const paymentData = await stripe.paymentIntents.retrieve(depositChargeId, {
+            stripeAccount: business.stripeAccountId
+        })
+        await appointment.confirmAppointment(supabase, paymentData.amount)
+    }
+
+    await runConfirmationSideEffects({
+        id: appointment.id,
+        start: appointment.start,
+        end: appointment.end,
+        serviceName: appointment.serviceData.name,
+        clientMetadata: appointment.clientMetadata,
+    }, {
+        id: business.id,
+        name: business.name,
+        email: business.email,
+        accountSettings: business.accountSettings,
+        completedStripeOnboarding: business.completedStripeOnboarding,
+    })
+
+    return { id: appointment.id, status: 'CONFIRMED' }
+}
 
 export const sendPaymentLink = async (appointmentId: string) => {
     const supabase = await createClient()
+    const ownBusiness = await requireOwnBusiness(supabase)
+    if (!ownBusiness.completed_stripe_onboarding) {
+        throw new Error('Set up Monetization to send payment links to clients.')
+    }
     const resend = new Resend(process.env.RESEND_API_KEY)
     const appointment = await Appointment.fetchById(supabase, appointmentId)
     if (Array.isArray(appointment)) throw new Error('Appointment not found')
+    if (appointment.businessId !== ownBusiness.business_id) throw new Error('Unauthorized')
     if (appointment.status !== 'CONFIRMED') throw new Error('Only confirmed appointments can have a payment link sent')
 
     const business = await BusinessUser.fetch(supabase, appointment.businessId)
 
     const PaymentLinkEmail = (await import('../../../../emails/payment-link')).default
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
         from: 'payment <noreply@reminder.afroallure.co>',
         to: appointment.clientMetadata.email,
         subject: `Payment Due — ${appointment.serviceData.name}`,
@@ -211,12 +206,15 @@ export const sendPaymentLink = async (appointmentId: string) => {
             appointmentID: appointment.id,
         } as any),
     })
+    if (error) throw new Error('Failed to send payment link. Please try again.')
 }
 
 export const sendConfirmationLink = async (appointmentId: string) => {
     const supabase = await createClient()
+    const ownBusiness = await requireOwnBusiness(supabase)
     const appointment = await Appointment.fetchById(supabase, appointmentId)
     if (Array.isArray(appointment)) throw new Error('Appointment not found')
+    if (appointment.businessId !== ownBusiness.business_id) throw new Error('Unauthorized')
     if (appointment.status !== 'PENDING') throw new Error('Only pending appointments can have a confirmation link sent')
 
     const business = await BusinessUser.fetch(supabase, appointment.businessId)
@@ -231,7 +229,7 @@ export const sendConfirmationLink = async (appointmentId: string) => {
             id: business.id,
             name: business.name,
             email: business.email,
-            address: formatBusinessAddress(business.accountSettings.business_address),
+            address: formatBusinessAddress(business.accountSettings?.business_address),
         },
         appointmentData: {
             id: appointment.id,
@@ -244,70 +242,77 @@ export const sendConfirmationLink = async (appointmentId: string) => {
 }
 
 
-export const createNewManualAppointment = async (appointmentData: AppointmentData) => {
+export const createNewManualAppointment = async (payload: CreateAppointmentPayload): Promise<AppointmentEvent> => {
     const supabase = await createClient()
+    const ownBusiness = await requireOwnBusiness(supabase)
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const { startDateToDateTime, endDateToDateTime } = convertInputToDateTime(appointmentData.date, appointmentData.start, appointmentData.end)
-    let addOns: {
-        id: string,
-        name: string,
-        price: number
-    }[] = []
+
+    assertBookableTimes(payload.startISO, payload.endISO)
+    const c = payload.clientData
+    if (!c?.firstName?.trim() || !c?.lastName?.trim() || !c?.email?.trim() || !c?.phoneNumber?.trim()) {
+        throw new Error('Please enter client information')
+    }
+
     try {
-        const selectedService = await Service.fetchById(supabase, appointmentData.serviceId)
+        const selectedService = await Service.fetchById(supabase, payload.serviceId)
         if (Array.isArray(selectedService)) throw new Error('Service not found')
+        if (selectedService.business !== ownBusiness.business_id) throw new Error('Unauthorized')
 
-        const fetchedAddons = await Addon.fetchByIds(supabase, [...appointmentData.selectedAddons])
-        addOns = fetchedAddons.map(a => ({ id: a.id, name: a.name, price: a.price }))
-
-        let addonPriceTotal = 0
-        addOns.forEach((addon) => {
-            addonPriceTotal += addon.price
-        })
+        const fetchedAddons = payload.selectedAddons.length
+            ? await Addon.fetchByIds(supabase, payload.selectedAddons)
+            : []
+        const addOns = fetchedAddons.map(a => ({ id: a.id, name: a.name, price: a.price }))
+        const addonPriceTotal = addOns.reduce((sum, addon) => sum + addon.price, 0)
         const totalPrice = selectedService.price + addonPriceTotal
+
         const policy = await BusinessPolicy.fetch(supabase, selectedService.business)
-        let depositPrice = 0;
-        if (policy.deposit.enabled) {
-            if (policy.deposit.settings.type === Type.FLAT) {
-                depositPrice = policy.deposit.settings.value
-            } else {
-                depositPrice = (policy.deposit.settings.value / 100) * totalPrice
-            }
+        // A deposit can only be collected once Stripe onboarding is complete.
+        const requireDeposit = payload.deposit && policy.deposit.enabled && ownBusiness.completed_stripe_onboarding
+        let depositPrice = 0
+        if (requireDeposit) {
+            depositPrice = policy.deposit.settings.type === Type.FLAT
+                ? policy.deposit.settings.value
+                : (policy.deposit.settings.value / 100) * totalPrice
         }
 
-        // Overlap check — reject if a CONFIRMED or PENDING appointment already occupies this slot
-        const startISO = startDateToDateTime.toISO()!
-        const endISO = endDateToDateTime.toISO()!
-        const { data: conflicts, error: conflictError } = await supabase
-            .from('appointments')
-            .select('id')
-            .eq('business', selectedService.business)
-            .in('status', ['CONFIRMED', 'PENDING'])
-            .lt('start', endISO)
-            .gt('end', startISO)
-        if (conflictError) throw new Error(conflictError.message)
-        if (conflicts && conflicts.length > 0) {
-            throw new Error('This time slot conflicts with an existing appointment.')
-        }
+        const startISO = DateTime.fromISO(payload.startISO).toUTC().toISO()!
+        const endISO = DateTime.fromISO(payload.endISO).toUTC().toISO()!
+        await assertNoConflict(supabase, selectedService.business, startISO, endISO)
 
         const appointment = await Appointment.create(supabase, selectedService.business, {
-            client_metadata: appointmentData.clientData, start: startISO, end: endISO, service_data: selectedService, status: 'PENDING', require_deposit: appointmentData.deposit, paid_deposit: false, deposit_charge_id: "", reschedules: policy.rescheduleLimit, deposit_price: depositPrice, selected_addons: addOns, substraction: policy.deposit.settings.subtraction
+            client_metadata: {
+                firstName: c.firstName.trim(),
+                lastName: c.lastName.trim(),
+                email: c.email.trim(),
+                phoneNumber: c.phoneNumber.trim(),
+            },
+            start: startISO,
+            end: endISO,
+            service_data: selectedService,
+            status: 'PENDING',
+            require_deposit: requireDeposit,
+            paid_deposit: false,
+            deposit_charge_id: "",
+            reschedules: policy.rescheduleLimit,
+            deposit_price: depositPrice,
+            selected_addons: addOns,
+            substraction: policy.deposit.settings.subtraction,
         })
         if (Array.isArray(appointment)) throw new Error('Unexpected: appointment creation returned multiple results')
+
+        rememberTimezone(supabase, ownBusiness, payload.timezone).catch(console.error)
 
         try {
             await appointment.sendConfirmAppointmentEmail(resend, supabase)
         } catch (emailErr) {
             console.error('Failed to send new appointment email:', emailErr)
         }
-        const appointmentEvent: AppointmentEvent = {
+        return {
             id: appointment.id,
             start: new Date(appointment.start),
             title: `${appointment.serviceData.name} with ${appointment.clientMetadata.firstName}`,
             end: new Date(appointment.end),
-            clientData: {
-                ...appointment.clientMetadata
-            },
+            clientData: { ...appointment.clientMetadata },
             serviceData: {
                 id: appointment.serviceData.id,
                 name: appointment.serviceData.name,
@@ -334,22 +339,19 @@ export const createNewManualAppointment = async (appointmentData: AppointmentDat
             refundedAmount: 0,
             hasOnlinePayment: false,
         }
-        return appointmentEvent
     } catch (error: any) {
         throw Error(error.message)
     }
-
-
 }
 
-export const cancelAppointment = async (appointmentId: string) => {
+export const cancelAppointment = async (appointmentId: string): Promise<{ id: string; status: string }> => {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
+    // business_users.business_id is its own uuid, not the auth user id, so the
+    // old `appointment.businessId !== user.id` check rejected every cancel.
+    const ownBusiness = await requireOwnBusiness(supabase)
     const resend = new Resend(process.env.RESEND_API_KEY)
 
-    // Fetch reminder/payment-link IDs before cancelling so we can stop scheduled jobs
+    // Fetch job ids before cancelling so we can stop scheduled jobs
     const { data: apptMeta } = await supabase
         .from('appointments')
         .select('reminder_ids, payment_link_id')
@@ -357,29 +359,20 @@ export const cancelAppointment = async (appointmentId: string) => {
         .single()
 
     const appointment = await Appointment.fetchById(supabase, appointmentId)
-    if (!Array.isArray(appointment)) {
-        if (appointment.businessId !== user.id) throw new Error('Unauthorized')
+    if (Array.isArray(appointment)) throw new Error('Appointment not found')
+    if (appointment.businessId !== ownBusiness.business_id) throw new Error('Unauthorized')
 
-        const cancelledAppointment = await appointment.cancel(supabase)
-        if (!Array.isArray(cancelledAppointment)) {
-            try {
-                await cancelledAppointment.sendBusinessCancellationEmail(resend, supabase)
-                await cancelledAppointment.sendClientCancellationEmail(resend, supabase)
-            } catch (emailErr) {
-                console.error('Failed to send cancellation emails:', emailErr)
-            }
+    const cancelled = await appointment.cancel(supabase)
+    if (Array.isArray(cancelled)) throw new Error('Failed to cancel appointment')
 
-            // Cancel scheduled Trigger.dev reminder jobs — fire-and-forget, non-critical
-            const reminders = apptMeta?.reminder_ids as any
-            if (reminders?.business?.hour) runs.cancel(reminders.business.hour).catch(console.error)
-            if (reminders?.business?.day) runs.cancel(reminders.business.day).catch(console.error)
-            if (reminders?.client?.hour) runs.cancel(reminders.client.hour).catch(console.error)
-            if (reminders?.client?.day) runs.cancel(reminders.client.day).catch(console.error)
-            if (apptMeta?.payment_link_id) runs.cancel(apptMeta.payment_link_id).catch(console.error)
-            if (reminders?.paymentCheck) runs.cancel(reminders.paymentCheck).catch(console.error)
-            if (reminders?.noShowCheck) runs.cancel(reminders.noShowCheck).catch(console.error)
-
-            return cancelledAppointment
-        }
+    try {
+        await cancelled.sendBusinessCancellationEmail(resend, supabase)
+        await cancelled.sendClientCancellationEmail(resend, supabase)
+    } catch (emailErr) {
+        console.error('Failed to send cancellation emails:', emailErr)
     }
+
+    await AppointmentReminders.cancelAll(apptMeta?.reminder_ids, apptMeta?.payment_link_id)
+
+    return { id: cancelled.id, status: cancelled.status }
 }

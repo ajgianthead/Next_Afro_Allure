@@ -5,9 +5,11 @@ import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmail
 import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders"
 import { NotificationType } from "@/lib/notifications/Notification"
 import { trackAppointmentBooked, trackAppointmentCancelled } from "../../../../lib/analytics"
-import { addCreateNewClient, isClientBannedFromBusiness } from "app/dashboard/(other)/clients/actions"
+import { isClientBannedFromBusiness } from "app/dashboard/(other)/clients/actions"
+import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient"
+import { scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation"
 import { DateTime } from "luxon"
-import { runs } from "@trigger.dev/sdk/v3"
+import { resolveTimezone } from "@/lib/timezone"
 
 export const getAppointmentByIdAction = async (id: string) => {
     const supabase = await createClient()
@@ -93,7 +95,7 @@ export const cancelClientAppointmentAction = async (
     await AppointmentEmails.sendCancelled(emailData).catch(console.error)
 
     const { error: notifError } = await supabase.from('notifications').insert({
-        body: `${client_metadata?.firstName} just cancelled their appointment on ${DateTime.fromISO(data.start).toFormat('LLLL dd, yyyy')} @ ${DateTime.fromISO(data.start).toLocaleString(DateTime.TIME_SIMPLE)}`,
+        body: `${client_metadata?.firstName} just cancelled their appointment on ${DateTime.fromISO(data.start).setZone(resolveTimezone(settings?.timezone)).toFormat('LLLL dd, yyyy')} @ ${DateTime.fromISO(data.start).setZone(resolveTimezone(settings?.timezone)).toLocaleString(DateTime.TIME_SIMPLE)}`,
         title: "‼️Cancelled Appointment Alert‼️",
         read: false,
         business_id: data.business,
@@ -102,14 +104,7 @@ export const cancelClientAppointmentAction = async (
     })
     if (notifError) console.error(notifError)
 
-    const reminders = data.reminder_ids as any
-    if (reminders?.business?.hour) runs.cancel(reminders.business.hour).catch(console.error)
-    if (reminders?.business?.day) runs.cancel(reminders.business.day).catch(console.error)
-    if (reminders?.client?.hour) runs.cancel(reminders.client.hour).catch(console.error)
-    if (reminders?.client?.day) runs.cancel(reminders.client.day).catch(console.error)
-    if (data.payment_link_id) runs.cancel(data.payment_link_id).catch(console.error)
-    if (reminders?.paymentCheck) runs.cancel(reminders.paymentCheck).catch(console.error)
-    if (reminders?.noShowCheck) runs.cancel(reminders.noShowCheck).catch(console.error)
+    await AppointmentReminders.cancelAll(data.reminder_ids, data.payment_link_id)
 
     trackAppointmentCancelled({
         appointmentType: '',
@@ -197,7 +192,7 @@ export const createAppointmentAction = async (body: {
         if (data.status === 'PENDING') {
             await AppointmentEmails.sendPendingConfirmation(emailData)
             const { error: notifError } = await supabase.from('notifications').insert({
-                body: `${client_metadata?.firstName} ${client_metadata?.lastName} just booked ${service_data?.name} on ${DateTime.fromISO(data.start).toFormat('LLLL dd, yyyy')} at ${DateTime.fromISO(data.start).toLocaleString(DateTime.TIME_SIMPLE)}.`,
+                body: `${client_metadata?.firstName} ${client_metadata?.lastName} just booked ${service_data?.name} on ${DateTime.fromISO(data.start).setZone(resolveTimezone(settings?.timezone)).toFormat('LLLL dd, yyyy')} at ${DateTime.fromISO(data.start).setZone(resolveTimezone(settings?.timezone)).toLocaleString(DateTime.TIME_SIMPLE)}.`,
                 title: 'New Booking Request',
                 read: false,
                 business_id: data.business,
@@ -208,7 +203,7 @@ export const createAppointmentAction = async (body: {
         } else if (data.status === 'CONFIRMED') {
             await AppointmentEmails.sendConfirmed(emailData)
             const { error: notifError } = await supabase.from('notifications').insert({
-                body: `${client_metadata?.firstName} ${client_metadata?.lastName} just booked ${service_data?.name} on ${DateTime.fromISO(data.start).toFormat('LLLL dd, yyyy')} at ${DateTime.fromISO(data.start).toLocaleString(DateTime.TIME_SIMPLE)}.`,
+                body: `${client_metadata?.firstName} ${client_metadata?.lastName} just booked ${service_data?.name} on ${DateTime.fromISO(data.start).setZone(resolveTimezone(settings?.timezone)).toFormat('LLLL dd, yyyy')} at ${DateTime.fromISO(data.start).setZone(resolveTimezone(settings?.timezone)).toLocaleString(DateTime.TIME_SIMPLE)}.`,
                 title: 'New Booking',
                 read: false,
                 business_id: data.business,
@@ -216,37 +211,24 @@ export const createAppointmentAction = async (body: {
                 appointment_id: data.id,
             })
             if (notifError) console.error('Failed to insert new-booking notification:', notifError)
-            const ids = await AppointmentReminders.schedule({
-                appointmentId: data.id,
+            await scheduleAndStoreReminders(supabase, {
+                id: data.id,
                 start: DateTime.fromISO(data.start).toISO()!,
                 end: DateTime.fromISO(data.end).toISO()!,
                 serviceName: service_data?.name,
-                businessData: {
-                    id: data.business,
-                    name: data.business_users.business_name,
-                    email: data.business_users.email,
-                    address: formatBusinessAddress(addr),
-                },
-                clientData: {
+                clientMetadata: {
                     firstName: client_metadata?.firstName,
                     lastName: client_metadata?.lastName,
                     email: client_metadata?.email,
                     phoneNumber: client_metadata?.phoneNumber,
                 },
-                settings: {
-                    clientReminders: { email_1: settings?.app_reminders?.email_1, email_24: settings?.app_reminders?.email_24 },
-                    businessReminders: { enabled: settings?.notifications?.email, email_1: settings?.notifications?.email_1, email_24: settings?.notifications?.email_24 },
-                },
+            }, {
+                id: data.business,
+                name: data.business_users.business_name,
+                email: data.business_users.email,
+                accountSettings: settings,
+                completedStripeOnboarding: !!data.business_users.completed_stripe_onboarding,
             })
-            await supabase.from('appointments').update({
-                reminder_ids: {
-                    business: { hour: ids.business.hour, day: ids.business.day },
-                    client: { hour: ids.client.hour, day: ids.client.day },
-                    paymentCheck: ids.paymentCheck,
-                    noShowCheck: ids.noShowCheck,
-                },
-                payment_link_id: ids.paymentLink,
-            }).eq('id', data.id)
         }
     } catch (err) {
         console.error('Post-create side effects failed:', err)
@@ -260,12 +242,13 @@ export const createAppointmentAction = async (body: {
         appointmentType: '',
     }).catch(console.error)
 
-    addCreateNewClient({
+    // Public booking path — no business session, so use the service-role helper.
+    await upsertBusinessClientAsAdmin({
         first_name: client_metadata?.firstName,
         last_name: client_metadata?.lastName,
         email: client_metadata?.email,
         phone_number: client_metadata?.phoneNumber,
-    }, data.business).catch(console.error)
+    }, data.business)
 
     return data
 }

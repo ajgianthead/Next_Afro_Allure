@@ -1,9 +1,12 @@
 'use client'
 
-import React, { createContext, useCallback, useRef, useState } from 'react'
+import React, { createContext, useCallback, useEffect, useRef, useState } from 'react'
 import { Joyride, EVENTS, STATUS, ACTIONS } from 'react-joyride'
 import type { Step, EventData } from 'react-joyride'
-import { markTourComplete } from './actions'
+import { ensureTimezoneAction, markTourComplete } from './actions'
+import { WelcomeModal } from './WelcomeModal'
+import type { BusinessAddress } from '@/lib/businessAddress'
+import { browserTimezone } from '@/lib/timezone'
 import { TOUR_STEPS } from './tourSteps'
 import { TourTooltip } from './TourTooltip'
 import { toast } from 'sonner'
@@ -46,10 +49,26 @@ interface TourProviderProps {
     toursCompleted: Record<string, boolean>
     businessId: string
     isOnboarded: boolean
+    businessName?: string
+    businessAddress?: Partial<BusinessAddress> | null
+    hasTimezone?: boolean
 }
 
-export function TourProvider({ children, toursCompleted: initial, businessId, isOnboarded }: TourProviderProps) {
+export function TourProvider({ children, toursCompleted: initial, businessId, isOnboarded, businessName = '', businessAddress, hasTimezone = true }: TourProviderProps) {
     const [toursCompleted, setToursCompleted] = useState<Record<string, boolean>>(initial)
+    // New businesses see the welcome slideshow (ending with their address)
+    // before any product tour. Businesses that already went through the
+    // dashboard tour are never shown it.
+    const [showWelcome, setShowWelcome] = useState(
+        isOnboarded && !initial?.welcome && !initial?.dashboard
+    )
+    const showWelcomeRef = useRef(showWelcome)
+    const pendingTourRef = useRef<string | null>(null)
+
+    // Save the business's timezone once so emails/reminders show local times.
+    useEffect(() => {
+        if (!hasTimezone) ensureTimezoneAction(browserTimezone()).catch(() => {})
+    }, [hasTimezone])
     const [run, setRun] = useState(false)
     const [steps, setSteps] = useState<Step[]>([])
     const [stepIndex, setStepIndex] = useState(0)
@@ -74,6 +93,11 @@ export function TourProvider({ children, toursCompleted: initial, businessId, is
     const startTour = useCallback((name: string) => {
         const tourSteps = TOUR_STEPS[name]
         if (!tourSteps || tourSteps.length === 0) return
+        // Page tours fire on mount; hold them until the welcome modal is done.
+        if (showWelcomeRef.current) {
+            pendingTourRef.current = name
+            return
+        }
         setRun(false)
         setTimeout(() => {
             activeTourRef.current = name
@@ -183,6 +207,19 @@ export function TourProvider({ children, toursCompleted: initial, businessId, is
             unregisterStepSetup,
         }}>
             {children}
+            <WelcomeModal
+                open={showWelcome}
+                businessName={businessName}
+                initialAddress={businessAddress}
+                onComplete={() => {
+                    showWelcomeRef.current = false
+                    setShowWelcome(false)
+                    setToursCompleted(prev => ({ ...prev, welcome: true }))
+                    const pending = pendingTourRef.current
+                    pendingTourRef.current = null
+                    if (pending) setTimeout(() => startTour(pending), 400)
+                }}
+            />
             <Joyride
                 run={run}
                 steps={steps}

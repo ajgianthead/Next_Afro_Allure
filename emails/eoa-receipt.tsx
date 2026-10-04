@@ -15,8 +15,8 @@ export interface EOAReceiptProps {
 }
 
 export default function EOAReceiptEmail({ clientData, businessData, appointmentData, serviceName, amountPaid }: EOAReceiptProps) {
-    const date = DateTime.fromISO(appointmentData.start).toFormat('cccc, LLLL d, yyyy')
-    const time = DateTime.fromISO(appointmentData.start).toFormat('h:mm a')
+    const date = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('cccc, LLLL d, yyyy')
+    const time = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('h:mm a')
     const amount = `$${(amountPaid / 100).toFixed(2)}`
 
     return (

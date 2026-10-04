@@ -1,6 +1,8 @@
 'use server'
 import { createClient } from '@/app/utils/supabase/server'
 import { getActualPlatformFees } from './stripeActions'
+import { DateTime } from 'luxon'
+import { resolveTimezone } from '@/lib/timezone'
 
 // ─── Return interfaces ────────────────────────────────────────────────────────
 
@@ -166,10 +168,97 @@ export async function getFinancialSummary(businessId: string): Promise<Financial
     return data[0] as unknown as FinancialSummary
 }
 
+export interface OnlinePaymentTotals {
+    thisYear: { amount: number; charges: number }
+    allTime: { amount: number; charges: number }
+}
+
+/**
+ * Money that actually went through Stripe (deposits and online balance
+ * payments). Cash payments never touch Stripe, so they must not be included
+ * when estimating Stripe processing fees — previously the estimate used all
+ * revenue and every booking, so cash-only businesses were shown Stripe fees.
+ */
+export async function getOnlinePaymentTotals(businessId: string): Promise<OnlinePaymentTotals> {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('appointments')
+        .select('start, paid_amount, paid_deposit, deposit_price, deposit_charge_id, service_paid, service_paid_type, service_charge_id')
+        .eq('business', businessId)
+        .or('paid_deposit.eq.true,service_paid_type.eq.PLATFORM')
+    if (error) throw new Error(`Online payments failed: ${error.message}`)
+
+    const startOfYear = DateTime.now().startOf('year')
+    const totals: OnlinePaymentTotals = { thisYear: { amount: 0, charges: 0 }, allTime: { amount: 0, charges: 0 } }
+    for (const a of data ?? []) {
+        const depositOnline = !!a.paid_deposit && !!a.deposit_charge_id
+        let amount = 0
+        let charges = 0
+        if (a.service_paid_type === 'PLATFORM') {
+            amount = a.paid_amount ?? 0
+            charges = (depositOnline ? 1 : 0) + (a.service_charge_id ? 1 : 0)
+        } else if (depositOnline) {
+            amount = Math.min(a.deposit_price ?? 0, a.paid_amount ?? 0) || (a.deposit_price ?? 0)
+            charges = 1
+        }
+        if (amount <= 0) continue
+        totals.allTime.amount += amount
+        totals.allTime.charges += charges
+        if (DateTime.fromISO(a.start) >= startOfYear) {
+            totals.thisYear.amount += amount
+            totals.thisYear.charges += charges
+        }
+    }
+    return totals
+}
+
+/**
+ * Projected revenue for the current month = what's been earned so far plus
+ * what's still due on confirmed appointments booked for the rest of the
+ * month. The old projection extrapolated the daily rate across the whole
+ * month (e.g. $160 earned by the 3rd → ~$1,650 projected), which wildly
+ * overstates early-month numbers.
+ */
+async function withBookedProjection(businessId: string, growth: GrowthTrends): Promise<GrowthTrends> {
+    try {
+        const supabase = await createClient()
+        const { data: business } = await supabase
+            .from('business_users')
+            .select('account_settings')
+            .eq('business_id', businessId)
+            .single()
+        const zone = resolveTimezone((business?.account_settings as any)?.timezone)
+        const now = DateTime.now().setZone(zone)
+
+        const { data: upcoming } = await supabase
+            .from('appointments')
+            .select('amount_due, service_paid')
+            .eq('business', businessId)
+            .eq('status', 'CONFIRMED')
+            .gte('start', now.toUTC().toISO()!)
+            .lte('start', now.endOf('month').toUTC().toISO()!)
+
+        const scheduled = (upcoming ?? [])
+            .filter(a => !a.service_paid)
+            .reduce((sum, a) => sum + Math.max(0, a.amount_due ?? 0), 0)
+        const projected = (growth.revenue_this_month ?? 0) + scheduled
+
+        const last = growth.revenue_last_month ?? 0
+        const pace = last === 0
+            ? (projected > 0 ? 'ahead' : 'on track')
+            : projected >= last * 1.05 ? 'ahead' : projected <= last * 0.95 ? 'behind' : 'on track'
+
+        return { ...growth, projected_month_revenue: projected, on_pace_vs_last_month: pace }
+    } catch (err) {
+        console.error('[withBookedProjection]', err)
+        return growth
+    }
+}
+
 // ─── Aggregator ───────────────────────────────────────────────────────────────
 
 export async function getAnalyticsPageData(businessId: string) {
-    const [overview, byMonth, booking, service, client, clientList, growth, financial, platformFees] =
+    const [overview, byMonth, booking, service, client, clientList, rawGrowth, financial, platformFees, onlinePayments] =
         await Promise.all([
             getRevenueOverview(businessId),
             getRevenueByMonth(businessId),
@@ -180,8 +269,10 @@ export async function getAnalyticsPageData(businessId: string) {
             getGrowthTrends(businessId),
             getFinancialSummary(businessId),
             getActualPlatformFees(businessId),
+            getOnlinePaymentTotals(businessId),
         ])
-    return { overview, byMonth, booking, service, client, clientList, growth, financial, platformFees }
+    const growth = await withBookedProjection(businessId, rawGrowth)
+    return { overview, byMonth, booking, service, client, clientList, growth, financial, platformFees, onlinePayments }
 }
 
 export type AnalyticsData = Awaited<ReturnType<typeof getAnalyticsPageData>>
