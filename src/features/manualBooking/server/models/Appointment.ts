@@ -13,6 +13,7 @@ import AppointmentRescheduled from "../../../../../emails/appointment-reschedule
 import AppointmentCancelled from "../../../../../emails/appointment-cancelled";
 import { Email, formatBusinessAddress } from "@lib/appointmentEmails/AppointmentEmails";
 import { toZonedISO } from "@/lib/timezone";
+import { getAppointmentEmailDetails } from "@lib/appointmentEmails/emailDetails";
 
 export interface AppointmentType {
     id: string,
@@ -380,13 +381,17 @@ export class Appointment {
     // in the business's timezone — the server runs in UTC, so without this the
     // emails would print UTC wall-clock times.
     private async emailProps(supabase: SupabaseClient<Database, any>) {
-        const business = await BusinessUser.fetch(supabase, this.businessId)
+        const [business, details] = await Promise.all([
+            BusinessUser.fetch(supabase, this.businessId),
+            getAppointmentEmailDetails(this.id, this.serviceData.name),
+        ])
         const tz = (business.accountSettings as any)?.timezone
         return {
             business,
             props: {
                 socials: { instagram: "https://instagram.com/afroallure_" },
-                serviceName: this.serviceData.name,
+                serviceName: details.serviceName,
+                prep: details.prep,
                 clientData: {
                     firstName: this.clientMetadata.firstName,
                     lastName: this.clientMetadata.lastName,

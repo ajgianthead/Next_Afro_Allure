@@ -4,6 +4,8 @@ import { BookingData } from "@/features/automatedBooking/context/BookingDataCont
 import { Check } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { useBooking } from "../hooks/useBookingData";
+import { useBookingQuote } from "../hooks/useBookingQuote";
+import { clientPrepFor } from "@/features/services/pricing";
 
 
 function BookingCheckbox({
@@ -40,6 +42,9 @@ export const ClientInfo = ({
     agreedAfroAllure: boolean; setAgreedAfroAllure: any
 }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
+    const { service, quote, prep } = useBookingQuote()
+    // Prep from the stylist plus "bring your own hair" when that applies.
+    const clientPrep = service ? clientPrepFor(service, quote?.selectedOptions ?? null) : null
 
     return (
         <div className="flex flex-col items-center w-full">
@@ -116,6 +121,34 @@ export const ClientInfo = ({
                     onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--t-primary)')}
                     onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--t-border)')}
                 />
+
+                {clientPrep && (
+                    <div className="flex flex-col gap-2 pt-3" style={{ borderTop: '1px solid var(--t-border)' }}>
+                        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--t-muted)' }}>Before your appointment</p>
+                        {clientPrep.instructions && (
+                            <p className="text-sm leading-relaxed" style={{ color: 'var(--t-text)' }}>{clientPrep.instructions}</p>
+                        )}
+                        {clientPrep.checklist.length > 0 && (
+                            <ul className="flex flex-col gap-1">
+                                {clientPrep.checklist.map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--t-text)' }}>
+                                        <Check size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--t-primary)' }} />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        {prep?.requireAgreement && (
+                            <BookingCheckbox
+                                id="prep-ack"
+                                checked={data.acknowledged}
+                                onChange={(v) => setData((prev) => ({ ...prev, acknowledged: v }))}
+                            >
+                                I&apos;ve read the prep instructions and will arrive ready.
+                            </BookingCheckbox>
+                        )}
+                    </div>
+                )}
 
                 {!data.booking_policy.deposit.enabled && (
                     <div className="flex flex-col gap-3 pt-3" style={{ borderTop: '1px solid var(--t-border)' }}>

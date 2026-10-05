@@ -45,15 +45,6 @@ export const createCheckout = async (
             const session = await getBookingSession(sessionId)
             if (!session) throw new Error('Booking session not found')
 
-            // Reuse existing non-cancelled PI (idempotency)
-            if (session.paymentIntentId) {
-                const existing = await stripe.paymentIntents.retrieve(
-                    session.paymentIntentId,
-                    { stripeAccount: business.stripeAccountId }
-                )
-                if (existing.status !== 'canceled') return existing
-            }
-
             const clientEmail = (session.clientInfo as any)?.email as string | undefined
 
             if (!booking?.serviceId) throw new Error('Missing booking details')
@@ -68,6 +59,25 @@ export const createCheckout = async (
             const { data: activePolicy } = await supabase.from('business_policies').select('deposit').eq('id', bizRow?.booking_policies ?? '').maybeSingle()
             const price = calculateDeposit((activePolicy?.deposit ?? null) as any, quote.totalCents)
             if (price < 50) throw new Error("This booking doesn't need a deposit.")
+
+            // Reuse this session's PaymentIntent (idempotency). If the client
+            // went back and changed their size/length/add-ons, bring its amount
+            // in line with the new deposit while it's still unpaid.
+            if (session.paymentIntentId) {
+                const existing = await stripe.paymentIntents.retrieve(
+                    session.paymentIntentId,
+                    { stripeAccount: business.stripeAccountId }
+                )
+                if (existing.status !== 'canceled') {
+                    const unpaid = ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(existing.status)
+                    if (existing.amount === price || !unpaid) return existing
+                    return await stripe.paymentIntents.update(
+                        existing.id,
+                        { amount: price, application_fee_amount: calculateApplicationFee(price) },
+                        { stripeAccount: business.stripeAccountId }
+                    )
+                }
+            }
 
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: price,

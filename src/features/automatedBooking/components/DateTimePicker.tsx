@@ -1,5 +1,6 @@
 'use client'
 
+import { quoteForBooking } from '../hooks/useBookingQuote'
 import { BookingData } from "@/features/automatedBooking/context/BookingDataContext";
 import { ServiceType } from "@/lib/service/Service";
 import { DateTime } from "luxon";
@@ -24,8 +25,10 @@ export const DateTimePicker = () => {
     const [slots, setSlots] = useState<Record<string, string[][]>>({})
     const [currSlots, setCurrSlots] = useState<DateTime[]>([]);
 
+    // Real duration for the chosen size/length (falls back to the service length).
     const getServiceLength = () =>
-        data.services.find((s: ServiceType) => s.id === data.selectedService)?.length ?? 60
+        quoteForBooking(data).quote?.durationMinutes
+        ?? data.services.find((s: ServiceType) => s.id === data.selectedService)?.length ?? 60
 
     const getData = async (startDate: string, endDate: string) => {
         const serviceLength = getServiceLength()
@@ -233,7 +236,8 @@ export const DateTimePicker = () => {
 
 const TimeSlot = ({ startTime, userZone }: { startTime: DateTime; userZone: string }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
-    const serviceLength = data.services.find((s) => s.id === data.selectedService)?.length ?? 60
+    const serviceLength = quoteForBooking(data).quote?.durationMinutes
+        ?? data.services.find((s) => s.id === data.selectedService)?.length ?? 60
     const start = startTime.setZone(userZone).toLocaleString(DateTime.TIME_SIMPLE)
     const endTime = startTime.setZone(userZone).plus({ minutes: serviceLength }).toISO()!
     const selected = startTime.toISO() === data.selectedDateTime.start && endTime === data.selectedDateTime.end

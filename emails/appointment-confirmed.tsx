@@ -5,10 +5,11 @@ import { EmailTemplate } from './new-appointment'
 import { EmailHeader } from './components/EmailHeader'
 import { EmailFooter } from './components/EmailFooter'
 import { AppointmentDetailBlock } from './components/AppointmentDetailBlock'
+import { PrepBlock } from './components/PrepBlock'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co'
 
-export default function AppointmentConfirmed({ serviceName, clientData, businessData, appointmentData }: EmailTemplate) {
+export default function AppointmentConfirmed({ serviceName, clientData, businessData, appointmentData, prep }: EmailTemplate) {
     const date = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('cccc, LLLL d, yyyy')
     const time = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('h:mm a')
     const rescheduleUrl = `${BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/reschedule`
@@ -56,6 +57,8 @@ export default function AppointmentConfirmed({ serviceName, clientData, business
                                     time={time}
                                     service={serviceName}
                                 />
+
+                                <PrepBlock prep={prep} />
 
                                 <Row style={{ marginTop: 8 }}>
                                     <Column style={{ textAlign: 'center' }}>

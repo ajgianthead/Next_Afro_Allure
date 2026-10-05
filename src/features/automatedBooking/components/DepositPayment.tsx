@@ -36,7 +36,7 @@ export const DepositPayment = ({
                 data.business_id,
                 undefined,
                 data.bookingSession?.id,
-                { serviceId: data.selectedService, addonIds: data.selectedAddons }
+                { serviceId: data.selectedService, addonIds: data.selectedAddons, style: data.styleSelection }
             )
             if (checkout) {
                 setData((prev) => ({ ...prev, options: { clientSecret: checkout.client_secret! } }))

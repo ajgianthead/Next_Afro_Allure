@@ -271,3 +271,36 @@ export function remainingBalance(appt: { amount_due: number; deposit_price?: num
     if (appt.paid_deposit && !appt.substraction) return Math.max(0, due - Math.round(Number(appt.deposit_price ?? 0)))
     return due
 }
+
+// ─── Describing a booking (emails, summaries, dashboard) ─────────────────────
+
+/** e.g. "Small · Waist · hair supplied" — empty string when there are no options. */
+export function describeSelectedOptions(raw: unknown): string {
+    if (!raw || typeof raw !== 'object') return ''
+    const s = raw as Partial<SelectedOptions>
+    const parts = [s.size?.label, s.length?.label].filter(Boolean) as string[]
+    if (s.hair) {
+        if (s.hair.mode === 'included') parts.push('hair included')
+        else if (s.hair.mode === 'optional') parts.push(s.hair.added ? 'hair supplied by stylist' : 'bringing own hair')
+        else if (s.hair.mode === 'client_brings') parts.push('bringing own hair')
+    }
+    return parts.join(' · ')
+}
+
+/** "Knotless braids — Small · Waist" */
+export function serviceLabel(serviceName: string, selectedOptions: unknown): string {
+    const options = describeSelectedOptions(selectedOptions)
+    return options ? `${serviceName} — ${options}` : serviceName
+}
+
+/** What the client needs to bring/do: prep from the service plus the hair note when they bring their own. */
+export function clientPrepFor(serviceData: unknown, selectedOptions: unknown): { instructions: string; checklist: string[] } | null {
+    const prep = parsePrep((serviceData as any)?.prep)
+    const s = selectedOptions as Partial<SelectedOptions> | null
+    const bringsHair = s?.hair && (s.hair.mode === 'client_brings' || (s.hair.mode === 'optional' && !s.hair.added))
+    const hairItem = bringsHair && s?.hair?.note ? `Bring your hair: ${s.hair.note}` : bringsHair ? 'Bring your own braiding hair' : null
+    const checklist = [...(hairItem ? [hairItem] : []), ...(prep?.checklist ?? [])]
+    const instructions = prep?.instructions ?? ''
+    if (!instructions && checklist.length === 0) return null
+    return { instructions, checklist }
+}

@@ -81,3 +81,14 @@ describe('editor helpers', () => {
         expect(parsePrep({ instructions: 'Come washed', checklist: ['Detangled'] })).toEqual({ instructions: 'Come washed', checklist: ['Detangled'], requireAgreement: true })
     })
 })
+
+describe('describing a booking', () => {
+    it('labels the service with the chosen options', async () => {
+        const { serviceLabel, clientPrepFor } = await import('./pricing')
+        const q = quoteBooking(knotless, { sizeId: 's', lengthId: 'w' })
+        expect(serviceLabel('Knotless', q.selectedOptions)).toBe('Knotless — Small · Waist · bringing own hair')
+        expect(serviceLabel('Silk press', null)).toBe('Silk press')
+        const prep = clientPrepFor({ prep: { instructions: 'Come washed', checklist: ['Detangled'] } }, q.selectedOptions)
+        expect(prep?.checklist).toEqual(['Bring your hair: 1B pre-stretched', 'Detangled'])
+    })
+})
