@@ -10,6 +10,7 @@ import { useBooking } from "../hooks/useBookingData";
 import { createCheckout } from "@/lib/stripe/createCheckout";
 import { AppointmentType, CheckoutType } from "./../../shared/appointments/types";
 import { Loader2 } from "lucide-react";
+import { feeFromPaymentMetadata, noShowDisclosure } from "@/features/noShowFees/noShowFee";
 
 
 export const DepositPayment = ({
@@ -22,6 +23,8 @@ export const DepositPayment = ({
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [id, setID] = useState<string>("")
+    // No-show fee agreed with this deposit (shown before the client pays).
+    const [noShowFeeCents, setNoShowFeeCents] = useState(0)
     const selectedServiceData = data.services.find((s: ServiceType) => s.id === data.selectedService)
 
     useEffect(() => {
@@ -41,6 +44,7 @@ export const DepositPayment = ({
             if (checkout) {
                 setData((prev) => ({ ...prev, options: { clientSecret: checkout.client_secret! } }))
                 setID(checkout.id)
+                setNoShowFeeCents(feeFromPaymentMetadata(checkout.metadata))
             }
         }
             ; (async () => {
@@ -65,6 +69,11 @@ export const DepositPayment = ({
 
     return (
         <Elements stripe={promise} options={data.options}>
+            {noShowFeeCents > 0 && (
+                <p className="text-xs mb-3 px-3 py-2" style={{ color: 'var(--t-muted)', border: '1px solid var(--t-border)', borderRadius: 'var(--t-input-r)' }}>
+                    {noShowDisclosure(noShowFeeCents)}
+                </p>
+            )}
             <CheckoutForm
                 setRbbOpen={setRbbOpen}
                 setAgreedAfroAllure={setAgreedAfroAllure}

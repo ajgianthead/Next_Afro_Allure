@@ -17,6 +17,7 @@ import { Appointment } from '@/features/manualBooking/server/models/Appointment'
 import { confirmAppointment } from '../actions'
 import { BusinessUser } from '@/lib/businessUser/BusinessUser'
 import { describeSelectedOptions, type SelectedOptions } from '@/features/services/pricing'
+import { feeFromPaymentMetadata, noShowDisclosure } from '@/features/noShowFees/noShowFee'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -30,6 +31,7 @@ export default function ConfirmAppClient({ appointment, business }: PageProps) {
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [stripeID, setStripeID] = useState<string | null>(null)
     const [amountDue, setAmountDue] = useState<number>()
+    const [noShowFeeCents, setNoShowFeeCents] = useState(0)
     const [completed, setCompleted] = useState<boolean | null>(
         appointment.status === 'CONFIRMED' ? true : null
     )
@@ -58,6 +60,7 @@ export default function ConfirmAppClient({ appointment, business }: PageProps) {
                 appointment.id
             )
             setAmountDue(res?.amount)
+            setNoShowFeeCents(feeFromPaymentMetadata(res?.metadata))
             setOptions({ clientSecret: res?.client_secret })
             setCompleted(false)
         }
@@ -110,6 +113,9 @@ export default function ConfirmAppClient({ appointment, business }: PageProps) {
                             <p className="text-sm" style={{ color: '#6F6863' }}>
                                 A deposit is required to confirm your appointment.
                             </p>
+                            {noShowFeeCents > 0 && (
+                                <p className="text-xs" style={{ color: '#6F6863' }}>{noShowDisclosure(noShowFeeCents, business.name)}</p>
+                            )}
                             <PaymentForm appointmentID={appointment.id} stripeID={stripeID!} />
                         </div>
                     </div>

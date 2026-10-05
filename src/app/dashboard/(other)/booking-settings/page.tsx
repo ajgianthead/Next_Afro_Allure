@@ -12,12 +12,30 @@ export default async function Page() {
     const businessUser = await fetchBusinessUser(user.id)
     const supabase = await createClient()
 
-    // Query by business relation — reliable regardless of whether booking_policies pointer is set
-    let { data } = await supabase
-        .from('business_policies')
-        .select('*')
-        .eq('business', businessUser.business_id)
-        .maybeSingle()
+    // Every save inserts a new policy row, so a business can have many: load
+    // the active one (business_users.booking_policies), else the newest. This
+    // used to be `.maybeSingle()` by business, which fails once there are two
+    // rows — and the self-heal below then replaced the business's settings
+    // with defaults.
+    let data = null as any
+    if (businessUser.booking_policies) {
+        const { data: active } = await supabase
+            .from('business_policies')
+            .select('*')
+            .eq('id', businessUser.booking_policies)
+            .eq('business', businessUser.business_id)
+            .maybeSingle()
+        data = active
+    }
+    if (!data) {
+        const { data: newest } = await supabase
+            .from('business_policies')
+            .select('*')
+            .eq('business', businessUser.business_id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+        data = newest?.[0] ?? null
+    }
 
     // Self-heal: create a default policy if one doesn't exist yet
     if (!data) {

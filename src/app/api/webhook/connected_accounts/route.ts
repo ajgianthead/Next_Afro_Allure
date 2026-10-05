@@ -25,6 +25,13 @@ export async function POST(request: NextRequest) {
     return apiError(`Webhook Error: ${err.message}`, 400);
   }
 
+  // No-show fees are charged and recorded synchronously by the dashboard
+  // (src/features/noShowFees); their payment events need no handling here and
+  // must not be mistaken for deposits.
+  if (event.type.startsWith('payment_intent.') && (event.data.object as Stripe.PaymentIntent).metadata?.purpose === 'NO_SHOW_FEE') {
+    return webhookAck();
+  }
+
   const client = await pool.connect();
   try {
     switch (event.type) {
