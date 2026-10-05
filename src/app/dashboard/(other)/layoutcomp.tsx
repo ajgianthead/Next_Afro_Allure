@@ -36,6 +36,7 @@ import {
     IconLogout,
     IconMessage2,
     IconLifebuoy,
+    IconGift,
     type Icon,
 } from '@tabler/icons-react'
 import { signOutAction } from '@/app/(auth)/actions'
@@ -60,6 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
             { title: 'Dashboard', url: '/dashboard', icon: IconLayoutDashboard },
             { title: 'Appointments', url: '/dashboard/appointments', icon: IconCalendarEvent },
             { title: 'Clients', url: '/dashboard/clients', icon: IconUsers },
+            { title: 'Rewards', url: '/dashboard/rewards', icon: IconGift },
             { title: 'Analytics', url: '/dashboard/analytics', icon: IconChartBar },
         ],
     },

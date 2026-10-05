@@ -167,20 +167,31 @@ export const createCheckout = async (
                 .single()
             if (error) throw new Error(error.message)
 
-            if (row.service_charge_id?.length) {
-                const existing = await stripe.paymentIntents.retrieve(
-                    row.service_charge_id,
-                    { stripeAccount: business.stripeAccountId }
-                )
-                if (existing.status !== 'canceled') return existing
-            }
-
             const price = remainingBalance({
                 amount_due: appointment.amountDue,
                 deposit_price: appointment.depositPrice,
                 paid_deposit: appointment.paidDeposit,
                 substraction: appointment.subtraction,
             })
+
+            if (row.service_charge_id?.length) {
+                const existing = await stripe.paymentIntents.retrieve(
+                    row.service_charge_id,
+                    { stripeAccount: business.stripeAccountId }
+                )
+                // The balance can change after the link was made (e.g. a loyalty
+                // reward was applied) — keep an unpaid payment in step with it.
+                const unpaid = ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(existing.status)
+                if (unpaid && price >= 50 && existing.amount !== price) {
+                    return await stripe.paymentIntents.update(
+                        existing.id,
+                        { amount: price, application_fee_amount: calculateApplicationFee(price) },
+                        { stripeAccount: business.stripeAccountId }
+                    )
+                }
+                if (existing.status !== 'canceled') return existing
+            }
+
             if (price < 50) throw new Error('Nothing is left to pay for this appointment.')
 
             const paymentIntent = await stripe.paymentIntents.create({

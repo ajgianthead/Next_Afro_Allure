@@ -73,18 +73,22 @@ async function makeBusiness(tag) {
     made.clients.push(client.client_id)
     must(await admin.from('business_clients').insert({ business: b.business_id, client: client.client_id, banned: false }).select().single(), 'clientele link')
     must(await admin.from('notifications').insert({ business_id: b.business_id, title: 't', body: 'private', type: 'test', read: false, appointment_id: appt.id }).select().single(), 'notification')
+    must(await admin.from('loyalty_programs').insert({ business_id: b.business_id, enabled: true, visits_required: 1 }).select().single(), 'loyalty program')
+    const reward = must(await admin.from('loyalty_rewards').insert({
+        business_id: b.business_id, client_id: client.client_id, code: `AA-T${tag.toUpperCase()}${String(stamp).slice(-4)}`, reward_type: 'amount_off', value: 1000,
+    }).select().single(), 'loyalty reward')
 
     const session = createClient(URL_, ANON, opts)
     const { error: le } = await session.auth.signInWithPassword({ email, password })
     if (le) throw le
-    return { id: b.business_id, client: session, apptId: appt.id, serviceId: svc.id, clientId: client.client_id, availabilityId: av.id }
+    return { id: b.business_id, client: session, apptId: appt.id, serviceId: svc.id, clientId: client.client_id, availabilityId: av.id, rewardId: reward.id }
 }
 
 const TABLES = [
     'admin_logs', 'appointments', 'availabilities', 'banned_clients', 'booking_sessions', 'business_clients',
     'business_policies', 'business_users', 'client_users', 'client_waitlist', 'feedback', 'image_section',
     'marketplace_profile', 'notifications', 'refunds', 'reviews', 'service_addons', 'services',
-    'support_tickets', 'user_feedback', 'web_editors',
+    'support_tickets', 'user_feedback', 'web_editors', 'loyalty_programs', 'loyalty_rewards', 'loyalty_ledger',
 ]
 const PUBLIC_READ = ['categories', 'subcategories', 'feature_flags']
 
@@ -123,6 +127,16 @@ try {
     check('A cannot delete B service', rowsOf(await a.from('services').delete().eq('id', B.serviceId).select()) === 0)
     const aInsB = await a.from('services').insert({ name: 'x', price: 1, length: 30, business: B.id, description: '', availability: B.availabilityId })
     check('A cannot add a service to B', !!aInsB.error, aInsB.error?.code)
+    check('A cannot read B loyalty program', rowsOf(await a.from('loyalty_programs').select('*').eq('business_id', B.id)) === 0)
+    check('A cannot read B rewards', rowsOf(await a.from('loyalty_rewards').select('*').eq('business_id', B.id)) === 0)
+    const aProgB = await a.from('loyalty_programs').update({ enabled: false }).eq('business_id', B.id).select()
+    check('A cannot change B loyalty program', rowsOf(aProgB) === 0, aProgB.error?.code)
+    const aMint = await a.from('loyalty_rewards').insert({ business_id: A.id, client_id: A.clientId, code: `AA-HACK${String(stamp).slice(-4)}`, reward_type: 'amount_off', value: 99999 })
+    check('A cannot mint its own rewards', !!aMint.error, aMint.error?.code)
+    const aReuse = await a.from('loyalty_rewards').update({ status: 'available', value: 99999 }).eq('id', A.rewardId).select()
+    check('A cannot edit rewards directly', rowsOf(aReuse) === 0, aReuse.error?.code)
+    const aLedger = await a.from('loyalty_ledger').insert({ business_id: A.id, client_id: A.clientId, kind: 'adjust', visits: 100 })
+    check('A cannot write the loyalty ledger directly', !!aLedger.error, aLedger.error?.code)
     const aStripe = await a.from('business_users').update({ stripe_acc_id: 'acct_attacker' }).eq('business_id', A.id).select()
     check('A cannot change own stripe_acc_id', !!aStripe.error || rowsOf(aStripe) === 0, aStripe.error?.code)
     const aPlan = await a.from('business_users').update({ plan_type: 'GROWTH', completed_stripe_onboarding: true }).eq('business_id', A.id).select()
@@ -137,6 +151,12 @@ try {
     check('A updates own settings/email', rowsOf(own) === 1, own.error?.message)
     const ownAppt = await a.from('appointments').update({ status: 'COMPLETED' }).eq('id', A.apptId).select()
     check('A updates own appointment', rowsOf(ownAppt) === 1, ownAppt.error?.message)
+    const ledger = await a.from('loyalty_ledger').select('kind, visits').eq('business_id', A.id)
+    check('completing a visit records it in the loyalty ledger', (ledger.data ?? []).some(l => l.kind === 'visit'), ledger.error?.message)
+    const earned = await a.from('loyalty_rewards').select('id').eq('business_id', A.id)
+    check('A reads own rewards (incl. one just earned)', rowsOf(earned) === 2, earned.error?.message ?? `${rowsOf(earned)} rows`)
+    const ownProg = await a.from('loyalty_programs').update({ visits_required: 6 }).eq('business_id', A.id).select()
+    check('A updates own loyalty program', rowsOf(ownProg) === 1, ownProg.error?.message)
     const ownSvc = await a.from('services').insert({ name: 'Mine', price: 1, length: 30, business: A.id, description: '', availability: A.availabilityId }).select()
     check('A adds own service', rowsOf(ownSvc) === 1, ownSvc.error?.message)
     const rpc = await a.rpc('get_revenue_overview', { p_business_id: B.id })

@@ -38,6 +38,8 @@ export type Database = {
           selected_addons: Json[]
           selected_options: Json | null
           acknowledged_at: string | null
+          loyalty_reward_id: string | null
+          discount_cents: number
           service_charge_id: string | null
           service_data: Json | null
           service_paid: boolean | null
@@ -75,6 +77,8 @@ export type Database = {
           selected_addons?: Json[]
           selected_options?: Json | null
           acknowledged_at?: string | null
+          loyalty_reward_id?: string | null
+          discount_cents?: number
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -112,6 +116,8 @@ export type Database = {
           selected_addons?: Json[]
           selected_options?: Json | null
           acknowledged_at?: string | null
+          loyalty_reward_id?: string | null
+          discount_cents?: number
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -678,6 +684,147 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      loyalty_ledger: {
+        Row: {
+          id: string
+          business_id: string
+          client_id: string
+          appointment_id: string | null
+          kind: string
+          visits: number
+          spend_cents: number
+          reward_id: string | null
+          note: string | null
+          notified_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          client_id: string
+          appointment_id?: string | null
+          kind: string
+          visits?: number
+          spend_cents?: number
+          reward_id?: string | null
+          note?: string | null
+          notified_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          client_id?: string
+          appointment_id?: string | null
+          kind?: string
+          visits?: number
+          spend_cents?: number
+          reward_id?: string | null
+          note?: string | null
+          notified_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_programs: {
+        Row: {
+          business_id: string
+          enabled: boolean
+          earn_type: string
+          visits_required: number
+          spend_threshold_cents: number
+          reward_type: string
+          reward_value: number
+          reward_expiry_days: number | null
+          rebook_bonus_enabled: boolean
+          rebook_within_days: number
+          referral_enabled: boolean
+          referral_reward_cents: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          enabled?: boolean
+          earn_type?: string
+          visits_required?: number
+          spend_threshold_cents?: number
+          reward_type?: string
+          reward_value?: number
+          reward_expiry_days?: number | null
+          rebook_bonus_enabled?: boolean
+          rebook_within_days?: number
+          referral_enabled?: boolean
+          referral_reward_cents?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          enabled?: boolean
+          earn_type?: string
+          visits_required?: number
+          spend_threshold_cents?: number
+          reward_type?: string
+          reward_value?: number
+          reward_expiry_days?: number | null
+          rebook_bonus_enabled?: boolean
+          rebook_within_days?: number
+          referral_enabled?: boolean
+          referral_reward_cents?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_rewards: {
+        Row: {
+          id: string
+          business_id: string
+          client_id: string
+          code: string
+          status: string
+          reward_type: string
+          value: number
+          source: string
+          issued_at: string
+          expires_at: string | null
+          used_at: string | null
+          used_appointment_id: string | null
+          used_amount_cents: number | null
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          client_id: string
+          code: string
+          status?: string
+          reward_type: string
+          value: number
+          source?: string
+          issued_at?: string
+          expires_at?: string | null
+          used_at?: string | null
+          used_appointment_id?: string | null
+          used_amount_cents?: number | null
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          client_id?: string
+          code?: string
+          status?: string
+          reward_type?: string
+          value?: number
+          source?: string
+          issued_at?: string
+          expires_at?: string | null
+          used_at?: string | null
+          used_appointment_id?: string | null
+          used_amount_cents?: number | null
+        }
+        Relationships: []
       }
       marketplace_profile: {
         Row: {

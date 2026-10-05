@@ -10,6 +10,7 @@ import { Database } from "../../../../../lib/database.types";
 import { trackAppointmentBooked } from "../../../../../lib/analytics";
 import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient";
 import { syncStripeRefund } from "@/features/refunds/server/sync";
+import { notifyLoyaltyForAppointment } from "@/features/loyalty/server/notify";
 import { createAdminClient } from "@/app/utils/supabase/admin";
 
 export async function POST(request: NextRequest) {
@@ -249,6 +250,9 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
       } catch (notifErr) {
         console.error('Failed to send EOA payment notification:', notifErr);
       }
+
+      // Paid in full = visit completed: tell the client their loyalty progress.
+      await notifyLoyaltyForAppointment(eoaRes.id);
     }
     return;
   }

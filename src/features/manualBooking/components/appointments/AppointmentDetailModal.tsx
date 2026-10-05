@@ -20,6 +20,7 @@ import { markAppointmentAs } from '@/app/dashboard/(other)/appointments/actions'
 import { RefundPanel, RefundHistory, RefundRecord, IssueRefundResult } from '@/features/refunds'
 import { listRefundsAction } from '@/features/refunds/server'
 import { describeSelectedOptions, type SelectedOptions } from '@/features/services/pricing'
+import { AppointmentRewards } from '@/features/loyalty/components/AppointmentRewards'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 const MONO = 'ui-monospace, monospace'
@@ -159,12 +160,12 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
         setLoading('markingPaid')
         setFeedback(null)
         try {
-            await markAppointmentAs(event.serviceData.business, 'COMPLETED', event.amountDue, event.id)
+            const result = await markAppointmentAs(event.serviceData.business, 'COMPLETED', event.amountDue, event.id)
             updateEventInContext({
                 status: 'COMPLETED',
                 servicePaid: true,
-                servicePaidType: 'CASH',
-                paidAmount: event.paidAmount + event.amountDue,
+                servicePaidType: event.servicePaidType ?? 'CASH',
+                paidAmount: result?.paid_amount ?? event.paidAmount + event.amountDue,
                 amountDue: 0,
             })
             handleClose()
@@ -333,6 +334,12 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                         </div>
                                     ))}
                                 </div>
+
+                                <AppointmentRewards
+                                    key={event.id}
+                                    appointmentId={event.id}
+                                    onBalanceChange={delta => updateEventInContext({ amountDue: Math.max(0, event.amountDue + delta) })}
+                                />
 
                                 <div
                                     className="flex flex-col gap-2 pt-3"
