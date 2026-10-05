@@ -10,6 +10,7 @@ import { getSlots } from "slot-calculator";
 import { Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { useBooking } from "../hooks/useBookingData";
+import { WaitlistForm } from "./WaitlistForm";
 
 
 export const DateTimePicker = () => {
@@ -228,6 +229,17 @@ export const DateTimePicker = () => {
                             </p>
                         )}
                     </div>
+                </div>
+            )}
+
+            {!isLoading && data.waitlist_enabled && (
+                <div className="mt-4">
+                    <WaitlistForm
+                        businessId={data.business_id}
+                        serviceId={data.selectedService || null}
+                        initialDate={selectedLuxon?.toISODate() ?? null}
+                        defaults={data.clientInfo}
+                    />
                 </div>
             )}
         </div>

@@ -13,6 +13,8 @@ import { AppointmentReminders } from "@/features/shared/appointments/Appointment
 import { runConfirmationSideEffects, scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation"
 import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails"
 import { isValidTimezone } from "@/lib/timezone"
+import { after } from "next/server"
+import { notifyWaitlistOfOpening } from "@/features/waitlist/server/notify"
 
 // Small grace window so a time picked "right now" isn't rejected by clock skew.
 const PAST_GRACE_MINUTES = 2
@@ -381,6 +383,8 @@ export const cancelAppointment = async (appointmentId: string): Promise<{ id: st
     }
 
     await AppointmentReminders.cancelAll(apptMeta?.reminder_ids, apptMeta?.payment_link_id)
+    // Tell waitlisted clients the time is free (after the response is sent).
+    after(() => notifyWaitlistOfOpening(cancelled.id))
 
     return { id: cancelled.id, status: cancelled.status }
 }

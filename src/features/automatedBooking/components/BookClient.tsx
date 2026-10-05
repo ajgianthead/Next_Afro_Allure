@@ -23,7 +23,7 @@ import { BookingStepper } from './BookingStepper'
 import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
 import { useRouter } from 'next/navigation'
 
-export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId }: {
+export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId, waitlistEnabled }: {
     businessData: PublicBusinessType,
     availabilities: AvailabilityType[],
     appointments: BusyInterval[],
@@ -32,9 +32,11 @@ export function BookClient({ businessData, availabilities, appointments, service
     bookingLimitReached?: boolean
     themeData?: BookingTheme | null
     preSelectedServiceId?: string
+    /** Clients can ask to hear about openings. */
+    waitlistEnabled?: boolean
 }) {
     return (
-        <BookingWrapper businessData={businessData} availabilities={availabilities} appointments={appointments} services={services} policy={policy}>
+        <BookingWrapper businessData={businessData} availabilities={availabilities} appointments={appointments} services={services} policy={policy} waitlistEnabled={!!waitlistEnabled}>
             <Book businessName={businessData.urlName} businessData={businessData} bookingLimitReachedInitial={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} />
         </BookingWrapper>
     )

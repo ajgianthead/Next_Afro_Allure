@@ -37,6 +37,7 @@ import {
     IconMessage2,
     IconLifebuoy,
     IconGift,
+    IconHourglass,
     type Icon,
 } from '@tabler/icons-react'
 import { signOutAction } from '@/app/(auth)/actions'
@@ -70,6 +71,7 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
             { title: 'Booking Site', url: '/dashboard/booking-site', icon: IconWorld },
             { title: 'Availability', url: '/dashboard/availability', icon: IconClock },
+            { title: 'Waitlist', url: '/dashboard/waitlist', icon: IconHourglass },
             { title: 'Booking Settings', url: '/dashboard/booking-settings', icon: IconAdjustments },
         ],
     },

@@ -89,6 +89,7 @@ const TABLES = [
     'business_policies', 'business_users', 'client_users', 'client_waitlist', 'feedback', 'image_section',
     'marketplace_profile', 'notifications', 'refunds', 'reviews', 'service_addons', 'services',
     'support_tickets', 'user_feedback', 'web_editors', 'loyalty_programs', 'loyalty_rewards', 'loyalty_ledger',
+    'booking_waitlist',
 ]
 const PUBLIC_READ = ['categories', 'subcategories', 'feature_flags']
 

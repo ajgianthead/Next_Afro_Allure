@@ -21,9 +21,12 @@ type Props = {
     appointments: BusyInterval[],
     services: ServiceType[],
     policy: BusinessPolicyType
+    waitlistEnabled?: boolean
 }
 export type BookingData = {
     business_id: string;
+    /** Clients can join the cancellation waitlist. */
+    waitlist_enabled?: boolean;
     availabilities: AvailabilityType[];
     booking_policy: BusinessPolicyType
     /** Busy times only (start/end) — never full appointment records. */
@@ -53,9 +56,10 @@ export type BookingData = {
     bookingSession: BookingSessionData | null
 }
 
-export function BookingWrapper({ children, businessData, availabilities, appointments, services, policy }: Props) {
+export function BookingWrapper({ children, businessData, availabilities, appointments, services, policy, waitlistEnabled }: Props) {
     let [data, setData] = useState<BookingData>({
         business_id: businessData.id,
+        waitlist_enabled: !!waitlistEnabled,
         availabilities: availabilities,
         appointments: appointments,
         services: services,

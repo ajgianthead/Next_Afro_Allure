@@ -13,6 +13,8 @@ import { getBusyIntervals } from "./busyIntervals"
 import { quoteFromDb } from "@/features/services/server/quote"
 import { parsePrep, QuoteError, type StyleSelection } from "@/features/services/pricing"
 import { resolveTimezone } from "@/lib/timezone"
+import { after } from "next/server"
+import { notifyWaitlistOfOpening } from "@/features/waitlist/server/notify"
 
 export const getAppointmentByIdAction = async (id: string) => {
     const supabase = createAdminClient()
@@ -108,6 +110,8 @@ export const cancelClientAppointmentAction = async (
     if (notifError) console.error(notifError)
 
     await AppointmentReminders.cancelAll(data.reminder_ids, data.payment_link_id)
+    // Tell waitlisted clients the time is free (after the response is sent).
+    after(() => notifyWaitlistOfOpening(data.id))
 
     trackAppointmentCancelled({
         appointmentType: '',
