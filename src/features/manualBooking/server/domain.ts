@@ -345,6 +345,7 @@ export const createNewManualAppointment = async (payload: CreateAppointmentPaylo
             refundStatus: 'NONE',
             refundedAmount: 0,
             hasOnlinePayment: false,
+            selectedOptions: quote.selectedOptions,
         }
     } catch (error: any) {
         throw Error(error.message)

@@ -14,6 +14,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
 import { DashboardTour } from '@/features/tour/tours/DashboardTour'
+import { serviceLabel } from '@/features/services/pricing'
+
+// Price of what was booked: chosen style price (or base price) + hair + add-ons.
+const bookedPrice = (apt: any): number => {
+  const options = apt.selected_options
+  const style = Number(options?.priceCents ?? apt.service_data?.price ?? 0)
+  const hair = options?.hair?.added ? Number(options.hair.price ?? 0) : 0
+  const addons = (Array.isArray(apt.selected_addons) ? apt.selected_addons : [])
+    .reduce((sum: number, a: any) => sum + Number(a?.price ?? 0), 0)
+  return style + hair + addons
+}
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -569,8 +580,9 @@ function AppointmentDetailsModal({ appointment, businessData, onClose }: { appoi
               <div className="grid grid-cols-2 gap-3">
                 <DetailField label="Date" value={DateTime.fromISO(apt.start).toFormat('DDDD')} />
                 <DetailField label="Time" value={`${DateTime.fromISO(apt.start).toFormat('t')} – ${DateTime.fromISO(apt.end).toFormat('t')}`} />
-                <DetailField label="Service" value={apt.service_data.name} />
-                <DetailField label="Price" value={`$${apt.service_data.price / 100}`} />
+                <DetailField label="Service" value={serviceLabel(apt.service_data.name, apt.selected_options)} />
+                {/* What was actually booked: chosen options, hair and add-ons (falls back to the base price). */}
+                <DetailField label="Price" value={`$${bookedPrice(apt) / 100}`} />
                 <DetailField label="Client" value={`${apt.client_metadata.firstName} ${apt.client_metadata.lastName}`} />
                 <DetailField label="Email" value={apt.client_metadata.email} />
                 <DetailField label="Phone" value={formatPhone(apt.client_metadata.phoneNumber)} />

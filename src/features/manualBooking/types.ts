@@ -17,6 +17,8 @@ export interface AppointmentData {
     }
     deposit: boolean
     selectedAddons: Set<string>
+    /** Size / length / hair for services with style options. */
+    styleSelection?: StyleSelection | null
 }
 
 /** What the create-appointment modal sends to the server. Times are ISO instants computed in the browser. */
@@ -97,6 +99,8 @@ export interface AppointmentEvent {
     refundedAmount: number
     /** A deposit or balance was paid through Stripe, so it can be refunded in-app. */
     hasOnlinePayment: boolean
+    /** Size / length / hair chosen when booking (snapshot), if the service had options. */
+    selectedOptions?: unknown
 }
 
 export interface AppointmentTableData {

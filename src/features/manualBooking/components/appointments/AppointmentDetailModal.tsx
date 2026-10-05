@@ -19,6 +19,7 @@ import {
 import { markAppointmentAs } from '@/app/dashboard/(other)/appointments/actions'
 import { RefundPanel, RefundHistory, RefundRecord, IssueRefundResult } from '@/features/refunds'
 import { listRefundsAction } from '@/features/refunds/server'
+import { describeSelectedOptions, type SelectedOptions } from '@/features/services/pricing'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 const MONO = 'ui-monospace, monospace'
@@ -88,6 +89,12 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
         : `${mins}m`
 
     const busy = loading !== 'idle'
+
+    // Size / length / hair chosen when booking (services with style options).
+    const options = (event?.selectedOptions ?? null) as SelectedOptions | null
+    const optionsText = describeSelectedOptions(options)
+    const stylePrice = options?.priceCents ?? event?.serviceData.price ?? 0
+    const hairAdded = options?.hair?.added ? options.hair.price : 0
 
     // Functional update: a stale snapshot here would overwrite other changes
     // made in the same tick and leave the views showing old data.
@@ -240,6 +247,9 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                             <div className="flex items-start justify-between gap-3">
                                 <p style={{ fontFamily: SERIF, fontSize: 18, color: '#1A1818', lineHeight: 1.3 }}>
                                     {event.serviceData.name}
+                                    {optionsText && (
+                                        <span className="block text-sm" style={{ fontFamily: 'inherit', color: '#6F6863' }}>{optionsText}</span>
+                                    )}
                                 </p>
                                 <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
                                     {hasRefunds && (
@@ -303,9 +313,16 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                             {event.serviceData.name}
                                         </span>
                                         <span style={{ fontFamily: SERIF, fontSize: 14, color: '#1A1818' }}>
-                                            {fmt(event.serviceData.price)}
+                                            {fmt(stylePrice)}
                                         </span>
                                     </div>
+
+                                    {hairAdded && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm" style={{ color: '#6F6863' }}>+ Braiding hair</span>
+                                            <span style={{ fontFamily: SERIF, fontSize: 14, color: '#6F6863' }}>{fmt(hairAdded)}</span>
+                                        </div>
+                                    )}
 
                                     {event.selectedAddons.map(addon => (
                                         <div key={addon.id} className="flex items-center justify-between">
