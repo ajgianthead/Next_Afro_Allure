@@ -21,6 +21,7 @@ import { RefundPanel, RefundHistory, RefundRecord, IssueRefundResult } from '@/f
 import { listRefundsAction } from '@/features/refunds/server'
 import { describeSelectedOptions, type SelectedOptions } from '@/features/services/pricing'
 import { AppointmentRewards } from '@/features/loyalty/components/AppointmentRewards'
+import { NoShowFeePanel } from '@/features/noShowFees/components/NoShowFeePanel'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 const MONO = 'ui-monospace, monospace'
@@ -388,6 +389,14 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                         </div>
                                     )}
                                 </div>
+
+                                {status === 'NO_SHOW' && event.paidDeposit && (
+                                    <NoShowFeePanel
+                                        key={event.id}
+                                        appointmentId={event.id}
+                                        onCharged={cents => updateEventInContext({ paidAmount: event.paidAmount + cents })}
+                                    />
+                                )}
 
                                 {refunds.length > 0 && (
                                     <div className="flex flex-col gap-2 pt-3" style={{ borderTop: '1px solid #F0EBE3' }}>

@@ -11,6 +11,7 @@ import { DateTime } from "luxon"
 import { calculateApplicationFee } from "@/lib/fees"
 import { quoteFromDb } from "@/features/services/server/quote"
 import { calculateDeposit, remainingBalance, type StyleSelection } from "@/features/services/pricing"
+import { cardOnFileFor, cardOnFileParams, cardOnFileUpdate } from "@/features/noShowFees/server/cardOnFile"
 
 /**
  * Creates (or reuses) the PaymentIntent for a deposit or end-of-appointment
@@ -56,9 +57,19 @@ export const createCheckout = async (
             })
             // Same policy bookAppointment uses, so the two always agree.
             const { data: bizRow } = await supabase.from('business_users').select('booking_policies').eq('business_id', businessId).single()
-            const { data: activePolicy } = await supabase.from('business_policies').select('deposit').eq('id', bizRow?.booking_policies ?? '').maybeSingle()
+            const { data: activePolicy } = await supabase.from('business_policies').select('*').eq('id', bizRow?.booking_policies ?? '').maybeSingle()
             const price = calculateDeposit((activePolicy?.deposit ?? null) as any, quote.totalCents)
             if (price < 50) throw new Error("This booking doesn't need a deposit.")
+
+            // No-show fee: save the card with the deposit and record the agreed fee.
+            const clientInfo = (session.clientInfo ?? {}) as any
+            const card = await cardOnFileFor({
+                stripeAccount: business.stripeAccountId,
+                noShowFee: (activePolicy as any)?.no_show_fee,
+                totalCents: quote.totalCents,
+                email: clientEmail,
+                name: `${clientInfo.firstName ?? ''} ${clientInfo.lastName ?? ''}`,
+            })
 
             // Reuse this session's PaymentIntent (idempotency). If the client
             // went back and changed their size/length/add-ons, bring its amount
@@ -70,10 +81,11 @@ export const createCheckout = async (
                 )
                 if (existing.status !== 'canceled') {
                     const unpaid = ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(existing.status)
-                    if (existing.amount === price || !unpaid) return existing
+                    const cardUpdate = cardOnFileUpdate(existing, card)
+                    if ((existing.amount === price && !cardUpdate) || !unpaid) return existing
                     return await stripe.paymentIntents.update(
                         existing.id,
-                        { amount: price, application_fee_amount: calculateApplicationFee(price) },
+                        { ...cardUpdate, amount: price, application_fee_amount: calculateApplicationFee(price) },
                         { stripeAccount: business.stripeAccountId }
                     )
                 }
@@ -83,12 +95,14 @@ export const createCheckout = async (
                 amount: price,
                 currency: 'usd',
                 receipt_email: clientEmail,
+                ...cardOnFileParams(card),
                 metadata: {
                     checkoutType,
                     bookingSessionId: sessionId,
                     businessId,
                     appointmentType,
                     purpose: checkoutType === CheckoutType.EOA ? 'EOA' : 'DEPOSIT',
+                    ...cardOnFileParams(card).metadata,
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
                 application_fee_amount: calculateApplicationFee(price),
@@ -121,12 +135,27 @@ export const createCheckout = async (
                 .single()
             if (error) throw new Error(error.message)
 
+            // No-show fee from the business's current policy, fixed onto the payment.
+            const { data: bizRow } = await supabase.from('business_users').select('booking_policies').eq('business_id', businessId).single()
+            const { data: activePolicy } = await supabase.from('business_policies').select('*').eq('id', bizRow?.booking_policies ?? '').maybeSingle()
+            const card = await cardOnFileFor({
+                stripeAccount: business.stripeAccountId,
+                noShowFee: (activePolicy as any)?.no_show_fee,
+                totalCents: Math.round(Number(appointment.amountDue ?? 0)),
+                email: appointment.clientMetadata.email,
+                name: `${appointment.clientMetadata.firstName ?? ''} ${appointment.clientMetadata.lastName ?? ''}`,
+            })
+
             if (row.deposit_charge_id?.length) {
                 const existing = await stripe.paymentIntents.retrieve(
                     row.deposit_charge_id,
                     { stripeAccount: business.stripeAccountId }
                 )
-                if (existing.status !== 'canceled') return existing
+                if (existing.status !== 'canceled') {
+                    const cardUpdate = cardOnFileUpdate(existing, card)
+                    if (!cardUpdate) return existing
+                    return await stripe.paymentIntents.update(existing.id, cardUpdate, { stripeAccount: business.stripeAccountId })
+                }
             }
 
             // The deposit was set when the appointment was created.
@@ -137,12 +166,14 @@ export const createCheckout = async (
                 amount: price,
                 currency: 'usd',
                 receipt_email: appointment.clientMetadata.email,
+                ...cardOnFileParams(card),
                 metadata: {
                     checkoutType,
                     appointment_id: appointment.id,
                     businessId,
                     appointmentType,
                     purpose: 'DEPOSIT',
+                    ...cardOnFileParams(card).metadata,
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
                 application_fee_amount: calculateApplicationFee(price),

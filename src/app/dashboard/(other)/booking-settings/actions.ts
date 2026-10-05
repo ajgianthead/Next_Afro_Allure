@@ -3,6 +3,7 @@
 import { createClient } from "@/app/utils/supabase/server";
 import { BookingSettings, PaymentConfig } from "./bookingSettingsClient";
 import { stripe } from "@/lib/stripe/stripeClient";
+import { NO_SHOW_FEE_OFF, parseNoShowFee } from "@/features/noShowFees/noShowFee";
 
 export const handleBookingSettings = async (
     bookingSettings: any,
@@ -52,6 +53,10 @@ export const handleBookingSettings = async (
             deposit: bookingSettings.deposit,
             late_fee: bookingSettings.lateFee,
             no_show: bookingSettings.noShowPolicy,
+            // Only once the column exists (the settings page sends it then).
+            ...(bookingSettings.noShowFee !== undefined
+                ? { no_show_fee: { ...(bookingSettings.deposit?.enabled ? parseNoShowFee(bookingSettings.noShowFee) : NO_SHOW_FEE_OFF) } }
+                : {}),
             cancel_day_limit: bookingSettings.cancelDayLimit,
             important_info: bookingSettings.importantInfo,
             read_before_booking: bookingSettings.readBeforeBooking,

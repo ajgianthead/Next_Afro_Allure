@@ -42,6 +42,11 @@ export type Database = {
           discount_cents: number
           waitlist_notified_at: string | null
           rebook_nudged_at: string | null
+          no_show_fee_status: string | null
+          no_show_fee_cents: number | null
+          no_show_fee_charge_id: string | null
+          no_show_fee_error: string | null
+          no_show_fee_charged_at: string | null
           service_charge_id: string | null
           service_data: Json | null
           service_paid: boolean | null
@@ -83,6 +88,11 @@ export type Database = {
           discount_cents?: number
           waitlist_notified_at?: string | null
           rebook_nudged_at?: string | null
+          no_show_fee_status?: string | null
+          no_show_fee_cents?: number | null
+          no_show_fee_charge_id?: string | null
+          no_show_fee_error?: string | null
+          no_show_fee_charged_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -124,6 +134,11 @@ export type Database = {
           discount_cents?: number
           waitlist_notified_at?: string | null
           rebook_nudged_at?: string | null
+          no_show_fee_status?: string | null
+          no_show_fee_cents?: number | null
+          no_show_fee_charge_id?: string | null
+          no_show_fee_error?: string | null
+          no_show_fee_charged_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -386,6 +401,7 @@ export type Database = {
           important_info: string | null
           late_fee: Json
           no_show: Json
+          no_show_fee: Json
           read_before_booking: string | null
           reschedule_day_limit: number | null
           reschedule_limit: number | null
@@ -401,6 +417,7 @@ export type Database = {
           important_info?: string | null
           late_fee: Json
           no_show: Json
+          no_show_fee?: Json
           read_before_booking?: string | null
           reschedule_day_limit?: number | null
           reschedule_limit?: number | null
@@ -416,6 +433,7 @@ export type Database = {
           important_info?: string | null
           late_fee?: Json
           no_show?: Json
+          no_show_fee?: Json
           read_before_booking?: string | null
           reschedule_day_limit?: number | null
           reschedule_limit?: number | null
