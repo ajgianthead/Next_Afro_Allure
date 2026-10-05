@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { formatPrice, formatDuration } from '../utils'
+import { parseStyleOptions, startingPrice } from '../pricing'
 
 interface ServiceCardProps {
     service: any
@@ -40,7 +41,9 @@ export function ServiceCard({ service, onClick }: ServiceCardProps) {
 
             <div>
                 <p className="font-semibold text-sm leading-tight">{service.name}</p>
-                <p className="text-sm text-muted-foreground">{formatPrice(service.price)}</p>
+                <p className="text-sm text-muted-foreground">
+                    {parseStyleOptions(service.style_options) ? `From ${formatPrice(startingPrice(service))}` : formatPrice(service.price)}
+                </p>
                 {service.length > 0 && (
                     <p className="text-xs text-muted-foreground">{formatDuration(service.length)}</p>
                 )}

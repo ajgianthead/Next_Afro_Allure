@@ -91,6 +91,10 @@ function CategoryTagsInput({
     )
 }
 import { DeleteServiceDialog } from './DeleteServiceDialog'
+import { StyleOptionsEditor, EMPTY_STYLE_OPTIONS, styleOptionProblems } from './StyleOptionsEditor'
+import { PrepEditor, EMPTY_PREP } from './PrepEditor'
+import { parsePrep, parseStyleOptions, startingPrice, type ServicePrep, type StyleOptions } from '../pricing'
+import { formatPrice } from '../utils'
 import {
     uploadImg,
     updateImg,
@@ -129,6 +133,13 @@ export function ServiceEditor({
     const [checkedAddons, setCheckedAddons] = useState<Set<string>>(new Set(initialData.addons))
     const [isSaving, setIsSaving] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
+    // Stored options are validated on load; anything unusable starts empty.
+    const [styleOptions, setStyleOptions] = useState<StyleOptions>(
+        () => parseStyleOptions(initialData.style_options) ?? EMPTY_STYLE_OPTIONS
+    )
+    const [prep, setPrep] = useState<ServicePrep>(() => parsePrep(initialData.prep) ?? EMPTY_PREP)
+    const optionProblems = styleOptionProblems(styleOptions)
+    const fromPrice = styleOptions.enabled ? startingPrice({ price: form.price, length: form.length, style_options: styleOptions }) : form.price
 
     // Revoke blob URL on unmount to prevent memory leaks
     useEffect(() => {
@@ -163,6 +174,14 @@ export function ServiceEditor({
 
     const handleSave = async () => {
         if (!form.name.trim()) return
+        if (optionProblems.length > 0) {
+            toast.error(optionProblems[0])
+            return
+        }
+        if (styleOptions.enabled && !(form.length > 0)) {
+            toast.error('Set a base duration for this service.')
+            return
+        }
         setIsSaving(true)
         try {
             const path = `private/images/${businessId}/services/${form.id}`
@@ -183,9 +202,14 @@ export function ServiceEditor({
 
             const payload: ServiceData = {
                 ...form,
+                // With size/length pricing, the stored base price is the
+                // lowest combination, used for "from $X" and sorting.
+                price: styleOptions.enabled ? fromPrice : form.price,
                 addons: Array.from(checkedAddons),
                 photo_url,
                 imagePath,
+                style_options: styleOptions.enabled ? styleOptions : null,
+                prep,
             }
 
             let saved: any
@@ -298,6 +322,15 @@ export function ServiceEditor({
                         </div>
 
                         {/* Price */}
+                        {styleOptions.enabled ? (
+                            <div className="flex flex-col gap-1">
+                                <Label>Price</Label>
+                                <p className="text-sm">
+                                    From <strong>{fromPrice > 0 ? formatPrice(fromPrice) : '—'}</strong>
+                                    <span className="text-xs text-muted-foreground"> · set per size and length below</span>
+                                </p>
+                            </div>
+                        ) : (
                         <div className="flex flex-col gap-1.5">
                             <Label>Base Price ($)</Label>
                             <Input
@@ -312,10 +345,16 @@ export function ServiceEditor({
                                 placeholder="e.g. 80"
                             />
                         </div>
+                        )}
 
                         {/* Duration */}
                         <div className="flex flex-col gap-1.5">
-                            <Label>Duration (minutes)</Label>
+                            <Label>{styleOptions.enabled ? 'Base duration (minutes)' : 'Duration (minutes)'}</Label>
+                            {styleOptions.enabled && (
+                                <p className="text-xs text-muted-foreground -mt-1">
+                                    For your quickest combination; add extra time per size and length below.
+                                </p>
+                            )}
                             <Input
                                 type="number"
                                 min="0"
@@ -327,6 +366,22 @@ export function ServiceEditor({
                                 placeholder="e.g. 180"
                             />
                         </div>
+
+                        {/* Size × length options and braiding hair */}
+                        <StyleOptionsEditor
+                            value={styleOptions}
+                            onChange={setStyleOptions}
+                            baseMinutes={form.length}
+                            onApplyTemplate={({ styleOptions: applied, prep: appliedPrep, baseMinutes }) => {
+                                setStyleOptions(applied)
+                                setForm(prev => ({ ...prev, length: baseMinutes }))
+                                // Don't overwrite prep the stylist already wrote.
+                                setPrep(prev => (prev.instructions.trim() || prev.checklist.length ? prev : appliedPrep))
+                            }}
+                        />
+
+                        {/* Prep instructions */}
+                        <PrepEditor value={prep} onChange={setPrep} />
 
                         {/* Categories */}
                         <div className="flex flex-col gap-1.5">
@@ -411,7 +466,7 @@ export function ServiceEditor({
                             )}
 
                             <Button
-                                disabled={!form.name.trim() || isSaving}
+                                disabled={!form.name.trim() || isSaving || optionProblems.length > 0}
                                 onClick={handleSave}
                             >
                                 {isSaving ? 'Saving…' : isEditing ? 'Save Changes' : 'Create Service'}
