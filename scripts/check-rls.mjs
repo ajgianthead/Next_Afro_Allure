@@ -84,7 +84,7 @@ const TABLES = [
     'admin_logs', 'appointments', 'availabilities', 'banned_clients', 'booking_sessions', 'business_clients',
     'business_policies', 'business_users', 'client_users', 'client_waitlist', 'feedback', 'image_section',
     'marketplace_profile', 'notifications', 'refunds', 'reviews', 'service_addons', 'services',
-    'support_tickets', 'user_feedback', 'web_editors',
+    'support_tickets', 'user_feedback', 'web_editors', 'booking_waitlist',
 ]
 const PUBLIC_READ = ['categories', 'subcategories', 'feature_flags']
 

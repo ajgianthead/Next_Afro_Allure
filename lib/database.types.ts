@@ -38,6 +38,7 @@ export type Database = {
           selected_addons: Json[]
           selected_options: Json | null
           acknowledged_at: string | null
+          waitlist_notified_at: string | null
           service_charge_id: string | null
           service_data: Json | null
           service_paid: boolean | null
@@ -75,6 +76,7 @@ export type Database = {
           selected_addons?: Json[]
           selected_options?: Json | null
           acknowledged_at?: string | null
+          waitlist_notified_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -112,6 +114,7 @@ export type Database = {
           selected_addons?: Json[]
           selected_options?: Json | null
           acknowledged_at?: string | null
+          waitlist_notified_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -203,6 +206,60 @@ export type Database = {
             referencedColumns: ["client_id"]
           },
         ]
+      }
+      booking_waitlist: {
+        Row: {
+          id: string
+          business_id: string
+          service_id: string | null
+          first_name: string
+          last_name: string
+          email: string
+          phone: string
+          from_date: string
+          to_date: string
+          time_of_day: string
+          note: string | null
+          status: string
+          notified_count: number
+          last_notified_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          service_id?: string | null
+          first_name: string
+          last_name?: string
+          email: string
+          phone?: string
+          from_date: string
+          to_date: string
+          time_of_day?: string
+          note?: string | null
+          status?: string
+          notified_count?: number
+          last_notified_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          service_id?: string | null
+          first_name?: string
+          last_name?: string
+          email?: string
+          phone?: string
+          from_date?: string
+          to_date?: string
+          time_of_day?: string
+          note?: string | null
+          status?: string
+          notified_count?: number
+          last_notified_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
       }
       booking_sessions: {
         Row: {
@@ -387,6 +444,7 @@ export type Database = {
           is_onboarded: boolean
           latitude: number | null
           legacy_url_names: string[]
+          waitlist_enabled: boolean
           location: unknown
           longitude: number | null
           payment_method_config_id: string
@@ -429,6 +487,7 @@ export type Database = {
           is_onboarded?: boolean
           latitude?: number | null
           legacy_url_names?: string[]
+          waitlist_enabled?: boolean
           location?: unknown
           longitude?: number | null
           payment_method_config_id?: string
@@ -471,6 +530,7 @@ export type Database = {
           is_onboarded?: boolean
           latitude?: number | null
           legacy_url_names?: string[]
+          waitlist_enabled?: boolean
           location?: unknown
           longitude?: number | null
           payment_method_config_id?: string

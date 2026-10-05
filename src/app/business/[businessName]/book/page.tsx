@@ -69,12 +69,19 @@ export default async function Page({ params, searchParams }: {
         .single()
     const themeData = (webEditorRow?.theme_data ?? null) as BookingTheme | null
 
+    const { data: waitlistRow } = await supabase
+        .from('business_users')
+        .select('waitlist_enabled')
+        .eq('business_id', business.id)
+        .maybeSingle()
+    const waitlistEnabled = waitlistRow?.waitlist_enabled ?? false
+
     // Validate ?service= against this business's already-fetched services.
     // serviceClient is already scoped to this business, so a match is sufficient validation.
     const preSelectedServiceId = serviceParam
         ? (serviceClient.find(s => s.id === serviceParam)?.id)
         : undefined
 
-    return <BookClient services={serviceClient} policy={policy} appointments={busyIntervals} businessData={clientBusinessData} availabilities={availabilitiesClient} bookingLimitReached={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} />;
+    return <BookClient services={serviceClient} policy={policy} appointments={busyIntervals} businessData={clientBusinessData} availabilities={availabilitiesClient} bookingLimitReached={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} waitlistEnabled={waitlistEnabled} />;
 
 }
