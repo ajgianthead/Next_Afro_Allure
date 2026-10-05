@@ -35,9 +35,13 @@ export const getPublicImgURL = async (path: string): Promise<string> => {
 // Style options and prep are validated before saving; a disabled or empty
 // options block is stored as null. Omitted fields are left unchanged.
 function styleFields(serviceData: ServiceData) {
-    const fields: { style_options?: any; prep?: any } = {}
+    const fields: { style_options?: any; prep?: any; rebook_weeks?: number | null } = {}
     if ('style_options' in serviceData) fields.style_options = parseStyleOptions(serviceData.style_options)
     if ('prep' in serviceData) fields.prep = parsePrep(serviceData.prep)
+    if ('rebook_weeks' in serviceData) {
+        const weeks = Number(serviceData.rebook_weeks)
+        fields.rebook_weeks = serviceData.rebook_weeks != null && Number.isInteger(weeks) && weeks >= 1 && weeks <= 52 ? weeks : null
+    }
     return fields
 }
 

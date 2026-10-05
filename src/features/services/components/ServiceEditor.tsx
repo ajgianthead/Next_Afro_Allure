@@ -93,6 +93,9 @@ function CategoryTagsInput({
 import { DeleteServiceDialog } from './DeleteServiceDialog'
 import { StyleOptionsEditor, EMPTY_STYLE_OPTIONS, styleOptionProblems } from './StyleOptionsEditor'
 import { PrepEditor, EMPTY_PREP } from './PrepEditor'
+
+// Typical maintenance cycles: retwists 4–6 weeks, braids 6–8, silk press 2–3.
+const REBOOK_WEEK_OPTIONS = [2, 3, 4, 5, 6, 8, 10, 12]
 import { parsePrep, parseStyleOptions, startingPrice, type ServicePrep, type StyleOptions } from '../pricing'
 import { formatPrice } from '../utils'
 import {
@@ -382,6 +385,29 @@ export function ServiceEditor({
 
                         {/* Prep instructions */}
                         <PrepEditor value={prep} onChange={setPrep} />
+
+                        {/* Maintenance-cycle rebooking email */}
+                        <div className="flex flex-col gap-1.5">
+                            <Label>Rebooking reminder</Label>
+                            <p className="text-xs text-muted-foreground -mt-1">
+                                Email clients when it&apos;s time for their next one — skipped if they&apos;ve already rebooked.
+                            </p>
+                            <Select
+                                value={form.rebook_weeks ? String(form.rebook_weeks) : 'off'}
+                                onValueChange={(v) => setForm({ ...form, rebook_weeks: v === 'off' ? null : Number(v) })}
+                            >
+                                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="off">Off</SelectItem>
+                                    {REBOOK_WEEK_OPTIONS.map(w => (
+                                        <SelectItem key={w} value={String(w)}>{w} weeks after their visit</SelectItem>
+                                    ))}
+                                    {form.rebook_weeks && !REBOOK_WEEK_OPTIONS.includes(form.rebook_weeks) && (
+                                        <SelectItem value={String(form.rebook_weeks)}>{form.rebook_weeks} weeks after their visit</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
                         {/* Categories */}
                         <div className="flex flex-col gap-1.5">

@@ -14,6 +14,8 @@ export type ServiceData = {
     style_options?: unknown
     /** Prep instructions / checklist / agreement — see src/features/services/pricing.ts */
     prep?: unknown
+    /** Email clients to rebook this many weeks after a visit (null = off). */
+    rebook_weeks?: number | null
     created_at?: string
     updated_at?: string
 }

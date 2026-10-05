@@ -38,6 +38,7 @@ export type Database = {
           selected_addons: Json[]
           selected_options: Json | null
           acknowledged_at: string | null
+          rebook_nudged_at: string | null
           service_charge_id: string | null
           service_data: Json | null
           service_paid: boolean | null
@@ -75,6 +76,7 @@ export type Database = {
           selected_addons?: Json[]
           selected_options?: Json | null
           acknowledged_at?: string | null
+          rebook_nudged_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -112,6 +114,7 @@ export type Database = {
           selected_addons?: Json[]
           selected_options?: Json | null
           acknowledged_at?: string | null
+          rebook_nudged_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -929,6 +932,7 @@ export type Database = {
           price: number
           prep: Json | null
           style_options: Json | null
+          rebook_weeks: number | null
           updated_at: string | null
         }
         Insert: {
@@ -946,6 +950,7 @@ export type Database = {
           price: number
           prep?: Json | null
           style_options?: Json | null
+          rebook_weeks?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -963,6 +968,7 @@ export type Database = {
           price?: number
           prep?: Json | null
           style_options?: Json | null
+          rebook_weeks?: number | null
           updated_at?: string | null
         }
         Relationships: [
