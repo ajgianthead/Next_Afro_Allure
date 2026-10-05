@@ -266,7 +266,7 @@ export class Appointment {
                 selected_addons: appointmentData.selected_addons,
                 amount_due: appointmentData.amount_due ?? Number(appointmentData.service_data.price) + addOnPrice,
                 substraction: appointmentData.substraction,
-                selected_options: (appointmentData.selected_options ?? null) as any
+                ...(appointmentData.selected_options ? { selected_options: appointmentData.selected_options as any } : {})
             }).select().single()
             if (error) throw Error(error.message)
             return Appointment.fromRows(row)

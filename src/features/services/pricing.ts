@@ -123,10 +123,12 @@ export function parseStyleOptions(raw: unknown): StyleOptions | null {
             const key = gridKey(s, l)
             const cell = r.grid?.[key]
             if (!cell) continue
+            const price = toCents(cell.price)
             grid[key] = {
-                price: toCents(cell.price),
+                price,
                 extraMinutes: toMinutes(cell.extraMinutes),
-                available: cell.available !== false,
+                // A combination with no price is never bookable (no $0 styles).
+                available: cell.available !== false && price > 0,
             }
         }
     }

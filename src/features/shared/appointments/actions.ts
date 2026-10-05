@@ -228,8 +228,10 @@ export const createAppointmentAction = async (body: {
             reschedules: Number(policy?.reschedule_limit ?? 0),
             deposit_price: null,
             selected_addons: quote.addons,
-            selected_options: quote.selectedOptions,
-            acknowledged_at: body.acknowledged ? DateTime.now().toUTC().toISO() : null,
+            // New columns are only written when used, so this works whether or
+            // not the style-options migration has run yet.
+            ...(quote.selectedOptions ? { selected_options: quote.selectedOptions as any } : {}),
+            ...(body.acknowledged ? { acknowledged_at: DateTime.now().toUTC().toISO() } : {}),
             amount_due: quote.totalCents,
         }])
         .select('*, business_users(*)')

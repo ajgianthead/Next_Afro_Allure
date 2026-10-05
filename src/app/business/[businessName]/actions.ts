@@ -327,35 +327,33 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
         }
         const acknowledgedAt = acknowledged ? DateTime.now().toUTC().toISO() : null
 
+        // Optional columns (style options / agreement) are only written when
+        // used, so this works whether or not their migration has run yet.
+        const extra: Record<string, unknown> = {}
+        if (quote.selectedOptions) extra.selected_options = JSON.stringify(quote.selectedOptions)
+        if (acknowledgedAt) extra.acknowledged_at = acknowledgedAt
+        const insertAppointment = (fields: Record<string, unknown>) => {
+            const all = { ...fields, ...extra }
+            const cols = Object.keys(all)
+            const sql = `INSERT INTO appointments (${cols.map(c => `"${c}"`).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING *`
+            return client.query(sql, Object.values(all))
+        }
+
         let appointment;
         if (paymentIntentID.length) {
-            appointment = await client.query(
-                `INSERT INTO appointments (
-                    start, "end", business, client_metadata, status, service_data,
-                    deposit_charge_id, policy_id, require_deposit, paid_deposit,
-                    reschedules, deposit_price, selected_addons, amount_due,
-                    selected_options, acknowledged_at
-                ) VALUES ($1,$2,$3,$4,'PROCESSING',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
-                [
-                    timeSlot.start, timeSlot.end, businessId, client_metadata, dbService,
-                    paymentIntentID, policyId, true, false,
-                    rescheduleLimit, depositAmountCents, selectedAddonObjects, totalPriceCents,
-                    quote.selectedOptions ? JSON.stringify(quote.selectedOptions) : null, acknowledgedAt
-                ]
-            )
+            appointment = await insertAppointment({
+                start: timeSlot.start, end: timeSlot.end, business: businessId, client_metadata,
+                status: 'PROCESSING', service_data: dbService, deposit_charge_id: paymentIntentID,
+                policy_id: policyId, require_deposit: true, paid_deposit: false, reschedules: rescheduleLimit,
+                deposit_price: depositAmountCents, selected_addons: selectedAddonObjects, amount_due: totalPriceCents,
+            })
         } else {
-            appointment = await client.query(
-                `INSERT INTO appointments (
-                    start, "end", business, client_metadata, status, service_data,
-                    policy_id, require_deposit, paid_deposit, reschedules,
-                    selected_addons, amount_due, selected_options, acknowledged_at
-                ) VALUES ($1,$2,$3,$4,'CONFIRMED',$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
-                [
-                    timeSlot.start, timeSlot.end, businessId, client_metadata, dbService,
-                    policyId, false, false, rescheduleLimit, selectedAddonObjects, totalPriceCents,
-                    quote.selectedOptions ? JSON.stringify(quote.selectedOptions) : null, acknowledgedAt
-                ]
-            )
+            appointment = await insertAppointment({
+                start: timeSlot.start, end: timeSlot.end, business: businessId, client_metadata,
+                status: 'CONFIRMED', service_data: dbService, policy_id: policyId, require_deposit: false,
+                paid_deposit: false, reschedules: rescheduleLimit, selected_addons: selectedAddonObjects,
+                amount_due: totalPriceCents,
+            })
         }
 
         await client.query('COMMIT');
