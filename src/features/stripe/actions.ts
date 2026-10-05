@@ -5,6 +5,7 @@ import { createAdminClient } from '@/app/utils/supabase/admin'
 import { calculateApplicationFee } from "@/lib/fees"
 import { remainingBalance } from "@/features/services/pricing"
 import { requireOwnStripeAccount } from "@/lib/auth/requireOwnStripeAccount"
+import { canPayBalance } from "@/features/stripe/balance"
 
 /**
  * PaymentIntent for an appointment's balance (payment links, `purpose: 'EOA'`)
@@ -48,13 +49,28 @@ export const createCheckoutAction = async (params: {
 
     // Reuse this appointment's existing PaymentIntent (never one passed in).
     const existingId = isBalance ? appt.service_charge_id : appt.deposit_charge_id
+    const price = isBalance ? remainingBalance(appt) : Math.round(Number(appt.deposit_price ?? 0))
     if (existingId) {
         const existing = await stripe.paymentIntents.retrieve(existingId, { stripeAccount })
-        if (existing.status !== 'canceled') return { clientSecret: existing.client_secret, id: existing.id, amountDue: existing.amount }
+        if (existing.status === 'succeeded') return { clientSecret: existing.client_secret, id: existing.id, amountDue: existing.amount }
+        if (existing.status !== 'canceled') {
+            // The balance can change after the link was first opened (a late
+            // fee or reward was added) — keep the unpaid payment in step.
+            const unpaid = ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(existing.status)
+            if (isBalance && unpaid && canPayBalance(appt) && existing.amount !== price) {
+                const updated = await stripe.paymentIntents.update(
+                    existing.id,
+                    { amount: price, application_fee_amount: calculateApplicationFee(price) },
+                    { stripeAccount }
+                )
+                return { clientSecret: updated.client_secret, id: updated.id, amountDue: updated.amount }
+            }
+            return { clientSecret: existing.client_secret, id: existing.id, amountDue: existing.amount }
+        }
     }
 
-    if (isBalance && (appt.service_paid || appt.status !== 'CONFIRMED')) throw new Error('This payment link is no longer valid.')
-    const price = isBalance ? remainingBalance(appt) : Math.round(Number(appt.deposit_price ?? 0))
+    // Payable after the automatic no-show / incomplete flags too (see canPayBalance).
+    if (isBalance && !canPayBalance(appt)) throw new Error('This payment link is no longer valid.')
     if (price < 50) throw new Error(isBalance ? 'Nothing is left to pay for this appointment.' : "This appointment doesn't need a deposit.")
 
     const intent = await stripe.paymentIntents.create({

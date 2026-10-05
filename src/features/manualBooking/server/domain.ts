@@ -13,6 +13,7 @@ import { AppointmentReminders } from "@/features/shared/appointments/Appointment
 import { runConfirmationSideEffects, scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation"
 import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails"
 import { isValidTimezone } from "@/lib/timezone"
+import { canPayBalance } from "@/features/stripe/balance"
 
 // Small grace window so a time picked "right now" isn't rejected by clock skew.
 const PAST_GRACE_MINUTES = 2
@@ -182,7 +183,15 @@ export const sendPaymentLink = async (appointmentId: string) => {
     const appointment = await Appointment.fetchById(supabase, appointmentId)
     if (Array.isArray(appointment)) throw new Error('Appointment not found')
     if (appointment.businessId !== ownBusiness.business_id) throw new Error('Unauthorized')
-    if (appointment.status !== 'CONFIRMED') throw new Error('Only confirmed appointments can have a payment link sent')
+    // Also after the automatic no-show / incomplete flags — see canPayBalance.
+    if (!canPayBalance({
+        status: appointment.status,
+        service_paid: appointment.servicePaid,
+        amount_due: appointment.amountDue,
+        deposit_price: appointment.depositPrice,
+        paid_deposit: appointment.paidDeposit,
+        substraction: appointment.subtraction,
+    })) throw new Error('There is nothing left to pay online for this appointment.')
 
     const business = await BusinessUser.fetch(supabase, appointment.businessId)
 

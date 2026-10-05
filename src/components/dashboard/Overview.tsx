@@ -10,11 +10,12 @@ import { PostgrestSingleResponse } from '@supabase/supabase-js'
 import { toast } from 'sonner'
 import { sendPaymentLink } from 'app/dashboard/(other)/actions'
 import QRCode from 'react-qr-code'
+import { canPayBalance } from '@/features/stripe/balance'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
 import { DashboardTour } from '@/features/tour/tours/DashboardTour'
-import { serviceLabel } from '@/features/services/pricing'
+import { remainingBalance, serviceLabel } from '@/features/services/pricing'
 
 // Price of what was booked: chosen style price (or base price) + hair + add-ons.
 const bookedPrice = (apt: any): number => {
@@ -588,9 +589,16 @@ function AppointmentDetailsModal({ appointment, businessData, onClose }: { appoi
                 <DetailField label="Phone" value={formatPhone(apt.client_metadata.phoneNumber)} />
                 <DetailField label="Status" value={apt.status} />
               </div>
-              {businessData.completed_stripe_onboarding && (
+              {businessData.completed_stripe_onboarding && !canPayBalance(apt) && (
+                <p className="pt-3 border-t text-xs" style={{ borderColor: BRAND.sand, color: BRAND.warm }}>
+                  {apt.service_paid ? 'Paid in full — no payment link needed.' : 'Nothing to collect online for this appointment right now.'}
+                </p>
+              )}
+              {businessData.completed_stripe_onboarding && canPayBalance(apt) && (
                 <div className="pt-3 border-t" style={{ borderColor: BRAND.sand }}>
-                  <p className="text-xs mb-3" style={{ color: BRAND.warm }}>QR code for payment</p>
+                  <p className="text-xs mb-3" style={{ color: BRAND.warm }}>
+                    Client scans to pay {`$${(remainingBalance(apt) / 100).toFixed(2).replace(/\.00$/, '')}`}
+                  </p>
                   <div style={{ height: 160, width: '100%' }}>
                     <QRCode
                       size={256}

@@ -4,6 +4,7 @@ import { createClient } from "@/app/utils/supabase/server";
 import { BookingSettings, PaymentConfig } from "./bookingSettingsClient";
 import { stripe } from "@/lib/stripe/stripeClient";
 import { NO_SHOW_FEE_OFF, parseNoShowFee } from "@/features/noShowFees/noShowFee";
+import { parseLateFee } from "@/features/lateFees/lateFee";
 
 export const handleBookingSettings = async (
     bookingSettings: any,
@@ -51,7 +52,7 @@ export const handleBookingSettings = async (
         .insert({
             business: businessId,
             deposit: bookingSettings.deposit,
-            late_fee: bookingSettings.lateFee,
+            late_fee: { ...parseLateFee(bookingSettings.lateFee) },
             no_show: bookingSettings.noShowPolicy,
             // Only once the column exists (the settings page sends it then).
             ...(bookingSettings.noShowFee !== undefined

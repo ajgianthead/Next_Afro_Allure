@@ -38,6 +38,8 @@ export type Database = {
           selected_addons: Json[]
           selected_options: Json | null
           acknowledged_at: string | null
+          late_fee_cents: number
+          late_fee_added_at: string | null
           no_show_fee_status: string | null
           no_show_fee_cents: number | null
           no_show_fee_charge_id: string | null
@@ -80,6 +82,8 @@ export type Database = {
           selected_addons?: Json[]
           selected_options?: Json | null
           acknowledged_at?: string | null
+          late_fee_cents?: number
+          late_fee_added_at?: string | null
           no_show_fee_status?: string | null
           no_show_fee_cents?: number | null
           no_show_fee_charge_id?: string | null
@@ -122,6 +126,8 @@ export type Database = {
           selected_addons?: Json[]
           selected_options?: Json | null
           acknowledged_at?: string | null
+          late_fee_cents?: number
+          late_fee_added_at?: string | null
           no_show_fee_status?: string | null
           no_show_fee_cents?: number | null
           no_show_fee_charge_id?: string | null
