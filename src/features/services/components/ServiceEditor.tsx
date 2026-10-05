@@ -93,6 +93,7 @@ function CategoryTagsInput({
 import { DeleteServiceDialog } from './DeleteServiceDialog'
 import { StyleOptionsEditor, EMPTY_STYLE_OPTIONS, styleOptionProblems } from './StyleOptionsEditor'
 import { PrepEditor, EMPTY_PREP } from './PrepEditor'
+import { RateCheck } from './RateCheck'
 import { parsePrep, parseStyleOptions, startingPrice, type ServicePrep, type StyleOptions } from '../pricing'
 import { formatPrice } from '../utils'
 import {
@@ -378,6 +379,15 @@ export function ServiceEditor({
                                 // Don't overwrite prep the stylist already wrote.
                                 setPrep(prev => (prev.instructions.trim() || prev.checklist.length ? prev : appliedPrep))
                             }}
+                        />
+
+                        {/* Hourly rate per style */}
+                        <RateCheck
+                            price={form.price}
+                            minutes={form.length}
+                            styleOptions={styleOptions}
+                            onStyleOptionsChange={setStyleOptions}
+                            onPriceChange={price => setForm(prev => ({ ...prev, price }))}
                         />
 
                         {/* Prep instructions */}
