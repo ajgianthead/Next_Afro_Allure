@@ -11,6 +11,7 @@ import { DateTime } from "luxon"
 import { calculateApplicationFee } from "@/lib/fees"
 import { quoteFromDb } from "@/features/services/server/quote"
 import { calculateDeposit, remainingBalance, type StyleSelection } from "@/features/services/pricing"
+import { canPayBalance } from "@/features/stripe/balance"
 import { cardOnFileFor, cardOnFileParams, cardOnFileUpdate } from "@/features/noShowFees/server/cardOnFile"
 
 /**
@@ -198,22 +199,25 @@ export const createCheckout = async (
                 .single()
             if (error) throw new Error(error.message)
 
-            const price = remainingBalance({
+            const balanceRow = {
+                status: appointment.status,
+                service_paid: appointment.servicePaid,
                 amount_due: appointment.amountDue,
                 deposit_price: appointment.depositPrice,
                 paid_deposit: appointment.paidDeposit,
                 substraction: appointment.subtraction,
-            })
+            }
+            const price = remainingBalance(balanceRow)
 
             if (row.service_charge_id?.length) {
                 const existing = await stripe.paymentIntents.retrieve(
                     row.service_charge_id,
                     { stripeAccount: business.stripeAccountId }
                 )
-                // The balance can change after the link was made (e.g. a loyalty
-                // reward was applied) — keep an unpaid payment in step with it.
+                // The balance can change after the link was made (a late fee
+                // or reward) — keep an unpaid payment in step with it.
                 const unpaid = ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(existing.status)
-                if (unpaid && price >= 50 && existing.amount !== price) {
+                if (unpaid && canPayBalance(balanceRow) && existing.amount !== price) {
                     return await stripe.paymentIntents.update(
                         existing.id,
                         { amount: price, application_fee_amount: calculateApplicationFee(price) },
@@ -223,7 +227,7 @@ export const createCheckout = async (
                 if (existing.status !== 'canceled') return existing
             }
 
-            if (price < 50) throw new Error('Nothing is left to pay for this appointment.')
+            if (!canPayBalance(balanceRow)) throw new Error('Nothing is left to pay for this appointment.')
 
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: price,

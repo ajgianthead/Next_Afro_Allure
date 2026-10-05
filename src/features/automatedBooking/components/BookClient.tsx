@@ -1,5 +1,6 @@
 "use client"
 import Image from 'next/image'
+import { describeLateFee, parseLateFee } from "@/features/lateFees/lateFee";
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { ArrowLeftCircleIcon, Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -422,6 +423,11 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                             <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--t-text)' }}>
                                 {data.booking_policy?.readBeforeBooking}
                             </p>
+                            {describeLateFee(parseLateFee(data.booking_policy?.late_fee)) && (
+                                <p className="text-sm mt-3" style={{ color: 'var(--t-text)' }}>
+                                    {describeLateFee(parseLateFee(data.booking_policy?.late_fee))}
+                                </p>
+                            )}
                         </div>
                         <div className="p-4 flex items-center justify-between gap-3" style={{ borderTop: '1px solid var(--t-border)' }}>
                             <BookingCheckbox

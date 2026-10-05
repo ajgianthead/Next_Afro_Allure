@@ -1,6 +1,7 @@
 'use client'
 
 import { BookingData } from "@/features/automatedBooking/context/BookingDataContext";
+import { describeLateFee, parseLateFee } from "@/features/lateFees/lateFee";
 import { Check } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { useBooking } from "../hooks/useBookingData";
@@ -148,6 +149,12 @@ export const ClientInfo = ({
                             </BookingCheckbox>
                         )}
                     </div>
+                )}
+
+                {describeLateFee(parseLateFee(data.booking_policy.late_fee)) && (
+                    <p className="text-xs" style={{ color: 'var(--t-muted)' }}>
+                        {describeLateFee(parseLateFee(data.booking_policy.late_fee))}
+                    </p>
                 )}
 
                 {!data.booking_policy.deposit.enabled && (

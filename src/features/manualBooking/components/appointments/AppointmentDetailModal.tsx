@@ -22,6 +22,7 @@ import { listRefundsAction } from '@/features/refunds/server'
 import { describeSelectedOptions, type SelectedOptions } from '@/features/services/pricing'
 import { AppointmentRewards } from '@/features/loyalty/components/AppointmentRewards'
 import { NoShowFeePanel } from '@/features/noShowFees/components/NoShowFeePanel'
+import { LateFeePanel } from '@/features/lateFees/components/LateFeePanel'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 const MONO = 'ui-monospace, monospace'
@@ -390,6 +391,17 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                     )}
                                 </div>
 
+                                {['CONFIRMED', 'NO_SHOW', 'INCOMPLETE'].includes(status) && !event.servicePaid && (
+                                    <LateFeePanel
+                                        key={`late-${event.id}`}
+                                        appointmentId={event.id}
+                                        onChange={({ amountDue, confirmed }) => updateEventInContext({
+                                            amountDue,
+                                            ...(confirmed && status === 'NO_SHOW' ? { status: 'CONFIRMED' as const } : {}),
+                                        })}
+                                    />
+                                )}
+
                                 {status === 'NO_SHOW' && event.paidDeposit && (
                                     <NoShowFeePanel
                                         key={event.id}
@@ -498,6 +510,32 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                                 style={{ color: '#DC2626', backgroundColor: 'transparent' }}
                                             >
                                                 Cancel
+                                            </button>
+                                        </>
+                                    )}
+
+                                    {/* Flagged as a no-show / unpaid automatically after the end time — the client may still pay. */}
+                                    {(status === 'NO_SHOW' || status === 'INCOMPLETE') && !event.servicePaid && event.amountDue > 0 && (
+                                        <>
+                                            {canTakeOnlinePayments && (
+                                                <button
+                                                    disabled={busy}
+                                                    onClick={handleSendPaymentLink}
+                                                    className="flex items-center gap-1.5 rounded-full text-sm font-medium px-4 h-9 transition-opacity hover:opacity-80 disabled:opacity-50"
+                                                    style={{ backgroundColor: '#FC6161', color: '#FFFFFF' }}
+                                                >
+                                                    {loading === 'sendingPaymentLink' && <Loader2 size={13} className="animate-spin" />}
+                                                    Send Payment Link
+                                                </button>
+                                            )}
+                                            <button
+                                                disabled={busy}
+                                                onClick={handleMarkPaid}
+                                                className="flex items-center gap-1.5 rounded-full text-sm font-medium px-4 h-9 transition-colors hover:bg-[#F0EBE3] disabled:opacity-50"
+                                                style={{ border: '1px solid #E8E2D6', color: '#1A1818', backgroundColor: 'transparent' }}
+                                            >
+                                                {loading === 'markingPaid' && <Loader2 size={13} className="animate-spin" />}
+                                                They came — Mark Paid (Cash)
                                             </button>
                                         </>
                                     )}

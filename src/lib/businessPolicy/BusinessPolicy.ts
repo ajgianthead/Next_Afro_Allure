@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js"
 import { Database } from "../../../lib/database.types"
+import { parseLateFee, type LateFee } from "@/features/lateFees/lateFee"
 
 export enum Level {
     LIGHT = "light",
@@ -23,10 +24,7 @@ export interface BusinessPolicyType {
             subtraction: boolean
         }
     },
-    late_fee: {
-        enabled: boolean
-        fee?: number
-    },
+    late_fee: LateFee,
     no_show: {
         enabled: boolean
         level?: Level
@@ -51,10 +49,7 @@ export class BusinessPolicy {
                 subtraction: boolean
             }
         },
-        public late_fee: {
-            enabled: boolean
-            fee?: number
-        },
+        public late_fee: LateFee,
         public no_show: {
             enabled: boolean
             level?: Level
@@ -102,9 +97,7 @@ export class BusinessPolicy {
                 enabled: (row.deposit as typeof BusinessPolicy.prototype.deposit).enabled,
                 settings: (row.deposit as typeof BusinessPolicy.prototype.deposit).settings
             },
-            {
-                enabled: (row.late_fee as typeof BusinessPolicy.prototype.late_fee).enabled
-            },
+            parseLateFee(row.late_fee),
             {
                 enabled: (row.no_show as typeof BusinessPolicy.prototype.no_show).enabled,
                 level: (row.no_show as typeof BusinessPolicy.prototype.no_show).level
@@ -129,12 +122,9 @@ export class BusinessPolicy {
                     subtraction: this.deposit.settings.subtraction
                 }
             },
-            late_fee: {
-                enabled: this.late_fee.enabled,
-                fee: this.late_fee.fee
-            },
+            late_fee: { ...this.late_fee },
             no_show: {
-                enabled: this.no_show,
+                enabled: this.no_show.enabled,
                 level: this.no_show.level
             },
             rescheduleLimit: this.rescheduleLimit,
@@ -147,9 +137,19 @@ export class BusinessPolicy {
     }
     static async fetch(supabase: SupabaseClient<Database, any>, businessId: string) {
         try {
-            const { data: row, error } = await supabase.from('business_policies').select().eq('business', businessId).single()
+            // Every settings save inserts a new policy row, so load the active
+            // one (business_users.booking_policies), else the newest. This used
+            // to be `.single()` by business, which errors once a business has
+            // saved its settings twice — breaking its booking page.
+            const { data: biz } = await supabase.from('business_users').select('booking_policies').eq('business_id', businessId).maybeSingle()
+            if (biz?.booking_policies) {
+                const { data: active } = await supabase.from('business_policies').select().eq('id', biz.booking_policies).eq('business', businessId).maybeSingle()
+                if (active) return BusinessPolicy.fromRow(active)
+            }
+            const { data: rows, error } = await supabase.from('business_policies').select().eq('business', businessId).order('created_at', { ascending: false }).limit(1)
             if (error) throw Error(error.message)
-            return BusinessPolicy.fromRow(row)
+            if (!rows?.length) throw Error('No booking policy found')
+            return BusinessPolicy.fromRow(rows[0])
         } catch (error: any) {
             throw Error(error.message)
         }
@@ -165,10 +165,7 @@ export class BusinessPolicy {
                         subtraction: policy.deposit.settings.subtraction
                     }
                 },
-                late_fee: {
-                    enabled: policy.late_fee.enabled,
-                    fee: policy.late_fee.fee
-                },
+                late_fee: { ...policy.late_fee },
                 no_show: {
                     enabled: policy.no_show.enabled,
                     level: policy.no_show.level
