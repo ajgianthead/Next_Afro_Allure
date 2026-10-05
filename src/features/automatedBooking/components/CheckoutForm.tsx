@@ -1,5 +1,6 @@
 'use client'
 
+import { calculateDeposit } from '@/features/services/pricing'
 import { businessSitePath } from '@/lib/businessHost'
 import { BookingData } from "@/features/automatedBooking/context/BookingDataContext";
 import { ServiceType } from "@/lib/service/Service";
@@ -100,9 +101,8 @@ export const CheckoutForm = ({
 
     const startDT = data.selectedDateTime.start ? DateTime.fromISO(data.selectedDateTime.start) : null
     const endDT = data.selectedDateTime.end ? DateTime.fromISO(data.selectedDateTime.end) : null
-    const dueNow = data.booking_policy.deposit.settings.type === 'flat'
-        ? data.booking_policy.deposit.settings.value
-        : ((service.price / 100) + addonSum) * (data.booking_policy.deposit.settings.value / 100)
+    // Same calculation the server charges (dollars, for display).
+    const dueNow = calculateDeposit(data.booking_policy.deposit as any, service.price + Math.round(addonSum * 100)) / 100
 
     return (
         <div className="flex flex-col lg:flex-row gap-4 w-full">

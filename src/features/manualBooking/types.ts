@@ -2,6 +2,7 @@ import { AddOn } from "@/app/utils/types/service";
 import { Database } from "../../../lib/database.types";
 import { BusinessPolicyType } from "@/lib/businessPolicy/BusinessPolicy";
 import { ServiceType } from "@/lib/service/Service";
+import type { StyleSelection } from "@/features/services/pricing";
 
 export interface AppointmentData {
     start: string,
@@ -32,6 +33,8 @@ export interface CreateAppointmentPayload {
     deposit: boolean
     selectedAddons: string[]
     timezone?: string
+    /** Size / length / hair for services with style options. */
+    styleSelection?: StyleSelection | null
 }
 
 export interface WrapperProps {

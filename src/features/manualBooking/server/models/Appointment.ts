@@ -159,7 +159,9 @@ export class Appointment {
                     (item.service_data as any).imagePath,
                     (item.service_data as any).addons,
                     (item.service_data as any).categories,
-                    (item.service_data as any).availability
+                    (item.service_data as any).availability,
+                    (item.service_data as any).style_options ?? null,
+                    (item.service_data as any).prep ?? null
 
                 ),
                 item.require_deposit,
@@ -211,7 +213,9 @@ export class Appointment {
                 (row.service_data as any).imagePath,
                 (row.service_data as any).addons,
                 (row.service_data as any).categories,
-                (row.service_data as any).availability
+                (row.service_data as any).availability,
+                (row.service_data as any).style_options ?? null,
+                (row.service_data as any).prep ?? null
 
             ),
             row.require_deposit,
@@ -239,7 +243,10 @@ export class Appointment {
         )
     }
     static async create(supabase: SupabaseClient<Database, any>, businessId: string, appointmentData: {
-        client_metadata: any, start: string, end: string, service_data: any, status: any, require_deposit: boolean, paid_deposit: boolean, deposit_charge_id: string, reschedules: number, deposit_price: number, selected_addons: AddOn[], substraction: boolean
+        client_metadata: any, start: string, end: string, service_data: any, status: any, require_deposit: boolean, paid_deposit: boolean, deposit_charge_id: string, reschedules: number, deposit_price: number, selected_addons: AddOn[], substraction: boolean,
+        /** Total from the shared pricing module; falls back to service price + add-ons. */
+        amount_due?: number,
+        selected_options?: unknown
     }) {
         try {
             let addOnPrice = 0;
@@ -257,8 +264,9 @@ export class Appointment {
                 reschedules: appointmentData.reschedules,
                 deposit_price: appointmentData.deposit_price,
                 selected_addons: appointmentData.selected_addons,
-                amount_due: Number(appointmentData.service_data.price) + addOnPrice,
-                substraction: appointmentData.substraction
+                amount_due: appointmentData.amount_due ?? Number(appointmentData.service_data.price) + addOnPrice,
+                substraction: appointmentData.substraction,
+                selected_options: (appointmentData.selected_options ?? null) as any
             }).select().single()
             if (error) throw Error(error.message)
             return Appointment.fromRows(row)

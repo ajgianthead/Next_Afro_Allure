@@ -14,7 +14,9 @@ export interface ServiceType {
     imagePath: string,
     addons: AddOn[],
     categories: string[],
-    availability: string
+    availability: string,
+    style_options?: unknown,
+    prep?: unknown
 }
 export class Service {
     constructor(
@@ -28,7 +30,9 @@ export class Service {
         public imagePath: string,
         public addons: AddOn[],
         public categories: string[],
-        public availability: string
+        public availability: string,
+        public style_options: unknown = null,
+        public prep: unknown = null
     ) { }
     toClient() {
         return {
@@ -42,7 +46,9 @@ export class Service {
             imagePath: this.imagePath,
             addons: this.addons,
             categories: this.categories,
-            availability: this.availability
+            availability: this.availability,
+            style_options: this.style_options,
+            prep: this.prep
         }
     }
     static async createDefault(supabase: SupabaseClient<Database, any>, businessId: string, availabilityId: string) {
@@ -77,7 +83,9 @@ export class Service {
                     row.imagePath!,
                     row.addons as unknown as AddOn[],
                     row.categories!,
-                    row.availability
+                    row.availability,
+                    row.style_options ?? null,
+                    row.prep ?? null
                 )
             })
         }
@@ -92,7 +100,9 @@ export class Service {
             row.imagePath!,
             row.addons as unknown as AddOn[],
             row.categories!,
-            row.availability
+            row.availability,
+            row.style_options ?? null,
+            row.prep ?? null
         )
     }
     static async create(supabase: SupabaseClient<Database, any>, serviceData: {

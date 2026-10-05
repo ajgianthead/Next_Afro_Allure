@@ -13,6 +13,9 @@ import { formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails
 import { scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation";
 import { resolveTimezone, toZonedISO } from "@/lib/timezone";
 import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders";
+import { quoteFromDb } from "@/features/services/server/quote";
+import { calculateDeposit, parsePrep, QuoteError, type StyleSelection } from "@/features/services/pricing";
+import { stripe } from "@/lib/stripe/stripeClient";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -246,7 +249,32 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
     start?: string;
     end?: string;
     appointmentLength: number;
-}, zone: string) => {
+}, zone: string, styleSelection?: StyleSelection | null, acknowledged?: boolean) => {
+    // Price, duration, add-ons and the deposit come from the database. The
+    // service object and amounts sent by the browser are not trusted.
+    let priced: Awaited<ReturnType<typeof quoteFromDb>>
+    try {
+        priced = await quoteFromDb(createAdminClient(), {
+            businessId,
+            serviceId: serviceData?.id,
+            addonIds: addons,
+            selection: styleSelection,
+        })
+    } catch (err) {
+        if (err instanceof QuoteError) throw new Error(err.message)
+        throw err
+    }
+    const { service: dbService, quote } = priced
+    if (parsePrep(dbService.prep)?.requireAgreement && !acknowledged) {
+        throw new Error('Please confirm you have read the prep instructions and policies.')
+    }
+    if (!timeSlot.start || !DateTime.fromISO(timeSlot.start).isValid) throw new Error('Please pick a valid time.')
+    timeSlot = {
+        start: timeSlot.start,
+        end: DateTime.fromISO(timeSlot.start).plus({ minutes: quote.durationMinutes }).toISO()!,
+        appointmentLength: quote.durationMinutes,
+    }
+
     const client = await pool.connect()
     try {
         await client.query('BEGIN');
@@ -266,7 +294,7 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
         // Check slot availability
         const availabilities = (await client.query(`SELECT id, availability_data FROM availabilities av WHERE av.business_id = $1`, [businessId])).rows
         const appointments = (await client.query(`SELECT * FROM appointments app WHERE app.business = $1 AND app.status != 'CANCELLED'`, [businessId])).rows
-        const availabilityRow = availabilities.find((av: any) => av.id === serviceData.availability)
+        const availabilityRow = availabilities.find((av: any) => av.id === dbService.availability)
         if (!availabilityRow) throw new Error('No availability configuration found for this service')
         const availability = availabilityRow.availability_data
 
@@ -281,18 +309,23 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
         const businessPolicy = await client.query(`SELECT * FROM business_policies bp WHERE bp.id = $1`, [policy.rows[0].booking_policies])
         const policyRow = businessPolicy.rows[0]
 
-        // Compute deposit and total amounts (in cents)
-        const selectedAddonObjects = (serviceData.addons ?? []).filter((a: any) => (addons as string[]).includes(a.id))
-        const addonPriceCents = selectedAddonObjects.reduce((sum: number, a: any) => sum + (a.price ?? 0), 0)
-        const totalPriceCents = serviceData.price + addonPriceCents
-        const policyDeposit = policyRow?.deposit
-        let depositAmountCents = 0
-        if (policyDeposit?.settings?.type === 'flat') {
-            depositAmountCents = Math.round((policyDeposit.settings.value ?? 0) * 100)
-        } else if (policyDeposit?.settings?.type === 'percentage') {
-            depositAmountCents = Math.round(totalPriceCents * (policyDeposit.settings.value ?? 0) / 100)
-        }
+        // Totals in cents, from the shared pricing module. The deposit check
+        // used to look for 'percentage' while settings save 'percent', so
+        // percentage deposits were recorded as $0.
+        const selectedAddonObjects = quote.addons
+        const totalPriceCents = quote.totalCents
+        const depositAmountCents = calculateDeposit(policyRow?.deposit, totalPriceCents)
         const rescheduleLimit = policyRow?.reschedule_limit ?? policyRow?.rescheduleLimit ?? 3
+
+        // The client must have paid exactly the deposit owed for this booking.
+        if (paymentIntentID.length) {
+            const { rows: [biz] } = await client.query(`SELECT stripe_acc_id FROM business_users WHERE business_id = $1`, [businessId])
+            const intent = await stripe.paymentIntents.retrieve(paymentIntentID, { stripeAccount: biz?.stripe_acc_id })
+            if (intent.amount !== depositAmountCents) {
+                throw new Error('The deposit amount has changed. Please refresh the page and try again.')
+            }
+        }
+        const acknowledgedAt = acknowledged ? DateTime.now().toUTC().toISO() : null
 
         let appointment;
         if (paymentIntentID.length) {
@@ -300,12 +333,14 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
                 `INSERT INTO appointments (
                     start, "end", business, client_metadata, status, service_data,
                     deposit_charge_id, policy_id, require_deposit, paid_deposit,
-                    reschedules, deposit_price, selected_addons, amount_due
-                ) VALUES ($1,$2,$3,$4,'PROCESSING',$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+                    reschedules, deposit_price, selected_addons, amount_due,
+                    selected_options, acknowledged_at
+                ) VALUES ($1,$2,$3,$4,'PROCESSING',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
                 [
-                    timeSlot.start, timeSlot.end, businessId, client_metadata, "PROCESSING", serviceData,
+                    timeSlot.start, timeSlot.end, businessId, client_metadata, dbService,
                     paymentIntentID, policyId, true, false,
-                    rescheduleLimit, depositAmountCents, selectedAddonObjects, totalPriceCents
+                    rescheduleLimit, depositAmountCents, selectedAddonObjects, totalPriceCents,
+                    quote.selectedOptions ? JSON.stringify(quote.selectedOptions) : null, acknowledgedAt
                 ]
             )
         } else {
@@ -313,11 +348,12 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
                 `INSERT INTO appointments (
                     start, "end", business, client_metadata, status, service_data,
                     policy_id, require_deposit, paid_deposit, reschedules,
-                    selected_addons, amount_due
-                ) VALUES ($1,$2,$3,$4,'CONFIRMED',$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+                    selected_addons, amount_due, selected_options, acknowledged_at
+                ) VALUES ($1,$2,$3,$4,'CONFIRMED',$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
                 [
-                    timeSlot.start, timeSlot.end, businessId, client_metadata, "CONFIRMED", serviceData,
-                    policyId, false, false, rescheduleLimit, selectedAddonObjects, totalPriceCents
+                    timeSlot.start, timeSlot.end, businessId, client_metadata, dbService,
+                    policyId, false, false, rescheduleLimit, selectedAddonObjects, totalPriceCents,
+                    quote.selectedOptions ? JSON.stringify(quote.selectedOptions) : null, acknowledgedAt
                 ]
             )
         }

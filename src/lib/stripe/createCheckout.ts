@@ -9,14 +9,24 @@ import { AppointmentType, CheckoutType } from "../../features/shared/appointment
 import { getBookingSession, updateBookingSession } from "@/features/automatedBooking/server/domain"
 import { DateTime } from "luxon"
 import { calculateApplicationFee } from "@/lib/fees"
+import { quoteFromDb } from "@/features/services/server/quote"
+import { calculateDeposit, remainingBalance, type StyleSelection } from "@/features/services/pricing"
 
+/**
+ * Creates (or reuses) the PaymentIntent for a deposit or end-of-appointment
+ * payment. The amount is always computed here from the database — the
+ * `price` argument from the browser is ignored (kept for call compatibility).
+ * Online booking deposits need `booking` so the server can price the chosen
+ * service, options and add-ons.
+ */
 export const createCheckout = async (
     checkoutType: CheckoutType,
     appointmentType: AppointmentType,
-    price: number,
+    _price: number,
     businessId: string,
     appointmentId?: string,
-    sessionId?: string
+    sessionId?: string,
+    booking?: { serviceId: string; addonIds: string[]; style?: StyleSelection | null }
 ): Promise<Stripe.PaymentIntent> => {
     try {
         const supabase = createAdminClient()
@@ -45,6 +55,19 @@ export const createCheckout = async (
             }
 
             const clientEmail = (session.clientInfo as any)?.email as string | undefined
+
+            if (!booking?.serviceId) throw new Error('Missing booking details')
+            const { quote } = await quoteFromDb(supabase, {
+                businessId,
+                serviceId: booking.serviceId,
+                addonIds: booking.addonIds,
+                selection: booking.style,
+            })
+            // Same policy bookAppointment uses, so the two always agree.
+            const { data: bizRow } = await supabase.from('business_users').select('booking_policies').eq('business_id', businessId).single()
+            const { data: activePolicy } = await supabase.from('business_policies').select('deposit').eq('id', bizRow?.booking_policies ?? '').maybeSingle()
+            const price = calculateDeposit((activePolicy?.deposit ?? null) as any, quote.totalCents)
+            if (price < 50) throw new Error("This booking doesn't need a deposit.")
 
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: price,
@@ -96,6 +119,10 @@ export const createCheckout = async (
                 if (existing.status !== 'canceled') return existing
             }
 
+            // The deposit was set when the appointment was created.
+            const price = Math.round(appointment.depositPrice ?? 0)
+            if (price < 50) throw new Error("This appointment doesn't need a deposit.")
+
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: price,
                 currency: 'usd',
@@ -137,6 +164,14 @@ export const createCheckout = async (
                 )
                 if (existing.status !== 'canceled') return existing
             }
+
+            const price = remainingBalance({
+                amount_due: appointment.amountDue,
+                deposit_price: appointment.depositPrice,
+                paid_deposit: appointment.paidDeposit,
+                substraction: appointment.subtraction,
+            })
+            if (price < 50) throw new Error('Nothing is left to pay for this appointment.')
 
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: price,

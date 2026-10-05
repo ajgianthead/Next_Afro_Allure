@@ -11,16 +11,6 @@ import { createCheckout } from "@/lib/stripe/createCheckout";
 import { AppointmentType, CheckoutType } from "./../../shared/appointments/types";
 import { Loader2 } from "lucide-react";
 
-function getDepositAmountCents(policy: any, servicePrice: number, addonPriceCents: number): number {
-    const total = servicePrice + addonPriceCents
-    if (policy?.deposit?.settings?.type === 'flat') {
-        return Math.round((policy.deposit.settings.value ?? 0) * 100)
-    }
-    if (policy?.deposit?.settings?.type === 'percentage') {
-        return Math.round(total * (policy.deposit.settings.value ?? 0) / 100)
-    }
-    return total
-}
 
 export const DepositPayment = ({
     setError, setOpenErrorDialog, setRbbOpen,
@@ -36,18 +26,17 @@ export const DepositPayment = ({
 
     useEffect(() => {
         const fetchSession = async () => {
-            const addonPriceCents = (selectedServiceData?.addons as any[] ?? [])
-                .filter((a: any) => data.selectedAddons.includes(a.id))
-                .reduce((sum: number, a: any) => sum + (a.price ?? 0), 0)
-            const depositAmount = getDepositAmountCents(data.booking_policy, selectedServiceData?.price ?? 0, addonPriceCents)
-
+            // The server prices the booking and works out the deposit; this
+            // used to send a browser-calculated amount, which for percentage
+            // deposits was the full service price.
             const checkout = await createCheckout(
                 CheckoutType.DEPOSIT,
                 AppointmentType.AUTOMATED,
-                depositAmount,
+                0,
                 data.business_id,
                 undefined,
-                data.bookingSession?.id
+                data.bookingSession?.id,
+                { serviceId: data.selectedService, addonIds: data.selectedAddons }
             )
             if (checkout) {
                 setData((prev) => ({ ...prev, options: { clientSecret: checkout.client_secret! } }))

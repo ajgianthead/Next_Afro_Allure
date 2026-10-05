@@ -243,7 +243,16 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         {bookingPolicy.deposit.settings?.type === Type.FLAT && (
                             <div className="flex items-center gap-2">
                                 <span className="text-sm" style={{ color: BRAND.warm }}>$</span>
-                                <BrandInput type="number" className="w-24" />
+                                {/* Flat deposits are stored in dollars. This field used to be unconnected. */}
+                                <BrandInput
+                                    type="number"
+                                    min={1}
+                                    step="0.01"
+                                    inputMode="decimal"
+                                    value={Number.isFinite(bookingPolicy.deposit.settings?.value) ? bookingPolicy.deposit.settings.value : ''}
+                                    onChange={(e) => setBookingPolicy({ ...bookingPolicy, deposit: { enabled: true, settings: { value: parseFloat(e.target.value), type: Type.FLAT, subtraction: bookingPolicy.deposit.settings.subtraction } } })}
+                                    className="w-24"
+                                />
                             </div>
                         )}
                     </div>
