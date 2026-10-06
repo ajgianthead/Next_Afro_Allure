@@ -49,6 +49,8 @@ interface EventProps {
 export default function EventCard({ event }: EventProps) {
     const { manualBookingData, setManualBookingData } = useManualBooking()
     const isConfirmed = event.status === 'CONFIRMED'
+    // Unpaid after the end time = INCOMPLETE; the business decides paid or no-show.
+    const canMarkAs = isConfirmed || event.status === 'INCOMPLETE'
 
     const statusColor = () => {
         switch (event.status) {
@@ -201,9 +203,9 @@ export default function EventCard({ event }: EventProps) {
 
                                     <DropdownMenuSeparator />
 
-                                    {/* Mark As — only for CONFIRMED */}
+                                    {/* Mark As — for CONFIRMED and INCOMPLETE */}
                                     <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger disabled={!isConfirmed} className="font-medium">
+                                        <DropdownMenuSubTrigger disabled={!canMarkAs} className="font-medium">
                                             <ChevronRight size={16} /> Mark As
                                         </DropdownMenuSubTrigger>
                                         <DropdownMenuSubContent>

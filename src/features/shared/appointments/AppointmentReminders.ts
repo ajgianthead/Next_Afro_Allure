@@ -1,4 +1,4 @@
-import { checkAppointmentStatus, checkNoShowTask, reminderTask, sendPaymentLink } from "trigger/reminder";
+import { checkAppointmentStatus, reminderTask, sendPaymentLink } from "trigger/reminder";
 import { runs } from "@trigger.dev/sdk";
 import { DateTime } from "luxon";
 
@@ -110,10 +110,9 @@ export class AppointmentReminders {
             { delay: end.plus({ minutes: 30 }).toJSDate() }
         ));
 
-        const noShowCheck = await safe('no-show check', () => checkNoShowTask.trigger(
-            { appointment_id: data.appointmentId },
-            { delay: end.plus({ minutes: 15 }).toJSDate() }
-        ));
+        // No automatic no-show: the payment check flags an unpaid appointment
+        // INCOMPLETE and the business marks it paid or no-show.
+        const noShowCheck = null;
 
         // Follow-up payment checks at 24hr and 48hr after appointment end.
         // Awaited and stored so a reschedule or cancel can cancel them too.

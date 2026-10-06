@@ -283,35 +283,10 @@ export const sendLink = async (props: PaymentLinkProps) => {
 // later time. Only act once the appointment as it stands now has ended.
 const hasEnded = (end: string) => DateTime.fromISO(end).toMillis() <= Date.now()
 
-const checkNoShow = async (appointmentId: string) => {
-  const supabase = adminClient()
-  const { data: appt } = await supabase
-    .from('appointments')
-    .select('id, business, status, service_paid, service_data, client_metadata, end')
-    .eq('id', appointmentId)
-    .single()
-
-  if (!appt || appt.status !== 'CONFIRMED' || appt.service_paid) return
-  if (!hasEnded(appt.end)) return
-
-  await supabase.from('appointments').update({ status: 'NO_SHOW' }).eq('id', appointmentId)
-
-  const cm = appt.client_metadata as any
-  const sd = appt.service_data as any
-  try {
-    await supabase.from('notifications').insert({
-      body: `${cm?.firstName ?? ''} ${cm?.lastName ?? ''} may not have shown up for their ${sd?.name ?? 'appointment'}.`,
-      title: 'Possible No-Show',
-      read: false,
-      business_id: appt.business,
-      type: 'no-show',
-      appointment_id: appt.id,
-    })
-  } catch (err) {
-    console.error('Failed to send no-show notification:', err)
-  }
-}
-
+// An unpaid appointment after its end time could mean the client didn't come,
+// or came and hasn't paid yet — the app can't tell which. So it's flagged
+// INCOMPLETE and the business decides: mark it paid, or mark it a no-show.
+// Nothing marks NO_SHOW automatically (a no-show fee needs that status).
 const checkPaymentStatus = async (appointmentId: string) => {
   const supabase = adminClient()
   const { data: appt } = await supabase
@@ -322,15 +297,23 @@ const checkPaymentStatus = async (appointmentId: string) => {
 
   if (!appt || appt.service_paid) return
   if (!hasEnded(appt.end)) return
-  if (appt.status === 'NO_SHOW' || appt.status === 'CANCELLED' || appt.status === 'COMPLETED') return
+  // INCOMPLETE = a follow-up check (24h / 48h) on one already flagged.
+  if (appt.status !== 'CONFIRMED' && appt.status !== 'INCOMPLETE') return
+  const followUp = appt.status === 'INCOMPLETE'
 
-  await supabase.from('appointments').update({ status: 'INCOMPLETE' }).eq('id', appointmentId)
+  if (!followUp) {
+    await supabase.from('appointments').update({ status: 'INCOMPLETE' }).eq('id', appointmentId)
+  }
 
   try {
     const cm = appt.client_metadata as any
     const sd = appt.service_data as any
+    const who = `${cm?.firstName ?? ''} ${cm?.lastName ?? ''}`.trim() || 'your client'
+    const what = sd?.name ?? 'appointment'
     await supabase.from('notifications').insert({
-      body: `Payment for ${sd?.name ?? 'an appointment'} with ${cm?.firstName ?? ''} ${cm?.lastName ?? ''} is still outstanding.`,
+      body: followUp
+        ? `${who}'s ${what} still isn't paid. Mark it paid if they came, or mark it as a no-show.`
+        : `${who}'s ${what} has ended but hasn't been paid. Mark it paid if they came, or mark it as a no-show.`,
       title: 'Payment Incomplete',
       read: false,
       business_id: appt.business,
@@ -375,10 +358,10 @@ export const checkAppointmentStatus = task({
   }
 })
 
+// No longer scheduled — no-shows are marked by the business (see
+// checkPaymentStatus). Kept so runs queued before that change finish quietly.
 export const checkNoShowTask = task({
   id: 'checkNoShow',
   maxDuration: 300,
-  run: async (payload: { appointment_id: string }) => {
-    await checkNoShow(payload.appointment_id)
-  }
+  run: async (_payload: { appointment_id: string }) => {}
 })
