@@ -52,6 +52,7 @@ export async function scheduleAndStoreReminders(
             client: { hour: ids.client.hour, day: ids.client.day },
             paymentCheck: ids.paymentCheck,
             noShowCheck: ids.noShowCheck,
+            paymentFollowUps: ids.paymentFollowUps,
         },
         payment_link_id: ids.paymentLink ?? '',
     }).eq('id', appointment.id)

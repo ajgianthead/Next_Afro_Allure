@@ -274,7 +274,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
         SET status = 'CONFIRMED', paid_deposit = $1,
             paid_amount = coalesce(paid_amount, 0) + $2,
             amount_due = CASE WHEN substraction THEN amount_due - $2 ELSE amount_due END
-        WHERE deposit_charge_id = $3
+        WHERE deposit_charge_id = $3 AND paid_deposit IS DISTINCT FROM true
         RETURNING *
       )
       SELECT updated.*, business_users.business_name, business_users.email, business_users.account_settings
@@ -286,6 +286,13 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
   } catch (error: any) {
     await client.query('ROLLBACK');
     throw error; // DB failure → signal Stripe to retry
+  }
+
+  // Stripe can deliver the same event more than once. A deposit already
+  // recorded means emails and reminders already went out — don't double them.
+  if (!res) {
+    console.log(`Deposit ${paymentIntent.id} already recorded; skipping side effects`);
+    return;
   }
 
   // Side effects: appointment is already confirmed, so failures here must NOT
@@ -403,6 +410,7 @@ async function scheduleReminders(res: any, appointmentId: string, client: any) {
           client: { hour: ids.client.hour, day: ids.client.day },
           paymentCheck: ids.paymentCheck,
           noShowCheck: ids.noShowCheck,
+          paymentFollowUps: ids.paymentFollowUps,
         },
         ids.paymentLink ?? '',
         appointmentId,

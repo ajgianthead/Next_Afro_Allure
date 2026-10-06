@@ -2,7 +2,7 @@ import { configure, schedules } from "@trigger.dev/sdk";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 configure({
-  secretKey: process.env.NEXT_PUBLIC_TRIGGER_API_KEY,
+  secretKey: process.env.TRIGGER_API_KEY,
 });
 
 // Daily at 13:00 UTC: businesses whose free early access has run out and who

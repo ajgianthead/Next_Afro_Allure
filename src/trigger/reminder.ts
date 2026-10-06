@@ -10,7 +10,7 @@ import { toZonedISO } from "../lib/timezone";
 import { clientPrepFor, serviceLabel } from "../features/services/pricing";
 
 configure({
-  secretKey: process.env.NEXT_PUBLIC_TRIGGER_API_KEY,
+  secretKey: process.env.TRIGGER_API_KEY,
 });
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -279,15 +279,20 @@ export const sendLink = async (props: PaymentLinkProps) => {
   }
 }
 
+// A check queued for an appointment's old time can outlive a reschedule to a
+// later time. Only act once the appointment as it stands now has ended.
+const hasEnded = (end: string) => DateTime.fromISO(end).toMillis() <= Date.now()
+
 const checkNoShow = async (appointmentId: string) => {
   const supabase = adminClient()
   const { data: appt } = await supabase
     .from('appointments')
-    .select('id, business, status, service_paid, service_data, client_metadata')
+    .select('id, business, status, service_paid, service_data, client_metadata, end')
     .eq('id', appointmentId)
     .single()
 
   if (!appt || appt.status !== 'CONFIRMED' || appt.service_paid) return
+  if (!hasEnded(appt.end)) return
 
   await supabase.from('appointments').update({ status: 'NO_SHOW' }).eq('id', appointmentId)
 
@@ -311,11 +316,12 @@ const checkPaymentStatus = async (appointmentId: string) => {
   const supabase = adminClient()
   const { data: appt } = await supabase
     .from('appointments')
-    .select('id, business, status, service_paid, service_data, client_metadata')
+    .select('id, business, status, service_paid, service_data, client_metadata, end')
     .eq('id', appointmentId)
     .single()
 
   if (!appt || appt.service_paid) return
+  if (!hasEnded(appt.end)) return
   if (appt.status === 'NO_SHOW' || appt.status === 'CANCELLED' || appt.status === 'COMPLETED') return
 
   await supabase.from('appointments').update({ status: 'INCOMPLETE' }).eq('id', appointmentId)

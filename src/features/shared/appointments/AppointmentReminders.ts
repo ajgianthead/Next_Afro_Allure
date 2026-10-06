@@ -33,6 +33,8 @@ export interface ScheduledReminderIds {
     paymentCheck: string | null;
     paymentLink: string | null;
     noShowCheck: string | null;
+    /** The 24h and 48h follow-up payment checks. */
+    paymentFollowUps: string[];
 }
 
 /** Builds the reminder settings from a business's account_settings JSON. Missing values mean "off". */
@@ -113,15 +115,18 @@ export class AppointmentReminders {
             { delay: end.plus({ minutes: 15 }).toJSDate() }
         ));
 
-        // Follow-up payment checks at 24hr and 48hr after appointment end
-        safe('24h payment check', () => checkAppointmentStatus.trigger(
-            { appointment_id: data.appointmentId },
-            { delay: end.plus({ hours: 24 }).toJSDate() }
-        ));
-        safe('48h payment check', () => checkAppointmentStatus.trigger(
-            { appointment_id: data.appointmentId },
-            { delay: end.plus({ hours: 48 }).toJSDate() }
-        ));
+        // Follow-up payment checks at 24hr and 48hr after appointment end.
+        // Awaited and stored so a reschedule or cancel can cancel them too.
+        const paymentFollowUps = await Promise.all([
+            safe('24h payment check', () => checkAppointmentStatus.trigger(
+                { appointment_id: data.appointmentId },
+                { delay: end.plus({ hours: 24 }).toJSDate() }
+            )),
+            safe('48h payment check', () => checkAppointmentStatus.trigger(
+                { appointment_id: data.appointmentId },
+                { delay: end.plus({ hours: 48 }).toJSDate() }
+            )),
+        ]);
 
         return {
             business: { hour: businessHour, day: businessDay },
@@ -129,6 +134,7 @@ export class AppointmentReminders {
             paymentCheck,
             paymentLink,
             noShowCheck,
+            paymentFollowUps: paymentFollowUps.filter((id): id is string => id !== null),
         };
     }
 
@@ -141,6 +147,7 @@ export class AppointmentReminders {
             reminderIds?.client?.day,
             reminderIds?.paymentCheck,
             reminderIds?.noShowCheck,
+            ...(Array.isArray(reminderIds?.paymentFollowUps) ? reminderIds.paymentFollowUps : []),
             paymentLinkId,
         ].filter((id): id is string => typeof id === 'string' && id.length > 0);
         return Promise.all(ids.map(id => runs.cancel(id).catch(err => console.error(`Failed to cancel run ${id}:`, err))));
