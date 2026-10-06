@@ -1,6 +1,6 @@
 'use client'
 
-import { Ban, Loader2, Plus, UserX } from 'lucide-react'
+import { Ban, FileUp, Loader2, Plus, UserX } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ import {
     type Client,
 } from 'app/dashboard/(other)/clients/actions'
 import { PostgrestError } from '@supabase/supabase-js'
+import { ImportClientsDialog } from '@/features/clientImport/components/ImportClientsDialog'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -81,6 +82,7 @@ export const ClientsTable = ({
 
     const [open, setOpen] = useState(false)
     const [openBanList, setOpenBanList] = useState(false)
+    const [openImport, setOpenImport] = useState(false)
     const [editing, setEditing] = useState(false)
     const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
 
@@ -226,7 +228,7 @@ export const ClientsTable = ({
                         Manage Clientele
                     </h1>
                     <p className="text-sm mt-0.5" style={{ color: '#6F6863' }}>
-                        Add, edit, and remove clients. Ban clients to block future bookings.
+                        Add, import, edit, and remove clients. Ban clients to block future bookings.
                     </p>
                 </div>
                 <div className="flex items-center gap-2 sm:shrink-0">
@@ -239,6 +241,16 @@ export const ClientsTable = ({
                     >
                         <Ban size={14} className="mr-1.5" />
                         Banned List
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl flex-1 sm:flex-none"
+                        style={{ borderColor: '#E8E2D6', color: '#1A1818', fontSize: '13px' }}
+                        onClick={() => setOpenImport(true)}
+                    >
+                        <FileUp size={14} className="mr-1.5" />
+                        Import
                     </Button>
                     <Button
                         size="sm"
@@ -329,6 +341,16 @@ export const ClientsTable = ({
                         <p className="text-sm italic" style={{ color: '#6F6863' }}>
                             You have no current clients
                         </p>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl"
+                            style={{ borderColor: '#E8E2D6', color: '#1A1818', fontSize: '13px' }}
+                            onClick={() => setOpenImport(true)}
+                        >
+                            <FileUp size={14} className="mr-1.5" />
+                            Import from StyleSeat, GlossGenius or Acuity
+                        </Button>
                     </div>
                 )}
             </div>
@@ -439,6 +461,13 @@ export const ClientsTable = ({
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <ImportClientsDialog
+                open={openImport}
+                onOpenChange={setOpenImport}
+                businessId={businessId}
+                onImported={rows => setClients(prev => [...prev, ...rows])}
+            />
 
             {/* Banned Client List Dialog */}
             <Dialog open={openBanList} onOpenChange={setOpenBanList}>

@@ -44,6 +44,8 @@ import {
 import { signOutAction } from '@/app/(auth)/actions'
 import { useState } from 'react'
 import { TourProvider } from '@/features/tour/TourProvider'
+import { UpgradeProvider } from '@/features/billing/components/UpgradeDialog'
+import { PlanBanner } from '@/features/billing/components/PlanBanner'
 import { HelpSheet } from '@/features/tour/HelpSheet'
 
 interface NavItem {
@@ -101,6 +103,7 @@ export default function LayoutComp({ children, businessData }: { children: React
         url === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(url)
 
     return (
+        <UpgradeProvider hadTrial={!!businessData?.had_trial}>
         <TourProvider
             toursCompleted={(businessData?.tours_completed as Record<string, boolean>) ?? {}}
             businessId={businessData?.business_id ?? ''}
@@ -219,6 +222,10 @@ export default function LayoutComp({ children, businessData }: { children: React
                             businessId={businessData?.business_id ?? ''}
                             initialUnreadCount={((businessData?.notifications ?? []) as { read: boolean }[]).filter(n => !n.read).length}
                         />
+                        <PlanBanner
+                            subscriptionStatus={businessData?.subscription_status}
+                            complimentaryUntil={businessData?.complimentary_until}
+                        />
                         <main>
                             <div className="w-full flex-1 max-h-min">
                                 <SiteWrapper>
@@ -233,5 +240,6 @@ export default function LayoutComp({ children, businessData }: { children: React
         </div>
         <HelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
         </TourProvider>
+        </UpgradeProvider>
     )
 }

@@ -366,7 +366,7 @@ function WhatYouGet({ foundingMemberCount }: { foundingMemberCount: number }) {
   return (
     <section className="dm-section" style={{ background: DARK, color: WARM, padding: '104px 56px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Eyebrow text="What You Get Free During Beta" light />
+        <Eyebrow text="What You Get — Free for 30 Days" light />
         <h2 style={{
           fontFamily: SERIF, fontWeight: 400,
           fontSize: 'clamp(36px, 5vw, 64px)', lineHeight: 1.01,
@@ -429,17 +429,17 @@ function WhatYouGet({ foundingMemberCount }: { foundingMemberCount: number }) {
               fontFamily: SERIF, fontSize: 'clamp(32px, 4vw, 44px)', fontWeight: 400,
               color: GOLD, letterSpacing: '-.025em', lineHeight: 1.05, marginBottom: 18,
             }}>
-              Free in beta.<br />
-              <span style={{ color: WARM, fontSize: '0.72em' }}>$25/mo after — locked forever.</span>
+              30 days free.<br />
+              <span style={{ color: WARM, fontSize: '0.72em' }}>Then $25/mo — locked forever.</span>
             </div>
 
             <p style={{
               fontFamily: SANS, fontSize: 15, lineHeight: 1.6,
               color: 'rgba(250,247,242,.75)', margin: '0 0 28px',
             }}>
-              Everything is free with full access during beta. When paid plans arrive, the first
-              250 stylists keep founding member pricing for life — plus reserved listing in the
-              AfroAllure marketplace when it launches.
+              Every feature is free for your first 30 days, no card needed. The first 250 stylists keep
+              founding member pricing for life — $25/mo or $250/yr, even when the price goes up — plus
+              reserved listing in the AfroAllure marketplace when it launches.
             </p>
 
             <div style={{
@@ -505,7 +505,7 @@ function FinalCTA() {
           fontFamily: SANS, fontSize: 13, color: MUTED, marginTop: 18,
           letterSpacing: '.01em',
         }}>
-          Free during beta · No credit card required · Set up in 5 minutes
+          30 days free · No credit card required · Set up in 5 minutes
         </p>
       </div>
     </section>

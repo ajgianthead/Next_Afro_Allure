@@ -12,7 +12,7 @@ import Stripe from 'stripe'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button as ShadcnButton } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
+import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
 import { useRouter } from 'next/navigation'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
@@ -117,14 +117,9 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
     const [bookingAdvanceError, setBookingAdvanceError] = useState(false)
 
     const router = useRouter()
+    const { openUpgrade } = useUpgrade()
 
-    const handleUpgrade = async () => {
-        setUpgradeLoading(true)
-        const session = businessUser.stripe_customer_id
-            ? await createSubscriptionForExistingCustomer(businessUser.stripe_customer_id)
-            : await createSubscriptionCheckout(businessUser.had_trial, businessUser.business_id)
-        router.push(session.url!)
-    }
+    const handleUpgrade = () => openUpgrade()
 
     const handlePaymentMethodConfig = (value: PaymentValue, checked: boolean) => {
         if (value === PaymentValue.GooglePay) {

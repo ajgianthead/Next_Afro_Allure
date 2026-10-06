@@ -11,7 +11,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 export async function getBusinessCounts() {
     const supabase = createAdminClient()
     const { data } = await supabase.from('business_users').select('subscription_status, subscription_plan')
-    const beta = data?.filter(b => !b.subscription_status || b.subscription_status === 'beta').length ?? 0
+    // Not paying and not trialing: Starter, early access, or a lapsed trial.
+    const beta = data?.filter(b => !['active', 'trialing', 'canceled', 'past_due'].includes(b.subscription_status ?? '')).length ?? 0
     const trial = data?.filter(b => b.subscription_status === 'trialing').length ?? 0
     const paying = data?.filter(b => b.subscription_status === 'active').length ?? 0
     const churned = data?.filter(b => b.subscription_status === 'canceled').length ?? 0

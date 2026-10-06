@@ -90,7 +90,7 @@ export default async function FoundingMembersPage() {
                     color: MUTED, margin: '0 auto', maxWidth: 520,
                 }}>
                     These professionals joined AfroAllure before there was a crowd.
-                    Free full access during beta, a rate locked forever after it, and the first
+                    A $25/mo rate locked for life, even when the price goes up, and the first
                     spots in the marketplace.
                 </p>
 

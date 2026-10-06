@@ -17,6 +17,8 @@ import { Client } from "@lib/clients/Client";
 import { Appointment } from "@/features/manualBooking/server/models/Appointment";
 import { Notification } from "@lib/notifications/Notification";
 import { checkAndAssignFoundingMember } from "@/lib/foundingMember";
+import { startSignupTrial } from "@/features/billing/server/trial";
+import type { BillingInterval } from "@/features/billing/plans";
 import { Resend } from "resend";
 import FounderNotification from "../../../emails/FounderNotification";
 
@@ -177,7 +179,7 @@ export class BusinessUser {
         }
     }
 
-    static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string, marketingOptIn: boolean = false, ipAddress: string | null = null) {
+    static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string, marketingOptIn: boolean = false, ipAddress: string | null = null, interval: BillingInterval = 'month') {
         try {
             // The visitor isn't signed in yet, and row-level security only lets a
             // business touch its own rows — so the account's database records are
@@ -241,6 +243,10 @@ export class BusinessUser {
                 .eq('business_id', business.business_id)
 
             await checkAndAssignFoundingMember(business.business_id).catch(console.error)
+            if (await startSignupTrial(business.business_id, customer.id, interval)) {
+                business.plan_type = 'GROWTH'
+                business.had_trial = true
+            }
 
             if (process.env.FOUNDER_EMAIL) {
                 try {
@@ -248,7 +254,7 @@ export class BusinessUser {
                     await resend.emails.send({
                         from: 'AfroAllure <notifications@beta.afroallure.co>',
                         to: process.env.FOUNDER_EMAIL,
-                        subject: `New beta signup: ${business.business_name}`,
+                        subject: `New signup: ${business.business_name}`,
                         react: FounderNotification({
                             eventType: 'new_signup',
                             businessName: business.business_name,

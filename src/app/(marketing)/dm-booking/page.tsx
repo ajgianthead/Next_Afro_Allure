@@ -4,7 +4,7 @@ import DmBookingLandingClient from './dmBookingLandingClient'
 export const metadata: Metadata = {
     title: 'Book by DM. Get paid like a business. | AfroAllure',
     description:
-        'AfroAllure adds automatic deposit collection, appointment confirmations, and reminders to your existing DM workflow. Free during beta. Built specifically for Black beauty professionals.',
+        'AfroAllure adds automatic deposit collection, appointment confirmations, and reminders to your existing DM workflow. Free for 30 days. Built specifically for Black beauty professionals.',
     openGraph: {
         title: 'Book by DM. Get paid like a business.',
         description: 'The booking system for stylists who book through DMs.',

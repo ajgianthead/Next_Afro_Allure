@@ -9,6 +9,7 @@ import PausedSubscription from "../../../../../emails/subscription-paused";
 import CancelledSubscription from "../../../../../emails/subscription-cancelled";
 import NewSubscription from "../../../../../emails/subscription-welcome";
 import FounderNotification from "../../../../../emails/FounderNotification";
+import { hasLiveSubscription } from "@/features/billing/server/trial";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'AfroAllure <noreply@reminder.afroallure.co>';
@@ -157,6 +158,9 @@ async function handleSubscriptionCreated(customerId: string, status: string, amo
 }
 
 async function handleSubscriptionPaused(customerId: string) {
+    // A stale trial being paused or cancelled while the business starts a new
+    // subscription must not downgrade them — events can arrive in any order.
+    if (await hasLiveSubscription(customerId)) return;
     const supabase = createAdminClient();
     const { data: business, error } = await supabase
         .from('business_users')
@@ -182,6 +186,7 @@ async function handleSubscriptionPaused(customerId: string) {
 }
 
 async function handleSubscriptionDeleted(customerId: string) {
+    if (await hasLiveSubscription(customerId)) return;
     const supabase = createAdminClient();
     const { data: business, error } = await supabase
         .from('business_users')

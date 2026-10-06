@@ -8,7 +8,7 @@ import { AvailabilityCard } from './AvailabilityCard'
 import { AvailabilityEditor } from './AvailabilityEditor'
 import { createDefaultAvailability, AvailabilityData } from '../utils'
 import { useUserContext } from '@/app/utils/context/UserContext'
-import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
+import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
 import { AvailabilityTour } from '@/features/tour/tours/AvailabilityTour'
 
 interface AvailabilityClientProps {
@@ -30,6 +30,7 @@ export default function AvailabilityClient({
 }: AvailabilityClientProps) {
     const { user } = useUserContext()
     const router = useRouter()
+    const { openUpgrade } = useUpgrade()
     const [availabilities, setAvailabilities] = useState<any[]>(availabilitiesData)
     const [defaultAvailable, setDefaultAvailable] = useState(defaultAvailabilityData)
     const [editorOpen, setEditorOpen] = useState(false)
@@ -73,13 +74,7 @@ export default function AvailabilityClient({
         setEditorOpen(false)
     }
 
-    const handleUpgrade = async () => {
-        setUpgrading(true)
-        const session = stripeCustomerId
-            ? await createSubscriptionForExistingCustomer(stripeCustomerId)
-            : await createSubscriptionCheckout(hadTrial, businessId)
-        router.push(session.url!)
-    }
+    const handleUpgrade = () => openUpgrade()
 
     return (
         <div className="px-6">

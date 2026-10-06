@@ -36,6 +36,8 @@ In the Vercel dashboard under **Project → Settings → Environment Variables**
 | `NEXT_PUBLIC_APP_ENV` | General | `development` locally, `production` in Vercel prod |
 | `STRIPE_SECRET_KEY` | `src/lib/utils.ts` | Server-side Stripe client |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Multiple client components | Stripe.js / Connect init |
+| `STRIPE_GROWTH_PRICE_ID` | `src/app/for-businesses/actions.ts`, `src/features/billing/server/trial.ts` | Growth monthly price ($25/mo). Test price in Preview, live price in Production |
+| `STRIPE_GROWTH_YEARLY_PRICE_ID` | Same as above | Growth yearly price ($250/yr). Test price in Preview, live price in Production |
 | `SUB_WEBHOOK_SECRET` | `src/app/api/webhook/subscriptions/route.ts` | Stripe webhook verification |
 | `CONNECTED_ACCOUNT_WEBHOOK_SECRET` | `src/app/api/webhook/connected_accounts/route.ts` | Stripe webhook verification |
 | `NEXT_PUBLIC_SUPABASE_URL` | All Supabase clients | Dev project URL locally |
