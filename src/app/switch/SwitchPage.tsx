@@ -1,16 +1,17 @@
-// AfroAllure — Switching from StyleSeat
-// Same visual language as /for-businesses. Every StyleSeat figure here is from
-// StyleSeat's own published pricing (checked Oct 2026) — keep it that way, and
-// update STYLESEAT below if their pricing changes.
+// AfroAllure — Switching from <platform>
+// Same visual language as /for-businesses. Copy and competitor facts live in
+// ./platforms.tsx; pricing math in src/features/billing.
 'use client'
-import '../../for-businesses/forBusinesses.css'
+import '../for-businesses/forBusinesses.css'
 import './switch.css'
 import { useState } from 'react'
 import Image from 'next/image'
-import LOGO from '../../../../public/images/logo_transparent_background.png'
+import LOGO from '../../../public/images/logo_transparent_background.png'
 import {
-    PLATFORM_FEE_PERCENT, STRIPE_PROCESSING_FIXED_CENTS, STRIPE_PROCESSING_PERCENT,
-} from '@/lib/fees'
+    AFROALLURE_GROWTH_MONTHLY, AFROALLURE_GROWTH_YEARLY, CHECKED_ON, monthlyCost, SOURCES,
+} from '@/features/billing/competitors'
+import { TRIAL_DAYS, YEARLY_SAVINGS_PERCENT } from '@/features/billing/plans'
+import { PLATFORMS, SHARED_FAQ, type PlatformSlug, type SwitchPlatform } from './platforms'
 
 const RED = '#FC6161'
 const DARK = '#0F0E0E'
@@ -24,18 +25,7 @@ const SERIF = "'Fraunces', 'Times New Roman', serif"
 const SANS = "'Inter', system-ui, sans-serif"
 const MONO = "ui-monospace, 'SF Mono', Menlo, monospace"
 
-const STYLESEAT = {
-    monthly: 35,
-    cardPercent: 0.026,
-    cardFixed: 0.3,
-    newClientPercent: 0.3,
-    newClientCap: 50,
-}
-const AFROALLURE_MONTHLY_AFTER_BETA = 25
-const AA_CARD_PERCENT = PLATFORM_FEE_PERCENT + STRIPE_PROCESSING_PERCENT
-const AA_CARD_FIXED = STRIPE_PROCESSING_FIXED_CENTS / 100
-
-const money = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+const money = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`
 
 const Eyebrow = ({ children, color = RED }: { children: React.ReactNode; color?: string }) => (
     <div style={{
@@ -86,8 +76,7 @@ function Nav({ isLoggedIn }: { isLoggedIn: boolean }) {
     )
 }
 
-// ─────────────────────────────────────────────────────────────
-function Hero({ isLoggedIn }: { isLoggedIn: boolean }) {
+function Hero({ p, isLoggedIn }: { p: SwitchPlatform; isLoggedIn: boolean }) {
     return (
         <section className="aa-section" style={{
             background: DARK, color: WARM, padding: '110px 56px 100px', position: 'relative', overflow: 'hidden',
@@ -98,50 +87,43 @@ function Hero({ isLoggedIn }: { isLoggedIn: boolean }) {
                              radial-gradient(ellipse 70% 60% at 5% 100%, rgba(201,151,74,.16), transparent 55%)`,
             }} />
             <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative' }}>
-                <Eyebrow color={GOLD}>Switching from StyleSeat</Eyebrow>
-                <h1 style={{
+                <Eyebrow color={GOLD}>Switching from {p.name}</Eyebrow>
+                <h1 className="aa-switch-h1" style={{
                     fontFamily: SERIF, fontWeight: 400, fontSize: 'clamp(44px, 6.4vw, 84px)',
                     lineHeight: .98, letterSpacing: '-.03em', margin: '0 0 26px',
                 }}>
-                    Bring your clients.<br /><em style={{ color: RED }}>Keep your name on it.</em>
+                    {p.heroTitle}
                 </h1>
-                <p style={{ fontFamily: SANS, fontSize: 18, lineHeight: 1.55, color: 'rgba(250,247,242,.75)', maxWidth: 620, margin: '0 0 36px' }}>
-                    Your booking page should look like your brand, not a directory listing next to the stylist down the street.
-                    Move your client list, your menu and your link to AfroAllure in about 15 minutes.
+                <p style={{ fontFamily: SANS, fontSize: 18, lineHeight: 1.55, color: 'rgba(250,247,242,.75)', maxWidth: 640, margin: '0 0 36px' }}>
+                    {p.heroBody}
                 </p>
                 <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
                     <PrimaryCta href={isLoggedIn ? '/dashboard/clients' : '/register'}>
-                        {isLoggedIn ? 'Import your clients' : 'Start free — no card needed'}
+                        {isLoggedIn ? 'Import your clients' : `Start free for ${TRIAL_DAYS} days`}
                     </PrimaryCta>
                     <a href="#how" style={{ fontFamily: SANS, fontSize: 15, color: WARM, fontWeight: 500 }}>How switching works</a>
                 </div>
+                {!isLoggedIn && (
+                    <p style={{ fontFamily: SANS, fontSize: 13, color: 'rgba(250,247,242,.55)', margin: '18px 0 0' }}>
+                        No credit card · No percentage fee on Growth · Bring your client list
+                    </p>
+                )}
             </div>
         </section>
     )
 }
 
-// ─────────────────────────────────────────────────────────────
-const GAINS: { title: string; body: string }[] = [
-    { title: 'Your own booking site', body: 'A real site at yourname.afroallure.co with your colors, fonts, photos and policies — no other stylists listed beside you.' },
-    { title: 'Priced the way braids are priced', body: 'Size × length pricing, hair included or not, and prep instructions, so clients book the exact style and see the real price.' },
-    { title: 'No-show and late fees, automatically', body: 'Card on file at booking. Charge a no-show fee in one tap, and late fees land on the final balance.' },
-    { title: 'Loyalty rewards', body: 'Reward clients after a set number of visits or amount spent — money or a percentage off their next appointment, sent to them automatically.' },
-    { title: 'Rebook reminders', body: 'Clients get a nudge when it is time for their next appointment, with a link straight to your calendar.' },
-    { title: 'Waitlist and openings graphics', body: 'When someone cancels, clients on your waitlist whose dates fit get an email right away. And post a ready-made openings graphic to your stories.' },
-]
-
-function WhatYouGet() {
+function Gains({ p }: { p: SwitchPlatform }) {
     return (
         <section className="aa-section" style={{ background: WARM, padding: '110px 56px' }}>
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-                <Eyebrow>What you get</Eyebrow>
-                <H2>Built for the way you already work.</H2>
-                <p style={{ fontFamily: SANS, fontSize: 16, color: MUTED, maxWidth: 620, lineHeight: 1.55, margin: '0 0 48px' }}>
-                    Most of your clients already find you on Instagram and through referrals. AfroAllure is built to turn
-                    them into regulars — and keep them yours.
+                <Eyebrow>Why pros switch</Eyebrow>
+                <H2>{p.gainsTitle}</H2>
+                <p style={{ fontFamily: SANS, fontSize: 16, color: MUTED, maxWidth: 640, lineHeight: 1.55, margin: '0 0 48px' }}>
+                    {p.gainsIntro}
                 </p>
                 <div className="aa-switch-grid">
-                    {GAINS.map(g => (
+                    {p.gains.map(g => (
                         <div key={g.title} style={{ background: '#fff', border: `1px solid ${LINE}`, borderRadius: 20, padding: '28px 26px' }}>
                             <div style={{ width: 28, height: 3, background: GOLD, borderRadius: 2, marginBottom: 18 }} />
                             <div style={{ fontFamily: SERIF, fontSize: 21, color: INK, marginBottom: 10, letterSpacing: '-.01em' }}>{g.title}</div>
@@ -154,7 +136,37 @@ function WhatYouGet() {
     )
 }
 
-// ─────────────────────────────────────────────────────────────
+function SideBySide({ p }: { p: SwitchPlatform }) {
+    return (
+        <section className="aa-section" style={{ background: '#fff', padding: '110px 56px', borderTop: `1px solid ${LINE}` }}>
+            <div style={{ maxWidth: 900, margin: '0 auto' }}>
+                <Eyebrow>Side by side</Eyebrow>
+                <H2>{p.name} and AfroAllure, honestly.</H2>
+                <p style={{ fontFamily: SANS, fontSize: 16, color: MUTED, lineHeight: 1.55, margin: '0 0 36px' }}>
+                    Where they&apos;re ahead, we say so.
+                </p>
+                <div style={{ border: `1px solid ${LINE}`, borderRadius: 16, overflow: 'hidden' }}>
+                    <div className="aa-switch-row" style={{ background: WARM, borderBottom: `1px solid ${LINE}` }}>
+                        <span />
+                        <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: MUTED, fontWeight: 600 }}>{p.name}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: RED, fontWeight: 700 }}>AfroAllure</span>
+                    </div>
+                    {p.compare.map((row, i) => (
+                        <div key={row.label} className="aa-switch-row" style={{ borderBottom: i < p.compare.length - 1 ? `1px solid ${LINE}` : 'none' }}>
+                            <span style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>{row.label}</span>
+                            <span style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>{row.them}</span>
+                            <span style={{ fontFamily: SANS, fontSize: 13, color: INK, fontWeight: 600, display: 'flex', gap: 6, alignItems: 'baseline' }}>
+                                {row.usWins && <span aria-label="better" style={{ color: RED }}>✓</span>}
+                                {row.us}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    )
+}
+
 function NumberField({ label, hint, value, onChange, prefix }: {
     label: string; hint?: string; value: number; onChange: (n: number) => void; prefix?: string
 }) {
@@ -185,80 +197,64 @@ function NumberField({ label, hint, value, onChange, prefix }: {
     )
 }
 
-function CostCompare() {
-    const [appointments, setAppointments] = useState(40)
-    const [price, setPrice] = useState(150)
+function CostCompare({ p }: { p: SwitchPlatform }) {
+    const [payments, setPayments] = useState(27)
+    const [average, setAverage] = useState(150)
     const [marketplaceClients, setMarketplaceClients] = useState(2)
 
-    const cardFees = (pct: number, fixed: number) => appointments * (price * pct + fixed)
-    const newClientFee = marketplaceClients * Math.min(price * STYLESEAT.newClientPercent, STYLESEAT.newClientCap)
-    const styleSeat = STYLESEAT.monthly + cardFees(STYLESEAT.cardPercent, STYLESEAT.cardFixed) + newClientFee
-    const aaBeta = cardFees(AA_CARD_PERCENT, AA_CARD_FIXED)
-    const aaAfter = AFROALLURE_MONTHLY_AFTER_BETA + aaBeta
+    const usage = { payments, average, marketplaceClients: p.cost.marketplaceInput ? marketplaceClients : 0 }
+    const them = monthlyCost(p.cost.model, usage)
+    const yearly = monthlyCost(AFROALLURE_GROWTH_YEARLY, usage)
+    const monthly = monthlyCost(AFROALLURE_GROWTH_MONTHLY, usage)
+    const diff = them - yearly
 
-    const rows: [string, string, string][] = [
-        ['Monthly plan', `${money(STYLESEAT.monthly)}/mo`, `$0 in beta · ${money(AFROALLURE_MONTHLY_AFTER_BETA)}/mo after`],
-        ['Card payments', '2.6% + 30¢', `${(AA_CARD_PERCENT * 100).toFixed(1)}% + 30¢ (card processing at cost + 1%)`],
-        ['New clients from the marketplace', '30% of their first visit, up to $50', 'No new-client fee'],
-        ['Your own website', '$10/mo add-on', 'Included'],
-    ]
-
-    const Total = ({ label, value, accent }: { label: string; value: number; accent?: boolean }) => (
+    const Total = ({ label, value, sub, accent }: { label: string; value: number; sub?: string; accent?: boolean }) => (
         <div style={{
             flex: 1, minWidth: 150, padding: '18px 20px', borderRadius: 16,
-            background: accent ? '#fff' : 'transparent', border: `1px solid ${accent ? RED : LINE}`,
+            background: accent ? '#fff' : 'transparent', border: `${accent ? 2 : 1}px solid ${accent ? RED : LINE}`,
         }}>
             <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: accent ? RED : MUTED, fontWeight: 600, marginBottom: 8 }}>{label}</div>
             <div style={{ fontFamily: SERIF, fontSize: 32, color: INK, letterSpacing: '-.02em' }}>{money(value)}<span style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>/mo</span></div>
+            {sub && <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, marginTop: 4 }}>{sub}</div>}
         </div>
     )
 
     return (
-        <section className="aa-section" style={{ background: '#fff', padding: '110px 56px', borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}` }}>
+        <section className="aa-section" style={{ background: WARM, padding: '110px 56px', borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}` }}>
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-                <Eyebrow>The honest math</Eyebrow>
+                <Eyebrow>The math</Eyebrow>
                 <H2>What you&apos;d pay each month.</H2>
                 <p style={{ fontFamily: SANS, fontSize: 16, color: MUTED, maxWidth: 640, lineHeight: 1.55, margin: '0 0 40px' }}>
-                    Our card fee is a little higher than StyleSeat&apos;s. There&apos;s no monthly fee during beta and no new-client fee ever.
-                    Put in your own numbers.
+                    Plan price plus card fees. Put in your own numbers.
                 </p>
 
                 <div className="aa-switch-calc">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                        <NumberField label="Appointments paid by card each month" value={appointments} onChange={setAppointments} />
-                        <NumberField label="Average appointment price" prefix="$" value={price} onChange={setPrice} />
-                        <NumberField
-                            label="New clients StyleSeat sends you each month"
-                            hint="Only clients who found you by searching StyleSeat — not ones who used your own link."
-                            value={marketplaceClients}
-                            onChange={setMarketplaceClients}
-                        />
+                        <NumberField label="Card payments a month" value={payments} onChange={setPayments} />
+                        <NumberField label="Average payment" prefix="$" value={average} onChange={setAverage} />
+                        {p.cost.marketplaceInput && (
+                            <NumberField
+                                label={`New clients ${p.name} sends you each month`}
+                                hint={`Only clients who found you by searching ${p.name}, not ones who used your own link.`}
+                                value={marketplaceClients}
+                                onChange={setMarketplaceClients}
+                            />
+                        )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                            <Total label="StyleSeat" value={styleSeat} />
-                            <Total label="AfroAllure · beta" value={aaBeta} accent />
+                            <Total label={p.name} value={them} sub={p.cost.model.planLabel} />
+                            <Total label="AfroAllure Growth" value={yearly} sub={`Billed yearly (save ${YEARLY_SAVINGS_PERCENT}%) · ${money(monthly)}/mo billed monthly`} accent />
                         </div>
-                        <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>
-                            After beta: {money(aaAfter)}/mo on AfroAllure. Founding members lock in the {money(AFROALLURE_MONTHLY_AFTER_BETA)} rate.
-                        </div>
-                        <div style={{ border: `1px solid ${LINE}`, borderRadius: 16, overflow: 'hidden', marginTop: 6 }}>
-                            <div className="aa-switch-row" style={{ background: WARM, borderBottom: `1px solid ${LINE}` }}>
-                                <span />
-                                <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: MUTED, fontWeight: 600 }}>StyleSeat</span>
-                                <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: RED, fontWeight: 700 }}>AfroAllure</span>
-                            </div>
-                            {rows.map(([label, ss, aa], i) => (
-                                <div key={label} className="aa-switch-row" style={{ borderBottom: i < rows.length - 1 ? `1px solid ${LINE}` : 'none' }}>
-                                    <span style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>{label}</span>
-                                    <span style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>{ss}</span>
-                                    <span style={{ fontFamily: SANS, fontSize: 13, color: INK, fontWeight: 600 }}>{aa}</span>
-                                </div>
-                            ))}
+                        <div style={{ fontFamily: SANS, fontSize: 14, color: INK }}>
+                            {diff >= 1
+                                ? <>You&apos;d keep about <strong>{money(diff)} more a month</strong>, or {money(diff * 12)} a year.</>
+                                : diff <= -1
+                                    ? <>{p.name} comes out about {money(-diff)} a month cheaper at these numbers. What you get for the difference is above.</>
+                                    : <>About the same either way at these numbers. What you get for it is above.</>}
                         </div>
                         <p style={{ fontFamily: SANS, fontSize: 12, color: MUTED, fontStyle: 'italic', lineHeight: 1.5, margin: 0 }}>
-                            StyleSeat figures from StyleSeat&apos;s published pricing (standard plan, card-on-file rate), October 2026;
-                            promotional rates and optional add-ons like Smart Pricing aren&apos;t included. Cash payments have no fees on either.
+                            {p.cost.note} Published pricing as of {CHECKED_ON}. Cash payments have no fees on either.
                         </p>
                     </div>
                 </div>
@@ -267,42 +263,27 @@ function CostCompare() {
     )
 }
 
-// ─────────────────────────────────────────────────────────────
-const STEPS: { title: string; body: React.ReactNode }[] = [
-    {
-        title: 'Export your client list from StyleSeat',
-        body: <>In the StyleSeat app, open <strong>Clients</strong>, tap <strong>⋯</strong> in the top corner and choose <strong>Export Client List</strong>. StyleSeat emails you a CSV file. <strong>Do this before you cancel</strong> — the export only works while your StyleSeat subscription is active.</>,
-    },
-    {
-        title: 'Create your AfroAllure account and add your services',
-        body: <>Set up your menu with size and length pricing, deposits and policies. Connect Stripe to get paid. Pick a look for your booking site.</>,
-    },
-    {
-        title: 'Import your clients',
-        body: <>In your dashboard, go to <strong>Clientele → Import</strong> and upload the CSV. We match the columns for you, skip anyone already on your list, and send nothing to your clients.</>,
-    },
-    {
-        title: 'Swap your link and tell your clients',
-        body: <>Put your new link in your Instagram bio and send the message below. Keep StyleSeat open until the appointments already booked there are done — StyleSeat doesn&apos;t export upcoming appointments, so jot them down or add them to your AfroAllure calendar.</>,
-    },
-]
-
-function HowToSwitch() {
+function HowToSwitch({ p }: { p: SwitchPlatform }) {
+    const steps: { title: string; body: React.ReactNode }[] = [
+        { title: `Export your client list from ${p.name}`, body: p.exportStep },
+        { title: 'Create your AfroAllure account and add your services', body: <>Start your free {TRIAL_DAYS}-day trial, with no card needed. Set up your menu with size and length pricing, deposits and policies, connect Stripe to get paid, and pick a look for your booking site.</> },
+        { title: 'Import your clients', body: <>In your dashboard, go to <strong>Clients → Import</strong> and upload the CSV. We match the columns for you, skip anyone already on your list, and send nothing to your clients.</> },
+        { title: 'Swap your link and tell your clients', body: <>Put your new link in your Instagram bio and send the message below. {p.appointmentsNote}</> },
+    ]
     return (
-        <section id="how" className="aa-section" style={{ background: WARM, padding: '110px 56px' }}>
+        <section id="how" className="aa-section" style={{ background: '#fff', padding: '110px 56px' }}>
             <div style={{ maxWidth: 860, margin: '0 auto' }}>
                 <Eyebrow>How to switch</Eyebrow>
                 <H2>Four steps. About 15 minutes.</H2>
                 <ol style={{ listStyle: 'none', padding: 0, margin: '40px 0 0', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {STEPS.map((s, i) => (
-                        <li key={s.title} style={{
-                            display: 'grid', gridTemplateColumns: '48px 1fr', gap: 18, background: '#fff',
-                            border: `1px solid ${LINE}`, borderRadius: 20, padding: '24px 24px',
+                    {steps.map((s, i) => (
+                        <li key={s.title} className="aa-switch-step" style={{
+                            display: 'grid', gridTemplateColumns: '48px 1fr', gap: 18, background: WARM,
+                            border: `1px solid ${LINE}`, borderRadius: 20, padding: 24,
                         }}>
                             <span style={{
                                 width: 40, height: 40, borderRadius: '50%', background: i === 0 ? RED : DARK, color: '#fff',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontFamily: SERIF, fontSize: 18,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 18,
                             }}>{i + 1}</span>
                             <div>
                                 <div style={{ fontFamily: SERIF, fontSize: 20, color: INK, marginBottom: 6, letterSpacing: '-.01em' }}>{s.title}</div>
@@ -316,7 +297,6 @@ function HowToSwitch() {
     )
 }
 
-// ─────────────────────────────────────────────────────────────
 const ANNOUNCEMENT = `Hey love! Quick update: I've moved my booking to my own site. 💛
 
 Book here from now on: [your link]
@@ -358,23 +338,15 @@ function Announcement() {
     )
 }
 
-// ─────────────────────────────────────────────────────────────
-const FAQ: [string, string][] = [
-    ['Will my clients get an email or text when I import them?', 'No. Importing just adds them to your client list. They only hear from you when they book, or when you turn on reminders like rebooking nudges.'],
-    ['Can I keep StyleSeat while I try AfroAllure?', 'Yes. Plenty of stylists run both for a few weeks while their existing StyleSeat appointments finish. Just make sure the same time slot isn\'t open on both.'],
-    ['What about my StyleSeat reviews?', 'Reviews stay on StyleSeat. Screenshot your favorites and add them to your AfroAllure booking site.'],
-    ['Do I lose new clients from StyleSeat search?', 'You lose StyleSeat\'s search listing if you cancel. If most of your clients come from Instagram, TikTok and referrals, that\'s usually a small share — the calculator above shows what those clients cost you today.'],
-    ['How do clients pay?', 'By card through Stripe, with deposits, a card on file for no-show and late fees, and the balance charged at the end. Cash works too and has no fees.'],
-]
-
-function Faq() {
+function Faq({ p }: { p: SwitchPlatform }) {
+    const items = [...SHARED_FAQ.slice(0, 2), ...p.faq, ...SHARED_FAQ.slice(2)]
     return (
         <section className="aa-section" style={{ background: WARM, padding: '110px 56px' }}>
             <div style={{ maxWidth: 820, margin: '0 auto' }}>
                 <Eyebrow>Questions</Eyebrow>
                 <H2>Before you switch.</H2>
                 <div style={{ marginTop: 32, borderTop: `1px solid ${LINE}` }}>
-                    {FAQ.map(([q, a]) => (
+                    {items.map(([q, a]) => (
                         <details key={q} className="aa-switch-faq" style={{ borderBottom: `1px solid ${LINE}`, padding: '20px 0' }}>
                             <summary style={{ fontFamily: SERIF, fontSize: 19, color: INK, cursor: 'pointer', listStyle: 'none', display: 'flex', justifyContent: 'space-between', gap: 16 }}>
                                 {q}<span aria-hidden style={{ color: RED, fontFamily: SANS }}>+</span>
@@ -388,9 +360,10 @@ function Faq() {
     )
 }
 
-function FinalCta({ isLoggedIn }: { isLoggedIn: boolean }) {
+function FinalCta({ p, isLoggedIn }: { p: SwitchPlatform; isLoggedIn: boolean }) {
+    const others = (Object.keys(PLATFORMS) as PlatformSlug[]).filter(s => s !== p.slug)
     return (
-        <section className="aa-section" style={{ background: WARM, padding: '0 56px 120px' }}>
+        <section className="aa-section" style={{ background: WARM, padding: '0 56px 100px' }}>
             <div style={{
                 maxWidth: 1000, margin: '0 auto', textAlign: 'center', background: '#fff',
                 border: `2px solid ${GOLD}`, borderRadius: 28, padding: '64px 32px',
@@ -399,27 +372,49 @@ function FinalCta({ isLoggedIn }: { isLoggedIn: boolean }) {
                     Your clients, your brand, your booking site.
                 </h2>
                 <p style={{ fontFamily: SANS, fontSize: 16, color: MUTED, margin: '0 0 30px' }}>
-                    Free during beta. Questions? Email <a href="mailto:abijahnesbitt@afroallure.co" style={{ color: INK }}>abijahnesbitt@afroallure.co</a> and we&apos;ll help you move.
+                    {TRIAL_DAYS} days free, no card needed. Questions? Email{' '}
+                    <a href="mailto:abijahnesbitt@afroallure.co" style={{ color: INK }}>abijahnesbitt@afroallure.co</a>{' '}
+                    and we&apos;ll help you move.
                 </p>
                 <PrimaryCta href={isLoggedIn ? '/dashboard/clients' : '/register'}>
                     {isLoggedIn ? 'Import your clients' : 'Start free'}
                 </PrimaryCta>
             </div>
+            <div style={{ maxWidth: 1000, margin: '28px auto 0', textAlign: 'center', fontFamily: SANS, fontSize: 13, color: MUTED }}>
+                Switching from somewhere else?{' '}
+                {others.map((s, i) => (
+                    <span key={s}>
+                        {i > 0 && ' · '}
+                        <a href={`/switch/${s}`} style={{ color: INK }}>{PLATFORMS[s].name}</a>
+                    </span>
+                ))}
+            </div>
+            <div style={{ maxWidth: 1000, margin: '16px auto 0', textAlign: 'center', fontFamily: SANS, fontSize: 11, color: MUTED }}>
+                Sources:{' '}
+                {SOURCES[p.slug].map((src, i) => (
+                    <span key={src.url}>
+                        {i > 0 && ' · '}
+                        <a href={src.url} target="_blank" rel="noopener noreferrer" style={{ color: MUTED }}>{src.label}</a>
+                    </span>
+                ))}
+            </div>
         </section>
     )
 }
 
-export default function SwitchFromStyleSeat({ isLoggedIn }: { isLoggedIn: boolean }) {
+export default function SwitchPage({ slug, isLoggedIn }: { slug: PlatformSlug; isLoggedIn: boolean }) {
+    const p = PLATFORMS[slug]
     return (
         <div className="aa-business-root" style={{ background: WARM, color: INK, fontFamily: SANS, width: '100%' }}>
             <Nav isLoggedIn={isLoggedIn} />
-            <Hero isLoggedIn={isLoggedIn} />
-            <WhatYouGet />
-            <CostCompare />
-            <HowToSwitch />
+            <Hero p={p} isLoggedIn={isLoggedIn} />
+            <Gains p={p} />
+            <SideBySide p={p} />
+            <CostCompare p={p} />
+            <HowToSwitch p={p} />
             <Announcement />
-            <Faq />
-            <FinalCta isLoggedIn={isLoggedIn} />
+            <Faq p={p} />
+            <FinalCta p={p} isLoggedIn={isLoggedIn} />
         </div>
     )
 }

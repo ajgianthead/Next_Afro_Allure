@@ -1,3 +1,4 @@
+.aa-business-root .aa-switch-h1 em { color: #FC6161; }
 .aa-business-root .aa-switch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .aa-business-root .aa-switch-calc { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; align-items: start; }
 .aa-business-root .aa-switch-row { display: grid; grid-template-columns: 1.2fr 1fr 1.3fr; gap: 12px; padding: 12px 16px; align-items: center; }
@@ -15,4 +16,6 @@
   .aa-business-root .aa-switch-announce { grid-template-columns: 1fr; gap: 28px; }
   .aa-business-root .aa-switch-row { grid-template-columns: 1fr 1fr; }
   .aa-business-root .aa-switch-row > :first-child { grid-column: 1 / -1; font-weight: 600; }
+  .aa-business-root .aa-switch-row:first-child > :first-child { display: none; }
+  .aa-business-root .aa-switch-step { grid-template-columns: 1fr !important; gap: 12px !important; }
 }
