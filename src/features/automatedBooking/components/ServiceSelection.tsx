@@ -4,8 +4,16 @@ import { BookingData } from "@/features/automatedBooking/context/BookingDataCont
 import { ServiceType } from "@/lib/service/Service";
 import Image from "next/image";
 import { Check, X } from "lucide-react";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { useBooking } from "../hooks/useBookingData";
+import { StylePicker } from "./StylePicker";
+import { parseStyleOptions, quoteBooking, QuoteError, startingPrice, type StyleSelection } from "@/features/services/pricing";
+
+const money = (cents: number) => `$${(cents / 100).toFixed(2).replace(/\.00$/, '')}`
+const duration = (minutes: number) => {
+    const h = Math.floor(minutes / 60), m = minutes % 60
+    return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`
+}
 
 
 export const ServiceSelection = () => {
@@ -30,11 +38,24 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
     const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set<string>([...data.selectedAddons]))
     const [openModal, setOpenModal] = useState<boolean>(false)
     const selected = service.id === data.selectedService
+    const styleOptions = useMemo(() => parseStyleOptions(service.style_options), [service.style_options])
+    const [selection, setSelection] = useState<StyleSelection>(
+        () => (selected && data.styleSelection) ? data.styleSelection : {}
+    )
 
-    const totalCents = service.price + Array.from(selectedAddons).reduce((sum, id) => {
-        const a = (service.addons as any[])?.find((a: any) => a.id === id)
-        return sum + (a?.price ?? 0)
-    }, 0)
+    // Same pricing the server charges; with style options the client must
+    // pick a size/length before the total (and the Select button) is ready.
+    const priced = useMemo(() => {
+        const addons = ((service.addons as any[]) ?? [])
+            .filter((a: any) => selectedAddons.has(a.id))
+            .map((a: any) => ({ id: a.id, name: a.name, price: Number(a.price ?? 0) }))
+        try {
+            return { quote: quoteBooking(service, styleOptions ? selection : null, addons), error: null }
+        } catch (err) {
+            return { quote: null, error: err instanceof QuoteError ? err.message : 'Unavailable' }
+        }
+    }, [service, styleOptions, selection, selectedAddons])
+    const fromLabel = styleOptions ? `From ${money(startingPrice(service))}` : money(service.price)
 
     return (
         <>
@@ -80,11 +101,18 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                             <div className="flex items-start justify-between gap-3">
                                 <p className="text-sm leading-relaxed" style={{ color: 'var(--t-muted)' }}>{service.description}</p>
                                 <span className="text-base font-bold shrink-0" style={{ color: 'var(--t-primary)', fontFamily: 'var(--t-font)' }}>
-                                    ${service.price / 100}
+                                    {fromLabel}
                                 </span>
                             </div>
 
                             <div style={{ height: 1, backgroundColor: 'var(--t-border)' }} />
+
+                            {styleOptions && (
+                                <>
+                                    <StylePicker options={styleOptions} selection={selection} onChange={setSelection} />
+                                    <div style={{ height: 1, backgroundColor: 'var(--t-border)' }} />
+                                </>
+                            )}
 
                             {/* Add-ons */}
                             <div className="space-y-2">
@@ -134,15 +162,26 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                             <div>
                                 <span className="text-xs" style={{ color: 'var(--t-muted)' }}>Total</span>
                                 <span className="ml-2 text-lg font-bold" style={{ color: 'var(--t-primary)', fontFamily: 'var(--t-font)' }}>
-                                    ${totalCents / 100}
+                                    {priced.quote ? money(priced.quote.totalCents) : '—'}
                                 </span>
+                                <p className="text-xs" style={{ color: 'var(--t-muted)' }}>
+                                    {priced.quote ? duration(priced.quote.durationMinutes) : priced.error}
+                                </p>
                             </div>
                             <button
+                                disabled={!priced.quote}
                                 onClick={() => {
-                                    setData((prev) => ({ ...prev, selectedService: service.id }))
+                                    if (!priced.quote) return
+                                    setData((prev) => ({
+                                        ...prev,
+                                        selectedService: service.id,
+                                        styleSelection: styleOptions ? selection : null,
+                                        // A different service may have different prep.
+                                        acknowledged: prev.selectedService === service.id ? prev.acknowledged : false,
+                                    }))
                                     setOpenModal(false)
                                 }}
-                                className="text-sm font-medium px-4 py-2 transition-opacity hover:opacity-90"
+                                className="text-sm font-medium px-4 py-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                                 style={{
                                     backgroundColor: 'var(--t-primary)',
                                     color: 'var(--t-primary-text)',
@@ -189,7 +228,7 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                 <div className="p-4 space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
                         <p className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>{service.name}</p>
-                        <span className="text-sm font-bold shrink-0" style={{ color: 'var(--t-primary)' }}>${service.price / 100}</span>
+                        <span className="text-sm font-bold shrink-0" style={{ color: 'var(--t-primary)' }}>{fromLabel}</span>
                     </div>
                     <p className="text-xs line-clamp-2" style={{ color: 'var(--t-muted)' }}>{service.description}</p>
                 </div>

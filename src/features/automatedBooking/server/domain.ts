@@ -111,11 +111,11 @@ export const attachPaymentIntent = async (id: string, selectedService: string, s
                 stripeAccount: business.stripeAccountId,
             });
             if (paymentIntent.status === 'canceled') {
-                paymentIntent = (await createCheckout(CheckoutType.DEPOSIT, Appointment.AUTOMATED, paymentIntent.amount, session.businessId, undefined, session.id)) as Stripe.Response<Stripe.PaymentIntent>;
+                paymentIntent = (await createCheckout(CheckoutType.DEPOSIT, Appointment.AUTOMATED, paymentIntent.amount, session.businessId, undefined, session.id, { serviceId: selectedService, addonIds: selectedAddons })) as Stripe.Response<Stripe.PaymentIntent>;
             }
         } else {
             const price = await getTotalAmountDue(selectedAddons, selectedService)
-            paymentIntent = (await createCheckout(CheckoutType.DEPOSIT, Appointment.AUTOMATED, price, session.businessId, undefined, session.id)) as Stripe.Response<Stripe.PaymentIntent>;
+            paymentIntent = (await createCheckout(CheckoutType.DEPOSIT, Appointment.AUTOMATED, price, session.businessId, undefined, session.id, { serviceId: selectedService, addonIds: selectedAddons })) as Stripe.Response<Stripe.PaymentIntent>;
         }
 
         const updatedSession = await updateBookingSession({

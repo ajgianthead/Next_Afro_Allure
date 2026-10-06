@@ -6,6 +6,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Database, Json } from "../../../../lib/database.types";
 import { PublicBusinessType } from "@/lib/businessUser/BusinessUser";
 import type { BusyInterval } from "@/features/shared/appointments/busyIntervals";
+import type { StyleSelection } from "@/features/services/pricing";
 import { AvailabilityType } from "@/features/availability/server/models/Availability";
 import { ServiceType } from "@/lib/service/Service";
 import { BusinessPolicyType } from "@/lib/businessPolicy/BusinessPolicy";
@@ -20,9 +21,12 @@ type Props = {
     appointments: BusyInterval[],
     services: ServiceType[],
     policy: BusinessPolicyType
+    waitlistEnabled?: boolean
 }
 export type BookingData = {
     business_id: string;
+    /** Clients can join the cancellation waitlist. */
+    waitlist_enabled?: boolean;
     availabilities: AvailabilityType[];
     booking_policy: BusinessPolicyType
     /** Busy times only (start/end) — never full appointment records. */
@@ -31,6 +35,10 @@ export type BookingData = {
     stripe_id: string;
     selectedService: string;
     selectedAddons: string[];
+    /** Size / length / hair for services with style options. */
+    styleSelection: StyleSelection | null;
+    /** Client confirmed the service's prep instructions. */
+    acknowledged: boolean;
     selectedDateTime: {
         start?: string,
         end?: string
@@ -48,9 +56,10 @@ export type BookingData = {
     bookingSession: BookingSessionData | null
 }
 
-export function BookingWrapper({ children, businessData, availabilities, appointments, services, policy }: Props) {
+export function BookingWrapper({ children, businessData, availabilities, appointments, services, policy, waitlistEnabled }: Props) {
     let [data, setData] = useState<BookingData>({
         business_id: businessData.id,
+        waitlist_enabled: !!waitlistEnabled,
         availabilities: availabilities,
         appointments: appointments,
         services: services,
@@ -67,6 +76,8 @@ export function BookingWrapper({ children, businessData, availabilities, appoint
             phoneNumber: ""
         },
         selectedService: "",
+        styleSelection: null,
+        acknowledged: false,
         selectedDateTime: {},
         bookingSession: null
     });

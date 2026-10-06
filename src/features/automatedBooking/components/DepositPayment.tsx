@@ -10,17 +10,8 @@ import { useBooking } from "../hooks/useBookingData";
 import { createCheckout } from "@/lib/stripe/createCheckout";
 import { AppointmentType, CheckoutType } from "./../../shared/appointments/types";
 import { Loader2 } from "lucide-react";
+import { feeFromPaymentMetadata, noShowDisclosure } from "@/features/noShowFees/noShowFee";
 
-function getDepositAmountCents(policy: any, servicePrice: number, addonPriceCents: number): number {
-    const total = servicePrice + addonPriceCents
-    if (policy?.deposit?.settings?.type === 'flat') {
-        return Math.round((policy.deposit.settings.value ?? 0) * 100)
-    }
-    if (policy?.deposit?.settings?.type === 'percentage') {
-        return Math.round(total * (policy.deposit.settings.value ?? 0) / 100)
-    }
-    return total
-}
 
 export const DepositPayment = ({
     setError, setOpenErrorDialog, setRbbOpen,
@@ -32,26 +23,28 @@ export const DepositPayment = ({
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [id, setID] = useState<string>("")
+    // No-show fee agreed with this deposit (shown before the client pays).
+    const [noShowFeeCents, setNoShowFeeCents] = useState(0)
     const selectedServiceData = data.services.find((s: ServiceType) => s.id === data.selectedService)
 
     useEffect(() => {
         const fetchSession = async () => {
-            const addonPriceCents = (selectedServiceData?.addons as any[] ?? [])
-                .filter((a: any) => data.selectedAddons.includes(a.id))
-                .reduce((sum: number, a: any) => sum + (a.price ?? 0), 0)
-            const depositAmount = getDepositAmountCents(data.booking_policy, selectedServiceData?.price ?? 0, addonPriceCents)
-
+            // The server prices the booking and works out the deposit; this
+            // used to send a browser-calculated amount, which for percentage
+            // deposits was the full service price.
             const checkout = await createCheckout(
                 CheckoutType.DEPOSIT,
                 AppointmentType.AUTOMATED,
-                depositAmount,
+                0,
                 data.business_id,
                 undefined,
-                data.bookingSession?.id
+                data.bookingSession?.id,
+                { serviceId: data.selectedService, addonIds: data.selectedAddons, style: data.styleSelection }
             )
             if (checkout) {
                 setData((prev) => ({ ...prev, options: { clientSecret: checkout.client_secret! } }))
                 setID(checkout.id)
+                setNoShowFeeCents(feeFromPaymentMetadata(checkout.metadata))
             }
         }
             ; (async () => {
@@ -76,6 +69,11 @@ export const DepositPayment = ({
 
     return (
         <Elements stripe={promise} options={data.options}>
+            {noShowFeeCents > 0 && (
+                <p className="text-xs mb-3 px-3 py-2" style={{ color: 'var(--t-muted)', border: '1px solid var(--t-border)', borderRadius: 'var(--t-input-r)' }}>
+                    {noShowDisclosure(noShowFeeCents)}
+                </p>
+            )}
             <CheckoutForm
                 setRbbOpen={setRbbOpen}
                 setAgreedAfroAllure={setAgreedAfroAllure}

@@ -36,6 +36,19 @@ export type Database = {
           require_deposit: boolean
           reschedules: number
           selected_addons: Json[]
+          selected_options: Json | null
+          acknowledged_at: string | null
+          loyalty_reward_id: string | null
+          discount_cents: number
+          waitlist_notified_at: string | null
+          rebook_nudged_at: string | null
+          late_fee_cents: number
+          late_fee_added_at: string | null
+          no_show_fee_status: string | null
+          no_show_fee_cents: number | null
+          no_show_fee_charge_id: string | null
+          no_show_fee_error: string | null
+          no_show_fee_charged_at: string | null
           service_charge_id: string | null
           service_data: Json | null
           service_paid: boolean | null
@@ -71,6 +84,19 @@ export type Database = {
           require_deposit?: boolean
           reschedules?: number
           selected_addons?: Json[]
+          selected_options?: Json | null
+          acknowledged_at?: string | null
+          loyalty_reward_id?: string | null
+          discount_cents?: number
+          waitlist_notified_at?: string | null
+          rebook_nudged_at?: string | null
+          late_fee_cents?: number
+          late_fee_added_at?: string | null
+          no_show_fee_status?: string | null
+          no_show_fee_cents?: number | null
+          no_show_fee_charge_id?: string | null
+          no_show_fee_error?: string | null
+          no_show_fee_charged_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -106,6 +132,19 @@ export type Database = {
           require_deposit?: boolean
           reschedules?: number
           selected_addons?: Json[]
+          selected_options?: Json | null
+          acknowledged_at?: string | null
+          loyalty_reward_id?: string | null
+          discount_cents?: number
+          waitlist_notified_at?: string | null
+          rebook_nudged_at?: string | null
+          late_fee_cents?: number
+          late_fee_added_at?: string | null
+          no_show_fee_status?: string | null
+          no_show_fee_cents?: number | null
+          no_show_fee_charge_id?: string | null
+          no_show_fee_error?: string | null
+          no_show_fee_charged_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -197,6 +236,60 @@ export type Database = {
             referencedColumns: ["client_id"]
           },
         ]
+      }
+      booking_waitlist: {
+        Row: {
+          id: string
+          business_id: string
+          service_id: string | null
+          first_name: string
+          last_name: string
+          email: string
+          phone: string
+          from_date: string
+          to_date: string
+          time_of_day: string
+          note: string | null
+          status: string
+          notified_count: number
+          last_notified_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          service_id?: string | null
+          first_name: string
+          last_name?: string
+          email: string
+          phone?: string
+          from_date: string
+          to_date: string
+          time_of_day?: string
+          note?: string | null
+          status?: string
+          notified_count?: number
+          last_notified_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          service_id?: string | null
+          first_name?: string
+          last_name?: string
+          email?: string
+          phone?: string
+          from_date?: string
+          to_date?: string
+          time_of_day?: string
+          note?: string | null
+          status?: string
+          notified_count?: number
+          last_notified_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
       }
       booking_sessions: {
         Row: {
@@ -314,6 +407,7 @@ export type Database = {
           important_info: string | null
           late_fee: Json
           no_show: Json
+          no_show_fee: Json
           read_before_booking: string | null
           reschedule_day_limit: number | null
           reschedule_limit: number | null
@@ -329,6 +423,7 @@ export type Database = {
           important_info?: string | null
           late_fee: Json
           no_show: Json
+          no_show_fee?: Json
           read_before_booking?: string | null
           reschedule_day_limit?: number | null
           reschedule_limit?: number | null
@@ -344,6 +439,7 @@ export type Database = {
           important_info?: string | null
           late_fee?: Json
           no_show?: Json
+          no_show_fee?: Json
           read_before_booking?: string | null
           reschedule_day_limit?: number | null
           reschedule_limit?: number | null
@@ -381,6 +477,7 @@ export type Database = {
           is_onboarded: boolean
           latitude: number | null
           legacy_url_names: string[]
+          waitlist_enabled: boolean
           location: unknown
           longitude: number | null
           payment_method_config_id: string
@@ -423,6 +520,7 @@ export type Database = {
           is_onboarded?: boolean
           latitude?: number | null
           legacy_url_names?: string[]
+          waitlist_enabled?: boolean
           location?: unknown
           longitude?: number | null
           payment_method_config_id?: string
@@ -465,6 +563,7 @@ export type Database = {
           is_onboarded?: boolean
           latitude?: number | null
           legacy_url_names?: string[]
+          waitlist_enabled?: boolean
           location?: unknown
           longitude?: number | null
           payment_method_config_id?: string
@@ -672,6 +771,147 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      loyalty_ledger: {
+        Row: {
+          id: string
+          business_id: string
+          client_id: string
+          appointment_id: string | null
+          kind: string
+          visits: number
+          spend_cents: number
+          reward_id: string | null
+          note: string | null
+          notified_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          client_id: string
+          appointment_id?: string | null
+          kind: string
+          visits?: number
+          spend_cents?: number
+          reward_id?: string | null
+          note?: string | null
+          notified_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          client_id?: string
+          appointment_id?: string | null
+          kind?: string
+          visits?: number
+          spend_cents?: number
+          reward_id?: string | null
+          note?: string | null
+          notified_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_programs: {
+        Row: {
+          business_id: string
+          enabled: boolean
+          earn_type: string
+          visits_required: number
+          spend_threshold_cents: number
+          reward_type: string
+          reward_value: number
+          reward_expiry_days: number | null
+          rebook_bonus_enabled: boolean
+          rebook_within_days: number
+          referral_enabled: boolean
+          referral_reward_cents: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          enabled?: boolean
+          earn_type?: string
+          visits_required?: number
+          spend_threshold_cents?: number
+          reward_type?: string
+          reward_value?: number
+          reward_expiry_days?: number | null
+          rebook_bonus_enabled?: boolean
+          rebook_within_days?: number
+          referral_enabled?: boolean
+          referral_reward_cents?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          enabled?: boolean
+          earn_type?: string
+          visits_required?: number
+          spend_threshold_cents?: number
+          reward_type?: string
+          reward_value?: number
+          reward_expiry_days?: number | null
+          rebook_bonus_enabled?: boolean
+          rebook_within_days?: number
+          referral_enabled?: boolean
+          referral_reward_cents?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_rewards: {
+        Row: {
+          id: string
+          business_id: string
+          client_id: string
+          code: string
+          status: string
+          reward_type: string
+          value: number
+          source: string
+          issued_at: string
+          expires_at: string | null
+          used_at: string | null
+          used_appointment_id: string | null
+          used_amount_cents: number | null
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          client_id: string
+          code: string
+          status?: string
+          reward_type: string
+          value: number
+          source?: string
+          issued_at?: string
+          expires_at?: string | null
+          used_at?: string | null
+          used_appointment_id?: string | null
+          used_amount_cents?: number | null
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          client_id?: string
+          code?: string
+          status?: string
+          reward_type?: string
+          value?: number
+          source?: string
+          issued_at?: string
+          expires_at?: string | null
+          used_at?: string | null
+          used_appointment_id?: string | null
+          used_amount_cents?: number | null
+        }
+        Relationships: []
       }
       marketplace_profile: {
         Row: {
@@ -921,6 +1161,9 @@ export type Database = {
           name: string
           photo_url: string | null
           price: number
+          prep: Json | null
+          style_options: Json | null
+          rebook_weeks: number | null
           updated_at: string | null
         }
         Insert: {
@@ -936,6 +1179,9 @@ export type Database = {
           name: string
           photo_url?: string | null
           price: number
+          prep?: Json | null
+          style_options?: Json | null
+          rebook_weeks?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -951,6 +1197,9 @@ export type Database = {
           name?: string
           photo_url?: string | null
           price?: number
+          prep?: Json | null
+          style_options?: Json | null
+          rebook_weeks?: number | null
           updated_at?: string | null
         }
         Relationships: [

@@ -36,6 +36,9 @@ import {
     IconLogout,
     IconMessage2,
     IconLifebuoy,
+    IconGift,
+    IconHourglass,
+    IconPhoto,
     type Icon,
 } from '@tabler/icons-react'
 import { signOutAction } from '@/app/(auth)/actions'
@@ -60,6 +63,7 @@ const NAV_GROUPS: NavGroup[] = [
             { title: 'Dashboard', url: '/dashboard', icon: IconLayoutDashboard },
             { title: 'Appointments', url: '/dashboard/appointments', icon: IconCalendarEvent },
             { title: 'Clients', url: '/dashboard/clients', icon: IconUsers },
+            { title: 'Rewards', url: '/dashboard/rewards', icon: IconGift },
             { title: 'Analytics', url: '/dashboard/analytics', icon: IconChartBar },
         ],
     },
@@ -68,7 +72,9 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
             { title: 'Booking Site', url: '/dashboard/booking-site', icon: IconWorld },
             { title: 'Availability', url: '/dashboard/availability', icon: IconClock },
+            { title: 'Waitlist', url: '/dashboard/waitlist', icon: IconHourglass },
             { title: 'Booking Settings', url: '/dashboard/booking-settings', icon: IconAdjustments },
+            { title: 'Share Openings', url: '/dashboard/openings', icon: IconPhoto },
         ],
     },
     {

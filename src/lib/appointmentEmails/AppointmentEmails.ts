@@ -11,6 +11,7 @@ import EOAReceiptEmail from "../../../emails/eoa-receipt";
 import RefundIssuedEmail from "../../../emails/refund-issued";
 import { getBusinessTimezone } from "@/lib/businessTimezone";
 import { toZonedISO } from "@/lib/timezone";
+import { getAppointmentEmailDetails } from "./emailDetails";
 
 const FROM_NOTIFICATION = 'notifications <noreply@reminder.afroallure.co>';
 const FROM_BOOKING_ALERT = 'Booking Alert <noreply@reminder.afroallure.co>';
@@ -65,7 +66,10 @@ async function trySend(opts: Parameters<typeof resend.emails.send>[0]): Promise<
 
 async function buildEmailProps(data: AppointmentEmailData) {
     // Times are stored in UTC; show them in the business's timezone.
-    const tz = await getBusinessTimezone(data.businessData.id);
+    const [tz, details] = await Promise.all([
+        getBusinessTimezone(data.businessData.id),
+        getAppointmentEmailDetails(data.appointmentData.id, data.serviceName),
+    ]);
     return {
         socials: SOCIALS,
         clientData: { firstName: data.clientMetadata.firstName, lastName: data.clientMetadata.lastName },
@@ -75,7 +79,9 @@ async function buildEmailProps(data: AppointmentEmailData) {
             start: toZonedISO(data.appointmentData.start, tz),
             end: toZonedISO(data.appointmentData.end, tz),
         },
-        serviceName: data.serviceName,
+        // e.g. "Knotless braids — Small · Waist", plus the client's prep checklist.
+        serviceName: details.serviceName,
+        prep: details.prep,
     };
 }
 

@@ -13,6 +13,7 @@ import AppointmentRescheduled from "../../../../../emails/appointment-reschedule
 import AppointmentCancelled from "../../../../../emails/appointment-cancelled";
 import { Email, formatBusinessAddress } from "@lib/appointmentEmails/AppointmentEmails";
 import { toZonedISO } from "@/lib/timezone";
+import { getAppointmentEmailDetails } from "@lib/appointmentEmails/emailDetails";
 
 export interface AppointmentType {
     id: string,
@@ -91,6 +92,8 @@ export class Appointment {
         public subtraction: boolean,
         public refundStatus: Database['public']['Enums']['refund_status'] = 'NONE',
         public refundedAmount: number = 0,
+        /** Size / length / hair chosen when booking, if the service had options. */
+        public selectedOptions: unknown = null,
     ) { }
     toClient() {
         return {
@@ -130,6 +133,7 @@ export class Appointment {
             subtraction: this.subtraction,
             refundStatus: this.refundStatus,
             refundedAmount: this.refundedAmount,
+            selectedOptions: this.selectedOptions,
         }
     }
     private static fromRows(row: Database['public']['Tables']['appointments']['Row'][] | Database['public']['Tables']['appointments']['Row']) {
@@ -159,7 +163,9 @@ export class Appointment {
                     (item.service_data as any).imagePath,
                     (item.service_data as any).addons,
                     (item.service_data as any).categories,
-                    (item.service_data as any).availability
+                    (item.service_data as any).availability,
+                    (item.service_data as any).style_options ?? null,
+                    (item.service_data as any).prep ?? null
 
                 ),
                 item.require_deposit,
@@ -184,6 +190,7 @@ export class Appointment {
                 item.substraction,
                 item.refund_status ?? 'NONE',
                 Number(item.refunded_amount ?? 0),
+                item.selected_options ?? null,
             ))
         }
         return new Appointment(
@@ -211,7 +218,9 @@ export class Appointment {
                 (row.service_data as any).imagePath,
                 (row.service_data as any).addons,
                 (row.service_data as any).categories,
-                (row.service_data as any).availability
+                (row.service_data as any).availability,
+                (row.service_data as any).style_options ?? null,
+                (row.service_data as any).prep ?? null
 
             ),
             row.require_deposit,
@@ -236,10 +245,14 @@ export class Appointment {
             row.substraction,
             row.refund_status ?? 'NONE',
             Number(row.refunded_amount ?? 0),
+            row.selected_options ?? null,
         )
     }
     static async create(supabase: SupabaseClient<Database, any>, businessId: string, appointmentData: {
-        client_metadata: any, start: string, end: string, service_data: any, status: any, require_deposit: boolean, paid_deposit: boolean, deposit_charge_id: string, reschedules: number, deposit_price: number, selected_addons: AddOn[], substraction: boolean
+        client_metadata: any, start: string, end: string, service_data: any, status: any, require_deposit: boolean, paid_deposit: boolean, deposit_charge_id: string, reschedules: number, deposit_price: number, selected_addons: AddOn[], substraction: boolean,
+        /** Total from the shared pricing module; falls back to service price + add-ons. */
+        amount_due?: number,
+        selected_options?: unknown
     }) {
         try {
             let addOnPrice = 0;
@@ -257,8 +270,9 @@ export class Appointment {
                 reschedules: appointmentData.reschedules,
                 deposit_price: appointmentData.deposit_price,
                 selected_addons: appointmentData.selected_addons,
-                amount_due: Number(appointmentData.service_data.price) + addOnPrice,
-                substraction: appointmentData.substraction
+                amount_due: appointmentData.amount_due ?? Number(appointmentData.service_data.price) + addOnPrice,
+                substraction: appointmentData.substraction,
+                ...(appointmentData.selected_options ? { selected_options: appointmentData.selected_options as any } : {})
             }).select().single()
             if (error) throw Error(error.message)
             return Appointment.fromRows(row)
@@ -372,13 +386,17 @@ export class Appointment {
     // in the business's timezone — the server runs in UTC, so without this the
     // emails would print UTC wall-clock times.
     private async emailProps(supabase: SupabaseClient<Database, any>) {
-        const business = await BusinessUser.fetch(supabase, this.businessId)
+        const [business, details] = await Promise.all([
+            BusinessUser.fetch(supabase, this.businessId),
+            getAppointmentEmailDetails(this.id, this.serviceData.name),
+        ])
         const tz = (business.accountSettings as any)?.timezone
         return {
             business,
             props: {
                 socials: { instagram: "https://instagram.com/afroallure_" },
-                serviceName: this.serviceData.name,
+                serviceName: details.serviceName,
+                prep: details.prep,
                 clientData: {
                     firstName: this.clientMetadata.firstName,
                     lastName: this.clientMetadata.lastName,

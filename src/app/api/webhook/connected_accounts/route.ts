@@ -10,6 +10,7 @@ import { Database } from "../../../../../lib/database.types";
 import { trackAppointmentBooked } from "../../../../../lib/analytics";
 import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient";
 import { syncStripeRefund } from "@/features/refunds/server/sync";
+import { notifyLoyaltyForAppointment } from "@/features/loyalty/server/notify";
 import { createAdminClient } from "@/app/utils/supabase/admin";
 
 export async function POST(request: NextRequest) {
@@ -23,6 +24,13 @@ export async function POST(request: NextRequest) {
     event = stripe.webhooks.constructEvent(bodyBuffer, sig!, endpointSecret);
   } catch (err: any) {
     return apiError(`Webhook Error: ${err.message}`, 400);
+  }
+
+  // No-show fees are charged and recorded synchronously by the dashboard
+  // (src/features/noShowFees); their payment events need no handling here and
+  // must not be mistaken for deposits.
+  if (event.type.startsWith('payment_intent.') && (event.data.object as Stripe.PaymentIntent).metadata?.purpose === 'NO_SHOW_FEE') {
+    return webhookAck();
   }
 
   const client = await pool.connect();
@@ -249,6 +257,9 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
       } catch (notifErr) {
         console.error('Failed to send EOA payment notification:', notifErr);
       }
+
+      // Paid in full = visit completed: tell the client their loyalty progress.
+      await notifyLoyaltyForAppointment(eoaRes.id);
     }
     return;
   }

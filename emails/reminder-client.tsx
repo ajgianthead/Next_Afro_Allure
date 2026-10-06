@@ -4,6 +4,7 @@ import { DateTime } from 'luxon'
 import { EmailHeader } from './components/EmailHeader'
 import { EmailFooter } from './components/EmailFooter'
 import { AppointmentDetailBlock } from './components/AppointmentDetailBlock'
+import { PrepBlock, type PrepDetails } from './components/PrepBlock'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co'
 
@@ -26,9 +27,11 @@ export interface EmailTemplate {
         start: string
         end: string
     }
+    /** Prep instructions / checklist for the client. */
+    prep?: PrepDetails | null
 }
 
-export default function ReminderClient({ serviceName, clientData, businessData, appointmentData }: EmailTemplate) {
+export default function ReminderClient({ serviceName, clientData, businessData, appointmentData, prep }: EmailTemplate) {
     const date = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('cccc, LLLL d, yyyy')
     const time = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('h:mm a')
     const rescheduleUrl = `${BASE_URL}/appointment/${appointmentData.id}/business/${businessData.id}/reschedule`
@@ -77,6 +80,8 @@ export default function ReminderClient({ serviceName, clientData, businessData, 
                                     service={serviceName}
                                     location={businessData.businessAddress}
                                 />
+
+                                <PrepBlock prep={prep} />
 
                                 <Row style={{ marginTop: 8 }}>
                                     <Column style={{ textAlign: 'center' }}>

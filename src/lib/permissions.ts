@@ -6,6 +6,7 @@ export const PLAN_LIMITS = {
     canUseAdvancedPayments: false,
     canViewDetailedAnalytics: false,
     canUseAutomatedReminders: false,
+    canUseLoyalty: false,
   },
   GROWTH: {
     maxMonthlyBookings: Infinity,
@@ -14,6 +15,7 @@ export const PLAN_LIMITS = {
     canUseAdvancedPayments: true,
     canViewDetailedAnalytics: true,
     canUseAutomatedReminders: true,
+    canUseLoyalty: true,
   },
 }
 

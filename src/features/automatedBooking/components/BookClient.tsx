@@ -1,5 +1,6 @@
 "use client"
 import Image from 'next/image'
+import { describeLateFee, parseLateFee } from "@/features/lateFees/lateFee";
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { ArrowLeftCircleIcon, Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -17,12 +18,13 @@ import { DateTimePicker } from './DateTimePicker';
 import { ClientInfo } from './ClientInfomation';
 import { DepositPayment } from './DepositPayment';
 import { useBooking } from '../hooks/useBookingData'
+import { BOOKING_SELECTION_KEY, quoteForBooking } from '../hooks/useBookingQuote'
 import { createBookingSessionAction, updateDateTimeAction, updateClientInfoAction, getBookingSessionAction } from '../server'
 import { BookingStepper } from './BookingStepper'
 import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
 import { useRouter } from 'next/navigation'
 
-export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId }: {
+export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId, waitlistEnabled }: {
     businessData: PublicBusinessType,
     availabilities: AvailabilityType[],
     appointments: BusyInterval[],
@@ -31,9 +33,11 @@ export function BookClient({ businessData, availabilities, appointments, service
     bookingLimitReached?: boolean
     themeData?: BookingTheme | null
     preSelectedServiceId?: string
+    /** Clients can ask to hear about openings. */
+    waitlistEnabled?: boolean
 }) {
     return (
-        <BookingWrapper businessData={businessData} availabilities={availabilities} appointments={appointments} services={services} policy={policy}>
+        <BookingWrapper businessData={businessData} availabilities={availabilities} appointments={appointments} services={services} policy={policy} waitlistEnabled={!!waitlistEnabled}>
             <Book businessName={businessData.urlName} businessData={businessData} bookingLimitReachedInitial={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} />
         </BookingWrapper>
     )
@@ -229,21 +233,33 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
             return
         }
 
+        // Size/length/hair and add-ons aren't on the booking session; they're
+        // kept in localStorage next to the session id.
+        let saved: { serviceId?: string; styleSelection?: any; selectedAddons?: string[] } = {}
+        try { saved = JSON.parse(localStorage.getItem(BOOKING_SELECTION_KEY) ?? '{}') } catch { saved = {} }
+
         getBookingSessionAction(sessionId).then((sessionData) => {
             if (!sessionData) { setIsLoading(false); return }
-            setData((prev) => ({
-                ...prev,
-                selectedService: sessionData.serviceId!,
+            setData((prev) => {
+                const sameService = saved.serviceId === sessionData.serviceId
+                const restored = {
+                    ...prev,
+                    selectedService: sessionData.serviceId!,
+                    styleSelection: sameService ? saved.styleSelection ?? null : null,
+                    selectedAddons: sameService ? saved.selectedAddons ?? [] : [],
+                }
+                const minutes = quoteForBooking(restored).quote?.durationMinutes
+                    ?? prev.services.find((s) => s.id === sessionData.serviceId!)?.length ?? 0
+                return {
+                ...restored,
                 selectedDateTime: {
                     start: sessionData.selectDateTime!,
-                    end: DateTime.fromISO(sessionData.selectDateTime!).plus({
-                        minutes: prev.services.find((s) => s.id === sessionData.serviceId!)?.length ?? 0
-                    }).toISO()!
+                    end: DateTime.fromISO(sessionData.selectDateTime!).plus({ minutes }).toISO()!
                 },
                 options: { ...prev.options, clientSecret: sessionData.paymentIntentId },
                 clientInfo: sessionData.clientInfo as any,
                 bookingSession: sessionData,
-            }))
+            }})
             if (sessionData.status === 'initiated') setActiveStep(1)
             else if (sessionData.status === 'date_selected') setActiveStep(2)
             else if (sessionData.status === 'details_completed') setActiveStep(data.booking_policy.deposit.enabled ? 3 : 2)
@@ -283,12 +299,22 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
             deposit_charge_id: "",
             reschedules: data.booking_policy.rescheduleLimit,
             deposit_price: null,
-            selected_addons: data.selectedAddons
+            selected_addons: data.selectedAddons,
+            style_selection: data.styleSelection,
+            acknowledged: data.acknowledged,
         })
+        localStorage.removeItem(BOOKING_SELECTION_KEY)
         return true
     }
 
     const handleSessionUpdates = async () => {
+        if (activeStep === 0) {
+            localStorage.setItem(BOOKING_SELECTION_KEY, JSON.stringify({
+                serviceId: data.selectedService,
+                styleSelection: data.styleSelection,
+                selectedAddons: data.selectedAddons,
+            }))
+        }
         if (activeStep === 0 && !data.bookingSession && data.selectedService.length > 0) {
             const session = await createBookingSessionAction(data.business_id, data.selectedService)
             localStorage.setItem('bookingSessionId', session.id!)
@@ -339,15 +365,20 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
 
     const handleChangeService = () => {
         localStorage.removeItem('bookingSessionId')
-        setData((prev) => ({ ...prev, selectedService: '', selectedAddons: [], bookingSession: null }))
+        localStorage.removeItem(BOOKING_SELECTION_KEY)
+        setData((prev) => ({ ...prev, selectedService: '', selectedAddons: [], styleSelection: null, acknowledged: false, bookingSession: null }))
         setPreSelected(false)
         router.push(sitePath('/book'))
     }
 
+    // A service with size/length options can't move on until it's priced,
+    // and prep that needs agreement must be confirmed on the contact step.
+    const booking = quoteForBooking(data)
+    const prepAgreed = !booking.prep?.requireAgreement || data.acknowledged
     const canGoNext =
-        (activeStep === 0 && data.selectedService.length > 0) ||
+        (activeStep === 0 && data.selectedService.length > 0 && !!booking.quote) ||
         (activeStep === 1 && Object.values(data.selectedDateTime).filter(Boolean).length > 0) ||
-        (activeStep === 2 && data.clientInfo.firstName.length > 0 && data.clientInfo.lastName.length > 0 && data.clientInfo.email.length > 0 && data.clientInfo.phoneNumber.length > 0)
+        (activeStep === 2 && data.clientInfo.firstName.length > 0 && data.clientInfo.lastName.length > 0 && data.clientInfo.email.length > 0 && data.clientInfo.phoneNumber.length > 0 && prepAgreed)
 
     const themeVars = {
         '--t-bg': theme.backgroundColor,
@@ -392,6 +423,11 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                             <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--t-text)' }}>
                                 {data.booking_policy?.readBeforeBooking}
                             </p>
+                            {describeLateFee(parseLateFee(data.booking_policy?.late_fee)) && (
+                                <p className="text-sm mt-3" style={{ color: 'var(--t-text)' }}>
+                                    {describeLateFee(parseLateFee(data.booking_policy?.late_fee))}
+                                </p>
+                            )}
                         </div>
                         <div className="p-4 flex items-center justify-between gap-3" style={{ borderTop: '1px solid var(--t-border)' }}>
                             <BookingCheckbox

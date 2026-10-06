@@ -1,5 +1,7 @@
 'use client'
 
+import { calculateDeposit, describeSelectedOptions } from '@/features/services/pricing'
+import { BOOKING_SELECTION_KEY, useBookingQuote } from '../hooks/useBookingQuote'
 import { businessSitePath } from '@/lib/businessHost'
 import { BookingData } from "@/features/automatedBooking/context/BookingDataContext";
 import { ServiceType } from "@/lib/service/Service";
@@ -53,6 +55,7 @@ export const CheckoutForm = ({
     const router = useRouter();
     const { businessName } = useParams<{ businessName: string }>();
     const [submitting, setSubmitting] = useState(false)
+    const { quote } = useBookingQuote()
     const [selectedAddons, setSelectedAddons] = useState<any[]>([])
     const [addonSum, setAddonSum] = useState<number>(0)
 
@@ -78,9 +81,12 @@ export const CheckoutForm = ({
             await bookAppointment(
                 data.selectedAddons, paymentIntentID, data.business_id, data.booking_policy.id,
                 service, data.clientInfo,
-                { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: service.length },
-                Intl.DateTimeFormat().resolvedOptions().timeZone
+                { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: quote?.durationMinutes ?? service.length },
+                Intl.DateTimeFormat().resolvedOptions().timeZone,
+                data.styleSelection,
+                data.acknowledged
             )
+            localStorage.removeItem(BOOKING_SELECTION_KEY)
             const { error } = await stripe.confirmPayment({
                 elements,
                 redirect: 'if_required',
@@ -100,9 +106,10 @@ export const CheckoutForm = ({
 
     const startDT = data.selectedDateTime.start ? DateTime.fromISO(data.selectedDateTime.start) : null
     const endDT = data.selectedDateTime.end ? DateTime.fromISO(data.selectedDateTime.end) : null
-    const dueNow = data.booking_policy.deposit.settings.type === 'flat'
-        ? data.booking_policy.deposit.settings.value
-        : ((service.price / 100) + addonSum) * (data.booking_policy.deposit.settings.value / 100)
+    // Same calculation the server charges (dollars, for display).
+    const totalCents = quote?.totalCents ?? service.price + Math.round(addonSum * 100)
+    const dueNow = calculateDeposit(data.booking_policy.deposit as any, totalCents) / 100
+    const optionsText = describeSelectedOptions(quote?.selectedOptions)
 
     return (
         <div className="flex flex-col lg:flex-row gap-4 w-full">
@@ -137,7 +144,8 @@ export const CheckoutForm = ({
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--t-muted)' }}>Service</p>
                         <p className="text-sm" style={{ color: 'var(--t-text)' }}>{service.name}</p>
-                        <p className="text-sm" style={{ color: 'var(--t-muted)' }}>${service.price / 100}</p>
+                        {optionsText && <p className="text-xs" style={{ color: 'var(--t-muted)' }}>{optionsText}</p>}
+                        <p className="text-sm" style={{ color: 'var(--t-muted)' }}>${(totalCents / 100).toFixed(2).replace(/\.00$/, '')} total</p>
                     </div>
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--t-muted)' }}>Client</p>

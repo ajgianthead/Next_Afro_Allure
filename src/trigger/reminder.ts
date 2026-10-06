@@ -7,6 +7,7 @@ import ReminderClient from "../../emails/reminder-client";
 import PaymentLinkEmail from "../../emails/payment-link";
 import { DateTime } from "luxon";
 import { toZonedISO } from "../lib/timezone";
+import { clientPrepFor, serviceLabel } from "../features/services/pricing";
 
 configure({
   secretKey: process.env.NEXT_PUBLIC_TRIGGER_API_KEY,
@@ -27,6 +28,8 @@ export type AppointmentReminderData = {
   start: string;
   end: string;
   timezone?: string;
+  /** Client prep checklist (client reminders only). */
+  prep?: { instructions: string; checklist: string[] } | null;
   clientData: {
     firstName: string;
     lastName: string;
@@ -89,7 +92,7 @@ const sendClientEmail = async (data: AppointmentReminderData) => {
           id: data.businessData.id,
           name: data.businessData.name,
           businessAddress: data.businessData.address
-        }
+        }, prep: data.prep
       }),
     });
     if (error) {
@@ -145,10 +148,10 @@ export type PaymentLinkProps = {
 // Reminders are scheduled when an appointment is confirmed, but the business
 // can turn reminders off (or reschedule/cancel) afterwards. Re-check the live
 // state right before sending so a disabled reminder never goes out.
-const shouldSendReminder = async (props: ReminderProps): Promise<{ send: boolean; timezone?: string }> => {
+const shouldSendReminder = async (props: ReminderProps): Promise<{ send: boolean; timezone?: string; serviceName?: string; prep?: { instructions: string; checklist: string[] } | null }> => {
   const supabase = adminClient()
   const [{ data: appt }, { data: business }] = await Promise.all([
-    supabase.from('appointments').select('status, start').eq('id', props.appointmentData.id).maybeSingle(),
+    supabase.from('appointments').select('status, start, selected_options, service_data').eq('id', props.appointmentData.id).maybeSingle(),
     supabase.from('business_users').select('account_settings').eq('business_id', props.businessData.id).maybeSingle(),
   ])
   if (!appt || appt.status !== 'CONFIRMED') return { send: false }
@@ -164,11 +167,17 @@ const shouldSendReminder = async (props: ReminderProps): Promise<{ send: boolean
   const enabled = props.sendToType === 'client'
     ? settings?.app_reminders?.[key] === true
     : settings?.notifications?.email === true && settings?.notifications?.[key] === true
-  return { send: enabled, timezone: settings?.timezone }
+  return {
+    send: enabled,
+    timezone: settings?.timezone,
+    // "Knotless braids — Small · Waist", and what the client should bring / do.
+    serviceName: serviceLabel(props.serviceName, appt.selected_options),
+    prep: clientPrepFor(appt.service_data, appt.selected_options),
+  }
 }
 
 const configureReminder = async (props: ReminderProps) => {
-  const { send, timezone } = await shouldSendReminder(props)
+  const { send, timezone, serviceName, prep } = await shouldSendReminder(props)
   if (!send) return
 
   if (props.sendToType === 'business') {
@@ -183,7 +192,7 @@ const configureReminder = async (props: ReminderProps) => {
     if (props.sendBy === 'email') {
       // Send via email
       await sendBusinessEmail({
-        serviceName: props.serviceName,
+        serviceName: serviceName ?? props.serviceName,
         sendBy: props.sendBy,
         businessData: {
           id: props.businessData.id,
@@ -210,7 +219,7 @@ const configureReminder = async (props: ReminderProps) => {
     if (props.sendBy === 'email') {
       // Send via email
       await sendClientEmail({
-        serviceName: props.serviceName,
+        serviceName: serviceName ?? props.serviceName,
         sendBy: props.sendBy,
         businessData: {
           id: props.businessData.id,
@@ -222,6 +231,7 @@ const configureReminder = async (props: ReminderProps) => {
         start: props.appointmentData.start,
         end: props.appointmentData.end,
         timezone,
+        prep,
         clientData: {
           ...props.clientData
         },

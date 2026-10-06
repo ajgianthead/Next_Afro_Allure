@@ -3,6 +3,7 @@ import { Html, Head, Body, Container, Section, Row, Column, Text, Link, Preview 
 import { DateTime } from 'luxon'
 import { EmailHeader } from './components/EmailHeader'
 import { EmailFooter } from './components/EmailFooter'
+import type { PrepDetails } from './components/PrepBlock'
 import { AppointmentDetailBlock } from './components/AppointmentDetailBlock'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co'
@@ -26,6 +27,8 @@ export interface EmailTemplate {
         start: string
         end: string
     }
+    /** Prep instructions / checklist for the client (client-facing emails only). */
+    prep?: PrepDetails | null
 }
 
 export default function NewAppointment({ socials, serviceName, clientData, businessData, appointmentData }: EmailTemplate) {

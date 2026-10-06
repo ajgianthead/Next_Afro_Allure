@@ -16,6 +16,8 @@ import { AppointmentType, CheckoutType } from '@/features/shared/appointments/ty
 import { Appointment } from '@/features/manualBooking/server/models/Appointment'
 import { confirmAppointment } from '../actions'
 import { BusinessUser } from '@/lib/businessUser/BusinessUser'
+import { describeSelectedOptions, type SelectedOptions } from '@/features/services/pricing'
+import { feeFromPaymentMetadata, noShowDisclosure } from '@/features/noShowFees/noShowFee'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -29,6 +31,7 @@ export default function ConfirmAppClient({ appointment, business }: PageProps) {
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [stripeID, setStripeID] = useState<string | null>(null)
     const [amountDue, setAmountDue] = useState<number>()
+    const [noShowFeeCents, setNoShowFeeCents] = useState(0)
     const [completed, setCompleted] = useState<boolean | null>(
         appointment.status === 'CONFIRMED' ? true : null
     )
@@ -57,6 +60,7 @@ export default function ConfirmAppClient({ appointment, business }: PageProps) {
                 appointment.id
             )
             setAmountDue(res?.amount)
+            setNoShowFeeCents(feeFromPaymentMetadata(res?.metadata))
             setOptions({ clientSecret: res?.client_secret })
             setCompleted(false)
         }
@@ -109,6 +113,9 @@ export default function ConfirmAppClient({ appointment, business }: PageProps) {
                             <p className="text-sm" style={{ color: '#6F6863' }}>
                                 A deposit is required to confirm your appointment.
                             </p>
+                            {noShowFeeCents > 0 && (
+                                <p className="text-xs" style={{ color: '#6F6863' }}>{noShowDisclosure(noShowFeeCents, business.name)}</p>
+                            )}
                             <PaymentForm appointmentID={appointment.id} stripeID={stripeID!} />
                         </div>
                     </div>
@@ -147,6 +154,11 @@ function AppointmentSummary({
 }) {
     const fmt = (cents: number) =>
         new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100)
+    // Size / length / hair chosen when the appointment was booked.
+    const options = (appointment.selectedOptions ?? null) as SelectedOptions | null
+    const optionsText = describeSelectedOptions(options)
+    const stylePrice = options?.priceCents ?? appointment.serviceData.price
+    const hairPrice = options?.hair?.added ? options.hair.price : 0
 
     return (
         <div
@@ -160,6 +172,7 @@ function AppointmentSummary({
                 <h2 className="text-xl font-semibold" style={{ fontFamily: SERIF, color: '#1A1818' }}>
                     {appointment.serviceData.name}
                 </h2>
+                {optionsText && <p className="text-sm mt-0.5" style={{ color: '#6F6863' }}>{optionsText}</p>}
             </div>
 
             <div className="flex flex-col gap-3" style={{ borderTop: '1px solid #F0EBE3', paddingTop: '1rem' }}>
@@ -168,7 +181,7 @@ function AppointmentSummary({
                     label="Time"
                     value={`${DateTime.fromISO(appointment.start).toFormat('t')} – ${DateTime.fromISO(appointment.end).toFormat('t')}`}
                 />
-                <Row label="Price" value={fmt(appointment.serviceData.price)} />
+                <Row label="Price" value={fmt(stylePrice + hairPrice)} />
                 {appointment.requireDeposit && (
                     <Row label="Deposit" value={fmt(appointment.depositPrice)} />
                 )}

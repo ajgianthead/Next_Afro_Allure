@@ -19,6 +19,10 @@ import {
 import { markAppointmentAs } from '@/app/dashboard/(other)/appointments/actions'
 import { RefundPanel, RefundHistory, RefundRecord, IssueRefundResult } from '@/features/refunds'
 import { listRefundsAction } from '@/features/refunds/server'
+import { describeSelectedOptions, type SelectedOptions } from '@/features/services/pricing'
+import { AppointmentRewards } from '@/features/loyalty/components/AppointmentRewards'
+import { NoShowFeePanel } from '@/features/noShowFees/components/NoShowFeePanel'
+import { LateFeePanel } from '@/features/lateFees/components/LateFeePanel'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 const MONO = 'ui-monospace, monospace'
@@ -89,6 +93,12 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
 
     const busy = loading !== 'idle'
 
+    // Size / length / hair chosen when booking (services with style options).
+    const options = (event?.selectedOptions ?? null) as SelectedOptions | null
+    const optionsText = describeSelectedOptions(options)
+    const stylePrice = options?.priceCents ?? event?.serviceData.price ?? 0
+    const hairAdded = options?.hair?.added ? options.hair.price : 0
+
     // Functional update: a stale snapshot here would overwrite other changes
     // made in the same tick and leave the views showing old data.
     const updateEventInContext = (patch: Partial<AppointmentEvent>) => {
@@ -152,12 +162,12 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
         setLoading('markingPaid')
         setFeedback(null)
         try {
-            await markAppointmentAs(event.serviceData.business, 'COMPLETED', event.amountDue, event.id)
+            const result = await markAppointmentAs(event.serviceData.business, 'COMPLETED', event.amountDue, event.id)
             updateEventInContext({
                 status: 'COMPLETED',
                 servicePaid: true,
-                servicePaidType: 'CASH',
-                paidAmount: event.paidAmount + event.amountDue,
+                servicePaidType: event.servicePaidType ?? 'CASH',
+                paidAmount: result?.paid_amount ?? event.paidAmount + event.amountDue,
                 amountDue: 0,
             })
             handleClose()
@@ -240,6 +250,9 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                             <div className="flex items-start justify-between gap-3">
                                 <p style={{ fontFamily: SERIF, fontSize: 18, color: '#1A1818', lineHeight: 1.3 }}>
                                     {event.serviceData.name}
+                                    {optionsText && (
+                                        <span className="block text-sm" style={{ fontFamily: 'inherit', color: '#6F6863' }}>{optionsText}</span>
+                                    )}
                                 </p>
                                 <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
                                     {hasRefunds && (
@@ -303,9 +316,16 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                             {event.serviceData.name}
                                         </span>
                                         <span style={{ fontFamily: SERIF, fontSize: 14, color: '#1A1818' }}>
-                                            {fmt(event.serviceData.price)}
+                                            {fmt(stylePrice)}
                                         </span>
                                     </div>
+
+                                    {hairAdded && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm" style={{ color: '#6F6863' }}>+ Braiding hair</span>
+                                            <span style={{ fontFamily: SERIF, fontSize: 14, color: '#6F6863' }}>{fmt(hairAdded)}</span>
+                                        </div>
+                                    )}
 
                                     {event.selectedAddons.map(addon => (
                                         <div key={addon.id} className="flex items-center justify-between">
@@ -316,6 +336,12 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                         </div>
                                     ))}
                                 </div>
+
+                                <AppointmentRewards
+                                    key={event.id}
+                                    appointmentId={event.id}
+                                    onBalanceChange={delta => updateEventInContext({ amountDue: Math.max(0, event.amountDue + delta) })}
+                                />
 
                                 <div
                                     className="flex flex-col gap-2 pt-3"
@@ -364,6 +390,25 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                         </div>
                                     )}
                                 </div>
+
+                                {['CONFIRMED', 'NO_SHOW', 'INCOMPLETE'].includes(status) && !event.servicePaid && (
+                                    <LateFeePanel
+                                        key={`late-${event.id}`}
+                                        appointmentId={event.id}
+                                        onChange={({ amountDue, confirmed }) => updateEventInContext({
+                                            amountDue,
+                                            ...(confirmed && status === 'NO_SHOW' ? { status: 'CONFIRMED' as const } : {}),
+                                        })}
+                                    />
+                                )}
+
+                                {status === 'NO_SHOW' && event.paidDeposit && (
+                                    <NoShowFeePanel
+                                        key={event.id}
+                                        appointmentId={event.id}
+                                        onCharged={cents => updateEventInContext({ paidAmount: event.paidAmount + cents })}
+                                    />
+                                )}
 
                                 {refunds.length > 0 && (
                                     <div className="flex flex-col gap-2 pt-3" style={{ borderTop: '1px solid #F0EBE3' }}>
@@ -465,6 +510,32 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                                 style={{ color: '#DC2626', backgroundColor: 'transparent' }}
                                             >
                                                 Cancel
+                                            </button>
+                                        </>
+                                    )}
+
+                                    {/* Flagged as a no-show / unpaid automatically after the end time — the client may still pay. */}
+                                    {(status === 'NO_SHOW' || status === 'INCOMPLETE') && !event.servicePaid && event.amountDue > 0 && (
+                                        <>
+                                            {canTakeOnlinePayments && (
+                                                <button
+                                                    disabled={busy}
+                                                    onClick={handleSendPaymentLink}
+                                                    className="flex items-center gap-1.5 rounded-full text-sm font-medium px-4 h-9 transition-opacity hover:opacity-80 disabled:opacity-50"
+                                                    style={{ backgroundColor: '#FC6161', color: '#FFFFFF' }}
+                                                >
+                                                    {loading === 'sendingPaymentLink' && <Loader2 size={13} className="animate-spin" />}
+                                                    Send Payment Link
+                                                </button>
+                                            )}
+                                            <button
+                                                disabled={busy}
+                                                onClick={handleMarkPaid}
+                                                className="flex items-center gap-1.5 rounded-full text-sm font-medium px-4 h-9 transition-colors hover:bg-[#F0EBE3] disabled:opacity-50"
+                                                style={{ border: '1px solid #E8E2D6', color: '#1A1818', backgroundColor: 'transparent' }}
+                                            >
+                                                {loading === 'markingPaid' && <Loader2 size={13} className="animate-spin" />}
+                                                They came — Mark Paid (Cash)
                                             </button>
                                         </>
                                     )}

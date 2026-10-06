@@ -21,6 +21,14 @@ import { dismissUpgradePromptAction } from "app/dashboard/(other)/actions";
 import { AppointmentData } from "../../types";
 import { addMinutesToTime, combineDateAndTime, minStartTimeFor, validateAppointmentTimes } from "../../utils/appointmentTime";
 import { browserTimezone } from "@/lib/timezone";
+import { parseStyleOptions, quoteBooking, QuoteError, type StyleSelection } from "@/features/services/pricing";
+import { StylePicker } from "@/features/automatedBooking/components/StylePicker";
+
+// StylePicker is themed with booking-site CSS variables; give it the dashboard's look.
+const PICKER_THEME = {
+    '--t-primary': '#0F0E0E', '--t-primary-text': '#FFFFFF', '--t-border': '#E8E2D6', '--t-card': '#FFFFFF',
+    '--t-text': '#1A1818', '--t-muted': '#6F6863', '--t-bg': '#FAF7F2', '--t-input-r': '10px',
+} as import('react').CSSProperties
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -64,16 +72,43 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
         }))
     }
 
-    const defaultEndFor = (start: string, serviceId: string) => {
+    const styleOptions = useMemo(() => parseStyleOptions(selectedService?.style_options), [selectedService])
+
+    // Same pricing as online booking — for the live price and default end time.
+    const quoteFor = (serviceId: string | undefined, selection: StyleSelection | null | undefined, addonIds: Set<string>) => {
         const service = manualBookingData?.services.find(s => s.id === serviceId)
-        if (!start || !service?.length) return null
-        return addMinutesToTime(start, service.length)
+        if (!service) return { quote: null, error: null as string | null }
+        const addons = ((service.addons as any[]) ?? []).filter((a: any) => addonIds.has(a.id))
+            .map((a: any) => ({ id: a.id, name: a.name, price: Number(a.price ?? 0) }))
+        try {
+            return { quote: quoteBooking(service, parseStyleOptions(service.style_options) ? selection ?? null : null, addons), error: null }
+        } catch (err) {
+            return { quote: null, error: err instanceof QuoteError ? err.message : 'Unable to price this service' }
+        }
+    }
+    const priced = quoteFor(form?.serviceId, form?.styleSelection, form?.selectedAddons ?? new Set())
+
+    const defaultEndFor = (start: string, serviceId: string, selection?: StyleSelection | null) => {
+        const service = manualBookingData?.services.find(s => s.id === serviceId)
+        const minutes = quoteFor(serviceId, selection, new Set()).quote?.durationMinutes ?? service?.length
+        if (!start || !minutes) return null
+        return addMinutesToTime(start, minutes)
     }
 
     const handleStartChange = (start: string) => {
         const patch: Partial<AppointmentData> = { start }
         if (!endEdited && form?.serviceId) {
-            const end = defaultEndFor(start, form.serviceId)
+            const end = defaultEndFor(start, form.serviceId, form.styleSelection)
+            if (end) patch.end = end
+        }
+        updateForm(patch)
+    }
+
+    const handleStyleChange = (styleSelection: StyleSelection) => {
+        // The chosen size/length sets the default end time (still editable).
+        const patch: Partial<AppointmentData> = { styleSelection }
+        if (!endEdited && form?.serviceId) {
+            const end = defaultEndFor(form.start ?? '', form.serviceId, styleSelection)
             if (end) patch.end = end
         }
         updateForm(patch)
@@ -81,7 +116,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
 
     const handleServiceChange = (serviceId: string) => {
         // Service length sets a default end time; the business can still change it.
-        const patch: Partial<AppointmentData> = { serviceId, selectedAddons: new Set() }
+        const patch: Partial<AppointmentData> = { serviceId, selectedAddons: new Set(), styleSelection: null }
         const end = defaultEndFor(form?.start ?? '', serviceId)
         if (end) {
             patch.end = end
@@ -102,6 +137,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
         const timeError = validateAppointmentTimes(form?.date, form?.start ?? '', form?.end ?? '')
         if (timeError) { setError(timeError); return false }
         if (!form?.serviceId) { setError('Please select a service'); return false }
+        if (priced.error) { setError(priced.error); return false }
         const c = form.clientData
         if (!c.firstName.trim() || !c.lastName.trim() || !c.email.trim() || !c.phoneNumber.trim()) {
             setError('Please enter client information'); return false
@@ -123,6 +159,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
                 serviceId: '',
                 clientData: { firstName: "", lastName: "", email: "", phoneNumber: "" },
                 selectedAddons: new Set(),
+                styleSelection: null,
                 deposit: depositAvailable
             },
             openCreateAppointment: false,
@@ -141,6 +178,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
             clientData: form.clientData,
             deposit: depositAvailable && form.deposit,
             selectedAddons: [...form.selectedAddons],
+            styleSelection: styleOptions ? form.styleSelection ?? null : null,
             timezone: browserTimezone(),
         })
         if (!res.ok) {
@@ -321,6 +359,20 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {styleOptions && (
+                        <div className="flex flex-col gap-2 rounded-xl p-3" style={{ ...PICKER_THEME, border: '1px solid #E8E2D6' }}>
+                            <StylePicker options={styleOptions} selection={form?.styleSelection ?? {}} onChange={handleStyleChange} />
+                        </div>
+                    )}
+
+                    {selectedService && (
+                        <p className="text-sm" style={{ color: priced.quote ? '#1A1818' : '#6F6863' }}>
+                            {priced.quote
+                                ? <>Price: <strong>${(priced.quote.totalCents / 100).toFixed(2).replace(/\.00$/, '')}</strong></>
+                                : priced.error}
+                        </p>
+                    )}
 
                     {selectedService?.addons?.length ? (
                         <div className="flex flex-col gap-2">

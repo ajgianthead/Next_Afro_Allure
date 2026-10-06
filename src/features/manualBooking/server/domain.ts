@@ -3,15 +3,19 @@ import { Resend } from "resend"
 import { DateTime } from "luxon"
 import { Appointment } from "./models/Appointment"
 import { Service } from "@/lib/service/Service"
-import { Addon } from "@/lib/addons/AddOn"
-import { BusinessPolicy, Type } from "@/lib/businessPolicy/BusinessPolicy"
+import { BusinessPolicy } from "@/lib/businessPolicy/BusinessPolicy"
 import { BusinessUser } from "@/lib/businessUser/BusinessUser"
 import { stripe } from "@/lib/stripe/stripeClient"
 import { AppointmentEvent, CreateAppointmentPayload } from "../types"
+import { quoteFromDb } from "@/features/services/server/quote"
+import { calculateDeposit, QuoteError } from "@/features/services/pricing"
 import { AppointmentReminders } from "@/features/shared/appointments/AppointmentReminders"
 import { runConfirmationSideEffects, scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation"
 import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails"
 import { isValidTimezone } from "@/lib/timezone"
+import { after } from "next/server"
+import { notifyWaitlistOfOpening } from "@/features/waitlist/server/notify"
+import { canPayBalance } from "@/features/stripe/balance"
 
 // Small grace window so a time picked "right now" isn't rejected by clock skew.
 const PAST_GRACE_MINUTES = 2
@@ -181,7 +185,15 @@ export const sendPaymentLink = async (appointmentId: string) => {
     const appointment = await Appointment.fetchById(supabase, appointmentId)
     if (Array.isArray(appointment)) throw new Error('Appointment not found')
     if (appointment.businessId !== ownBusiness.business_id) throw new Error('Unauthorized')
-    if (appointment.status !== 'CONFIRMED') throw new Error('Only confirmed appointments can have a payment link sent')
+    // Also after the automatic no-show / incomplete flags — see canPayBalance.
+    if (!canPayBalance({
+        status: appointment.status,
+        service_paid: appointment.servicePaid,
+        amount_due: appointment.amountDue,
+        deposit_price: appointment.depositPrice,
+        paid_deposit: appointment.paidDeposit,
+        substraction: appointment.subtraction,
+    })) throw new Error('There is nothing left to pay online for this appointment.')
 
     const business = await BusinessUser.fetch(supabase, appointment.businessId)
 
@@ -254,26 +266,30 @@ export const createNewManualAppointment = async (payload: CreateAppointmentPaylo
     }
 
     try {
-        const selectedService = await Service.fetchById(supabase, payload.serviceId)
-        if (Array.isArray(selectedService)) throw new Error('Service not found')
-        if (selectedService.business !== ownBusiness.business_id) throw new Error('Unauthorized')
-
-        const fetchedAddons = payload.selectedAddons.length
-            ? await Addon.fetchByIds(supabase, payload.selectedAddons)
-            : []
-        const addOns = fetchedAddons.map(a => ({ id: a.id, name: a.name, price: a.price }))
-        const addonPriceTotal = addOns.reduce((sum, addon) => sum + addon.price, 0)
-        const totalPrice = selectedService.price + addonPriceTotal
+        // Same pricing as online booking (size/length/hair options, add-ons).
+        // The business still picks its own end time on manual bookings.
+        let priced: Awaited<ReturnType<typeof quoteFromDb>>
+        try {
+            priced = await quoteFromDb(supabase, {
+                businessId: ownBusiness.business_id,
+                serviceId: payload.serviceId,
+                addonIds: payload.selectedAddons,
+                selection: payload.styleSelection,
+            })
+        } catch (err) {
+            if (err instanceof QuoteError) throw new Error(err.message)
+            throw err
+        }
+        const { quote } = priced
+        const selectedService = Service.fromRow(priced.service as any) as Service
+        const addOns = quote.addons
+        const totalPrice = quote.totalCents
 
         const policy = await BusinessPolicy.fetch(supabase, selectedService.business)
         // A deposit can only be collected once Stripe onboarding is complete.
+        // Flat deposits are in dollars (they used to be saved here as cents).
         const requireDeposit = payload.deposit && policy.deposit.enabled && ownBusiness.completed_stripe_onboarding
-        let depositPrice = 0
-        if (requireDeposit) {
-            depositPrice = policy.deposit.settings.type === Type.FLAT
-                ? policy.deposit.settings.value
-                : (policy.deposit.settings.value / 100) * totalPrice
-        }
+        const depositPrice = requireDeposit ? calculateDeposit(policy.deposit as any, totalPrice) : 0
 
         const startISO = DateTime.fromISO(payload.startISO).toUTC().toISO()!
         const endISO = DateTime.fromISO(payload.endISO).toUTC().toISO()!
@@ -297,6 +313,8 @@ export const createNewManualAppointment = async (payload: CreateAppointmentPaylo
             deposit_price: depositPrice,
             selected_addons: addOns,
             substraction: policy.deposit.settings.subtraction,
+            amount_due: totalPrice,
+            selected_options: quote.selectedOptions,
         })
         if (Array.isArray(appointment)) throw new Error('Unexpected: appointment creation returned multiple results')
 
@@ -338,6 +356,7 @@ export const createNewManualAppointment = async (payload: CreateAppointmentPaylo
             refundStatus: 'NONE',
             refundedAmount: 0,
             hasOnlinePayment: false,
+            selectedOptions: quote.selectedOptions,
         }
     } catch (error: any) {
         throw Error(error.message)
@@ -373,6 +392,8 @@ export const cancelAppointment = async (appointmentId: string): Promise<{ id: st
     }
 
     await AppointmentReminders.cancelAll(apptMeta?.reminder_ids, apptMeta?.payment_link_id)
+    // Tell waitlisted clients the time is free (after the response is sent).
+    after(() => notifyWaitlistOfOpening(cancelled.id))
 
     return { id: cancelled.id, status: cancelled.status }
 }

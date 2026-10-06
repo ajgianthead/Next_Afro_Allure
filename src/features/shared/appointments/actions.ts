@@ -10,7 +10,11 @@ import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBus
 import { scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation"
 import { DateTime } from "luxon"
 import { getBusyIntervals } from "./busyIntervals"
+import { quoteFromDb } from "@/features/services/server/quote"
+import { parsePrep, QuoteError, type StyleSelection } from "@/features/services/pricing"
 import { resolveTimezone } from "@/lib/timezone"
+import { after } from "next/server"
+import { notifyWaitlistOfOpening } from "@/features/waitlist/server/notify"
 
 export const getAppointmentByIdAction = async (id: string) => {
     const supabase = createAdminClient()
@@ -106,6 +110,8 @@ export const cancelClientAppointmentAction = async (
     if (notifError) console.error(notifError)
 
     await AppointmentReminders.cancelAll(data.reminder_ids, data.payment_link_id)
+    // Tell waitlisted clients the time is free (after the response is sent).
+    after(() => notifyWaitlistOfOpening(data.id))
 
     trackAppointmentCancelled({
         appointmentType: '',
@@ -132,6 +138,10 @@ export const createAppointmentAction = async (body: {
     reschedules: number
     deposit_price: number | null
     selected_addons: any[]
+    /** Size / length / hair chosen for services with style options. */
+    style_selection?: StyleSelection | null
+    /** Client ticked the prep / policy agreement. */
+    acknowledged?: boolean
 }) => {
     const isBanned = await isClientBannedFromBusiness(
         body.client_metadata?.email,
@@ -146,8 +156,7 @@ export const createAppointmentAction = async (body: {
     const supabase = createAdminClient()
 
     const start = DateTime.fromISO(body.start)
-    const end = DateTime.fromISO(body.end)
-    if (!start.isValid || !end.isValid || end <= start) throw new Error('Please pick a valid time.')
+    if (!start.isValid) throw new Error('Please pick a valid time.')
     if (start < DateTime.now().minus({ minutes: 5 })) throw new Error('That time has already passed. Please pick another.')
 
     const cm = body.client_metadata ?? {}
@@ -168,13 +177,25 @@ export const createAppointmentAction = async (body: {
         .single()
     if (!business) throw new Error('Business not found.')
 
-    const { data: service } = await supabase
-        .from('services')
-        .select('*')
-        .eq('id', body.service_data?.id)
-        .eq('business', business.business_id)
-        .single()
-    if (!service) throw new Error('Service not found.')
+    // Price, duration and add-ons come from the database, never the browser.
+    let priced: Awaited<ReturnType<typeof quoteFromDb>>
+    try {
+        priced = await quoteFromDb(supabase, {
+            businessId: business.business_id,
+            serviceId: body.service_data?.id,
+            addonIds: body.selected_addons,
+            selection: body.style_selection,
+        })
+    } catch (err) {
+        if (err instanceof QuoteError) throw new Error(err.message)
+        throw err
+    }
+    const { service, quote } = priced
+    if (parsePrep(service.prep)?.requireAgreement && !body.acknowledged) {
+        throw new Error('Please confirm you have read the prep instructions and policies.')
+    }
+    // The end time follows the chosen style's real duration.
+    const end = start.plus({ minutes: quote.durationMinutes })
 
     const { data: policy } = await supabase
         .from('business_policies')
@@ -184,14 +205,6 @@ export const createAppointmentAction = async (body: {
     if ((policy?.deposit as any)?.enabled && business.completed_stripe_onboarding) {
         throw new Error('This business requires a deposit to book.')
     }
-
-    const addonIds = (Array.isArray(body.selected_addons) ? body.selected_addons : [])
-        .map((a: any) => (typeof a === 'string' ? a : a?.id))
-        .filter((id: unknown): id is string => typeof id === 'string')
-    const { data: addons } = addonIds.length
-        ? await supabase.from('service_addons').select('id, name, price').in('id', addonIds).eq('business_id', business.business_id)
-        : { data: [] as { id: string; name: string; price: number }[] }
-    const addonTotal = (addons ?? []).reduce((sum, a) => sum + Number(a.price ?? 0), 0)
 
     const { data: conflicts } = await supabase
         .from('appointments')
@@ -218,8 +231,12 @@ export const createAppointmentAction = async (body: {
             deposit_charge_id: '',
             reschedules: Number(policy?.reschedule_limit ?? 0),
             deposit_price: null,
-            selected_addons: addons ?? [],
-            amount_due: Number(service.price) + addonTotal,
+            selected_addons: quote.addons,
+            // New columns are only written when used, so this works whether or
+            // not the style-options migration has run yet.
+            ...(quote.selectedOptions ? { selected_options: quote.selectedOptions as any } : {}),
+            ...(body.acknowledged ? { acknowledged_at: DateTime.now().toUTC().toISO() } : {}),
+            amount_due: quote.totalCents,
         }])
         .select('*, business_users(*)')
         .single()

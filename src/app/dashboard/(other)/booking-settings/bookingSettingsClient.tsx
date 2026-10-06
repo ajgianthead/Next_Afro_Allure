@@ -1,6 +1,8 @@
 'use client'
 
 import { effectivePlanType } from '@/lib/beta'
+import { parseNoShowFee, type NoShowFee } from '@/features/noShowFees/noShowFee'
+import { describeLateFee, parseLateFee, type LateFee } from '@/features/lateFees/lateFee'
 import { CircularProgress, CssVarsProvider, Divider, FormControl, FormHelperText, Input as JoyInput, Option, Select } from '@mui/joy'
 import { Info, Check, Lock } from 'lucide-react'
 import { BookingSettingsTour } from '@/features/tour/tours/BookingSettingsTour'
@@ -32,8 +34,10 @@ export interface BookingSettings {
         enabled: boolean;
         settings: { type: Type; value: number; subtraction: boolean }
     };
-    lateFee: { enabled: boolean; fee?: number };
+    lateFee: LateFee;
     noShowPolicy: { enabled: boolean; level?: Level }
+    /** Charged to the card saved with the deposit. Undefined until the database has the column. */
+    noShowFee?: NoShowFee;
     rescheduleLimit: string;
     rescheduleDayLimit: string;
     cancelDayLimit: string;
@@ -55,6 +59,7 @@ interface PageProps {
         important_info: string | null;
         late_fee: any;
         no_show: any;
+        no_show_fee?: any;
         read_before_booking: string | null;
         reschedule_day_limit: number | null;
         reschedule_limit: number | null;
@@ -75,8 +80,9 @@ export interface PaymentConfig {
 export default function BookingSettingsClient({ businessUser, policyData, paymentConfig, paymentConfigId }: PageProps) {
     const [bookingPolicy, setBookingPolicy] = useState<BookingSettings>({
         deposit: policyData.deposit,
-        lateFee: policyData.late_fee,
+        lateFee: parseLateFee(policyData.late_fee),
         noShowPolicy: policyData.no_show,
+        ...('no_show_fee' in policyData ? { noShowFee: parseNoShowFee(policyData.no_show_fee) } : {}),
         rescheduleLimit: policyData.reschedule_limit!.toString(),
         rescheduleDayLimit: policyData.reschedule_day_limit!.toString(),
         cancelDayLimit: policyData.cancel_day_limit!.toString(),
@@ -243,13 +249,134 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         {bookingPolicy.deposit.settings?.type === Type.FLAT && (
                             <div className="flex items-center gap-2">
                                 <span className="text-sm" style={{ color: BRAND.warm }}>$</span>
-                                <BrandInput type="number" className="w-24" />
+                                {/* Flat deposits are stored in dollars. This field used to be unconnected. */}
+                                <BrandInput
+                                    type="number"
+                                    min={1}
+                                    step="0.01"
+                                    inputMode="decimal"
+                                    value={Number.isFinite(bookingPolicy.deposit.settings?.value) ? bookingPolicy.deposit.settings.value : ''}
+                                    onChange={(e) => setBookingPolicy({ ...bookingPolicy, deposit: { enabled: true, settings: { value: parseFloat(e.target.value), type: Type.FLAT, subtraction: bookingPolicy.deposit.settings.subtraction } } })}
+                                    className="w-24"
+                                />
                             </div>
                         )}
                     </div>
                 )}
             </Section>
             </div>
+
+            {/* No-show fee (needs deposits: the card is saved when the deposit is paid) */}
+            {bookingPolicy.noShowFee && (
+            <Section label="No-Show Fee">
+                <SettingRow
+                    label="Charge a fee when a client doesn't show up"
+                    description="The card a client pays their deposit with is saved. If they no-show, you can charge this fee from the appointment — it's never charged automatically."
+                >
+                    <Checkbox
+                        checked={bookingPolicy.noShowFee.enabled}
+                        disabled={!isOnboarded || !bookingPolicy.deposit.enabled}
+                        onCheckedChange={(checked: boolean) => setBookingPolicy({
+                            ...bookingPolicy,
+                            noShowFee: { ...bookingPolicy.noShowFee!, enabled: checked, value: bookingPolicy.noShowFee!.value || (bookingPolicy.noShowFee!.type === 'percent' ? 50 : 25) },
+                        })}
+                    />
+                </SettingRow>
+                {!bookingPolicy.deposit.enabled && (
+                    <p className="text-xs mt-2" style={{ color: BRAND.warm }}>Turn on deposits to use a no-show fee.</p>
+                )}
+                {bookingPolicy.noShowFee.enabled && bookingPolicy.deposit.enabled && (
+                    <div className="mt-4 pl-4 border-l-2 space-y-3" style={{ borderColor: BRAND.sand }}>
+                        <div className="flex gap-4">
+                            {(['flat', 'percent'] as const).map(t => (
+                                <label key={t} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        checked={bookingPolicy.noShowFee!.type === t}
+                                        onChange={() => setBookingPolicy({ ...bookingPolicy, noShowFee: { ...bookingPolicy.noShowFee!, type: t, value: t === 'percent' ? 50 : 25 } })}
+                                        style={{ accentColor: BRAND.gold }}
+                                    />
+                                    <span className="text-sm" style={{ color: BRAND.dark }}>{t === 'flat' ? 'Flat amount' : 'Percent of the service price'}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {bookingPolicy.noShowFee.type === 'flat' && <span className="text-sm" style={{ color: BRAND.warm }}>$</span>}
+                            <BrandInput
+                                type="number"
+                                min={1}
+                                max={bookingPolicy.noShowFee.type === 'percent' ? 100 : undefined}
+                                step={bookingPolicy.noShowFee.type === 'percent' ? '1' : '0.01'}
+                                value={Number.isFinite(bookingPolicy.noShowFee.value) && bookingPolicy.noShowFee.value > 0 ? bookingPolicy.noShowFee.value : ''}
+                                onChange={(e) => setBookingPolicy({ ...bookingPolicy, noShowFee: { ...bookingPolicy.noShowFee!, value: parseFloat(e.target.value) } })}
+                                className="w-24"
+                            />
+                            {bookingPolicy.noShowFee.type === 'percent' && <span className="text-sm" style={{ color: BRAND.warm }}>%</span>}
+                        </div>
+                        <p className="text-xs" style={{ color: BRAND.warm }}>
+                            On top of the deposit you keep. Clients see the fee before they pay, and it applies to bookings made after you turn it on.
+                        </p>
+                    </div>
+                )}
+            </Section>
+            )}
+
+            {/* Late fee — added by the business from the appointment, paid with the balance */}
+            <Section label="Late Fee">
+                <SettingRow
+                    label="Charge a late fee"
+                    description="You decide who was late: add the fee from the appointment and it's included in what the client pays at the end — by payment link, QR code or cash."
+                >
+                    <Checkbox
+                        checked={bookingPolicy.lateFee.enabled}
+                        onCheckedChange={(checked: boolean) => setBookingPolicy({
+                            ...bookingPolicy,
+                            lateFee: { ...bookingPolicy.lateFee, enabled: checked, value: bookingPolicy.lateFee.value || (bookingPolicy.lateFee.type === 'percent' ? 10 : 15) },
+                        })}
+                    />
+                </SettingRow>
+                {bookingPolicy.lateFee.enabled && (
+                    <div className="mt-4 pl-4 border-l-2 space-y-3" style={{ borderColor: BRAND.sand }}>
+                        <div className="flex gap-4">
+                            {(['flat', 'percent'] as const).map(t => (
+                                <label key={t} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        checked={bookingPolicy.lateFee.type === t}
+                                        onChange={() => setBookingPolicy({ ...bookingPolicy, lateFee: { ...bookingPolicy.lateFee, type: t, value: t === 'percent' ? 10 : 15 } })}
+                                        style={{ accentColor: BRAND.gold }}
+                                    />
+                                    <span className="text-sm" style={{ color: BRAND.dark }}>{t === 'flat' ? 'Flat amount' : 'Percent of the service price'}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {bookingPolicy.lateFee.type === 'flat' && <span className="text-sm" style={{ color: BRAND.warm }}>$</span>}
+                            <BrandInput
+                                type="number"
+                                min={1}
+                                max={bookingPolicy.lateFee.type === 'percent' ? 100 : undefined}
+                                step={bookingPolicy.lateFee.type === 'percent' ? '1' : '0.01'}
+                                value={Number.isFinite(bookingPolicy.lateFee.value) && bookingPolicy.lateFee.value > 0 ? bookingPolicy.lateFee.value : ''}
+                                onChange={(e) => setBookingPolicy({ ...bookingPolicy, lateFee: { ...bookingPolicy.lateFee, value: parseFloat(e.target.value) } })}
+                                className="w-24"
+                            />
+                            {bookingPolicy.lateFee.type === 'percent' && <span className="text-sm" style={{ color: BRAND.warm }}>%</span>}
+                        </div>
+                        <InlineNumberRule
+                            prefix="Tell clients it applies after"
+                            suffix="minutes late"
+                            value={String(bookingPolicy.lateFee.graceMinutes)}
+                            onChange={(v) => setBookingPolicy({ ...bookingPolicy, lateFee: { ...bookingPolicy.lateFee, graceMinutes: Math.max(0, parseInt(v) || 0) } })}
+                        />
+                        {describeLateFee(parseLateFee(bookingPolicy.lateFee)) && (
+                            <p className="text-xs" style={{ color: BRAND.warm }}>
+                                Clients see: &ldquo;{describeLateFee(parseLateFee(bookingPolicy.lateFee))}&rdquo;
+                            </p>
+                        )}
+                    </div>
+                )}
+            </Section>
 
             {/* Payment Methods */}
             <Section label="Payment Methods">

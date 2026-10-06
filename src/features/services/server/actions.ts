@@ -1,5 +1,6 @@
 'use server'
 
+import { parsePrep, parseStyleOptions } from '@/features/services/pricing'
 import { createClient } from '@/app/utils/supabase/server'
 import { ServiceData, AddonData } from '../types'
 
@@ -31,6 +32,19 @@ export const getPublicImgURL = async (path: string): Promise<string> => {
 
 // ── Service actions ───────────────────────────────────────────────────────────
 
+// Style options and prep are validated before saving; a disabled or empty
+// options block is stored as null. Omitted fields are left unchanged.
+function styleFields(serviceData: ServiceData) {
+    const fields: { style_options?: any; prep?: any; rebook_weeks?: number | null } = {}
+    if ('style_options' in serviceData) fields.style_options = parseStyleOptions(serviceData.style_options)
+    if ('prep' in serviceData) fields.prep = parsePrep(serviceData.prep)
+    if ('rebook_weeks' in serviceData) {
+        const weeks = Number(serviceData.rebook_weeks)
+        fields.rebook_weeks = serviceData.rebook_weeks != null && Number.isInteger(weeks) && weeks >= 1 && weeks <= 52 ? weeks : null
+    }
+    return fields
+}
+
 export const createServiceAction = async (
     businessId: string,
     serviceData: ServiceData
@@ -50,6 +64,7 @@ export const createServiceAction = async (
             business: businessId,
             categories: serviceData.categories,
             availability: serviceData.availability,
+            ...styleFields(serviceData),
         })
         .select()
         .single()
@@ -74,6 +89,7 @@ export const updateServiceAction = async (
             imagePath: serviceData.imagePath,
             categories: serviceData.categories,
             availability: serviceData.availability,
+            ...styleFields(serviceData),
         })
         .eq('id', serviceData.id)
         .eq('business', businessId)
