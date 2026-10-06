@@ -17,7 +17,7 @@ type Totals = Omit<ImportBatchResult, 'clients'>
 // Where each platform keeps its export. Menus move around, so every tip ends
 // with the fallback that always works: ask their support for a CSV.
 const EXPORT_TIPS: { name: string; tip: string }[] = [
-    { name: 'StyleSeat', tip: 'Open StyleSeat on a computer, go to your Clients list and look for Export. No button? Ask StyleSeat support to email you your client list as a CSV.' },
+    { name: 'StyleSeat', tip: 'In the StyleSeat app, open Clients, tap ⋯ in the top corner, choose Export Client List, and it emails you a CSV. Do this before you cancel — the export only works while your Pro subscription is active.' },
     { name: 'GlossGenius', tip: 'In GlossGenius on the web, open Clients and choose Export. Support can also send it.' },
     { name: 'Acuity', tip: 'In Acuity, go to Clients, then Import/Export, and export your client list as CSV.' },
     { name: 'Square, Vagaro, Booksy', tip: 'Look for Export in the Customers or Clients section.' },

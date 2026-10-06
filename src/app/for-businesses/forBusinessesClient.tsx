@@ -1260,6 +1260,7 @@ function Footer() {
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Marketplace</a></li>
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>For Businesses</a></li>
                         <li><a href="/founding-members" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Founding Members</a></li>
+                        <li><a href="/switch/styleseat" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Switching from StyleSeat</a></li>
                         <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Register</a></li>
                     </ul>
                 </div>
