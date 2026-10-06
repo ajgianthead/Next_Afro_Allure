@@ -1,4 +1,4 @@
-import { configure, schedules } from "@trigger.dev/sdk/v3";
+import { configure, schedules } from "@trigger.dev/sdk";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { runRebookReminders } from "../features/rebooking/server/run";

@@ -1,5 +1,5 @@
 import { checkAppointmentStatus, checkNoShowTask, reminderTask, sendPaymentLink } from "trigger/reminder";
-import { runs } from "@trigger.dev/sdk/v3";
+import { runs } from "@trigger.dev/sdk";
 import { DateTime } from "luxon";
 
 export interface ReminderData {

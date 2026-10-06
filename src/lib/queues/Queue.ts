@@ -1,4 +1,4 @@
-import { task, Task as TriggerTask, runs } from "@trigger.dev/sdk/v3";
+import { task, Task as TriggerTask, runs } from "@trigger.dev/sdk";
 
 interface ReminderProps {
     serviceName: string;

@@ -1,4 +1,4 @@
-import { configure, task } from "@trigger.dev/sdk/v3";
+import { configure, task } from "@trigger.dev/sdk";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { Database } from "../../lib/database.types";
