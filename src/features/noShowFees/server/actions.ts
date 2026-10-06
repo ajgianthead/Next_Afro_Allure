@@ -6,6 +6,7 @@ import { createAdminClient } from '@/app/utils/supabase/admin'
 import { requireOwnBusinessId } from '@/lib/auth/requireBusinessOwner'
 import { stripe } from '@/lib/stripe/stripeClient'
 import { calculateApplicationFee } from '@/lib/fees'
+import { getEffectivePlanType } from '@/lib/businessPlan'
 import { feeFromPaymentMetadata } from '../noShowFee'
 
 type Result<T = {}> = ({ ok: true } & T) | { ok: false; error: string }
@@ -107,6 +108,7 @@ export async function chargeNoShowFee(appointmentId: string): Promise<Result<{ c
     const cm = (appt.client_metadata ?? {}) as any
     const serviceName = (appt.service_data as any)?.name ?? 'appointment'
     try {
+        const planType = await getEffectivePlanType(supabase, businessId)
         const charge = await stripe.paymentIntents.create({
             amount: feeCents,
             currency: 'usd',
@@ -116,7 +118,7 @@ export async function chargeNoShowFee(appointmentId: string): Promise<Result<{ c
             confirm: true,
             receipt_email: cm.email || undefined,
             description: `No-show fee — ${serviceName}`,
-            application_fee_amount: calculateApplicationFee(feeCents),
+            application_fee_amount: calculateApplicationFee(feeCents, planType),
             metadata: { purpose: 'NO_SHOW_FEE', appointment_id: appt.id, businessId },
         }, {
             stripeAccount,

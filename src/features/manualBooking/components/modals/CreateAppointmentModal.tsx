@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns"
 import { createManualAppointmentAction } from "../../server";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from "app/for-businesses/actions";
+import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
 import { dismissUpgradePromptAction } from "app/dashboard/(other)/actions";
 import { AppointmentData } from "../../types";
 import { addMinutesToTime, combineDateAndTime, minStartTimeFor, validateAppointmentTimes } from "../../utils/appointmentTime";
@@ -47,6 +47,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
 }) => {
     const { manualBookingData, setManualBookingData } = useManualBooking()
     const router = useRouter()
+    const { openUpgrade } = useUpgrade()
     const [upgradeLoading, setUpgradeLoading] = useState(false)
     // Once the business edits the end time by hand, stop overwriting it with
     // the service-length default.
@@ -197,19 +198,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
         router.refresh()
     }
 
-    const handleUpgrade = async () => {
-        setUpgradeLoading(true)
-        try {
-            const session = stripeCustomerId
-                ? await createSubscriptionForExistingCustomer(stripeCustomerId)
-                : await createSubscriptionCheckout(hadTrial, businessId)
-            if (session.url) router.push(session.url)
-        } catch {
-            toast.error('Failed to start checkout. Please try again.')
-        } finally {
-            setUpgradeLoading(false)
-        }
-    }
+    const handleUpgrade = () => openUpgrade()
 
     const handleDismissUpgrade = async () => {
         localStorage.setItem('upgrade_modal_dismissed', JSON.stringify({ ts: Date.now() }))

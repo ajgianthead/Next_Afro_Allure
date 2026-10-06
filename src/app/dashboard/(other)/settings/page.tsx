@@ -16,9 +16,10 @@ export default async function Page() {
         const subs = await stripe.subscriptions.list({
             customer: business.stripe_customer_id,
             status: 'all',
-            limit: 1,
+            limit: 10,
         })
-        const sub = subs.data[0]
+        // Prefer the live subscription over a paused one left by an expired trial.
+        const sub = subs.data.find(s => ['trialing', 'active', 'past_due'].includes(s.status)) ?? subs.data[0]
         if (sub) {
             subscription = {
                 id: sub.id,
@@ -27,6 +28,7 @@ export default async function Page() {
                 current_period_end: sub.items.data[0]?.current_period_end ?? 0,
                 cancel_at_period_end: sub.cancel_at_period_end,
                 trial_end: sub.trial_end ?? null,
+                interval: sub.items.data[0]?.price.recurring?.interval === 'year' ? 'year' : 'month',
             }
         }
     }

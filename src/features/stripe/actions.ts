@@ -3,6 +3,7 @@
 import { stripe } from "@/lib/stripe/stripeClient"
 import { createAdminClient } from '@/app/utils/supabase/admin'
 import { calculateApplicationFee } from "@/lib/fees"
+import { getEffectivePlanType } from "@/lib/businessPlan"
 import { remainingBalance } from "@/features/services/pricing"
 import { requireOwnStripeAccount } from "@/lib/auth/requireOwnStripeAccount"
 import { canPayBalance } from "@/features/stripe/balance"
@@ -46,6 +47,7 @@ export const createCheckoutAction = async (params: {
         throw new Error('This business hasn\'t finished setting up payments yet. Please check back soon or contact them directly.')
     }
     const stripeAccount = data.stripe_acc_id
+    const planType = await getEffectivePlanType(supabase, appt.business)
 
     // Reuse this appointment's existing PaymentIntent (never one passed in).
     const existingId = isBalance ? appt.service_charge_id : appt.deposit_charge_id
@@ -60,7 +62,7 @@ export const createCheckoutAction = async (params: {
             if (isBalance && unpaid && canPayBalance(appt) && existing.amount !== price) {
                 const updated = await stripe.paymentIntents.update(
                     existing.id,
-                    { amount: price, application_fee_amount: calculateApplicationFee(price) },
+                    { amount: price, application_fee_amount: calculateApplicationFee(price, planType) },
                     { stripeAccount }
                 )
                 return { clientSecret: updated.client_secret, id: updated.id, amountDue: updated.amount }
@@ -83,7 +85,7 @@ export const createCheckoutAction = async (params: {
             type: appointmentType ?? '',
         },
         payment_method_configuration: data.payment_method_config_id || undefined,
-        application_fee_amount: calculateApplicationFee(price),
+        application_fee_amount: calculateApplicationFee(price, planType),
     }, { stripeAccount })
 
     if (isBalance) {

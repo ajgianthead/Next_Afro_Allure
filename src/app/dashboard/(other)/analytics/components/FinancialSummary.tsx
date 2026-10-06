@@ -48,12 +48,12 @@ interface Props {
     platformFees: ActualPlatformFees
 }
 
-// Everything taken from a business's payouts — the 1% platform fee and card
+// Everything taken from a business's payouts — the 1% Starter-plan fee (if any) and card
 // processing passed through at cost — is a Stripe application fee, so the
 // real total comes straight from Stripe (platformFees). Businesses aren't
 // billed by Stripe separately, so nothing else is subtracted. Cash payments
 // have no fees.
-const FEES_TIP = "1% AfroAllure fee + card processing (Stripe's 2.9% + $0.30, at cost) on payments clients made online. Actual amounts from Stripe. Cash payments have no fees."
+const FEES_TIP = "Card processing (Stripe's 2.9% + $0.30, at cost), plus a 1% AfroAllure fee on the free Starter plan only, on payments clients made online. Actual amounts from Stripe. Cash payments have no fees."
 
 export function FinancialSummarySection({ financial, platformFees }: Props) {
     const netThisYear = Math.max(0, financial.total_earned_this_year - platformFees.thisYear)

@@ -1,6 +1,6 @@
 'use client'
 
-import { BETA_FULL_ACCESS, effectivePlanType } from '@/lib/beta'
+import { effectivePlanType } from '@/lib/beta'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Lock } from 'lucide-react'
@@ -13,7 +13,12 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog'
-import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
+import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
+import { switchGrowthInterval } from 'app/for-businesses/actions'
+import {
+    dollars, GROWTH_MONTHLY_CENTS, GROWTH_YEARLY_CENTS, STARTER_LIMITS, YEARLY_FREE_MONTHS,
+    YEARLY_FULL_PRICE_CENTS, YEARLY_SAVINGS_CENTS, YEARLY_SAVINGS_PERCENT,
+} from '@/features/billing/plans'
 import { validateBusinessAddress, normalizeBusinessAddress } from '@/lib/businessAddress'
 import { saveAccountSettings, cancelSubscription, reactivateSubscription, createBillingPortalSession } from './actions'
 
@@ -47,6 +52,7 @@ export interface SubscriptionInfo {
     current_period_end: number
     cancel_at_period_end: boolean
     trial_end: number | null
+    interval: 'month' | 'year'
 }
 
 const DEFAULT_SETTINGS: AccountSettings = {
@@ -425,6 +431,54 @@ function PreferencesSection({
 
 // ─── Subscription section ─────────────────────────────────────────────────────
 
+function YearlySwitch({ subscription, onSubChange }: {
+    subscription: SubscriptionInfo
+    onSubChange: (s: SubscriptionInfo | null) => void
+}) {
+    const [switching, setSwitching] = useState(false)
+    if (subscription.interval === 'year' || subscription.cancel_at_period_end) return null
+    const handleSwitch = async () => {
+        setSwitching(true)
+        try {
+            const res = await switchGrowthInterval('year')
+            if (res.ok) {
+                onSubChange({ ...subscription, interval: 'year' })
+                toast.success(subscription.status === 'trialing'
+                    ? 'Switched to yearly. Nothing is charged until your trial ends.'
+                    : 'Switched to yearly. The difference is prorated on your next invoice.')
+            } else {
+                toast.error(res.error)
+            }
+        } catch {
+            toast.error('Could not switch plans. Please try again.')
+        } finally {
+            setSwitching(false)
+        }
+    }
+    return (
+        <div
+            className="rounded-xl px-3 py-2.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between"
+            style={{ backgroundColor: 'rgba(252,97,97,0.05)', border: '1px solid rgba(252,97,97,0.2)' }}
+        >
+            <p className="text-xs" style={{ color: '#1A1818' }}>
+                Pay yearly: <strong>{dollars(GROWTH_YEARLY_CENTS)}/yr</strong> instead of {dollars(YEARLY_FULL_PRICE_CENTS)} —{' '}
+                save {dollars(YEARLY_SAVINGS_CENTS)} ({YEARLY_SAVINGS_PERCENT}%), {YEARLY_FREE_MONTHS} months free.
+            </p>
+            <Button
+                onClick={handleSwitch}
+                disabled={switching}
+                size="sm"
+                className="rounded-xl px-3 shrink-0"
+                style={{ backgroundColor: '#FC6161', color: '#FFFFFF', fontSize: '12px' }}
+            >
+                {switching && <Loader2 size={12} className="animate-spin mr-1.5" />}
+                Switch to yearly
+            </Button>
+        </div>
+    )
+}
+
+
 function SubscriptionSection({
     subscription,
     business,
@@ -482,35 +536,8 @@ function SubscriptionSection({
         }
     }
 
-    const handleUpgrade = async () => {
-        setLoading('upgrade')
-        try {
-            const session = business.stripe_customer_id
-                ? await createSubscriptionForExistingCustomer(business.stripe_customer_id)
-                : await createSubscriptionCheckout(business.had_trial, business.business_id)
-            if (session.url) router.push(session.url)
-        } catch {
-            toast.error('Failed to start checkout. Please try again.')
-            setLoading(null)
-        }
-    }
-
-    // Beta: everyone has full access, nothing to buy. Existing subscribers
-    // still fall through to the sections below so they can manage/cancel.
-    if (BETA_FULL_ACCESS && (!subscription || subscription.status === 'canceled' || subscription.status === 'incomplete_expired')) {
-        return (
-            <Section title="Current Plan" last>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold" style={{ color: '#1A1818' }}>Beta</span>
-                    <StatusBadge label="Full access" color="green" />
-                </div>
-                <p className="text-xs" style={{ color: '#6F6863' }}>
-                    Every feature is unlocked and free while AfroAllure is in beta — unlimited bookings,
-                    automated reminders, analytics and more. No payment needed.
-                </p>
-            </Section>
-        )
-    }
+    const { openUpgrade } = useUpgrade()
+    const handleUpgrade = () => openUpgrade()
 
     // Starter / cancelled
     if (!subscription || subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
@@ -521,7 +548,9 @@ function SubscriptionSection({
                     <StatusBadge label="Free" color="neutral" />
                 </div>
                 <p className="text-xs" style={{ color: '#6F6863' }}>
-                    Up to 10 bookings/month. Upgrade to Growth for unlimited bookings, automated reminders, and more.
+                    Free, with a 1% fee on card payments and up to {STARTER_LIMITS.manualBookingsPerMonth} manual bookings a month.
+                    Growth removes the fee and unlocks unlimited bookings, reminders, loyalty and more —{' '}
+                    {dollars(GROWTH_MONTHLY_CENTS)}/mo, or {dollars(GROWTH_YEARLY_CENTS)}/yr (save {YEARLY_SAVINGS_PERCENT}%).
                 </p>
                 <div>
                     <Button
@@ -531,7 +560,7 @@ function SubscriptionSection({
                         style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF', fontSize: '13px' }}
                     >
                         {loading === 'upgrade' && <Loader2 size={13} className="animate-spin mr-1.5" />}
-                        Upgrade to Growth — $25/mo
+                        See Growth plans
                     </Button>
                 </div>
             </Section>
@@ -547,8 +576,10 @@ function SubscriptionSection({
                     <StatusBadge label="Trial" color="gold" />
                 </div>
                 <p className="text-xs" style={{ color: '#6F6863' }}>
-                    Free trial ends {fmt(subscription.trial_end!)}. Add a payment method to keep Growth after your trial.
+                    {subscription.interval === 'year' ? 'Yearly' : 'Monthly'} plan · free trial ends {fmt(subscription.trial_end!)}.
+                    Add a payment method to keep Growth after your trial — you won&apos;t be charged before then.
                 </p>
+                <YearlySwitch subscription={subscription} onSubChange={onSubChange} />
                 <div className="flex gap-2 flex-wrap">
                     <Button
                         onClick={handlePortal}
@@ -590,8 +621,9 @@ function SubscriptionSection({
                     <StatusBadge label="Active" color="green" />
                 </div>
                 <p className="text-xs" style={{ color: '#6F6863' }}>
-                    Next billing date: {fmt(subscription.current_period_end)}.
+                    {subscription.interval === 'year' ? 'Yearly' : 'Monthly'} plan · next billing date: {fmt(subscription.current_period_end)}.
                 </p>
+                <YearlySwitch subscription={subscription} onSubChange={onSubChange} />
                 <div className="flex gap-2 flex-wrap">
                     <Button
                         variant="outline"
@@ -681,19 +713,18 @@ function SubscriptionSection({
                     style={{ backgroundColor: 'rgba(201,151,74,0.08)', border: '1px solid rgba(201,151,74,0.25)' }}
                 >
                     <p className="text-xs" style={{ color: '#6F6863' }}>
-                        Your subscription is paused — your trial ended without a payment method on file.
-                        Add one to resume Growth.
+                        Your trial ended without a payment method, so you&apos;re on Starter for now.
+                        Choose a plan to get Growth back.
                     </p>
                 </div>
                 <div>
                     <Button
-                        onClick={handlePortal}
+                        onClick={handleUpgrade}
                         disabled={!!loading}
                         className="rounded-xl px-5"
                         style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF', fontSize: '13px' }}
                     >
-                        {loading === 'portal' && <Loader2 size={13} className="animate-spin mr-1.5" />}
-                        Add payment method
+                        Choose a plan
                     </Button>
                 </div>
             </Section>
@@ -795,19 +826,8 @@ export default function SettingsClient({
         }
     }
 
-    const handleUpgrade = async () => {
-        setUpgradeLoading(true)
-        try {
-            const session = business.stripe_customer_id
-                ? await createSubscriptionForExistingCustomer(business.stripe_customer_id)
-                : await createSubscriptionCheckout(business.had_trial, business.business_id)
-            if (session.url) router.push(session.url)
-        } catch {
-            toast.error('Failed to start checkout. Please try again.')
-        } finally {
-            setUpgradeLoading(false)
-        }
-    }
+    const { openUpgrade } = useUpgrade()
+    const handleUpgrade = () => openUpgrade()
 
     const showSaveFooter = activeTab !== 'subscription'
 

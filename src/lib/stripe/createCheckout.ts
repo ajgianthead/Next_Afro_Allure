@@ -86,7 +86,7 @@ export const createCheckout = async (
                     if ((existing.amount === price && !cardUpdate) || !unpaid) return existing
                     return await stripe.paymentIntents.update(
                         existing.id,
-                        { ...cardUpdate, amount: price, application_fee_amount: calculateApplicationFee(price) },
+                        { ...cardUpdate, amount: price, application_fee_amount: calculateApplicationFee(price, business.planType) },
                         { stripeAccount: business.stripeAccountId }
                     )
                 }
@@ -106,7 +106,7 @@ export const createCheckout = async (
                     ...cardOnFileParams(card).metadata,
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
-                application_fee_amount: calculateApplicationFee(price),
+                application_fee_amount: calculateApplicationFee(price, business.planType),
             }, {
                 stripeAccount: business.stripeAccountId,
             })
@@ -177,7 +177,7 @@ export const createCheckout = async (
                     ...cardOnFileParams(card).metadata,
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
-                application_fee_amount: calculateApplicationFee(price),
+                application_fee_amount: calculateApplicationFee(price, business.planType),
             }, {
                 stripeAccount: business.stripeAccountId,
             })
@@ -220,7 +220,7 @@ export const createCheckout = async (
                 if (unpaid && canPayBalance(balanceRow) && existing.amount !== price) {
                     return await stripe.paymentIntents.update(
                         existing.id,
-                        { amount: price, application_fee_amount: calculateApplicationFee(price) },
+                        { amount: price, application_fee_amount: calculateApplicationFee(price, business.planType) },
                         { stripeAccount: business.stripeAccountId }
                     )
                 }
@@ -241,7 +241,7 @@ export const createCheckout = async (
                     purpose: 'EOA',
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
-                application_fee_amount: calculateApplicationFee(price),
+                application_fee_amount: calculateApplicationFee(price, business.planType),
             }, {
                 stripeAccount: business.stripeAccountId,
             })

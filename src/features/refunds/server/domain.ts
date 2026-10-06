@@ -259,7 +259,7 @@ export async function issueRefund(input: IssueRefundInput): Promise<IssueRefundR
             refund = await stripe.refunds.create({
                 payment_intent: charge.paymentIntentId,
                 amount,
-                // Fees taken from the payout (1% platform fee + card processing)
+                // Fees taken from the payout (card processing, plus 1% on Starter)
                 // are non-refundable (see /refunds); Stripe keeps its processing fee too.
                 refund_application_fee: false,
                 reason: input.reason === 'requested_by_customer' || input.reason === 'duplicate' ? input.reason : undefined,

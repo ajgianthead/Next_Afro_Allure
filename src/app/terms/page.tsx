@@ -21,7 +21,7 @@ export default function TermsOfServicePage() {
             <div className="max-w-3xl mx-auto px-6 py-16" style={{ fontFamily: 'Inter, sans-serif' }}>
                 <p className="text-xs uppercase tracking-widest text-[#A09790] mb-3">Legal</p>
                 <h1 style={{ fontFamily: SERIF }} className="text-4xl text-[#1A1818] mb-2">Terms of Service</h1>
-                <p className="text-sm text-[#6F6863] mb-10">Effective October 4, 2026</p>
+                <p className="text-sm text-[#6F6863] mb-10">Effective October 6, 2026</p>
 
                 <p className="text-[15px] leading-relaxed text-[#3A3634]">
                     These Terms of Service (&ldquo;Terms&rdquo;) govern your use of the AfroAllure platform, operated by AfroAllure LLC
@@ -35,18 +35,25 @@ export default function TermsOfServicePage() {
 
                 <Section title="2. Subscription Plans">
                     <p>
-                        AfroAllure offers subscription plans (currently Starter and Growth) billed monthly. Plan features and
-                        pricing are described at checkout and in your account dashboard, and may change with notice.
+                        AfroAllure offers a free Starter plan and a paid Growth plan, billed monthly or yearly. New accounts
+                        start with a free 30-day Growth trial that does not require a payment method; if no plan is chosen by
+                        the end of the trial, the account moves to Starter. Plan features and pricing are described at checkout
+                        and in your account dashboard, and may change with notice. A price change never affects a rate we have
+                        told you is locked for as long as your subscription stays active.
                     </p>
                 </Section>
 
                 <Section title="3. Platform Fee on Bookings">
                     <p>
-                        In addition to your subscription fee, AfroAllure charges a 1% platform fee on each booking payment processed
-                        through the platform via Stripe Connect. Stripe&rsquo;s card processing fee (2.9% + $0.30 per payment) is
-                        also passed through to you at cost, with no markup. Both are deducted from the payout to your connected
-                        Stripe account and are disclosed before you complete checkout. Payments you collect in cash outside the
-                        platform have no fees.
+                        On the Growth plan, AfroAllure charges no platform fee on booking payments. On the free Starter plan,
+                        AfroAllure charges a 1% platform fee on each booking payment processed through the platform via Stripe
+                        Connect. On every plan, Stripe&rsquo;s card processing fee (2.9% + $0.30 per payment) is passed through to
+                        you at cost, with no markup. These fees are deducted from the payout to your connected Stripe account.
+                        Payments you collect in cash outside the platform have no fees.
+                    </p>
+                    <p>
+                        Standard payouts to your bank are free. Instant payouts are optional: each one costs 1.75% of the amount
+                        paid out (minimum $1.00), deducted from that payout, and the fee is shown before you confirm it.
                     </p>
                 </Section>
 

@@ -70,7 +70,7 @@ export default function NewSubscription({ businessData }: EmailTemplate) {
                                     <strong style={{ color: '#1A1818' }}>Custom drag-and-drop website builder</strong> — design a fully branded booking site that feels like you.
                                 </Text>
                                 <Text style={FEATURE_STYLE}>
-                                    <strong style={{ color: '#1A1818' }}>Multiple payment options</strong> — accept credit/debit cards, Apple Pay, Google Pay, Cash App, and more. (1% platform fee + card processing at cost applies.)
+                                    <strong style={{ color: '#1A1818' }}>Multiple payment options</strong> — accept credit/debit cards, Apple Pay, Google Pay, Cash App, and more. (No AfroAllure fee on Growth — only card processing at cost.)
                                 </Text>
                                 <Text style={FEATURE_STYLE}>
                                     <strong style={{ color: '#1A1818' }}>Automated email reminders</strong> — reduce no-shows and keep clients informed automatically.

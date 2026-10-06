@@ -140,7 +140,7 @@ function MobileNav() {
                             background: RED, color: '#fff',
                             fontFamily: SANS, fontWeight: 600, fontSize: 15,
                             padding: '14px', borderRadius: 999, textDecoration: 'none',
-                        }}>Join Beta — Free</a>
+                        }}>Start Free — 30 Days</a>
                     </div>
                 </div>
             )}
@@ -175,7 +175,7 @@ function Nav({ dark = false }) {
                 background: RED, color: '#fff', padding: '11px 18px', borderRadius: 999,
                 display: 'inline-flex', alignItems: 'center', gap: 6,
             }}>
-                Join Beta — Free
+                Start Free — 30 Days
             </a>
         </nav>
     );
@@ -250,7 +250,7 @@ function Hero({ openWaitlist }: { openWaitlist: () => void }) {
                 }}>
                     {[
                         ['250', 'Founding stylist spots'],
-                        ['$0', 'Full access during beta'],
+                        ['30', 'Days free, no card needed'],
                         ['2', 'Communities we serve'],
                     ].map(([n, l], i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
@@ -638,7 +638,7 @@ function Marketplace({ openWaitlist, foundingMemberCount }: { openWaitlist: () =
                             color, barbering. Find exactly who you&apos;re looking for, exactly where you are.
                         </p>
                         <p style={{ margin: 0 }}>
-                            When the marketplace launches, founding members are listed first. Join free during beta
+                            When the marketplace launches, founding members are listed first. Start free for 30 days
                             and claim your spot before anyone else.
                         </p>
                     </div>
@@ -834,9 +834,9 @@ function MarketplaceMock() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// BETA CTA SECTION
+// FOUNDING CTA SECTION
 // ─────────────────────────────────────────────────────────────
-function BetaCTA() {
+function FoundingCTA() {
     return (
         <section className="aa-section" style={{ background: RED, color: '#fff', padding: '120px 56px' }}>
             <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
@@ -852,8 +852,8 @@ function BetaCTA() {
                     fontSize: 'clamp(42px, 5.5vw, 72px)', lineHeight: 1, letterSpacing: '-.025em',
                     margin: 0, color: '#fff', textWrap: 'balance',
                 }}>
-                    The beta is free.<br />
-                    The founding spots <em style={{ fontStyle: 'italic' }}>won't be.</em>
+                    Your first month is free.<br />
+                    The founding spots <em style={{ fontStyle: 'italic' }}>won't last.</em>
                 </h2>
 
                 <p style={{
@@ -861,8 +861,8 @@ function BetaCTA() {
                     color: 'rgba(255,255,255,.88)',
                     margin: '24px auto 40px', maxWidth: 540, fontWeight: 400,
                 }}>
-                    Every feature, no paywalls, free for the entire beta. Founding member listing in the
-                    marketplace at launch. Direct line to the team building this. No card required.
+                    Every feature free for 30 days, no card required. Founding members lock in $25/mo for life,
+                    get listed first in the marketplace at launch, and a direct line to the team building this.
                 </p>
 
                 {/* Email + button */}
@@ -1093,7 +1093,7 @@ function AfroAllureLanding({ waitlistCount = 0, foundingMemberCount = 0 }: { wai
             <Problem />
             <Features />
             <Marketplace openWaitlist={openWaitlist} foundingMemberCount={foundingMemberCount} />
-            <BetaCTA />
+            <FoundingCTA />
             {waitlistCount > 0 && (
                 <div style={{ textAlign: 'center', padding: '32px', background: WARM }}>
                     <span style={{ fontFamily: MONO, fontSize: 12, color: MUTED, letterSpacing: '.14em', textTransform: 'uppercase' }}>

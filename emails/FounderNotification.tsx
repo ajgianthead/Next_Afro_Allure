@@ -13,7 +13,7 @@ type Props = {
 }
 
 const EVENT_LABELS: Record<string, string> = {
-    new_signup: '🆕 New Beta Signup',
+    new_signup: '🆕 New Signup',
     new_subscriber: '💰 New Paid Subscriber',
     upgrade: '⬆️ Plan Upgrade',
     cancellation: '❌ Cancellation',

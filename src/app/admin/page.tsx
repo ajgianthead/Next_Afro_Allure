@@ -208,7 +208,8 @@ export default async function AdminPage() {
                                 const desc = a.subscription_status === 'active' ? 'Active on Growth plan'
                                     : a.subscription_status === 'trialing' ? 'In trial'
                                         : a.subscription_status === 'canceled' ? 'Canceled'
-                                            : 'Joined as beta user'
+                                            : a.subscription_status === 'complimentary' ? 'Early access (free 30 days)'
+                                                : 'On Starter'
                                 return (
                                     <div key={a.business_id} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
                                         <span className="shrink-0 rounded-full" style={{ width: 8, height: 8, backgroundColor: dot }} />

@@ -13,7 +13,7 @@ import QRCode from 'react-qr-code'
 import { canPayBalance } from '@/features/stripe/balance'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { createSubscriptionCheckout, createSubscriptionForExistingCustomer } from 'app/for-businesses/actions'
+import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
 import { DashboardTour } from '@/features/tour/tours/DashboardTour'
 import { remainingBalance, serviceLabel } from '@/features/services/pricing'
 
@@ -134,7 +134,7 @@ function Greeting({ businessData }: { businessData: Business }) {
                 Founding Member #{padded}
               </p>
               <p style={{ fontSize: 12, color: '#6F6863', margin: '0 0 8px', lineHeight: 1.5 }}>
-                You&apos;re one of the first 250 professionals on AfroAllure. You have full access free during beta, your $25/mo rate is locked forever after it, and you&apos;ll be first-listed in the marketplace.
+                You&apos;re one of the first 250 professionals on AfroAllure. Your $25/mo (or $250/yr) Growth rate is locked for life, even when the price goes up, and you&apos;ll be first-listed in the marketplace.
               </p>
               <a href="/founding-members" style={{ fontSize: 12, fontWeight: 600, color: '#C9974A', textDecoration: 'none' }}>
                 See the founding members wall →
@@ -245,6 +245,7 @@ function BookingLimitBanner({ monthlyBookingCount, planType, businessData }: { m
   const [dismissed, setDismissed] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { openUpgrade } = useUpgrade()
 
   useEffect(() => {
     const stored = localStorage.getItem('booking_warning_dismissed')
@@ -264,20 +265,7 @@ function BookingLimitBanner({ monthlyBookingCount, planType, businessData }: { m
   if (!isAtLimit && !isNearLimit) return null
   if (isNearLimit && dismissed) return null
 
-  const handleUpgrade = async () => {
-    setLoading(true)
-    try {
-      const bd = businessData as any
-      const session = bd.stripe_customer_id
-        ? await createSubscriptionForExistingCustomer(bd.stripe_customer_id)
-        : await createSubscriptionCheckout(bd.had_trial, bd.business_id)
-      if (session.url) router.push(session.url)
-    } catch {
-      toast.error('Failed to start checkout. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleUpgrade = () => openUpgrade()
 
   const handleDismiss = () => {
     localStorage.setItem('booking_warning_dismissed', JSON.stringify({ ts: Date.now() }))
@@ -330,23 +318,11 @@ function BookingLimitBanner({ monthlyBookingCount, planType, businessData }: { m
 function StarterUpgradeCard({ monthlyBookingCount, planType, businessData }: { monthlyBookingCount: number; planType: 'STARTER' | 'GROWTH'; businessData: Business }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { openUpgrade } = useUpgrade()
 
   if (planType !== 'STARTER') return null
 
-  const handleUpgrade = async () => {
-    setLoading(true)
-    try {
-      const bd = businessData as any
-      const session = bd.stripe_customer_id
-        ? await createSubscriptionForExistingCustomer(bd.stripe_customer_id)
-        : await createSubscriptionCheckout(bd.had_trial, bd.business_id)
-      if (session.url) router.push(session.url)
-    } catch {
-      toast.error('Failed to start checkout. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleUpgrade = () => openUpgrade()
 
   const pct = Math.min((monthlyBookingCount / 10) * 100, 100)
 

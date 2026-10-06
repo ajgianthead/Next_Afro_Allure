@@ -6,6 +6,7 @@ import {
     ConnectPayoutsList,
     ConnectReportingChart,
 } from '@stripe/react-connect-js'
+import { INSTANT_PAYOUT_FEE_LABEL } from '@/lib/fees'
 
 function SectionCard({ label, children, className }: { label?: string; children: React.ReactNode; className?: string }) {
     return (
@@ -32,6 +33,10 @@ export function EarningsTab() {
         <div className="flex gap-3 flex-col pb-6 mt-3">
             <SectionCard>
                 <ConnectBalances />
+                <p className="text-xs mt-3" style={{ color: '#6F6863' }}>
+                    Standard payouts to your bank are free and usually arrive in 2 business days. Instant payouts
+                    typically arrive within 30 minutes, any day of the week, for {INSTANT_PAYOUT_FEE_LABEL} of the amount.
+                </p>
             </SectionCard>
 
             <div className="flex flex-col sm:flex-row gap-3">

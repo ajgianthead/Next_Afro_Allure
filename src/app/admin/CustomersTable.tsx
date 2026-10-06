@@ -30,7 +30,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
     { key: 'all', label: 'All' },
     { key: 'active', label: 'Active' },
     { key: 'trial', label: 'Trial' },
-    { key: 'beta', label: 'Beta' },
+    { key: 'beta', label: 'Free / early access' },
     { key: 'at_risk', label: 'At Risk' },
     { key: 'churned', label: 'Churned' },
 ]
@@ -39,7 +39,8 @@ function planBadge(status: string | null) {
     if (status === 'active') return { label: 'GROWTH', color: GOLD }
     if (status === 'trialing') return { label: 'TRIAL', color: '#5B9BD5' }
     if (status === 'canceled') return { label: 'CHURNED', color: RED }
-    return { label: 'BETA', color: MUTED }
+    if (status === 'complimentary') return { label: 'EARLY ACCESS', color: MUTED }
+    return { label: 'STARTER', color: MUTED }
 }
 
 function statusBadge(status: string | null) {
@@ -47,8 +48,10 @@ function statusBadge(status: string | null) {
         active: { label: 'Active', color: '#4ADE80' },
         trialing: { label: 'Trialing', color: GOLD },
         canceled: { label: 'Canceled', color: RED },
+        complimentary: { label: 'Early access', color: MUTED },
+        paused: { label: 'Trial ended', color: MUTED },
     }
-    return map[status ?? ''] ?? { label: 'Beta', color: MUTED }
+    return map[status ?? ''] ?? { label: 'Starter', color: MUTED }
 }
 
 function timeAgo(dateStr: string | null) {
@@ -75,7 +78,7 @@ export default function CustomersTable({ businesses }: { businesses: Business[] 
             if (q && !(b.business_name?.toLowerCase().includes(q) || b.email?.toLowerCase().includes(q))) return false
             if (filter === 'active') return b.subscription_status === 'active'
             if (filter === 'trial') return b.subscription_status === 'trialing'
-            if (filter === 'beta') return !b.subscription_status || b.subscription_status === 'beta'
+            if (filter === 'beta') return !['active', 'trialing', 'canceled', 'past_due'].includes(b.subscription_status ?? '')
             if (filter === 'churned') return b.subscription_status === 'canceled'
             if (filter === 'at_risk') return b.at_risk
             return true
