@@ -116,7 +116,7 @@ function SideBySide({ p }: { p: SwitchPlatform }) {
                 <Eyebrow>Side by side</Eyebrow>
                 <H2>{p.name} and AfroAllure, honestly.</H2>
                 <p style={{ fontFamily: SANS, fontSize: 16, color: MUTED, lineHeight: 1.55, margin: '0 0 36px' }}>
-                    Where they&apos;re ahead, we say so.
+                    Published prices and plans, checked {CHECKED_ON}.
                 </p>
                 <div style={{ border: `1px solid ${LINE}`, borderRadius: 16, overflow: 'hidden' }}>
                     <div className="aa-switch-row" style={{ background: WARM, borderBottom: `1px solid ${LINE}` }}>
@@ -223,7 +223,7 @@ function CostCompare({ p }: { p: SwitchPlatform }) {
                             {diff >= 1
                                 ? <>You&apos;d keep about <strong>{money(diff)} more a month</strong>, or {money(diff * 12)} a year.</>
                                 : diff <= -1
-                                    ? <>{p.name} comes out about {money(-diff)} a month cheaper at these numbers. What you get for the difference is above.</>
+                                    ? <>At these numbers AfroAllure is about {money(-diff)} a month more, and that includes {p.included}.</>
                                     : <>About the same either way at these numbers. What you get for it is above.</>}
                         </div>
                         <p style={{ fontFamily: SANS, fontSize: 12, color: MUTED, fontStyle: 'italic', lineHeight: 1.5, margin: 0 }}>

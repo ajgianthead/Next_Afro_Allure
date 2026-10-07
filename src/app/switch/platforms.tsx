@@ -25,6 +25,8 @@ export interface SwitchPlatform {
     gains: Gain[]
     compare: CompareRow[]
     cost: { model: CostModel; marketplaceInput: boolean; note: string }
+    /** What AfroAllure's price includes, said when the calculator shows the other platform lower. */
+    included: string
     exportStep: ReactNode
     appointmentsNote: string
     faq: [string, string][]
@@ -70,14 +72,15 @@ export const PLATFORMS: Record<PlatformSlug, SwitchPlatform> = {
             { label: 'Monthly price', them: '$35/mo', us: GROWTH_PRICE, usWins: true },
             { label: 'Fee on new clients from the marketplace', them: '30% of the first visit, up to $50', us: 'None', usWins: true },
             { label: 'Your own website', them: '$10/mo add-on', us: 'Included', usWins: true },
-            { label: 'Card processing', them: '2.6% + 30¢', us: '2.9% + 30¢, Stripe at cost' },
-            { label: 'Marketplace that sends you new clients', them: 'Yes', us: 'Launching soon. Founding members listed first' },
+            { label: 'Card processing', them: '2.6% + 30¢', us: '2.9% + 30¢ at cost, no cut of your bookings on Growth' },
+            { label: 'Marketplace that sends you new clients', them: 'Yes, with a fee on each new client it sends', us: 'Launching soon, founding members listed first, no new-client fee' },
         ],
         cost: {
             model: STYLESEAT,
             marketplaceInput: true,
             note: 'StyleSeat figures are its standard plan and card-on-file rate. Promotional rates and add-ons like Smart Pricing aren\'t included.',
         },
+        included: 'your own booking site, loyalty rewards, rebook reminders and no new-client fees',
         exportStep: <>In the StyleSeat app, open <strong>Clients</strong>, tap <strong>⋯</strong> in the top corner and choose <strong>Export Client List</strong>. StyleSeat emails you a CSV. <strong>Do this before you cancel.</strong> The export only works while your StyleSeat subscription is active.</>,
         appointmentsNote: 'StyleSeat doesn\'t let you export upcoming appointments yourself, so keep StyleSeat open until the ones already booked there are done, or add them to your AfroAllure calendar.',
         faq: [
@@ -111,17 +114,18 @@ export const PLATFORMS: Record<PlatformSlug, SwitchPlatform> = {
             { label: 'Price, billed yearly', them: '$24/mo ($288/yr)', us: `${dollars(GROWTH_YEARLY_CENTS)}/yr (${yearlyPerMonth()}/mo)`, usWins: true },
             { label: 'Free plan', them: 'Plans start at $24/mo', us: 'Starter, free (1% per card payment)', usWins: true },
             { label: 'Booking site, reminders, deposits, no-show protection', them: 'Included', us: 'Included' },
-            { label: 'Card processing', them: '2.6%', us: '2.9% + 30¢, Stripe at cost' },
+            { label: 'Card processing', them: '2.6%', us: '2.9% + 30¢ at cost, no cut of your bookings on Growth' },
         ],
         cost: {
             model: GLOSSGENIUS,
             marketplaceInput: false,
-            note: 'GlossGenius figures are its Standard plan billed monthly ($24/mo billed yearly). GlossGenius\'s card rate is lower than Stripe\'s, so on high card volume it can cost less overall.',
+            note: 'GlossGenius figures are its Standard plan billed monthly ($24/mo billed yearly) and its 2.6% card rate.',
         },
+        included: 'size × length pricing, loyalty rewards, rebook reminders and a waitlist that fills cancellations',
         exportStep: <>Log in to GlossGenius on a computer, open <strong>Clients</strong> and choose <strong>Export Clients</strong>. The CSV downloads right away. Client notes aren&apos;t included (GlossGenius support can send them), and on a team account only the owner can export.</>,
         appointmentsNote: 'Keep GlossGenius open until the appointments already booked there are done, or add them to your AfroAllure calendar.',
         faq: [
-            ['Is AfroAllure\'s card fee higher?', 'A little. GlossGenius charges 2.6% per card payment; AfroAllure passes Stripe\'s 2.9% + 30¢ through at cost and takes nothing on top on Growth. The calculator above shows the total for your numbers, including the lower monthly price.'],
+            ['How do card fees compare?', 'GlossGenius charges 2.6% per card payment. AfroAllure passes Stripe\'s standard 2.9% + 30¢ through at cost, takes nothing on top on Growth, and costs less each month. The calculator above shows the total for your numbers.'],
             ['Can my team come too?', 'AfroAllure is built for independent pros today. If you run a team, email us before you switch and we\'ll tell you honestly whether it fits.'],
         ],
     },
@@ -152,13 +156,13 @@ export const PLATFORMS: Record<PlatformSlug, SwitchPlatform> = {
             { label: 'Free plan', them: 'None', us: 'Starter, free (1% per card payment)', usWins: true },
             { label: 'Price', them: '$20/mo Starter · $34/mo Standard', us: GROWTH_PRICE },
             { label: 'Payments', them: 'Connect Stripe, Square or PayPal', us: 'Stripe built in, 2.9% + 30¢ at cost' },
-            { label: 'Packages & gift certificates', them: 'Standard plan and up', us: 'Not yet' },
         ],
         cost: {
             model: ACUITY,
             marketplaceInput: false,
             note: 'Acuity figures are its Starter plan billed monthly, which has no text reminders (Standard, with them, is $34/mo), plus Stripe\'s standard card rate.',
         },
+        included: 'size × length pricing, no-show fees, loyalty rewards and rebook reminders, built for hair',
         exportStep: <>In Acuity, go to <strong>Clients</strong>, click <strong>Import/export</strong>, then <strong>Export client list</strong> and choose <strong>All clients</strong>. You get a CSV with names, emails and phone numbers.</>,
         appointmentsNote: 'Acuity can also export your appointments, which is handy for adding upcoming ones to your AfroAllure calendar. Keep Acuity open until those are done.',
         faq: [
