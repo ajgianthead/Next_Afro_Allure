@@ -35,6 +35,11 @@ export const SPECIALTIES: Record<SpecialtySlug, MarketingPageContent> = {
             { type: 'pains', style: 'quotes' },
             { type: 'rows' },
             { type: 'menu', withPicker: true },
+            {
+                type: 'demo', title: 'Your braid menu, set up once.',
+                body: 'Every size and length with its own price and time, hair options and prep, in one service.',
+                visual: { slot: 'demo', widget: { kind: 'dashboard', view: 'services', business: 'Braids by Kayla' } },
+            },
             { type: 'benefits', style: 'bento' },
             { type: 'showcase' },
         ],
@@ -113,6 +118,11 @@ export const SPECIALTIES: Record<SpecialtySlug, MarketingPageContent> = {
         sections: [
             { type: 'pains', style: 'numbered' },
             { type: 'rows' },
+            {
+                type: 'demo', title: 'Your whole week, on one screen.',
+                body: 'See every retwist and starter set, open an appointment, and send the pay link or mark it paid in a tap.',
+                visual: { slot: 'demo', widget: { kind: 'dashboard', view: 'appointments', business: 'Locs by Nia' } },
+            },
             { type: 'menu' },
             { type: 'benefits', style: 'checklist' },
             { type: 'showcase' },

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /** Steps 0..count-1 on a timer, looping. Stays on `restAt` when the device asks for reduced motion. */
 export function useCycle(count: number, ms: number, restAt = count - 1): number {
@@ -43,6 +43,42 @@ export function BrowserFrame({ url, children }: { url: string; children: React.R
                 </span>
             </div>
             {children}
+        </div>
+    )
+}
+
+/**
+ * A laptop with a 16:10 screen. `canvas` content is drawn at a fixed
+ * 1280 × 800 and scaled to fit, so a dashboard demo looks the same at any
+ * width; videos and images fill the screen directly.
+ */
+export function LaptopFrame({ children, canvas = false }: { children: React.ReactNode; canvas?: boolean }) {
+    const screenRef = useRef<HTMLDivElement>(null)
+    const [scale, setScale] = useState(0.7)
+    useEffect(() => {
+        if (!canvas || !screenRef.current) return
+        const el = screenRef.current
+        const fit = () => setScale(el.clientWidth / 1280)
+        fit()
+        const ro = new ResizeObserver(fit)
+        ro.observe(el)
+        return () => ro.disconnect()
+    }, [canvas])
+    return (
+        <div style={{ width: '100%', maxWidth: 1080, margin: '0 auto' }}>
+            <div style={{ background: '#0F0E0E', borderRadius: '18px 18px 0 0', padding: '2.2% 2.2% 2.6%', boxShadow: '0 40px 80px rgba(15,14,14,.28), inset 0 0 0 2px #2A2727', position: 'relative' }}>
+                <span aria-hidden style={{ position: 'absolute', top: '0.9%', left: '50%', transform: 'translateX(-50%)', width: 6, height: 6, borderRadius: '50%', background: '#2A2727' }} />
+                <div ref={screenRef} style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', overflow: 'hidden', borderRadius: 6, background: '#FAF7F2' }}>
+                    {canvas ? (
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 800, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+                            {children}
+                        </div>
+                    ) : children}
+                </div>
+            </div>
+            <div aria-hidden style={{ height: 14, margin: '0 -4%', background: 'linear-gradient(#D9D4CC, #B8B2A9)', borderRadius: '0 0 18px 18px', position: 'relative' }}>
+                <span style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '14%', height: 5, background: '#A39D94', borderRadius: '0 0 8px 8px' }} />
+            </div>
         </div>
     )
 }

@@ -47,8 +47,12 @@ export type SlotMedia = MediaSource & {
     /** Required when a stylist or client is shown, with the date they said yes. */
     credit?: Credit
     permissionGiven?: string
-    /** Show it in a phone frame (vertical reels, phone screen recordings) instead of a plain rounded frame. */
-    phone?: boolean
+    /**
+     * How to show it: 'laptop' for screen recordings of the dashboard or booking
+     * site (16:10), 'phone' for vertical reels and phone recordings (9:16),
+     * 'plain' for anything else. Instagram reels always use the phone frame.
+     */
+    frame?: 'laptop' | 'phone' | 'plain'
 }
 
 export const STYLIST_MEDIA: StylistMedia[] = [
@@ -65,7 +69,8 @@ export const STYLIST_MEDIA: StylistMedia[] = [
 
 /** Keyed `${page}:${slot}`, e.g. 'braiders:hero' or 'payments:demo'. */
 export const SLOT_MEDIA: Partial<Record<`${MarketingPageSlug}:${SlotName}`, SlotMedia>> = {
-    // 'braiders:demo': { kind: 'video', src: '/demos/booking-braids.mp4', poster: '/demos/booking-braids.jpg', alt: 'A client booking medium knotless braids on a phone', phone: true },
+    // 'payments:hero': { kind: 'video', src: '/demos/dashboard-appointments.mp4', poster: '/demos/dashboard-appointments.jpg', alt: 'Marking an appointment paid in the AfroAllure dashboard', frame: 'laptop' },
+    // 'braiders:row-1': { kind: 'video', src: '/demos/booking-braids.mp4', poster: '/demos/booking-braids.jpg', alt: 'A client booking medium knotless braids on a phone', frame: 'phone' },
 }
 
 export function mediaFor(slug: MarketingPageSlug): StylistMedia[] {

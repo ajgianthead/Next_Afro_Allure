@@ -19,8 +19,8 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
         eyebrow: 'Payments',
         heroTitle: <>Your money stays yours.<br /><em>0% platform fee on Growth.</em></>,
         heroBody: `On Growth, AfroAllure takes nothing from your bookings. You pay one flat price, ${GROWTH_PRICE}, and Stripe's card processing at cost. That's it.`,
-        theme: { accent: '#2F7D5B', hero: 'split-light' },
-        heroVisual: { slot: 'hero', widget: { kind: 'payout', amountCents: 20000 } },
+        theme: { accent: '#2F7D5B', hero: 'centered-dark' },
+        heroVisual: { slot: 'hero', widget: { kind: 'dashboard', view: 'appointments', business: 'Studio Amara' } },
         facts: [
             ['0%', 'AfroAllure fee on your payments, on Growth'],
             [dollars(GROWTH_MONTHLY_CENTS), 'a month, flat. Or ' + dollars(GROWTH_YEARLY_CENTS) + ' a year'],
@@ -43,6 +43,11 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
                 body: 'Near the end of the appointment, the client gets a link to pay what\'s left. Add the SMS add-on and it arrives by text too.',
                 bullets: ['Sent automatically near the end', 'Send one any time from the appointment', 'Refunds in full or in part from the dashboard'],
                 visual: { slot: 'row-2', widget: { kind: 'texts', business: 'Studio Amara', service: 'Silk press' } },
+            },
+            {
+                eyebrow: 'What you keep', title: 'No cut. Just Stripe at cost.',
+                body: 'On Growth, the only thing taken from a card payment is Stripe\'s standard processing. AfroAllure\'s share is zero.',
+                visual: { slot: 'row-3', widget: { kind: 'payout', amountCents: 20000 } },
             },
         ],
         painsTitle: 'Where the money leaks',
@@ -91,6 +96,11 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
         sections: [
             { type: 'pains', style: 'quotes' },
             { type: 'rows' },
+            {
+                type: 'demo', title: 'From no-show to fee charged, in two taps.',
+                body: 'An unpaid appointment is flagged Incomplete. Mark it a no-show and charge the fee the client agreed to, right from the appointment.',
+                visual: { slot: 'demo', widget: { kind: 'dashboard', view: 'no-show', business: 'Braids by Kayla' } },
+            },
             { type: 'steps', style: 'cards' },
             { type: 'benefits', style: 'checklist' },
         ],
@@ -221,6 +231,11 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
         heroVisual: { slot: 'hero', widget: { kind: 'price-picker' } },
         sections: [
             { type: 'pains', style: 'numbered' },
+            {
+                type: 'demo', title: 'Build the whole grid in a minute.',
+                body: 'Add your sizes and lengths, fill in each price and time, choose how hair works and write your prep. It\'s live on your booking site straight away.',
+                visual: { slot: 'demo', widget: { kind: 'dashboard', view: 'services', business: 'Braids by Kayla' } },
+            },
             { type: 'menu' },
             { type: 'rows' },
             { type: 'steps', style: 'cards' },

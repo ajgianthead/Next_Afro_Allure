@@ -10,6 +10,7 @@ import './widgets.css'
 import { smsTemplates } from '@/lib/sms/templates'
 import type { SampleMenu, Widget } from '../content'
 import { BrowserFrame, Card, money, PhoneFrame, useCycle } from './frames'
+import { DashboardDemo } from './Dashboard'
 
 const INK = '#1A1818'
 const MUTED = '#6F6863'
@@ -358,5 +359,6 @@ export function WidgetView({ widget, menu }: { widget: Widget; menu?: SampleMenu
         case 'calendar': return <Calendar />
         case 'payout': return <Payout amountCents={widget.amountCents} />
         case 'rebook': return <Rebook {...widget} />
+        case 'dashboard': return <DashboardDemo view={widget.view} business={widget.business} />
     }
 }

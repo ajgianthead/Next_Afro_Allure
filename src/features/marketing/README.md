@@ -38,6 +38,24 @@ To swap one for a real video or screen recording, add it to `SLOT_MEDIA` in
 `row-2`, `row-3`). Set `phone: true` to show it in a phone frame. Remove the
 entry and the widget comes back.
 
+Frames: `frame: 'laptop'` for dashboard and booking-site recordings (16:10),
+`frame: 'phone'` for phone recordings and vertical reels (9:16). Until a
+recording exists, laptops show a drawn demo of the real dashboard
+(`widgets/Dashboard.tsx`: appointments, services editor, no-show flow).
+
+### Recording a demo
+
+- **Size**: record the browser at 1440 × 900 (16:10) for laptop slots; record
+  the phone in portrait for phone slots.
+- **Data**: use a demo business with made-up clients. Never show a real
+  client's name, email or phone number.
+- **Clean screen**: hide bookmarks and extensions, close other tabs, browser
+  zoom at 100%, notifications off.
+- **Length**: 8–20 seconds, one idea per clip, no sound (it plays muted and
+  loops). Start and end on the same screen so the loop is seamless.
+- **Export**: MP4 (H.264), 30 fps, under about 8 MB. Save a still from the
+  first frame as the poster JPG. Put both in `public/demos/`.
+
 ## Adding a stylist's photo or reel
 
 No stock photos and no AI-generated faces. Every face on these pages is a real

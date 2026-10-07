@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import type { SampleMenu, Visual } from '../content'
 import { slotMedia, type MarketingPageSlug, type SlotMedia } from '../media'
-import { PhoneFrame } from '../widgets/frames'
+import { LaptopFrame, PhoneFrame } from '../widgets/frames'
 import { WidgetView } from '../widgets/Widgets'
 
 function MediaBody({ m }: { m: SlotMedia }) {
@@ -26,8 +26,11 @@ function RealMedia({ m }: { m: SlotMedia }) {
             {m.credit.name}{m.credit.instagram && <> · <a href={`https://instagram.com/${m.credit.instagram}`} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>@{m.credit.instagram}</a></>}
         </figcaption>
     )
-    if (m.phone || m.kind === 'instagram') {
+    if (m.frame === 'phone' || m.kind === 'instagram') {
         return <figure style={{ margin: 0 }}><PhoneFrame><MediaBody m={m} /></PhoneFrame>{caption}</figure>
+    }
+    if (m.frame === 'laptop') {
+        return <figure style={{ margin: 0 }}><LaptopFrame><MediaBody m={m} /></LaptopFrame>{caption}</figure>
     }
     return (
         <figure style={{ margin: 0 }}>

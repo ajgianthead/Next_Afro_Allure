@@ -258,6 +258,11 @@ export const BEAUTY: Record<BeautySlug, MarketingPageContent> = {
         sections: [
             { type: 'pains', style: 'numbered' },
             { type: 'rows' },
+            {
+                type: 'demo', title: 'Every booking, deposit and balance in one place.',
+                body: 'Open any appointment to see what\'s been paid and what\'s left, and send the pay link with one tap.',
+                visual: { slot: 'demo', widget: { kind: 'dashboard', view: 'appointments', business: 'Beat by Maya' } },
+            },
             { type: 'menu' },
             { type: 'benefits', style: 'bento' },
             { type: 'showcase' },
