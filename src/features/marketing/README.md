@@ -6,14 +6,37 @@ the switch pages (`/switch/<platform>`). All share the menu in `menu.ts`.
 | File | What it holds |
 | --- | --- |
 | `menu.ts` | The menu: Features, Who it's for, Switch, Pricing |
-| `specialties.tsx` | Copy for the four specialty pages |
+| `specialties.tsx` | Copy for the hair pages (braiders, locticians, natural hair, wigs) |
+| `beauty.tsx` | Copy for the beauty pages (nails, lashes, brows, makeup) |
 | `features.tsx` | Copy for the four feature pages |
-| `media.ts` | Real stylists' photos and reels, and which pages they appear on |
-| `components/MarketingPage.tsx` | The page layout |
+| `media.ts` | Real photos, reels and recordings, and where they appear |
+| `widgets/Widgets.tsx` | The animated product demos |
+| `components/MarketingPage.tsx` | The building blocks pages are put together from |
 
-To add a page: add an entry to `SPECIALTIES` or `FEATURES`, add its slug to
+To add a page: add an entry to one of the copy files, add its slug to
 `MarketingPageSlug` in `media.ts`, and add a link in `menu.ts`. Only write
 what AfroAllure does today.
+
+## Every page looks different on purpose
+
+Each page picks its own `theme` (accent color and hero layout: `split-dark`,
+`split-light`, `centered-dark`, `split-accent`) and its own `sections`, in its
+own order, each with a style: pains as `cards`, `numbered` or `quotes`;
+benefits as `grid`, `bento` or `checklist`; steps as `timeline` or `cards`;
+feature `rows` that alternate sides; a `menu` with or without the live price
+picker; a `facts` band; a big `demo` frame. A test fails if two pages end up
+with the same layout.
+
+## Demos, videos and screen recordings
+
+Every visual on a page (the hero, each feature row, the phone beside the menu,
+a demo frame) is an animated widget drawn in code: DMs turning into a booking,
+texts landing on a phone, a deposit checkout, a booking site, a calendar
+filling from the waitlist, a payout, a rebook email, a size × length picker.
+To swap one for a real video or screen recording, add it to `SLOT_MEDIA` in
+`media.ts` under `'<page>:<slot>'` (slots: `hero`, `demo`, `menu`, `row-1`,
+`row-2`, `row-3`). Set `phone: true` to show it in a phone frame. Remove the
+entry and the widget comes back.
 
 ## Adding a stylist's photo or reel
 

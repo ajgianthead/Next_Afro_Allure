@@ -1,0 +1,28 @@
+/* Animated product demos on the marketing pages. Every animation is off for
+   people who ask their device for reduced motion. */
+
+.aa-w { font-family: 'Inter', system-ui, sans-serif; color: #1A1818; }
+.aa-w * { box-sizing: border-box; }
+
+.aa-w-in { animation: aa-w-in .45s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes aa-w-in { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.aa-w-pulse { animation: aa-w-pulse 1.6s ease-in-out infinite; }
+@keyframes aa-w-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc, #FC6161) 45%, transparent); } 50% { box-shadow: 0 0 0 8px transparent; } }
+
+.aa-w-float { animation: aa-w-float 6s ease-in-out infinite; }
+@keyframes aa-w-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+.aa-w-typing span { display: inline-block; width: 6px; height: 6px; margin: 0 2px; border-radius: 50%; background: #9C948D; animation: aa-w-dot 1s infinite; }
+.aa-w-typing span:nth-child(2) { animation-delay: .15s; }
+.aa-w-typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes aa-w-dot { 0%, 60%, 100% { opacity: .3; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+
+.aa-w-cursor { transition: transform .7s cubic-bezier(.2,.8,.2,1), opacity .3s; }
+.aa-w-cell { transition: background .3s, color .3s, transform .3s; }
+.aa-w-bar { transition: width .9s cubic-bezier(.2,.8,.2,1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .aa-w-in, .aa-w-pulse, .aa-w-float, .aa-w-typing span { animation: none !important; }
+  .aa-w-cursor, .aa-w-cell, .aa-w-bar { transition: none !important; }
+}

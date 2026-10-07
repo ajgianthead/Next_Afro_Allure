@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { ChevronDown, Menu, X } from 'lucide-react'
 import LOGO from '../../../../public/images/logo_transparent_background.png'
-import { MARKETING_MENU, PRICING_HREF } from '../menu'
+import { MARKETING_MENU, PRICING_HREF, type MenuLink } from '../menu'
 
 const RED = '#FC6161'
 const DARK = '#0F0E0E'
@@ -15,6 +15,13 @@ const INK = '#1A1818'
 const MUTED = '#6F6863'
 const LINE = '#E8E2D6'
 const SANS = "'Inter', system-ui, sans-serif"
+
+/** Splits a group's links by their `column` heading, in order. One untitled column when none have one. */
+function columnsOf(links: MenuLink[]): [string, MenuLink[]][] {
+    const cols = new Map<string, MenuLink[]>()
+    for (const l of links) cols.set(l.column ?? '', [...(cols.get(l.column ?? '') ?? []), l])
+    return [...cols.entries()]
+}
 
 /** The desktop dropdown groups and Pricing link. Used inside other navs too (e.g. /for-businesses). */
 export function MarketingMenuDesktop({ dark = false }: { dark?: boolean }) {
@@ -51,14 +58,22 @@ export function MarketingMenuDesktop({ dark = false }: { dark?: boolean }) {
                             <div style={{
                                 background: '#fff', border: `1px solid ${LINE}`, borderRadius: 16, padding: 8, minWidth: 280,
                                 boxShadow: '0 12px 32px rgba(15,14,14,.12)',
+                                display: 'grid', gridTemplateColumns: `repeat(${columnsOf(group.links).length}, minmax(240px, 1fr))`, gap: 4,
                             }}>
-                                {group.links.map(link => (
-                                    <a key={link.href} href={link.href} onClick={() => setOpen(null)} className="aa-menu-item" style={{
-                                        display: 'block', padding: '10px 12px', borderRadius: 10, textDecoration: 'none',
-                                    }}>
-                                        <div style={{ color: INK, fontWeight: 600, fontSize: 14 }}>{link.label}</div>
-                                        {link.blurb && <div style={{ color: MUTED, fontSize: 12, marginTop: 2, fontWeight: 400 }}>{link.blurb}</div>}
-                                    </a>
+                                {columnsOf(group.links).map(([heading, links]) => (
+                                    <div key={heading || 'links'}>
+                                        {heading && (
+                                            <div style={{ padding: '8px 12px 4px', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: MUTED, fontWeight: 600 }}>{heading}</div>
+                                        )}
+                                        {links.map(link => (
+                                            <a key={link.href} href={link.href} onClick={() => setOpen(null)} className="aa-menu-item" style={{
+                                                display: 'block', padding: '10px 12px', borderRadius: 10, textDecoration: 'none',
+                                            }}>
+                                                <div style={{ color: INK, fontWeight: 600, fontSize: 14 }}>{link.label}</div>
+                                                {link.blurb && <div style={{ color: MUTED, fontSize: 12, marginTop: 2, fontWeight: 400 }}>{link.blurb}</div>}
+                                            </a>
+                                        ))}
+                                    </div>
                                 ))}
                             </div>
                         </div>

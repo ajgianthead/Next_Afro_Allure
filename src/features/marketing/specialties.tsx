@@ -2,6 +2,7 @@
 // no-show problem, their prep. Keep every claim true of AfroAllure today.
 
 import type { MarketingPageContent } from './content'
+import { BEAUTY, type BeautySlug } from './beauty'
 import { dollars, GROWTH_MONTHLY_CENTS, GROWTH_YEARLY_CENTS, TRIAL_DAYS } from '../billing/plans'
 
 const GROWTH_PRICE = `${dollars(GROWTH_MONTHLY_CENTS)}/mo or ${dollars(GROWTH_YEARLY_CENTS)}/yr`
@@ -17,6 +18,45 @@ export const SPECIALTIES: Record<SpecialtySlug, MarketingPageContent> = {
         eyebrow: 'For braiders',
         heroTitle: <>Stop quoting in the DMs.<br /><em>Let the menu do it.</em></>,
         heroBody: 'Clients pick the style, the size and the length, see the real price and the time it takes, pay the deposit and get your prep list. You get back the hours you spend answering "how much for smedium, mid-back?"',
+        theme: { accent: '#FC6161', hero: 'split-dark' },
+        heroVisual: {
+            slot: 'hero',
+            widget: {
+                kind: 'dm-thread', messages: [
+                    { from: 'client', text: 'hey!! how much for medium knotless, mid-back?' },
+                    { from: 'client', text: 'and do you provide the hair?' },
+                    { from: 'you', text: 'Hey love! Every size, length and price is on my booking page, hair included 💛' },
+                    { from: 'you', text: 'braidsbykayla.afroallure.co' },
+                    { from: 'client', text: 'omg perfect, booking now' },
+                ],
+            },
+        },
+        sections: [
+            { type: 'pains', style: 'quotes' },
+            { type: 'rows' },
+            { type: 'menu', withPicker: true },
+            { type: 'benefits', style: 'bento' },
+            { type: 'showcase' },
+        ],
+        rows: [
+            {
+                eyebrow: 'Deposits', title: 'No deposit, no appointment.',
+                body: 'Clients pay a deposit to lock in the chair, and agree to your no-show fee before they pay. Their card is saved, so if they don\'t come, it\'s one tap.',
+                bullets: ['Flat or percentage deposits', 'Taken off the final balance if you choose', 'No-show fee charged only when you say so'],
+                visual: { slot: 'row-1', widget: { kind: 'checkout', service: 'Medium knotless · Mid-back', totalCents: 23000, depositCents: 5000, noShowFeeCents: 5000 } },
+            },
+            {
+                eyebrow: 'Prep', title: 'They show up washed, blow-dried and ready.',
+                body: 'Your prep list shows when they book, and the reminders a day and an hour before point them back to it, so "I didn\'t know" stops being an excuse.',
+                bullets: ['Prep instructions and a checklist on each service', 'Clients tick "I agree" before booking', 'Reminders a day and an hour before'],
+                visual: { slot: 'row-2', widget: { kind: 'texts', business: 'Braids by Kayla', service: 'Medium knotless' } },
+            },
+            {
+                eyebrow: 'Rebooking', title: 'Back in your chair before they wander.',
+                body: 'Set how long a style lasts. When a client is due and hasn\'t rebooked, AfroAllure sends them a nudge with a link to your calendar.',
+                visual: { slot: 'row-3', widget: { kind: 'rebook', business: 'Braids by Kayla', service: 'Knotless braids', weeks: 8 } },
+            },
+        ],
         painsTitle: 'Sound familiar?',
         pains: [
             { title: 'Every price is a conversation', body: 'Small or medium, shoulder or waist, hair included or not. Each combination means another message thread before anyone books.' },
@@ -68,6 +108,28 @@ export const SPECIALTIES: Record<SpecialtySlug, MarketingPageContent> = {
         eyebrow: 'For locticians',
         heroTitle: <>Your clients come back every few weeks.<br /><em>Make it automatic.</em></>,
         heroBody: 'Locs are a relationship, not a one-off. AfroAllure prices retwists and starters the way you do, and nudges each client when their next maintenance is due, so your book stays full without chasing.',
+        theme: { accent: '#C9974A', hero: 'split-light' },
+        heroVisual: { slot: 'hero', widget: { kind: 'rebook', business: 'Locs by Nia', service: 'Retwist', weeks: 6 } },
+        sections: [
+            { type: 'pains', style: 'numbered' },
+            { type: 'rows' },
+            { type: 'menu' },
+            { type: 'benefits', style: 'checklist' },
+            { type: 'showcase' },
+        ],
+        rows: [
+            {
+                eyebrow: 'A full book', title: 'Regulars on schedule, gaps filled.',
+                body: 'Maintenance clients book their next retwist on time, and when someone cancels, your waitlist hears about the opening right away.',
+                bullets: ['Rebook reminders on your cycle', 'Waitlist emails when a slot opens', 'Your week at a glance'],
+                visual: { slot: 'row-1', widget: { kind: 'calendar' } },
+            },
+            {
+                eyebrow: 'Reminders', title: 'Nobody forgets their retwist.',
+                body: 'A confirmation when they book and reminders a day and an hour before. Add the SMS add-on and they come by text too.',
+                visual: { slot: 'row-2', widget: { kind: 'texts', business: 'Locs by Nia', service: 'Retwist & style' } },
+            },
+        ],
         painsTitle: 'What gets in the way',
         pains: [
             { title: 'Clients go too long between retwists', body: 'Then the appointment takes twice as long, at the same price, and the locs pay for it.' },
@@ -127,6 +189,38 @@ export const SPECIALTIES: Record<SpecialtySlug, MarketingPageContent> = {
         eyebrow: 'For natural hair & silk press stylists',
         heroTitle: <>Fully booked,<br /><em>without the back-and-forth.</em></>,
         heroBody: 'Silk presses, wash and gos, twist outs, trims. Price them by length, take a deposit, tell clients how to come in, and let a waitlist fill the gaps when someone cancels.',
+        theme: { accent: '#8E4A6B', hero: 'centered-dark' },
+        heroVisual: {
+            slot: 'hero',
+            widget: {
+                kind: 'booking-site', business: 'Press by Dani', slug: 'pressbydani', services: [
+                    { name: 'Silk press', price: '$105', time: '2h 30m' },
+                    { name: 'Wash & go', price: '$75', time: '1h 30m' },
+                    { name: 'Twist out', price: '$85', time: '2h' },
+                    { name: 'Trim', price: '$20', time: '30m' },
+                ],
+            },
+        },
+        sections: [
+            { type: 'pains', style: 'cards' },
+            { type: 'rows' },
+            { type: 'benefits', style: 'grid' },
+            { type: 'menu', withPicker: true },
+            { type: 'showcase' },
+        ],
+        rows: [
+            {
+                eyebrow: 'Waitlist', title: 'A cancellation at 9am, rebooked by 9:05.',
+                body: 'Clients join your waitlist for the dates they want. When a slot opens, the ones whose dates fit get an email straight away and can grab it.',
+                visual: { slot: 'row-1', widget: { kind: 'calendar' } },
+            },
+            {
+                eyebrow: 'Rebooking', title: 'Monthly presses stay monthly.',
+                body: 'Set how often a service should be redone. Clients who are due get a friendly nudge with a link to book, so regulars stay regular.',
+                bullets: ['Set the cycle per service', 'Sent automatically every day', 'Loyalty rewards for your regulars'],
+                visual: { slot: 'row-2', widget: { kind: 'rebook', business: 'Press by Dani', service: 'Silk press', weeks: 4 } },
+            },
+        ],
         painsTitle: 'The day-to-day',
         pains: [
             { title: 'Length changes everything', body: 'A press on shoulder-length hair isn\'t the same job as one on hip-length hair, but a flat price pretends it is.' },
@@ -178,6 +272,28 @@ export const SPECIALTIES: Record<SpecialtySlug, MarketingPageContent> = {
         eyebrow: 'For wig & sew-in stylists',
         heroTitle: <>Closure, frontal or leave-out.<br /><em>Booked right the first time.</em></>,
         heroBody: 'Clients choose the install, see what hair to bring, pay the deposit and agree to your prep before they book. No surprises when they sit down.',
+        theme: { accent: '#B8456A', hero: 'split-accent' },
+        heroVisual: { slot: 'hero', widget: { kind: 'checkout', service: 'Frontal sew-in', totalCents: 25000, depositCents: 7500, noShowFeeCents: 7500 } },
+        sections: [
+            { type: 'pains', style: 'numbered' },
+            { type: 'menu', withPicker: true },
+            { type: 'rows' },
+            { type: 'benefits', style: 'bento' },
+            { type: 'showcase' },
+        ],
+        rows: [
+            {
+                eyebrow: 'Hair notes', title: 'The right bundles, every time.',
+                body: 'Your hair note and prep show while they book, and reminders a day and an hour before keep the appointment on their mind.',
+                visual: { slot: 'row-1', widget: { kind: 'texts', business: 'Installs by Bri', service: 'Frontal sew-in' } },
+            },
+            {
+                eyebrow: 'Getting paid', title: 'Checkout before they reach the door.',
+                body: 'Near the end of the install, the client gets a link to pay the balance. On Growth, AfroAllure takes nothing from it.',
+                bullets: ['Pay links by email, and by text with SMS', 'Stripe processing at cost', 'Cash recorded with no fee'],
+                visual: { slot: 'row-2', widget: { kind: 'payout', amountCents: 25000 } },
+            },
+        ],
         painsTitle: 'Where installs go wrong',
         pains: [
             { title: 'The wrong hair', body: 'A client brings two bundles for a job that needs four, or the wrong length, and the appointment stalls.' },
@@ -229,3 +345,8 @@ export const SPECIALTIES: Record<SpecialtySlug, MarketingPageContent> = {
         related: ['/features/no-show-protection', '/features/payments', '/switch/styleseat'],
     },
 }
+
+export type AnySpecialtySlug = SpecialtySlug | BeautySlug
+
+/** Hair and beauty specialty pages together, for the /for/<specialty> route. */
+export const ALL_SPECIALTIES: Record<AnySpecialtySlug, MarketingPageContent> = { ...SPECIALTIES, ...BEAUTY }

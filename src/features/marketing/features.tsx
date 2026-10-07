@@ -19,6 +19,32 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
         eyebrow: 'Payments',
         heroTitle: <>Your money stays yours.<br /><em>0% platform fee on Growth.</em></>,
         heroBody: `On Growth, AfroAllure takes nothing from your bookings. You pay one flat price, ${GROWTH_PRICE}, and Stripe's card processing at cost. That's it.`,
+        theme: { accent: '#2F7D5B', hero: 'split-light' },
+        heroVisual: { slot: 'hero', widget: { kind: 'payout', amountCents: 20000 } },
+        facts: [
+            ['0%', 'AfroAllure fee on your payments, on Growth'],
+            [dollars(GROWTH_MONTHLY_CENTS), 'a month, flat. Or ' + dollars(GROWTH_YEARLY_CENTS) + ' a year'],
+            ['2.9% + 30¢', 'Stripe card processing, passed through at cost'],
+        ],
+        sections: [
+            { type: 'facts' },
+            { type: 'rows' },
+            { type: 'steps', style: 'timeline' },
+            { type: 'benefits', style: 'grid' },
+        ],
+        rows: [
+            {
+                eyebrow: 'Deposits', title: 'Paid before they ever sit down.',
+                body: 'A deposit by card confirms the booking, and it comes off the final balance if you choose. No screenshots, no "did you get it?"',
+                visual: { slot: 'row-1', widget: { kind: 'checkout', service: 'Boho knotless · Waist', totalCents: 28000, depositCents: 7000 } },
+            },
+            {
+                eyebrow: 'Pay links', title: 'The balance, settled in a tap.',
+                body: 'Near the end of the appointment, the client gets a link to pay what\'s left. Add the SMS add-on and it arrives by text too.',
+                bullets: ['Sent automatically near the end', 'Send one any time from the appointment', 'Refunds in full or in part from the dashboard'],
+                visual: { slot: 'row-2', widget: { kind: 'texts', business: 'Studio Amara', service: 'Silk press' } },
+            },
+        ],
         painsTitle: 'Where the money leaks',
         pains: [
             { title: 'A cut of every booking', body: 'Percentage fees look small until you add them up across a month of $200 appointments.' },
@@ -60,6 +86,26 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
         eyebrow: 'No-show protection',
         heroTitle: <>No deposit, no appointment.<br /><em>No show, no problem.</em></>,
         heroBody: 'Deposits hold the chair, the card is saved for an agreed no-show fee, late fees cover the clients who run behind, and reminders make sure they remember.',
+        theme: { accent: '#FC6161', hero: 'split-dark' },
+        heroVisual: { slot: 'hero', widget: { kind: 'checkout', service: 'Small knotless · Waist', totalCents: 34000, depositCents: 8500, noShowFeeCents: 8500 } },
+        sections: [
+            { type: 'pains', style: 'quotes' },
+            { type: 'rows' },
+            { type: 'steps', style: 'cards' },
+            { type: 'benefits', style: 'checklist' },
+        ],
+        rows: [
+            {
+                eyebrow: 'Reminders', title: 'Most no-shows just forgot.',
+                body: 'A confirmation when they book, then reminders a day and an hour before. With the SMS add-on, they land as texts too.',
+                visual: { slot: 'row-1', widget: { kind: 'texts', business: 'Braids by Kayla', service: 'Small knotless' } },
+            },
+            {
+                eyebrow: 'Waitlist', title: 'A cancellation doesn\'t have to be a gap.',
+                body: 'When someone cancels, everyone on your waitlist whose dates fit gets an email right away, and the first to book takes the slot.',
+                visual: { slot: 'row-2', widget: { kind: 'calendar' } },
+            },
+        ],
         painsTitle: 'What a no-show costs',
         pains: [
             { title: 'Hours you can\'t sell twice', body: 'A long service blocked out, the client never comes, and it\'s too late to fill the slot.' },
@@ -103,6 +149,32 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
         eyebrow: 'Reminders & SMS',
         heroTitle: <>Clients remember.<br /><em>Regulars come back.</em></>,
         heroBody: 'Reminders before each visit, a nudge when it\'s time to rebook, and a waitlist that fills the gaps, all sent for you.',
+        theme: { accent: '#3B6FD9', hero: 'centered-dark' },
+        heroVisual: { slot: 'hero', widget: { kind: 'texts', business: 'Locs by Nia', service: 'Retwist & style' } },
+        facts: [
+            ['24h + 1h', 'email reminders before every visit'],
+            [String(SMS_MONTHLY_TEXTS), 'texts a month with the SMS add-on'],
+            [dollars(SMS_MONTHLY_CENTS), 'a month for SMS, on Growth'],
+        ],
+        sections: [
+            { type: 'pains', style: 'cards' },
+            { type: 'facts' },
+            { type: 'rows' },
+            { type: 'steps', style: 'timeline' },
+            { type: 'benefits', style: 'bento' },
+        ],
+        rows: [
+            {
+                eyebrow: 'Rebooking', title: 'A nudge when it\'s time again.',
+                body: 'Set how often each service should be redone. Clients who are due and haven\'t rebooked get a reminder with a link straight to your calendar.',
+                visual: { slot: 'row-1', widget: { kind: 'rebook', business: 'Locs by Nia', service: 'Retwist', weeks: 6 } },
+            },
+            {
+                eyebrow: 'Waitlist', title: 'Openings announce themselves.',
+                body: 'Clients join your waitlist for the dates they want and hear the moment a fitting slot opens.',
+                visual: { slot: 'row-2', widget: { kind: 'calendar' } },
+            },
+        ],
         painsTitle: 'What slips through',
         pains: [
             { title: 'Forgotten appointments', body: 'Booked three weeks ago, gone from memory by the day.' },
@@ -145,6 +217,53 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
         eyebrow: 'Style menus & prep',
         heroTitle: <>Priced the way<br /><em>textured hair is priced.</em></>,
         heroBody: 'One service, a grid of prices. Clients choose the size, the length and the hair, see the real price and time, and read your prep before they book.',
+        theme: { accent: '#A86B3C', hero: 'split-dark' },
+        heroVisual: { slot: 'hero', widget: { kind: 'price-picker' } },
+        sections: [
+            { type: 'pains', style: 'numbered' },
+            { type: 'menu' },
+            { type: 'rows' },
+            { type: 'steps', style: 'cards' },
+            { type: 'benefits', style: 'grid' },
+        ],
+        sampleMenus: {
+            title: 'One service, every combination',
+            intro: 'An example. You set every size, length, price and time.',
+            menus: [
+                {
+                    service: 'Knotless braids',
+                    note: 'Hair optional, +$30 if supplied.',
+                    columns: ['Shoulder', 'Mid-back', 'Waist'],
+                    rows: [
+                        { label: 'Large', cells: ['$160 · 3h', '$180 · 3.5h', '$210 · 4h'] },
+                        { label: 'Medium', cells: ['$200 · 4.5h', '$230 · 5h', '$260 · 6h'] },
+                        { label: 'Small', cells: ['$260 · 6h', '$300 · 7h', '$340 · 8h'] },
+                    ],
+                    extras: ['Curly ends +$25', 'Boho pieces +$40'],
+                },
+            ],
+        },
+        rows: [
+            {
+                eyebrow: 'Your booking site', title: 'Your whole menu, on a site with your name.',
+                body: 'Every service, price and photo on yourname.afroallure.co, in your colors. Clients choose and book without a single DM.',
+                visual: {
+                    slot: 'row-1',
+                    widget: {
+                        kind: 'booking-site', business: 'Braids by Kayla', slug: 'braidsbykayla', services: [
+                            { name: 'Knotless braids', price: 'from $160', time: '3h+' },
+                            { name: 'Boho knotless', price: 'from $200', time: '4h+' },
+                            { name: 'Feed-in cornrows', price: 'from $90', time: '2h+' },
+                        ],
+                    },
+                },
+            },
+            {
+                eyebrow: 'Prep & agreement', title: 'Read and agreed before they pay.',
+                body: 'Prep instructions and your policies sit right above the pay button, with a box they have to tick.',
+                visual: { slot: 'row-2', widget: { kind: 'checkout', service: 'Medium knotless · Mid-back', totalCents: 23000, depositCents: 5000 } },
+            },
+        ],
         painsTitle: 'Why one price doesn\'t work',
         pains: [
             { title: 'Too many services', body: 'Twelve listings for one style, one for each size and length, and clients still pick the wrong one.' },

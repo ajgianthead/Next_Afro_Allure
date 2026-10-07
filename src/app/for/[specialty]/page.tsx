@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { fetchUser } from 'app/dashboard/(other)/actions'
 import { MarketingPage } from '@/features/marketing/components/MarketingPage'
-import { SPECIALTIES, type SpecialtySlug } from '@/features/marketing/specialties'
+import { ALL_SPECIALTIES as SPECIALTIES, type AnySpecialtySlug as SpecialtySlug } from '@/features/marketing/specialties'
 
 type Params = Promise<{ specialty: string }>
 

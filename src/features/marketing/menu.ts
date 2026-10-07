@@ -2,14 +2,18 @@
 // platform people switch from. Page content lives in ./specialties.tsx,
 // ./features.tsx and src/app/switch/platforms.tsx.
 
-export interface MenuLink { label: string; href: string; blurb?: string }
+export interface MenuLink { label: string; href: string; blurb?: string; /** Column heading in a two-column dropdown. */ column?: string }
 export interface MenuGroup { label: string; links: MenuLink[] }
 
 export const SPECIALTY_LINKS: MenuLink[] = [
-    { label: 'Braiders', href: '/for/braiders', blurb: 'Size × length pricing, hair, prep' },
-    { label: 'Locticians', href: '/for/locticians', blurb: 'Retwists, starters, rebook cycles' },
-    { label: 'Natural hair & silk press', href: '/for/natural-hair', blurb: 'Pricing by length, prep, loyalty' },
-    { label: 'Wigs & sew-ins', href: '/for/wigs-and-installs', blurb: 'Closures, frontals, hair notes' },
+    { label: 'Braiders', href: '/for/braiders', blurb: 'Size × length pricing, hair, prep', column: 'Hair' },
+    { label: 'Locticians', href: '/for/locticians', blurb: 'Retwists, starters, rebook cycles', column: 'Hair' },
+    { label: 'Natural hair & silk press', href: '/for/natural-hair', blurb: 'Pricing by length, waitlist', column: 'Hair' },
+    { label: 'Wigs & sew-ins', href: '/for/wigs-and-installs', blurb: 'Closures, frontals, hair notes', column: 'Hair' },
+    { label: 'Nail techs', href: '/for/nails', blurb: 'Shape × length, art, fills', column: 'Beauty' },
+    { label: 'Lash artists', href: '/for/lashes', blurb: 'Full sets, fills, prep', column: 'Beauty' },
+    { label: 'Brow artists', href: '/for/brows', blurb: 'Lamination, tint, touch-ups', column: 'Beauty' },
+    { label: 'Makeup artists', href: '/for/makeup', blurb: 'Event and bridal deposits', column: 'Beauty' },
 ]
 
 export const FEATURE_LINKS: MenuLink[] = [

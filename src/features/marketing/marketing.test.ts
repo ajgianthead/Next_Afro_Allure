@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { FEATURES } from './features'
-import { SPECIALTIES } from './specialties'
+import { ALL_SPECIALTIES as SPECIALTIES } from './specialties'
 import { FEATURE_LINKS, SPECIALTY_LINKS, SWITCH_LINKS } from './menu'
 import { STYLIST_MEDIA } from './media'
 
@@ -25,12 +25,21 @@ describe('marketing pages', () => {
         expect(p.faq.length).toBeGreaterThanOrEqual(4)
         expect(p.metaDescription.length).toBeLessThanOrEqual(220)
         expect(p.kind === 'specialty' ? p.sampleMenus : p.steps).toBeTruthy()
+        expect(p.rows.length).toBeGreaterThanOrEqual(2)
+        // A menu section or a price-picker needs a sample menu to show.
+        const needsMenu = p.sections.some(s => s.type === 'menu') || p.heroVisual.widget.kind === 'price-picker'
+        if (needsMenu) expect(p.sampleMenus?.menus.length).toBeGreaterThan(0)
     })
 
     it('sample menus have a cell for every column', () => {
         for (const p of pages) for (const m of p.sampleMenus?.menus ?? []) {
             for (const row of m.rows) expect(row.cells).toHaveLength(m.columns.length)
         }
+    })
+
+    it('pages do not all share one layout', () => {
+        const shapes = new Set(pages.map(p => [p.theme.hero, ...p.sections.map(s => s.type + ('style' in s ? ':' + s.style : ''))].join('|')))
+        expect(shapes.size).toBe(pages.length)
     })
 
     it('every stylist photo or reel records when permission was given', () => {
