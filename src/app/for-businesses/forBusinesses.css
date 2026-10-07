@@ -11,7 +11,7 @@
   .aa-business-root .aa-pricing-grid { grid-template-columns: 1fr !important; }
   .aa-business-root .aa-founding-grid { grid-template-columns: 1fr !important; gap: 36px !important; }
   .aa-business-root .aa-founding-card { padding: 56px 40px !important; }
-  .aa-business-root .aa-footer-grid { grid-template-columns: 1.4fr 1fr 1fr !important; }
+  .aa-business-root .aa-footer-grid { grid-template-columns: 1fr 1fr !important; }
 }
 
 @media (max-width: 720px) {

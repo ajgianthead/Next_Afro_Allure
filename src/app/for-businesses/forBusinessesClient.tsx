@@ -6,6 +6,9 @@ import { useState, useEffect, useRef } from "react";
 import LOGO from '../../../public/images/logo_transparent_background.png'
 import Image from "next/image";
 import { Menu, Sparkles } from "lucide-react";
+import { MarketingMenuDesktop, MarketingMenuMobileLinks } from '@/features/marketing/components/MarketingNav';
+import '@/features/marketing/components/marketing.css';
+import { FEATURE_LINKS, SPECIALTY_LINKS } from '@/features/marketing/menu';
 import {
     dollars, GROWTH_MONTHLY_CENTS, GROWTH_YEARLY_CENTS, STARTER_LIMITS, TRIAL_DAYS, YEARLY_FREE_MONTHS,
     YEARLY_FULL_PRICE_CENTS, YEARLY_SAVINGS_CENTS, YEARLY_SAVINGS_PERCENT, yearlyPerMonth, type BillingInterval,
@@ -80,13 +83,7 @@ function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
             </div>
             {open && (
                 <div style={{ background: '#1A1818', borderBottom: '1px solid rgba(250,247,242,.08)' }}>
-                    {[{ label: 'Features', href: '#features' }, { label: 'Pricing', href: '#pricing' }].map(({ label, href }) => (
-                        <a key={label} href={href} onClick={() => setOpen(false)} style={{
-                            display: 'block', padding: '16px 24px',
-                            fontFamily: SANS, fontSize: 15, color: 'rgba(250,247,242,.85)',
-                            borderBottom: '1px solid rgba(250,247,242,.08)', textDecoration: 'none',
-                        }}>{label}</a>
-                    ))}
+                    <MarketingMenuMobileLinks onNavigate={() => setOpen(false)} />
                     {isLoggedIn ? (
                         <div style={{ padding: '16px 24px' }}>
                             <a href="/dashboard" onClick={() => setOpen(false)} style={{
@@ -124,7 +121,6 @@ function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
 // NAV
 // ─────────────────────────────────────────────────────────────
 function Nav({ dark = false, isLoggedIn = false }: { dark?: boolean; isLoggedIn?: boolean }) {
-    const muted = dark ? 'rgba(250,247,242,.7)' : MUTED;
     return (
         <nav className="aa-nav" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -139,10 +135,7 @@ function Nav({ dark = false, isLoggedIn = false }: { dark?: boolean; isLoggedIn?
                         src={LOGO} alt="logo-img" width={150} />
                 </div>
             </a>
-            <div className="aa-nav-links" style={{ display: 'flex', gap: 36, fontFamily: SANS, fontSize: 14, color: muted, fontWeight: 500 }}>
-                <a href="#features">Features</a>
-                <a href="#pricing">Pricing</a>
-            </div>
+            <MarketingMenuDesktop dark={dark} />
             {isLoggedIn ? (
                 <a href="/dashboard" style={{
                     fontFamily: SANS, fontWeight: 600, fontSize: 13,
@@ -1238,7 +1231,7 @@ function Footer() {
         }}>
             <div className="aa-footer-grid" style={{
                 maxWidth: 1240, margin: '0 auto',
-                display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: 48,
+                display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: 48,
                 paddingBottom: 48, borderBottom: '1px solid rgba(250,247,242,.1)',
             }}>
                 <div>
@@ -1264,14 +1257,28 @@ function Footer() {
                         listStyle: 'none', padding: 0, margin: 0,
                         display: 'flex', flexDirection: 'column', gap: 12, fontFamily: SANS, fontSize: 14
                     }}>
-                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Features</a></li>
-                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Marketplace</a></li>
-                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>For Businesses</a></li>
+                        {FEATURE_LINKS.map(l => (
+                            <li key={l.href}><a href={l.href} style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>{l.label}</a></li>
+                        ))}
                         <li><a href="/founding-members" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Founding Members</a></li>
                         <li><a href="/switch/styleseat" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Switching from StyleSeat</a></li>
                         <li><a href="/switch/glossgenius" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Switching from GlossGenius</a></li>
                         <li><a href="/switch/acuity" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Switching from Acuity</a></li>
-                        <li><a style={{ color: 'rgba(250,247,242,.85)' }}>Register</a></li>
+                        <li><a href="/register" style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>Register</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div style={{
+                        fontFamily: MONO, fontSize: 10, letterSpacing: '.16em',
+                        textTransform: 'uppercase', color: 'rgba(250,247,242,.5)', marginBottom: 18
+                    }}>Who it&apos;s for</div>
+                    <ul style={{
+                        listStyle: 'none', padding: 0, margin: 0,
+                        display: 'flex', flexDirection: 'column', gap: 12, fontFamily: SANS, fontSize: 14
+                    }}>
+                        {SPECIALTY_LINKS.map(l => (
+                            <li key={l.href}><a href={l.href} style={{ color: 'rgba(250,247,242,.85)', textDecoration: 'none' }}>{l.label}</a></li>
+                        ))}
                     </ul>
                 </div>
                 <div>

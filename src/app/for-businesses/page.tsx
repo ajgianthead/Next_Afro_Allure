@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import { fetchUser } from 'app/dashboard/(other)/actions';
 import AfroAllureBusiness from './forBusinessesClient';
 import { getFoundingMemberCount } from '@/lib/foundingMember';
+
+export const metadata: Metadata = {
+    title: 'AfroAllure for Business | Booking Built for Black Beauty Professionals',
+    description: 'Booking sites for braiders, locticians, natural hair stylists and barbers: size × length pricing, deposits and no-show fees, reminders, loyalty and no percentage fee on Growth. 30 days free.',
+    alternates: { canonical: '/for-businesses' },
+}
 
 const Page = async () => {
     const [user, foundingMemberCount] = await Promise.all([

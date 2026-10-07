@@ -11,6 +11,8 @@ import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/c
 
 
 export const metadata = {
+  // Resolves canonical and social-preview URLs on the marketing pages.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://beta.afroallure.co'),
   title: 'AfroAllure | Empowering Black Beauty Professionals',
   icons: {
     icon: '/unnamed.ico',

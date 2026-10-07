@@ -5,8 +5,8 @@
 import '../for-businesses/forBusinesses.css'
 import './switch.css'
 import { useState } from 'react'
-import Image from 'next/image'
-import LOGO from '../../../public/images/logo_transparent_background.png'
+import { MarketingNav } from '@/features/marketing/components/MarketingNav'
+import '@/features/marketing/components/marketing.css'
 import {
     AFROALLURE_GROWTH_MONTHLY, AFROALLURE_GROWTH_YEARLY, CHECKED_ON, monthlyCost, SOURCES,
 } from '@/features/billing/competitors'
@@ -48,33 +48,6 @@ const PrimaryCta = ({ href, children }: { href: string; children: React.ReactNod
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
     }}>{children} →</a>
 )
-
-// ─────────────────────────────────────────────────────────────
-function Nav({ isLoggedIn }: { isLoggedIn: boolean }) {
-    return (
-        <nav className="aa-nav" style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '20px 56px', borderBottom: `1px solid ${LINE}`, background: WARM,
-        }}>
-            <a href="/for-businesses" aria-label="AfroAllure for businesses">
-                <Image src={LOGO} alt="AfroAllure" width={130} />
-            </a>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontFamily: SANS, fontSize: 14 }}>
-                {isLoggedIn ? (
-                    <a href="/dashboard" style={{ color: INK, fontWeight: 600, textDecoration: 'none' }}>Dashboard</a>
-                ) : (
-                    <>
-                        <a href="/login" style={{ color: INK, textDecoration: 'none' }}>Log in</a>
-                        <a href="/register" style={{
-                            background: DARK, color: '#fff', padding: '9px 18px', borderRadius: 999,
-                            textDecoration: 'none', fontWeight: 600,
-                        }}>Start free</a>
-                    </>
-                )}
-            </div>
-        </nav>
-    )
-}
 
 function Hero({ p, isLoggedIn }: { p: SwitchPlatform; isLoggedIn: boolean }) {
     return (
@@ -406,7 +379,7 @@ export default function SwitchPage({ slug, isLoggedIn }: { slug: PlatformSlug; i
     const p = PLATFORMS[slug]
     return (
         <div className="aa-business-root" style={{ background: WARM, color: INK, fontFamily: SANS, width: '100%' }}>
-            <Nav isLoggedIn={isLoggedIn} />
+            <MarketingNav isLoggedIn={isLoggedIn} />
             <Hero p={p} isLoggedIn={isLoggedIn} />
             <Gains p={p} />
             <SideBySide p={p} />
