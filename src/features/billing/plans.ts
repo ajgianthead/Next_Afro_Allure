@@ -8,6 +8,12 @@ export const GROWTH_MONTHLY_CENTS = 2500
 export const GROWTH_YEARLY_CENTS = 25000
 export const TRIAL_DAYS = 30
 
+// SMS Reminders add-on (Growth only). Stripe prices: STRIPE_SMS_PRICE_ID and
+// STRIPE_SMS_YEARLY_PRICE_ID. Every text, to a client or the business, counts.
+export const SMS_MONTHLY_CENTS = 1000
+export const SMS_YEARLY_CENTS = 10000
+export const SMS_MONTHLY_TEXTS = 400
+
 /** What a year of monthly billing costs, and what the yearly plan saves against it. */
 export const YEARLY_FULL_PRICE_CENTS = GROWTH_MONTHLY_CENTS * 12
 export const YEARLY_SAVINGS_CENTS = YEARLY_FULL_PRICE_CENTS - GROWTH_YEARLY_CENTS

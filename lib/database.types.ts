@@ -498,6 +498,9 @@ export type Database = {
           total_booking_volume: number | null
           subscription_plan: string | null
           subscription_status: string | null
+          sms_enabled: boolean
+          sms_phone: string | null
+          sms_business_texts: boolean
         }
         Insert: {
           account_settings?: Json | null
@@ -541,6 +544,9 @@ export type Database = {
           total_booking_volume?: number | null
           subscription_plan?: string | null
           subscription_status?: string | null
+          sms_enabled?: boolean
+          sms_phone?: string | null
+          sms_business_texts?: boolean
         }
         Update: {
           account_settings?: Json | null
@@ -584,6 +590,9 @@ export type Database = {
           total_booking_volume?: number | null
           subscription_plan?: string | null
           subscription_status?: string | null
+          sms_enabled?: boolean
+          sms_phone?: string | null
+          sms_business_texts?: boolean
         }
         Relationships: []
       }

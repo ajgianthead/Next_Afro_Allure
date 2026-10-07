@@ -3,13 +3,16 @@ import { createAdminClient } from "@/app/utils/supabase/admin"
 import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmails/AppointmentEmails"
 import { AppointmentReminders, reminderSettingsFrom } from "./AppointmentReminders"
 import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient"
+import { clientConsentedToSms, sendSms } from "@/lib/sms/send"
+import { formatWhen, smsTemplates } from "@/lib/sms/templates"
+import { resolveTimezone } from "@/lib/timezone"
 
 export interface ConfirmedAppointmentInfo {
     id: string
     start: string
     end: string
     serviceName: string
-    clientMetadata: { firstName: string; lastName: string; email: string; phoneNumber: string }
+    clientMetadata: { firstName: string; lastName: string; email: string; phoneNumber: string; smsConsent?: boolean }
 }
 
 export interface ConfirmingBusinessInfo {
@@ -18,6 +21,40 @@ export interface ConfirmingBusinessInfo {
     email: string
     accountSettings: any
     completedStripeOnboarding: boolean
+}
+
+/**
+ * Booking texts for businesses with the SMS add-on: "you're booked" to the
+ * client (if they agreed to texts) and "new booking" to the business.
+ * sendSms checks the plan, consent and monthly limit, and never throws.
+ */
+export async function sendConfirmationTexts(
+    supabase: SupabaseClient<any, any, any>,
+    appointment: ConfirmedAppointmentInfo,
+    business: { id: string; name: string; accountSettings: any },
+    /** False when the business confirmed it themselves: no "new booking" text about their own action. */
+    options: { notifyBusiness: boolean }
+) {
+    const when = formatWhen(appointment.start, resolveTimezone(business.accountSettings?.timezone))
+    const cm = appointment.clientMetadata
+    await Promise.all([
+        sendSms(supabase, {
+            businessId: business.id,
+            audience: 'client',
+            to: cm.phoneNumber,
+            clientConsent: clientConsentedToSms(cm),
+            body: smsTemplates.clientConfirmation({ business: business.name, service: appointment.serviceName, when }),
+        }),
+        options.notifyBusiness && sendSms(supabase, {
+            businessId: business.id,
+            audience: 'business',
+            body: smsTemplates.businessNewBooking({
+                client: `${cm.firstName} ${cm.lastName}`.trim(),
+                service: appointment.serviceName,
+                when,
+            }),
+        }),
+    ])
 }
 
 /** Schedules reminder / payment jobs (respecting the business's settings) and stores their run ids on the appointment. */
@@ -100,6 +137,9 @@ export async function runConfirmationSideEffects(
     } catch (err) {
         console.error('Failed to schedule reminders after confirmation:', err)
     }
+
+    // notifyInApp is set when the client (not the business) confirmed.
+    await sendConfirmationTexts(admin, appointment, business, { notifyBusiness: !!options.notifyInApp })
 
     await upsertBusinessClientAsAdmin({
         first_name: appointment.clientMetadata.firstName,

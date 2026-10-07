@@ -12,6 +12,7 @@ import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBus
 import { syncStripeRefund } from "@/features/refunds/server/sync";
 import { notifyLoyaltyForAppointment } from "@/features/loyalty/server/notify";
 import { createAdminClient } from "@/app/utils/supabase/admin";
+import { sendConfirmationTexts } from "@/features/shared/appointments/confirmation";
 
 export async function POST(request: NextRequest) {
   const endpointSecret = process.env.CONNECTED_ACCOUNT_WEBHOOK_SECRET!;
@@ -321,6 +322,13 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
     // Use res.id (the confirmed appointment's DB id) — appointmentID from PI metadata
     // is undefined for automated bookings where only bookingSessionId is in metadata.
     await scheduleReminders(res, res.id, client);
+    await sendConfirmationTexts(createAdminClient(), {
+      id: res.id,
+      start: DateTime.fromJSDate(res.start).toISO()!,
+      end: DateTime.fromJSDate(res.end).toISO()!,
+      serviceName: res.service_data.name,
+      clientMetadata: res.client_metadata,
+    }, { id: res.business, name: res.business_name, accountSettings: res.account_settings }, { notifyBusiness: true });
 
     // Mark booking session confirmed if this was a session-based automated booking
     const { bookingSessionId } = paymentIntent.metadata;

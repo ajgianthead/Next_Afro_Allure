@@ -10,6 +10,7 @@ import CancelledSubscription from "../../../../../emails/subscription-cancelled"
 import NewSubscription from "../../../../../emails/subscription-welcome";
 import FounderNotification from "../../../../../emails/FounderNotification";
 import { hasLiveSubscription } from "@/features/billing/server/trial";
+import { syncSmsEnabled } from "@/features/billing/server/sms";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'AfroAllure <noreply@reminder.afroallure.co>';
@@ -95,6 +96,10 @@ export async function POST(request: NextRequest) {
             case 'customer.subscription.deleted':
                 await handleSubscriptionDeleted(customerId);
                 break;
+        }
+        // SMS add-on: on only while a live subscription carries the SMS price.
+        if (event.type.startsWith('customer.subscription.')) {
+            await syncSmsEnabled(customerId);
         }
     } catch (error: any) {
         return apiError(error.message ?? 'Webhook handler failed', 500);

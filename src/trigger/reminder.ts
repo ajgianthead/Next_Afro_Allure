@@ -6,8 +6,10 @@ import ReminderBusiness from "../../emails/reminder-business";
 import ReminderClient from "../../emails/reminder-client";
 import PaymentLinkEmail from "../../emails/payment-link";
 import { DateTime } from "luxon";
-import { toZonedISO } from "../lib/timezone";
+import { resolveTimezone, toZonedISO } from "../lib/timezone";
 import { clientPrepFor, serviceLabel } from "../features/services/pricing";
+import { clientConsentedToSms, sendSms } from "../lib/sms/send";
+import { formatWhen, payLink, smsTemplates } from "../lib/sms/templates";
 
 configure({
   secretKey: process.env.TRIGGER_API_KEY,
@@ -148,10 +150,10 @@ export type PaymentLinkProps = {
 // Reminders are scheduled when an appointment is confirmed, but the business
 // can turn reminders off (or reschedule/cancel) afterwards. Re-check the live
 // state right before sending so a disabled reminder never goes out.
-const shouldSendReminder = async (props: ReminderProps): Promise<{ send: boolean; timezone?: string; serviceName?: string; prep?: { instructions: string; checklist: string[] } | null }> => {
+const shouldSendReminder = async (props: ReminderProps): Promise<{ send: boolean; kind?: 'day' | 'hour'; timezone?: string; serviceName?: string; smsConsent?: boolean; prep?: { instructions: string; checklist: string[] } | null }> => {
   const supabase = adminClient()
   const [{ data: appt }, { data: business }] = await Promise.all([
-    supabase.from('appointments').select('status, start, selected_options, service_data').eq('id', props.appointmentData.id).maybeSingle(),
+    supabase.from('appointments').select('status, start, selected_options, service_data, client_metadata').eq('id', props.appointmentData.id).maybeSingle(),
     supabase.from('business_users').select('account_settings').eq('business_id', props.businessData.id).maybeSingle(),
   ])
   if (!appt || appt.status !== 'CONFIRMED') return { send: false }
@@ -169,6 +171,8 @@ const shouldSendReminder = async (props: ReminderProps): Promise<{ send: boolean
     : settings?.notifications?.email === true && settings?.notifications?.[key] === true
   return {
     send: enabled,
+    kind,
+    smsConsent: clientConsentedToSms(appt.client_metadata),
     timezone: settings?.timezone,
     // "Knotless braids — Small · Waist", and what the client should bring / do.
     serviceName: serviceLabel(props.serviceName, appt.selected_options),
@@ -176,9 +180,37 @@ const shouldSendReminder = async (props: ReminderProps): Promise<{ send: boolean
   }
 }
 
+// Texts go out alongside the email when the business has the SMS add-on;
+// sendSms checks the plan, consent, opt-outs and the monthly limit.
+const textReminder = async (props: ReminderProps, kind: 'day' | 'hour', serviceName: string, timezone: string | undefined, smsConsent: boolean) => {
+  const when = formatWhen(props.appointmentData.start, resolveTimezone(timezone))
+  if (props.sendToType === 'client') {
+    await sendSms(adminClient(), {
+      businessId: props.businessData.id,
+      audience: 'client',
+      to: props.clientData.phoneNumber,
+      clientConsent: smsConsent,
+      body: smsTemplates.clientReminder({ business: props.businessData.name, service: serviceName, when, kind }),
+    })
+  } else if (props.sendToType === 'business') {
+    await sendSms(adminClient(), {
+      businessId: props.businessData.id,
+      audience: 'business',
+      body: smsTemplates.businessReminder({
+        client: `${props.clientData.firstName} ${props.clientData.lastName}`.trim(),
+        service: serviceName,
+        when,
+        kind,
+      }),
+    })
+  }
+}
+
 const configureReminder = async (props: ReminderProps) => {
-  const { send, timezone, serviceName, prep } = await shouldSendReminder(props)
+  const { send, kind, timezone, serviceName, prep, smsConsent } = await shouldSendReminder(props)
   if (!send) return
+
+  await textReminder(props, kind ?? 'hour', serviceName ?? props.serviceName, timezone, !!smsConsent)
 
   if (props.sendToType === 'business') {
     // Send to notification system
@@ -342,12 +374,23 @@ export const sendPaymentLink = task({
     // confirmed and unpaid, and the business can actually take card payments.
     const supabase = adminClient()
     const [{ data: appt }, { data: business }] = await Promise.all([
-      supabase.from('appointments').select('status, service_paid, amount_due').eq('id', payload.appointmentID).maybeSingle(),
+      supabase.from('appointments').select('status, service_paid, amount_due, client_metadata').eq('id', payload.appointmentID).maybeSingle(),
       supabase.from('business_users').select('completed_stripe_onboarding').eq('business_id', payload.businessData.id).maybeSingle(),
     ])
     if (!appt || appt.status !== 'CONFIRMED' || appt.service_paid || (appt.amount_due ?? 0) <= 0) return
     if (!business?.completed_stripe_onboarding) return
     await sendLink(payload)
+    await sendSms(supabase, {
+      businessId: payload.businessData.id,
+      audience: 'client',
+      to: payload.clientData.phoneNumber,
+      clientConsent: clientConsentedToSms(appt.client_metadata),
+      body: smsTemplates.clientPaymentLink({
+        business: payload.businessData.name,
+        service: payload.serviceName,
+        url: payLink(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co', payload.appointmentID),
+      }),
+    })
   }
 })
 export const checkAppointmentStatus = task({

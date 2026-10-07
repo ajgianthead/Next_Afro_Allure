@@ -48,6 +48,8 @@ export type BookingData = {
         lastName: string;
         email: string;
         phoneNumber: string;
+        /** Agreed to appointment texts (only used by businesses with the SMS add-on). */
+        smsConsent: boolean;
     }
     options: {
         clientSecret: any,
@@ -73,7 +75,8 @@ export function BookingWrapper({ children, businessData, availabilities, appoint
             firstName: "",
             lastName: "",
             email: "",
-            phoneNumber: ""
+            phoneNumber: "",
+            smsConsent: false
         },
         selectedService: "",
         styleSelection: null,

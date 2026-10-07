@@ -14,6 +14,7 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog'
 import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
+import { SmsAddonSection } from '@/features/billing/components/SmsAddonSection'
 import { switchGrowthInterval } from 'app/for-businesses/actions'
 import {
     dollars, GROWTH_MONTHLY_CENTS, GROWTH_YEARLY_CENTS, STARTER_LIMITS, YEARLY_FREE_MONTHS,
@@ -892,11 +893,14 @@ export default function SettingsClient({
                         />
                     )}
                     {activeTab === 'subscription' && (
-                        <SubscriptionSection
-                            subscription={subscription}
-                            business={business}
-                            onSubChange={setSubscription}
-                        />
+                        <>
+                            <SubscriptionSection
+                                subscription={subscription}
+                                business={business}
+                                onSubChange={setSubscription}
+                            />
+                            <SmsAddonSection onUpgrade={handleUpgrade} />
+                        </>
                     )}
                 </div>
 
