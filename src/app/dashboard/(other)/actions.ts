@@ -2,8 +2,6 @@
 import { createClient } from "@/app/utils/supabase/server"
 import { redirect } from "next/navigation"
 import { Database } from "../../../../lib/database.types"
-import { Resend } from "resend"
-import { PaymentLinkProps, sendLink } from "trigger/reminder"
 
 
 export const fetchUser = async () => {
@@ -11,12 +9,6 @@ export const fetchUser = async () => {
     const { data, error } = await supabase.auth.getUser()
     return data?.user
 
-}
-
-export const sendPaymentLink = async (props: PaymentLinkProps) => {
-    const resend = new Resend(process.env.RESEND_API_KEY)
-    const res = await sendLink(props)
-    return res
 }
 
 export const sendFeedback = async ({ businessId, businessName, email, feedback }: {
