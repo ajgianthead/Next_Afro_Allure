@@ -40,7 +40,10 @@ export default function SetPasswordPage() {
         const { error: updateError } = await supabase.auth.updateUser({ password })
 
         if (updateError) {
-            setError(updateError.message)
+            // No session means the reset link was never opened, expired, or was used up.
+            setError(/session/i.test(updateError.message)
+                ? 'This reset link has expired. Request a new one from the "Forgot password?" page.'
+                : updateError.message)
             setLoading(false)
             return
         }

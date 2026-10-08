@@ -19,7 +19,7 @@ import { BusinessUser } from '@lib/businessUser/BusinessUser'
 // signup only showed "An error occurred in the Server Components render".
 export type AuthActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string }
 
-export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false, interval: BillingInterval = 'month'): Promise<AuthActionResult<ReturnType<BusinessUser['toClient']>>> => {
+export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false, interval: BillingInterval = 'month'): Promise<AuthActionResult<ReturnType<BusinessUser['toClient']> & { needsEmailConfirmation: boolean }>> => {
     try {
         const supabase = await createClient()
         const headerList = await headers()
@@ -33,12 +33,22 @@ export const createBusinessUser = async (email: string, name: string, password: 
         // disables every dashboard product tour (they're all gated on it).
         // Service role: right after signUp there may be no session yet (email
         // confirmation), and row-level security would block the update.
-        await createAdminClient()
+        const admin = createAdminClient()
+        const { data: row } = await admin
             .from('business_users')
             .update({ is_onboarded: true })
             .eq('business_id', businessUser.id)
+            .select('user_id')
+            .single()
 
-        return { ok: true, data: businessUser.toClient() }
+        // With "Confirm email" on in Supabase, signUp leaves no session until
+        // the link in the email is clicked, so the dashboard isn't reachable yet.
+        let needsEmailConfirmation = false
+        if (row?.user_id) {
+            const { data } = await admin.auth.admin.getUserById(row.user_id)
+            needsEmailConfirmation = !!data.user && !data.user.email_confirmed_at
+        }
+        return { ok: true, data: { ...businessUser.toClient(), needsEmailConfirmation } }
     } catch (error: any) {
         console.error('Signup failed:', error)
         return { ok: false, error: error?.message || 'Could not create your account. Please try again.' }
@@ -65,6 +75,30 @@ export const loginBusinessUser = async (email: string, password: string): Promis
     }
 }
 
+
+/**
+ * Sends the "Reset your password" email. Always reports success, so the form
+ * can't be used to find out which emails have an account.
+ */
+export const requestPasswordReset = async (email: string): Promise<AuthActionResult> => {
+    const trimmed = email.trim()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return { ok: false, error: 'Enter a valid email address.' }
+    try {
+        const supabase = await createClient()
+        const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+            // Becomes {{ .RedirectTo }} in the email (see supabase/templates).
+            redirectTo: process.env.NEXT_PUBLIC_BASE_URL,
+        })
+        if (error) {
+            console.error('Password reset email failed:', error.message)
+            // Supabase limits how often these can be sent; that's worth saying.
+            if (error.status === 429) return { ok: false, error: 'Too many requests. Please wait a minute and try again.' }
+        }
+    } catch (error: any) {
+        console.error('Password reset email failed:', error)
+    }
+    return { ok: true, data: undefined }
+}
 
 export const signOutAction = async () => {
     const supabase = await createClient()

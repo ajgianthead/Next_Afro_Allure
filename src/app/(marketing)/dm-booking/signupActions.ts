@@ -46,15 +46,20 @@ export async function createAdFunnelUser(
 
     const firstName = trimmedName.split(' ')[0]
 
-    // Generate a 7-day recovery link for password setup
+    // Recovery link for password setup. It lasts as long as Supabase's email
+    // OTP expiry (Authentication → Providers → Email; 24 hours in prod).
     const adminClient = createAdminClient()
-    const redirectTo = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?next=/set-password`
     const { data: linkData } = await adminClient.auth.admin.generateLink({
         type: 'recovery',
         email: trimmedEmail,
-        options: { redirectTo },
     })
-    const recoveryUrl: string | null = (linkData as any)?.properties?.action_link ?? null
+    // Same landing route as the Supabase reset email (/auth/confirm), which
+    // verifies the token itself. Supabase's own action_link would hand back
+    // tokens /auth/callback can't read.
+    const hashedToken = linkData?.properties?.hashed_token
+    const recoveryUrl: string | null = hashedToken
+        ? `${process.env.NEXT_PUBLIC_BASE_URL}/auth/confirm?token_hash=${encodeURIComponent(hashedToken)}&type=recovery&next=/set-password`
+        : null
 
     // Fire emails without blocking the redirect
     const resend = new Resend(process.env.RESEND_API_KEY)

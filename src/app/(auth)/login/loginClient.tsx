@@ -8,10 +8,16 @@ import { loginBusinessUser } from '../actions'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
-export default function Login() {
+/** Messages for `/login?error=…` (set by the auth email routes). */
+const LINK_ERRORS: Record<string, string> = {
+    link_expired: 'That link has expired or was already used. Sign in below, or create your account again if you never confirmed your email.',
+    confirmation_failed: 'We couldn\'t confirm that link. Please try signing in.',
+}
+
+export default function Login({ linkError }: { linkError?: string }) {
     const router = useRouter()
     const [cred, setCred] = useState({ email: '', password: '' })
-    const [error, setError] = useState<string | null>(null)
+    const [error, setError] = useState<string | null>(linkError ? LINK_ERRORS[linkError] ?? null : null)
     const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -106,6 +112,13 @@ export default function Login() {
                                 >
                                     Password
                                 </label>
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-xs font-medium transition-opacity hover:opacity-70"
+                                    style={{ color: '#FC6161' }}
+                                >
+                                    Forgot password?
+                                </Link>
                             </div>
                             <input
                                 id="password"
@@ -140,7 +153,7 @@ export default function Login() {
 
                 {/* Footer */}
                 <p className="text-center text-sm mt-5" style={{ color: '#6F6863' }}>
-                    Don't have an account?{' '}
+                    Don&apos;t have an account?{' '}
                     <Link
                         href="/register"
                         className="font-medium transition-opacity hover:opacity-70"
