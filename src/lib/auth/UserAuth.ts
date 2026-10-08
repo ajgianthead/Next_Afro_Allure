@@ -13,7 +13,10 @@ export class UserAuth {
             options: {
                 data: {
                     account_type: 'business'
-                }
+                },
+                // Becomes {{ .RedirectTo }} in the confirmation email, so its
+                // link points at this environment (see supabase/templates).
+                emailRedirectTo: process.env.NEXT_PUBLIC_BASE_URL,
             }
         })
         if (error) throw Error(error.message)

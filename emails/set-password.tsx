@@ -12,7 +12,7 @@ export default function SetPasswordEmail({ firstName, setPasswordUrl }: SetPassw
     return (
         <Html lang="en">
             <Head />
-            <Preview>{`${firstName}, set your AfroAllure password — this link expires in 7 days.`}</Preview>
+            <Preview>{`${firstName}, set your AfroAllure password to finish setting up your account.`}</Preview>
             <Body style={{ backgroundColor: '#FAF7F2', margin: 0, padding: '40px 0' }}>
                 <Container style={{ maxWidth: 600, margin: '0 auto' }}>
 
@@ -44,7 +44,7 @@ export default function SetPasswordEmail({ firstName, setPasswordUrl }: SetPassw
                                         lineHeight: 1.6,
                                     }}
                                 >
-                                    Click the button below to create a password for your AfroAllure account. This link is valid for 7 days.
+                                    Click the button below to create a password for your AfroAllure account. The link works once and expires after an hour. If it has expired, use &quot;Forgot password?&quot; on the sign-in page to get a new one.
                                 </Text>
 
                                 <Row>

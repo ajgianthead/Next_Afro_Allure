@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, AlertCircle, Check } from 'lucide-react'
+import { Loader2, AlertCircle, Check, Mail } from 'lucide-react'
 import { createBusinessUser } from '../actions'
 import type { BillingInterval } from '@/features/billing/plans'
 import { FeeDisclosure } from '@/components/FeeDisclosure'
@@ -66,6 +66,8 @@ export default function Register() {
     const [marketingOptIn, setMarketingOptIn] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    // Set once the account exists but the email still needs confirming.
+    const [checkEmail, setCheckEmail] = useState<string | null>(null)
 
     const canSubmit =
         formData.name.trim().length > 0 &&
@@ -83,6 +85,11 @@ export default function Register() {
             const res = await createBusinessUser(formData.email, formData.name, formData.password, marketingOptIn, interval)
             if (!res.ok) {
                 setError(res.error)
+                setLoading(false)
+                return
+            }
+            if (res.data.needsEmailConfirmation) {
+                setCheckEmail(formData.email.trim())
                 setLoading(false)
                 return
             }
@@ -111,7 +118,24 @@ export default function Register() {
                     </p>
                 </div>
 
-                {/* Card */}
+                {checkEmail ? (
+                    <div
+                        className="rounded-2xl p-8 text-center"
+                        style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D6' }}
+                    >
+                        <Mail size={28} className="mx-auto mb-4" style={{ color: '#FC6161' }} />
+                        <h1 style={{ fontFamily: SERIF, fontSize: 22, color: '#1A1818', marginBottom: 12 }}>
+                            Check your email
+                        </h1>
+                        <p className="text-sm leading-relaxed" style={{ color: '#6F6863' }}>
+                            We sent a link to <strong style={{ color: '#1A1818' }}>{checkEmail}</strong>.
+                            Click it to confirm your email and open your dashboard.
+                        </p>
+                        <p className="text-xs leading-relaxed mt-4" style={{ color: '#6F6863' }}>
+                            Don&apos;t see it? Check your spam or promotions folder.
+                        </p>
+                    </div>
+                ) : (
                 <div
                     className="rounded-2xl p-8"
                     style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D6' }}
@@ -279,6 +303,7 @@ export default function Register() {
                         </button>
                     </form>
                 </div>
+                )}
 
                 {/* Footer */}
                 <p className="text-center text-sm mt-5" style={{ color: '#6F6863' }}>

@@ -15,7 +15,7 @@ const ROOT = process.env.NEXT_PUBLIC_BOOKING_ROOT_DOMAIN?.toLowerCase()
 const APP_ORIGIN = process.env.NEXT_PUBLIC_BASE_URL
 
 // App pages that must never be served on a business subdomain.
-const APP_ONLY = /^\/(dashboard|edit|login|register|onboarding|appointment|auth|admin|set-password|subscriptionResult)(\/|$)/
+const APP_ONLY = /^\/(dashboard|edit|login|register|forgot-password|onboarding|appointment|auth|admin|set-password|subscriptionResult)(\/|$)/
 // Business-site paths that should stay as-is (Next internals, API, static files).
 const PASS_THROUGH = /^\/(api|_next|monitoring)(\/|$)|\.[a-z0-9]+$/i
 
