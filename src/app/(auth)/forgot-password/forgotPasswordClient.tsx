@@ -55,7 +55,7 @@ export default function ForgotPassword({ linkExpired }: { linkExpired?: boolean 
                             </h1>
                             <p className="text-sm leading-relaxed" style={{ color: '#6F6863' }}>
                                 If <strong style={{ color: '#1A1818' }}>{sentTo}</strong> has an AfroAllure account,
-                                we sent it a link to reset your password. The link works once and expires in an hour.
+                                we sent it a link to reset your password. The link works once and expires in 24 hours.
                             </p>
                             <p className="text-xs leading-relaxed mt-4" style={{ color: '#6F6863' }}>
                                 Don&apos;t see it? Check your spam or promotions folder.

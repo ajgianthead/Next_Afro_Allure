@@ -47,7 +47,7 @@ export async function createAdFunnelUser(
     const firstName = trimmedName.split(' ')[0]
 
     // Recovery link for password setup. It lasts as long as Supabase's email
-    // OTP expiry (Authentication → Providers → Email; 1 hour by default).
+    // OTP expiry (Authentication → Providers → Email; 24 hours in prod).
     const adminClient = createAdminClient()
     const { data: linkData } = await adminClient.auth.admin.generateLink({
         type: 'recovery',

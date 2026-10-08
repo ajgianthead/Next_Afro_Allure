@@ -44,7 +44,7 @@ export default function SetPasswordEmail({ firstName, setPasswordUrl }: SetPassw
                                         lineHeight: 1.6,
                                     }}
                                 >
-                                    Click the button below to create a password for your AfroAllure account. The link works once and expires after an hour. If it has expired, use &quot;Forgot password?&quot; on the sign-in page to get a new one.
+                                    Click the button below to create a password for your AfroAllure account. The link works once and expires after 24 hours. If it has expired, use &quot;Forgot password?&quot; on the sign-in page to get a new one.
                                 </Text>
 
                                 <Row>
