@@ -437,16 +437,21 @@ function YearlySwitch({ subscription, onSubChange }: {
     onSubChange: (s: SubscriptionInfo | null) => void
 }) {
     const [switching, setSwitching] = useState(false)
+    // Set when switching would end a monthly promo; the business confirms first.
+    const [promoWarning, setPromoWarning] = useState('')
     if (subscription.interval === 'year' || subscription.cancel_at_period_end) return null
-    const handleSwitch = async () => {
+    const handleSwitch = async (dropPromo = false) => {
         setSwitching(true)
         try {
-            const res = await switchGrowthInterval('year')
+            const res = await switchGrowthInterval('year', { dropPromo })
             if (res.ok) {
+                setPromoWarning('')
                 onSubChange({ ...subscription, interval: 'year' })
                 toast.success(subscription.status === 'trialing'
                     ? 'Switched to yearly. Nothing is charged until your trial ends.'
                     : 'Switched to yearly. The difference is prorated on your next invoice.')
+            } else if (res.confirmDropPromo) {
+                setPromoWarning(res.confirmDropPromo)
             } else {
                 toast.error(res.error)
             }
@@ -465,16 +470,44 @@ function YearlySwitch({ subscription, onSubChange }: {
                 Pay yearly: <strong>{dollars(GROWTH_YEARLY_CENTS)}/yr</strong> instead of {dollars(YEARLY_FULL_PRICE_CENTS)} —{' '}
                 save {dollars(YEARLY_SAVINGS_CENTS)} ({YEARLY_SAVINGS_PERCENT}%), {YEARLY_FREE_MONTHS} months free.
             </p>
-            <Button
-                onClick={handleSwitch}
-                disabled={switching}
-                size="sm"
-                className="rounded-xl px-3 shrink-0"
-                style={{ backgroundColor: '#FC6161', color: '#FFFFFF', fontSize: '12px' }}
-            >
-                {switching && <Loader2 size={12} className="animate-spin mr-1.5" />}
-                Switch to yearly
-            </Button>
+            {promoWarning ? (
+                <div className="flex flex-col gap-2 sm:items-end">
+                    <p className="text-xs" style={{ color: '#1A1818' }}>{promoWarning}</p>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => handleSwitch(true)}
+                            disabled={switching}
+                            size="sm"
+                            className="rounded-xl px-3 shrink-0"
+                            style={{ backgroundColor: '#FC6161', color: '#FFFFFF', fontSize: '12px' }}
+                        >
+                            {switching && <Loader2 size={12} className="animate-spin mr-1.5" />}
+                            Switch anyway
+                        </Button>
+                        <Button
+                            onClick={() => setPromoWarning('')}
+                            disabled={switching}
+                            size="sm"
+                            variant="ghost"
+                            className="rounded-xl px-3 shrink-0"
+                            style={{ fontSize: '12px' }}
+                        >
+                            Stay monthly
+                        </Button>
+                    </div>
+                </div>
+            ) : (
+                <Button
+                    onClick={() => handleSwitch()}
+                    disabled={switching}
+                    size="sm"
+                    className="rounded-xl px-3 shrink-0"
+                    style={{ backgroundColor: '#FC6161', color: '#FFFFFF', fontSize: '12px' }}
+                >
+                    {switching && <Loader2 size={12} className="animate-spin mr-1.5" />}
+                    Switch to yearly
+                </Button>
+            )}
         </div>
     )
 }

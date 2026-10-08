@@ -8,6 +8,7 @@ import { requireOwnBusinessId } from "@/lib/auth/requireBusinessOwner";
 import { TRIAL_DAYS, type BillingInterval } from "@/features/billing/plans";
 import { clearStaleSubscriptions, growthPriceId, hasLiveSubscription } from "@/features/billing/server/trial";
 import { growthItemOf, itemsForInterval, liveSubscription } from "@/features/billing/server/sms";
+import { describeDiscount, discountsDroppedOnYearly } from "@/features/billing/discounts";
 
 const DOMAIN = process.env.NEXT_PUBLIC_BASE_URL
 
@@ -123,8 +124,16 @@ export const startGrowthCheckout = async (interval: BillingInterval): Promise<st
  * Moves the signed-in business's live Growth subscription (trialing or active)
  * between monthly and yearly. During a trial nothing is charged; on an active
  * plan Stripe prorates the change onto the next invoice.
+ *
+ * Moving to yearly drops promo discounts (see discountsDroppedOnYearly).
+ * When there's one to drop, nothing changes until the business confirms:
+ * the first call returns `confirmDropPromo`, and the caller repeats it with
+ * `dropPromo: true`.
  */
-export const switchGrowthInterval = async (interval: BillingInterval): Promise<{ ok: true } | { ok: false; error: string }> => {
+export const switchGrowthInterval = async (
+    interval: BillingInterval,
+    opts: { dropPromo?: boolean } = {},
+): Promise<{ ok: true } | { ok: false; error: string; confirmDropPromo?: string }> => {
     const businessId = await requireOwnBusinessId()
     const { data: biz } = await createAdminClient()
         .from('business_users')
@@ -139,10 +148,28 @@ export const switchGrowthInterval = async (interval: BillingInterval): Promise<{
     if (!sub || !item) return { ok: false, error: 'No subscription found.' }
 
     if (item.price.id === growthPriceId(interval)) return { ok: true }
-    await stripe.subscriptions.update(sub.id, {
+
+    const params: Stripe.SubscriptionUpdateParams = {
         // SMS moves with Growth: a subscription's items must share one interval.
         items: itemsForInterval(sub, interval),
         proration_behavior: sub.status === 'trialing' ? 'none' : 'create_prorations',
-    })
+    }
+    if (interval === 'year') {
+        const withDiscounts = await stripe.subscriptions.retrieve(sub.id, { expand: ['discounts'] })
+        const dropped = discountsDroppedOnYearly(withDiscounts.discounts)
+        if (dropped.length > 0) {
+            if (!opts.dropPromo) {
+                const what = dropped.map(describeDiscount).join(' and ')
+                return {
+                    ok: false,
+                    error: 'Promo codes are for the monthly plan.',
+                    confirmDropPromo: `Promo codes only apply to the monthly plan. Switching to yearly ends your ${what} promo.`,
+                }
+            }
+            // An empty string removes the subscription's discounts.
+            params.discounts = ''
+        }
+    }
+    await stripe.subscriptions.update(sub.id, params)
     return { ok: true }
 }
