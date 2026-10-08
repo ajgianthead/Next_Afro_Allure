@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe/stripeClient'
 import { createAdminClient } from '@/app/utils/supabase/admin'
 import type { BillingInterval } from '../plans'
 import { growthPriceId } from './trial'
+import { twilioConfigured } from '@/lib/sms/twilio'
 
 // The SMS Reminders add-on is a second item on the business's Growth
 // subscription, billed on the same schedule (a subscription's items must
@@ -12,6 +13,15 @@ export function smsPriceId(interval: BillingInterval): string {
     const id = interval === 'year' ? process.env.STRIPE_SMS_YEARLY_PRICE_ID : process.env.STRIPE_SMS_PRICE_ID
     if (!id) throw new Error(`${interval === 'year' ? 'STRIPE_SMS_YEARLY_PRICE_ID' : 'STRIPE_SMS_PRICE_ID'} env var not set`)
     return id
+}
+
+/**
+ * Whether SMS Reminders can be sold and sent here: Twilio and both SMS
+ * prices are set. Until then the add-on shows as coming soon, so nobody
+ * pays for texts that can't go out.
+ */
+export function smsAddonAvailable(): boolean {
+    return twilioConfigured() && !!process.env.STRIPE_SMS_PRICE_ID && !!process.env.STRIPE_SMS_YEARLY_PRICE_ID
 }
 
 /** The SMS price ids that are configured; empty when the add-on isn't set up in this environment. */

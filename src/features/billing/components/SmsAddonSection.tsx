@@ -134,6 +134,11 @@ export function SmsAddonSection({ onUpgrade }: { onUpgrade: () => void }) {
                             </p>
                         )}
                     </>
+                ) : status.reason === 'unavailable' ? (
+                    <p className="text-xs" style={{ color: MUTED }}>
+                        <strong style={{ color: INK }}>Coming soon</strong> · {dollars(SMS_MONTHLY_CENTS)}/mo for up to {SMS_MONTHLY_TEXTS} texts a month on Growth.
+                        Reminders keep going out by email in the meantime.
+                    </p>
                 ) : status.reason === 'not_growth' ? (
                     <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ backgroundColor: 'rgba(201,151,74,0.08)', border: '1px solid rgba(201,151,74,0.2)' }}>
                         <Lock size={13} className="shrink-0" style={{ color: '#C9974A' }} />

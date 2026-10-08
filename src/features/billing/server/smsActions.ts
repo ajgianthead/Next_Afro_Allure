@@ -6,12 +6,12 @@ import { createAdminClient } from '@/app/utils/supabase/admin'
 import { requireOwnBusinessId } from '@/lib/auth/requireBusinessOwner'
 import { toE164 } from '@/lib/sms/phone'
 import { SMS_MONTHLY_TEXTS, type BillingInterval } from '../plans'
-import { growthItemOf, intervalOf, liveSubscription, smsItemOf, smsPriceId, syncSmsEnabled } from './sms'
+import { growthItemOf, intervalOf, liveSubscription, smsAddonAvailable, smsItemOf, smsPriceId, syncSmsEnabled } from './sms'
 
 export type SmsAddonStatus = {
     /** Whether the business can add it now. When false, `reason` says why. */
     canAdd: boolean
-    reason: 'not_growth' | 'trialing' | 'no_subscription' | null
+    reason: 'unavailable' | 'not_growth' | 'trialing' | 'no_subscription' | null
     enabled: boolean
     interval: BillingInterval
     sentThisMonth: number
@@ -46,7 +46,8 @@ export async function getSmsAddonStatus(): Promise<SmsAddonStatus> {
     const sub = biz.stripe_customer_id ? await liveSubscription(biz.stripe_customer_id) : undefined
     const growth = sub ? growthItemOf(sub) : undefined
     let reason: SmsAddonStatus['reason'] = null
-    if (biz.plan_type !== 'GROWTH') reason = 'not_growth'
+    if (!smsAddonAvailable()) reason = 'unavailable'
+    else if (biz.plan_type !== 'GROWTH') reason = 'not_growth'
     else if (!sub || !growth) reason = 'no_subscription'
     else if (sub.status === 'trialing') reason = 'trialing'
 
@@ -69,6 +70,7 @@ export async function getSmsAddonStatus(): Promise<SmsAddonStatus> {
  */
 export async function addSmsAddon(): Promise<Result> {
     const biz = await ownBusiness()
+    if (!smsAddonAvailable()) return { ok: false, error: 'SMS Reminders are coming soon.' }
     if (biz.plan_type !== 'GROWTH' || !biz.stripe_customer_id) return { ok: false, error: 'SMS Reminders are part of the Growth plan.' }
     const sub = await liveSubscription(biz.stripe_customer_id)
     const growth = sub ? growthItemOf(sub) : undefined

@@ -10,6 +10,7 @@ import { BookClient } from "@/features/automatedBooking/components";
 import { assignAddons } from "@/app/dashboard/(other)/appointments/actions";
 import { getBusinessPermissions } from "@/lib/permissions";
 import { DateTime } from "luxon";
+import { twilioConfigured } from "@/lib/sms/twilio";
 import type { BookingTheme } from "@/features/automatedBooking/types/theme";
 
 export const dynamic = 'force-dynamic'
@@ -71,10 +72,12 @@ export default async function Page({ params, searchParams }: {
 
     const { data: waitlistRow } = await supabase
         .from('business_users')
-        .select('waitlist_enabled')
+        .select('waitlist_enabled, sms_enabled')
         .eq('business_id', business.id)
         .maybeSingle()
     const waitlistEnabled = waitlistRow?.waitlist_enabled ?? false
+    // Only ask clients about texts when this business can actually send them.
+    const smsEnabled = !!waitlistRow?.sms_enabled && twilioConfigured()
 
     // Validate ?service= against this business's already-fetched services.
     // serviceClient is already scoped to this business, so a match is sufficient validation.
@@ -82,6 +85,6 @@ export default async function Page({ params, searchParams }: {
         ? (serviceClient.find(s => s.id === serviceParam)?.id)
         : undefined
 
-    return <BookClient services={serviceClient} policy={policy} appointments={busyIntervals} businessData={clientBusinessData} availabilities={availabilitiesClient} bookingLimitReached={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} waitlistEnabled={waitlistEnabled} />;
+    return <BookClient services={serviceClient} policy={policy} appointments={busyIntervals} businessData={clientBusinessData} availabilities={availabilitiesClient} bookingLimitReached={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} waitlistEnabled={waitlistEnabled} smsEnabled={smsEnabled} />;
 
 }
