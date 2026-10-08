@@ -97,6 +97,8 @@ export interface AppointmentEvent {
     selectedAddons: { id: string; name: string; price: number }[]
     refundStatus: Database['public']['Enums']['refund_status']
     refundedAmount: number
+    /** Tip paid online with the balance, in cents (not part of paidAmount). */
+    tipCents?: number
     /** A deposit or balance was paid through Stripe, so it can be refunded in-app. */
     hasOnlinePayment: boolean
     /** Size / length / hair chosen when booking (snapshot), if the service had options. */

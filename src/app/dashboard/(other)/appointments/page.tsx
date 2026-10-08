@@ -50,6 +50,7 @@ export default async function Page() {
                 })),
                 refundStatus: appointment.refundStatus,
                 refundedAmount: appointment.refundedAmount,
+                tipCents: appointment.tipCents,
                 selectedOptions: appointment.selectedOptions,
                 hasOnlinePayment: (appointment.paidDeposit && !!appointment.depositChargeId)
                     || (appointment.servicePaid && appointment.servicePaidType === 'PLATFORM' && !!appointment.serviceChargeId),

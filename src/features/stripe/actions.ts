@@ -7,6 +7,8 @@ import { getEffectivePlanType } from "@/lib/businessPlan"
 import { remainingBalance } from "@/features/services/pricing"
 import { requireOwnStripeAccount } from "@/lib/auth/requireOwnStripeAccount"
 import { canPayBalance } from "@/features/stripe/balance"
+import { balanceIntentAmount, canEditTip, tipBaseCents, tipFromMetadata, TIP_METADATA_KEY, validateTip } from "@/features/stripe/tips"
+import Stripe from "stripe"
 
 /**
  * PaymentIntent for an appointment's balance (payment links, `purpose: 'EOA'`)
@@ -52,22 +54,29 @@ export const createCheckoutAction = async (params: {
     // Reuse this appointment's existing PaymentIntent (never one passed in).
     const existingId = isBalance ? appt.service_charge_id : appt.deposit_charge_id
     const price = isBalance ? remainingBalance(appt) : Math.round(Number(appt.deposit_price ?? 0))
+    const result = (pi: Stripe.PaymentIntent) => ({
+        clientSecret: pi.client_secret,
+        id: pi.id,
+        amountDue: pi.amount,
+        tipCents: isBalance ? tipFromMetadata(pi.metadata) : 0,
+    })
     if (existingId) {
         const existing = await stripe.paymentIntents.retrieve(existingId, { stripeAccount })
-        if (existing.status === 'succeeded') return { clientSecret: existing.client_secret, id: existing.id, amountDue: existing.amount }
+        if (existing.status === 'succeeded') return result(existing)
         if (existing.status !== 'canceled') {
             // The balance can change after the link was first opened (a late
-            // fee or reward was added) — keep the unpaid payment in step.
-            const unpaid = ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(existing.status)
-            if (isBalance && unpaid && canPayBalance(appt) && existing.amount !== price) {
+            // fee or reward was added) — keep the unpaid payment in step,
+            // keeping any tip the client already chose.
+            const next = isBalance && canPayBalance(appt) ? balanceIntentAmount(existing, price) : null
+            if (next) {
                 const updated = await stripe.paymentIntents.update(
                     existing.id,
-                    { amount: price, application_fee_amount: calculateApplicationFee(price, planType) },
+                    { amount: next.amount, application_fee_amount: calculateApplicationFee(next.amount, planType, next.tipCents) },
                     { stripeAccount }
                 )
-                return { clientSecret: updated.client_secret, id: updated.id, amountDue: updated.amount }
+                return result(updated)
             }
-            return { clientSecret: existing.client_secret, id: existing.id, amountDue: existing.amount }
+            return result(existing)
         }
     }
 
@@ -83,6 +92,7 @@ export const createCheckoutAction = async (params: {
             appointment_id: appt.id,
             purpose,
             type: appointmentType ?? '',
+            ...(isBalance ? { [TIP_METADATA_KEY]: '0' } : {}),
         },
         payment_method_configuration: data.payment_method_config_id || undefined,
         application_fee_amount: calculateApplicationFee(price, planType),
@@ -94,7 +104,65 @@ export const createCheckoutAction = async (params: {
         await supabase.from('appointments').update({ deposit_charge_id: intent.id }).eq('id', appt.id)
     }
 
-    return { clientSecret: intent.client_secret, id: intent.id, amountDue: intent.amount }
+    return result(intent)
+}
+
+export type SetBalanceTipResult =
+    | { ok: true; amountDue: number; tipCents: number; balanceCents: number }
+    | { ok: false; error: string }
+
+/**
+ * Sets the client's tip on an appointment's unpaid balance payment. Public
+ * like createCheckoutAction: the balance, the cap and the Stripe account all
+ * come from the database; only the tip amount comes from the browser. The
+ * page must wait for this before confirming, so the charge matches what the
+ * client was shown.
+ */
+export const setBalanceTip = async (appointmentID: string, tipCents: number): Promise<SetBalanceTipResult> => {
+    const supabase = createAdminClient()
+    const { data: appt } = await supabase
+        .from('appointments')
+        .select('id, business, status, amount_due, deposit_price, paid_deposit, substraction, service_paid, service_charge_id')
+        .eq('id', appointmentID)
+        .maybeSingle()
+    if (!appt) return { ok: false, error: 'Appointment not found.' }
+    if (!canPayBalance(appt) || !appt.service_charge_id) {
+        return { ok: false, error: 'This payment link is no longer valid.' }
+    }
+
+    const invalid = validateTip(tipCents, tipBaseCents(appt))
+    if (invalid) return { ok: false, error: invalid }
+
+    const { data: biz } = await supabase
+        .from('business_users')
+        .select('stripe_acc_id, completed_stripe_onboarding')
+        .eq('business_id', appt.business)
+        .maybeSingle()
+    if (!biz?.completed_stripe_onboarding || !biz.stripe_acc_id) {
+        return { ok: false, error: 'This business hasn\'t finished setting up payments yet.' }
+    }
+    const stripeAccount = biz.stripe_acc_id
+
+    try {
+        const existing = await stripe.paymentIntents.retrieve(appt.service_charge_id, { stripeAccount })
+        if (existing.status === 'succeeded') return { ok: false, error: 'This appointment is already paid.' }
+        if (!canEditTip(existing.status)) {
+            return { ok: false, error: 'Your payment is already being processed, so the tip can\'t be changed.' }
+        }
+
+        const balance = remainingBalance(appt)
+        const amount = balance + tipCents
+        const planType = await getEffectivePlanType(supabase, appt.business)
+        const updated = await stripe.paymentIntents.update(existing.id, {
+            amount,
+            application_fee_amount: calculateApplicationFee(amount, planType, tipCents),
+            metadata: { [TIP_METADATA_KEY]: String(tipCents) },
+        }, { stripeAccount })
+        return { ok: true, amountDue: updated.amount, tipCents: tipFromMetadata(updated.metadata), balanceCents: balance }
+    } catch (error: any) {
+        console.error(`setBalanceTip failed for appointment ${appointmentID}:`, error?.message)
+        return { ok: false, error: 'We couldn\'t update your tip. Please try again.' }
+    }
 }
 
 export const createAccountLinkAction = async (accountId: string) => {

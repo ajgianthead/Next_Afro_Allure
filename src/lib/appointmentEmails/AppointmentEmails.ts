@@ -110,8 +110,8 @@ export class AppointmentEmails {
         }
     }
 
-    static async sendEOAReceipt(data: AppointmentEmailData & { amountPaid: number }): Promise<void> {
-        const props = { ...(await buildEmailProps(data)), amountPaid: data.amountPaid };
+    static async sendEOAReceipt(data: AppointmentEmailData & { amountPaid: number; tipCents?: number }): Promise<void> {
+        const props = { ...(await buildEmailProps(data)), amountPaid: data.amountPaid, tipCents: data.tipCents ?? 0 };
         await trySend({
             from: FROM_NOTIFICATION,
             to: data.clientMetadata.email,

@@ -283,6 +283,12 @@ export function RefundPanel({ appointmentId, onBack, onRefunded }: Props) {
                                 The {fmt(summary.cashPaid)} paid in cash can&apos;t be refunded here — return it to the client directly.
                             </div>
                         )}
+                        {summary.tipCents > 0 && summary.serviceRefundable > 0 && (
+                            <div className="flex items-start gap-2 text-xs" style={{ color: '#6F6863' }}>
+                                <Info size={13} className="flex-shrink-0 mt-0.5" />
+                                The balance payment includes a {fmt(summary.tipCents)} tip. A full refund returns the tip too.
+                            </div>
+                        )}
                         {summary.disputed && (
                             <div className="flex items-start gap-2 text-xs" style={{ color: '#C9974A' }}>
                                 <Info size={13} className="flex-shrink-0 mt-0.5" />

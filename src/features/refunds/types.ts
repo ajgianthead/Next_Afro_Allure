@@ -41,6 +41,8 @@ export interface RefundSummary {
     totalRefunded: number
     /** Balance paid in cash — can't be refunded through Stripe. */
     cashPaid: number
+    /** Tip included in the online balance payment — refundable along with it. */
+    tipCents: number
     /** A payment is under dispute, so Stripe won't allow refunding it. */
     disputed: boolean
     /** Whether the "also cancel this appointment" option applies. */

@@ -13,6 +13,7 @@ import { syncStripeRefund } from "@/features/refunds/server/sync";
 import { notifyLoyaltyForAppointment } from "@/features/loyalty/server/notify";
 import { createAdminClient } from "@/app/utils/supabase/admin";
 import { sendConfirmationTexts } from "@/features/shared/appointments/confirmation";
+import { splitBalancePayment } from "@/features/stripe/tips";
 
 export async function POST(request: NextRequest) {
   const endpointSecret = process.env.CONNECTED_ACCOUNT_WEBHOOK_SECRET!;
@@ -194,26 +195,37 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
   const { purpose, appointment_id: appointmentID } = paymentIntent.metadata;
 
   if (purpose === 'EOA') {
+    // The charge is balance + tip. paid_amount only ever counts what was paid
+    // toward the appointment; the tip is recorded on its own.
+    const { serviceCents, tipCents } = splitBalancePayment(paymentIntent.amount, paymentIntent.metadata);
     let eoaRes: any;
     try {
       await client.query('BEGIN');
+      // Stripe can deliver the same event more than once. Once this payment
+      // is recorded, a redelivery matches no row — so paid_amount isn't
+      // counted twice and the receipt isn't re-sent.
       const result = await client.query(
         `WITH updated AS (
           UPDATE appointments
           SET service_paid = $1, service_paid_type = 'PLATFORM', service_charge_id = $2,
-              status = 'COMPLETED', paid_amount = coalesce(paid_amount, 0) + $3
+              status = 'COMPLETED', paid_amount = coalesce(paid_amount, 0) + $3, tip_cents = $5
           WHERE id = $4
+            AND NOT (coalesce(service_paid, false) AND service_paid_type = 'PLATFORM' AND service_charge_id = $2)
           RETURNING *
         )
         SELECT updated.*, business_users.business_name, business_users.email, business_users.account_settings
         FROM updated JOIN business_users ON updated.business = business_users.business_id`,
-        [true, paymentIntent.id, paymentIntent.amount, appointmentID]
+        [true, paymentIntent.id, serviceCents, appointmentID, tipCents]
       );
       await client.query('COMMIT');
       eoaRes = result.rows[0];
     } catch (error: any) {
       await client.query('ROLLBACK');
       throw error;
+    }
+
+    if (!eoaRes) {
+      console.log(`Balance payment ${paymentIntent.id} already recorded; skipping side effects`);
     }
 
     if (eoaRes) {
@@ -238,6 +250,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
           serviceName: eoaRes.service_data.name,
           notifyBusiness: eoaRes.account_settings?.notifications?.email ?? false,
           amountPaid: paymentIntent.amount,
+          tipCents,
         });
       } catch (emailErr) {
         console.error('Failed to send EOA receipt email:', emailErr);
@@ -247,8 +260,9 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
       try {
         const supabase = createAdminClient();
         const cm = eoaRes.client_metadata;
+        const tipNote = tipCents > 0 ? ` and left you a $${(tipCents / 100).toFixed(2)} tip` : '';
         await supabase.from('notifications').insert({
-          body: `${cm.firstName} ${cm.lastName} just paid for their ${eoaRes.service_data.name} appointment.`,
+          body: `${cm.firstName} ${cm.lastName} just paid for their ${eoaRes.service_data.name} appointment${tipNote}.`,
           title: 'Payment Received',
           read: false,
           business_id: eoaRes.business,

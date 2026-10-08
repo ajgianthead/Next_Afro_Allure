@@ -397,6 +397,15 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                         </div>
                                     )}
 
+                                    {(event.tipCents ?? 0) > 0 && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium" style={{ color: '#15803D' }}>Tip</span>
+                                            <span style={{ fontFamily: SERIF, fontSize: 15, color: '#15803D', fontWeight: 600 }}>
+                                                {fmt(event.tipCents ?? 0)}
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {event.refundedAmount > 0 && (
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-medium" style={{ color: '#6F6863' }}>Refunded</span>

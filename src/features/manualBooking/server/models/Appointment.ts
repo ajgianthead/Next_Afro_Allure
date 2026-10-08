@@ -52,6 +52,7 @@ export interface AppointmentType {
     subtraction: boolean,
     refundStatus: Database['public']['Enums']['refund_status'],
     refundedAmount: number,
+    tipCents?: number,
 }
 
 export class Appointment {
@@ -94,6 +95,8 @@ export class Appointment {
         public refundedAmount: number = 0,
         /** Size / length / hair chosen when booking, if the service had options. */
         public selectedOptions: unknown = null,
+        /** Tip paid with the balance online (not part of paidAmount). */
+        public tipCents: number = 0,
     ) { }
     toClient() {
         return {
@@ -134,6 +137,7 @@ export class Appointment {
             refundStatus: this.refundStatus,
             refundedAmount: this.refundedAmount,
             selectedOptions: this.selectedOptions,
+            tipCents: this.tipCents,
         }
     }
     private static fromRows(row: Database['public']['Tables']['appointments']['Row'][] | Database['public']['Tables']['appointments']['Row']) {
@@ -191,6 +195,7 @@ export class Appointment {
                 item.refund_status ?? 'NONE',
                 Number(item.refunded_amount ?? 0),
                 item.selected_options ?? null,
+                Number(item.tip_cents ?? 0),
             ))
         }
         return new Appointment(
@@ -246,6 +251,7 @@ export class Appointment {
             row.refund_status ?? 'NONE',
             Number(row.refunded_amount ?? 0),
             row.selected_options ?? null,
+            Number(row.tip_cents ?? 0),
         )
     }
     static async create(supabase: SupabaseClient<Database, any>, businessId: string, appointmentData: {

@@ -8,6 +8,7 @@ interface AppointmentDetailBlockProps {
     location?: string
     duration?: string
     amount?: string
+    tip?: string
     deposit?: string
 }
 
@@ -36,6 +37,7 @@ export function AppointmentDetailBlock({
     location,
     duration,
     amount,
+    tip,
     deposit,
 }: AppointmentDetailBlockProps) {
     const rows = [
@@ -45,6 +47,7 @@ export function AppointmentDetailBlock({
         { label: 'Location', value: location },
         { label: 'Duration', value: duration },
         { label: 'Amount',   value: amount },
+        { label: 'Tip',      value: tip },
         { label: 'Deposit',  value: deposit },
     ].filter(r => r.value !== undefined && r.value !== null && r.value !== '')
 
