@@ -24,7 +24,8 @@ if (!process.env.STRIPE_GROWTH_PRICE_ID) {
  * One Checkout Session shape for every way into Growth. First-time
  * subscribers get the free trial without a card (the subscription pauses if
  * none is added by the end); returning subscribers pay up front. Promotion
- * codes are accepted on every session.
+ * codes are accepted on monthly checkouts only: yearly is already discounted,
+ * and a code meant as "N months off" would otherwise come off a $250 bill.
  */
 async function growthCheckout(customer: string, firstTime: boolean, interval: BillingInterval) {
     if (await hasLiveSubscription(customer)) throw new Error('This account already has a Growth subscription.')
@@ -33,7 +34,7 @@ async function growthCheckout(customer: string, firstTime: boolean, interval: Bi
         billing_address_collection: 'auto',
         line_items: [{ price: growthPriceId(interval), quantity: 1 }],
         mode: 'subscription',
-        allow_promotion_codes: true,
+        allow_promotion_codes: interval === 'month',
         success_url: SUCCESS_URL,
         cancel_url: CANCEL_URL,
         customer,
