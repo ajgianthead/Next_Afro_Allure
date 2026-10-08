@@ -1,0 +1,44 @@
+.aa-business-root .aa-menu-item:hover { background: #FAF7F2; }
+.aa-business-root .aa-mkt-h1 em { color: var(--acc, #FC6161); font-style: italic; }
+.aa-business-root .aa-mkt-on-accent .aa-mkt-h1 em { color: #fff; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 8px; }
+
+.aa-business-root .aa-mkt-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.aa-business-root .aa-mkt-media { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.aa-business-root .aa-mkt-split { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
+.aa-business-root .aa-mkt-row { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center; }
+.aa-business-root .aa-mkt-row-flip > :first-child { order: 2; }
+.aa-business-root .aa-mkt-numbered { display: grid; grid-template-columns: 110px 1fr 1.2fr; gap: 28px; align-items: baseline; }
+.aa-business-root .aa-mkt-bento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.aa-business-root .aa-mkt-bento-wide { grid-column: span 2; }
+.aa-business-root .aa-mkt-checklist { display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; }
+.aa-business-root .aa-mkt-timeline { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 28px; position: relative; }
+.aa-business-root .aa-mkt-timeline::before { content: ''; position: absolute; top: 22px; left: 22px; right: 22px; height: 2px; background: #E8E2D6; }
+.aa-business-root .aa-mkt-faq-wrap { display: grid; grid-template-columns: .8fr 1.4fr; gap: 64px; align-items: start; }
+.aa-business-root .aa-mkt-menu-row { display: grid; gap: 12px; padding: 12px 16px; align-items: center; }
+.aa-business-root .aa-mkt-faq summary::-webkit-details-marker { display: none; }
+.aa-business-root .aa-mkt-faq[open] summary span { transform: rotate(45deg); }
+
+@media (max-width: 1024px) {
+  .aa-business-root .aa-mkt-grid3 { grid-template-columns: repeat(2, 1fr); }
+  .aa-business-root .aa-mkt-media { grid-template-columns: repeat(2, 1fr); }
+  .aa-business-root .aa-mkt-split, .aa-business-root .aa-mkt-row { grid-template-columns: 1fr; gap: 48px; }
+  .aa-business-root .aa-mkt-row-flip > :first-child { order: 0; }
+  .aa-business-root .aa-mkt-bento { grid-template-columns: repeat(2, 1fr); }
+  .aa-business-root .aa-mkt-faq-wrap { grid-template-columns: 1fr; gap: 24px; }
+  .aa-business-root .aa-mkt-timeline { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
+  .aa-business-root .aa-mkt-timeline::before { display: none; }
+}
+
+@media (max-width: 860px) {
+  .aa-business-root .aa-menu-toggle { display: flex !important; }
+  .aa-business-root .aa-nav .aa-nav-links { display: none !important; }
+}
+
+@media (max-width: 720px) {
+  .aa-business-root .aa-mkt-grid3, .aa-business-root .aa-mkt-media, .aa-business-root .aa-mkt-bento,
+  .aa-business-root .aa-mkt-checklist, .aa-business-root .aa-mkt-timeline { grid-template-columns: 1fr; }
+  .aa-business-root .aa-mkt-bento-wide { grid-column: auto; }
+  .aa-business-root .aa-mkt-numbered { grid-template-columns: 1fr; gap: 8px; }
+  .aa-business-root .aa-mkt-menu-row { font-size: 12px; padding: 10px 12px; }
+  .aa-business-root .aa-mkt-step { grid-template-columns: 1fr !important; gap: 12px !important; }
+}

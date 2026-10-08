@@ -37,11 +37,14 @@ export function estimateStripeProcessingFee(amountInCents: number): number {
 
 /**
  * application_fee_amount for a PaymentIntent: platform fee + card processing.
+ * `tipInCents` is the part of the amount that's a tip — AfroAllure takes no
+ * platform fee on tips, only Stripe's processing on the whole charge.
  * Never more than the charge itself (Stripe rejects that).
  */
-export function calculateApplicationFee(amountInCents: number, planType: PlanType): number {
+export function calculateApplicationFee(amountInCents: number, planType: PlanType, tipInCents = 0): number {
     const amount = Math.max(0, Math.round(amountInCents))
-    return Math.min(amount, calculatePlatformFee(amount, planType) + estimateStripeProcessingFee(amount))
+    const tip = Math.min(amount, Math.max(0, Math.round(tipInCents)))
+    return Math.min(amount, calculatePlatformFee(amount - tip, planType) + estimateStripeProcessingFee(amount))
 }
 
 // Optional instant payouts. Stripe charges AfroAllure 1% (50¢ minimum) plus its

@@ -22,11 +22,14 @@ type Props = {
     services: ServiceType[],
     policy: BusinessPolicyType
     waitlistEnabled?: boolean
+    smsEnabled?: boolean
 }
 export type BookingData = {
     business_id: string;
     /** Clients can join the cancellation waitlist. */
     waitlist_enabled?: boolean;
+    /** Clients can opt in to appointment texts. */
+    sms_enabled?: boolean;
     availabilities: AvailabilityType[];
     booking_policy: BusinessPolicyType
     /** Busy times only (start/end) — never full appointment records. */
@@ -48,6 +51,8 @@ export type BookingData = {
         lastName: string;
         email: string;
         phoneNumber: string;
+        /** Agreed to appointment texts (only used by businesses with the SMS add-on). */
+        smsConsent: boolean;
     }
     options: {
         clientSecret: any,
@@ -56,10 +61,11 @@ export type BookingData = {
     bookingSession: BookingSessionData | null
 }
 
-export function BookingWrapper({ children, businessData, availabilities, appointments, services, policy, waitlistEnabled }: Props) {
+export function BookingWrapper({ children, businessData, availabilities, appointments, services, policy, waitlistEnabled, smsEnabled }: Props) {
     let [data, setData] = useState<BookingData>({
         business_id: businessData.id,
         waitlist_enabled: !!waitlistEnabled,
+        sms_enabled: !!smsEnabled,
         availabilities: availabilities,
         appointments: appointments,
         services: services,
@@ -73,7 +79,8 @@ export function BookingWrapper({ children, businessData, availabilities, appoint
             firstName: "",
             lastName: "",
             email: "",
-            phoneNumber: ""
+            phoneNumber: "",
+            smsConsent: false
         },
         selectedService: "",
         styleSelection: null,

@@ -124,6 +124,7 @@ export async function getRefundSummary(appointmentId: string): Promise<RefundSum
         cashPaid: appt.service_paid && appt.service_paid_type === 'CASH'
             ? Math.max(0, appt.paid_amount - depositPaidOnline)
             : 0,
+        tipCents: service ? Number(appt.tip_cents ?? 0) : 0,
         disputed: !!(deposit?.disputed || service?.disputed),
         canCancel: canCancel(appt),
         refunds: (rows ?? []).map(toRefundRecord),

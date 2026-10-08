@@ -1,6 +1,6 @@
 'use client'
 
-import { loadStripe, Stripe } from '@stripe/stripe-js'
+import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js'
 import { DateTime } from 'luxon'
 import React, { useEffect, useState } from 'react'
 import {
@@ -12,7 +12,8 @@ import {
 import { CircleCheckBig, Loader2 } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { createCheckoutAction } from '@/features/stripe/actions'
+import { createCheckoutAction, setBalanceTip } from '@/features/stripe/actions'
+import { TipPicker } from '@/features/stripe/components/TipPicker'
 import { getBalanceSummary, type BalanceSummary } from '@/features/stripe/balanceSummary'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
@@ -40,6 +41,9 @@ export default function EOAClient() {
     const [options, setOptions] = useState<{ clientSecret: string }>()
     const [promise, setStripePromise] = useState<Promise<Stripe | null>>()
     const [dueNow, setDueNow] = useState(0)
+    const [tipCents, setTipCents] = useState(0)
+    const [savingTip, setSavingTip] = useState(false)
+    const [tipError, setTipError] = useState('')
     const [state, setState] = useState<'loading' | 'ready' | 'paid' | 'invalid'>('loading')
 
     useEffect(() => {
@@ -51,10 +55,12 @@ export default function EOAClient() {
 
             setStripePromise(loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, { stripeAccount: s.stripeAccountId }))
             // The server works out the amount; nothing here is trusted.
-            const { clientSecret, amountDue } = await createCheckoutAction({ purpose: 'EOA', appointmentID: appointment_id })
+            const { clientSecret, amountDue, tipCents } = await createCheckoutAction({ purpose: 'EOA', appointmentID: appointment_id })
             if (!clientSecret) { setState('invalid'); return }
             setOptions({ clientSecret })
             setDueNow(amountDue)
+            // A tip chosen before a reload is still on the payment.
+            setTipCents(tipCents)
             setState('ready')
         }
         init().catch(() => setState('invalid'))
@@ -90,6 +96,28 @@ export default function EOAClient() {
         )
     }
 
+    // Saves the tip on the server, then lets the Payment Element (and wallets
+    // like Apple Pay) pick up the new amount. Paying is locked meanwhile so the
+    // charge always matches the total on screen.
+    const changeTip = async (next: number, elements: StripeElements | null): Promise<boolean> => {
+        setSavingTip(true)
+        setTipError('')
+        try {
+            const res = await setBalanceTip(appointment_id, next)
+            if (!res.ok) { setTipError(res.error); return false }
+            await elements?.fetchUpdates()
+            setTipCents(res.tipCents)
+            setDueNow(res.amountDue)
+            return true
+        } catch {
+            setTipError("We couldn't update your tip. Please try again.")
+            return false
+        } finally {
+            setSavingTip(false)
+        }
+    }
+
+    const balanceCents = dueNow - tipCents
     const start = DateTime.fromISO(summary.start)
     const end = DateTime.fromISO(summary.end)
 
@@ -119,6 +147,19 @@ export default function EOAClient() {
                             ))}
                         </div>
 
+                        {tipCents > 0 && (
+                            <div className="flex flex-col gap-2" style={{ borderTop: '1px solid #F0EBE3', paddingTop: '1rem' }}>
+                                <div className="flex justify-between gap-4">
+                                    <p className="text-sm" style={{ color: '#1A1818' }}>Balance</p>
+                                    <p className="text-sm" style={{ color: '#6F6863' }}>{fmt(balanceCents)}</p>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                    <p className="text-sm" style={{ color: '#1A1818' }}>Tip</p>
+                                    <p className="text-sm" style={{ color: '#6F6863' }}>{fmt(tipCents)}</p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="rounded-lg px-4 py-3" style={{ backgroundColor: '#0F0E0E' }}>
                             <div className="flex justify-between items-center">
                                 <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>Due now</p>
@@ -137,9 +178,23 @@ export default function EOAClient() {
                     <div className="flex-1 rounded-xl p-6 flex flex-col gap-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D6' }}>
                         <div>
                             <p className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#6F6863' }}>Payment</p>
-                            <p className="text-sm" style={{ color: '#6F6863' }}>Pay your balance below.</p>
+                            <p className="text-sm" style={{ color: '#6F6863' }}>Add a tip if you&apos;d like, then pay your balance below.</p>
                         </div>
-                        <EOAPaymentForm appointmentID={appointment_id} stripeID={summary.stripeAccountId!} amount={dueNow} />
+                        <EOAPaymentForm
+                            appointmentID={appointment_id}
+                            stripeID={summary.stripeAccountId!}
+                            amount={dueNow}
+                            locked={savingTip}
+                            tip={(elements, paying) => (
+                                <TipPicker
+                                    baseCents={summary.tipBaseCents}
+                                    tipCents={tipCents}
+                                    saving={savingTip || paying}
+                                    error={tipError}
+                                    onChange={next => changeTip(next, elements)}
+                                />
+                            )}
+                        />
                     </div>
                 </div>
             </Elements>
@@ -147,7 +202,15 @@ export default function EOAClient() {
     )
 }
 
-function EOAPaymentForm({ appointmentID, stripeID, amount }: { appointmentID: string; stripeID: string; amount: number }) {
+function EOAPaymentForm({ appointmentID, stripeID, amount, locked, tip }: {
+    appointmentID: string
+    stripeID: string
+    amount: number
+    /** A tip change is saving — paying now could charge the old total. */
+    locked: boolean
+    /** The tip picker; locked while a payment is being submitted. */
+    tip: (elements: StripeElements | null, paying: boolean) => React.ReactNode
+}) {
     const elements = useElements()
     const stripe = useStripe()
     const [submitting, setSubmitting] = useState(false)
@@ -155,7 +218,7 @@ function EOAPaymentForm({ appointmentID, stripeID, amount }: { appointmentID: st
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        if (!stripe || !elements) return
+        if (!stripe || !elements || locked) return
         setSubmitting(true)
         setPayError('')
         const { error } = await stripe.confirmPayment({
@@ -170,14 +233,15 @@ function EOAPaymentForm({ appointmentID, stripeID, amount }: { appointmentID: st
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 flex-1">
+            {tip(elements, submitting)}
             <PaymentElement className="w-full" />
             {payError && <p className="text-sm" style={{ color: '#FC6161' }}>{payError}</p>}
             <Button
                 type="submit"
-                disabled={!stripe || !elements || submitting}
+                disabled={!stripe || !elements || submitting || locked}
                 style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF' }}
             >
-                {submitting ? <Loader2 className="size-4 animate-spin" /> : `Pay ${fmt(amount)}`}
+                {submitting || locked ? <Loader2 className="size-4 animate-spin" /> : `Pay ${fmt(amount)}`}
             </Button>
         </form>
     )

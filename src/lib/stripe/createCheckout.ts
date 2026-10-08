@@ -12,6 +12,7 @@ import { calculateApplicationFee } from "@/lib/fees"
 import { quoteFromDb } from "@/features/services/server/quote"
 import { calculateDeposit, remainingBalance, type StyleSelection } from "@/features/services/pricing"
 import { canPayBalance } from "@/features/stripe/balance"
+import { balanceIntentAmount, TIP_METADATA_KEY } from "@/features/stripe/tips"
 import { cardOnFileFor, cardOnFileParams, cardOnFileUpdate } from "@/features/noShowFees/server/cardOnFile"
 
 /**
@@ -215,12 +216,13 @@ export const createCheckout = async (
                     { stripeAccount: business.stripeAccountId }
                 )
                 // The balance can change after the link was made (a late fee
-                // or reward) — keep an unpaid payment in step with it.
-                const unpaid = ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(existing.status)
-                if (unpaid && canPayBalance(balanceRow) && existing.amount !== price) {
+                // or reward) — keep an unpaid payment in step with it,
+                // keeping any tip the client already chose.
+                const next = canPayBalance(balanceRow) ? balanceIntentAmount(existing, price) : null
+                if (next) {
                     return await stripe.paymentIntents.update(
                         existing.id,
-                        { amount: price, application_fee_amount: calculateApplicationFee(price, business.planType) },
+                        { amount: next.amount, application_fee_amount: calculateApplicationFee(next.amount, business.planType, next.tipCents) },
                         { stripeAccount: business.stripeAccountId }
                     )
                 }
@@ -239,6 +241,7 @@ export const createCheckout = async (
                     businessId,
                     appointmentType,
                     purpose: 'EOA',
+                    [TIP_METADATA_KEY]: '0',
                 },
                 payment_method_configuration: business.paymentMethodConfigId,
                 application_fee_amount: calculateApplicationFee(price, business.planType),

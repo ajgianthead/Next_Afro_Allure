@@ -7,7 +7,7 @@ import { NotificationType } from "@/lib/notifications/Notification"
 import { trackAppointmentBooked, trackAppointmentCancelled } from "../../../../lib/analytics"
 import { isClientBannedFromBusiness } from "app/dashboard/(other)/clients/actions"
 import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient"
-import { scheduleAndStoreReminders } from "@/features/shared/appointments/confirmation"
+import { scheduleAndStoreReminders, sendConfirmationTexts } from "@/features/shared/appointments/confirmation"
 import { DateTime } from "luxon"
 import { getBusyIntervals } from "./busyIntervals"
 import { quoteFromDb } from "@/features/services/server/quote"
@@ -165,6 +165,8 @@ export const createAppointmentAction = async (body: {
         lastName: String(cm.lastName ?? '').trim().slice(0, 100),
         email: String(cm.email ?? '').trim().slice(0, 254),
         phoneNumber: String(cm.phoneNumber ?? '').trim().slice(0, 40),
+        // Only ever true from the booking form's unticked-by-default checkbox.
+        smsConsent: cm.smsConsent === true,
     }
     if (!clientMetadata.firstName || !clientMetadata.lastName || !clientMetadata.email || !clientMetadata.phoneNumber) {
         throw new Error('Please fill in all contact information fields')
@@ -309,6 +311,13 @@ export const createAppointmentAction = async (body: {
                 accountSettings: settings,
                 completedStripeOnboarding: !!data.business_users.completed_stripe_onboarding,
             })
+            await sendConfirmationTexts(createAdminClient(), {
+                id: data.id,
+                start: DateTime.fromISO(data.start).toISO()!,
+                end: DateTime.fromISO(data.end).toISO()!,
+                serviceName: service_data?.name,
+                clientMetadata: client_metadata,
+            }, { id: data.business, name: data.business_users.business_name, accountSettings: settings }, { notifyBusiness: true })
         }
     } catch (err) {
         console.error('Post-create side effects failed:', err)

@@ -66,6 +66,7 @@ export const confirmAppointment = async (appointmentId: string, businessId: stri
                         lastName: cm?.lastName ?? '',
                         email: cm?.email ?? '',
                         phoneNumber: cm?.phoneNumber ?? '',
+                        smsConsent: cm?.smsConsent === true,
                     },
                 },
                 {

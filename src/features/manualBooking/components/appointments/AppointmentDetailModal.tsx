@@ -38,7 +38,7 @@ const formatPhone = (raw: string) => {
 }
 
 type Status = NonNullable<AppointmentEvent['status']>
-type LoadingState = 'idle' | 'confirming' | 'cancelling' | 'markingPaid' | 'sendingLink' | 'sendingPaymentLink'
+type LoadingState = 'idle' | 'confirming' | 'cancelling' | 'markingPaid' | 'markingNoShow' | 'sendingLink' | 'sendingPaymentLink'
 
 const STATUS_CONFIG: Record<Status, { badgeBg: string; badgeText: string; label: string }> = {
     CONFIRMED:  { badgeBg: 'rgba(34,197,94,0.1)',    badgeText: '#15803D', label: 'Confirmed' },
@@ -152,6 +152,22 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
             setFeedback({ type: 'success', message: 'Payment link sent to client.' })
         } catch (err: any) {
             setFeedback({ type: 'error', message: err?.message ?? 'Failed to send payment link.' })
+        } finally {
+            setLoading('idle')
+        }
+    }
+
+    // Stays open: a no-show with a paid deposit shows the no-show fee panel next.
+    const handleMarkNoShow = async () => {
+        if (!event) return
+        setLoading('markingNoShow')
+        setFeedback(null)
+        try {
+            await markAppointmentAs(event.serviceData.business, 'NO_SHOW', event.amountDue, event.id)
+            updateEventInContext({ status: 'NO_SHOW' })
+            toast.success('Marked as no-show')
+        } catch (err: any) {
+            setFeedback({ type: 'error', message: err?.message ?? 'Failed to mark as no-show.' })
         } finally {
             setLoading('idle')
         }
@@ -381,6 +397,15 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                         </div>
                                     )}
 
+                                    {(event.tipCents ?? 0) > 0 && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium" style={{ color: '#15803D' }}>Tip</span>
+                                            <span style={{ fontFamily: SERIF, fontSize: 15, color: '#15803D', fontWeight: 600 }}>
+                                                {fmt(event.tipCents ?? 0)}
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {event.refundedAmount > 0 && (
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-medium" style={{ color: '#6F6863' }}>Refunded</span>
@@ -514,7 +539,7 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                         </>
                                     )}
 
-                                    {/* Flagged as a no-show / unpaid automatically after the end time — the client may still pay. */}
+                                    {/* Flagged INCOMPLETE automatically after the end time, or marked a no-show — the client may still pay. */}
                                     {(status === 'NO_SHOW' || status === 'INCOMPLETE') && !event.servicePaid && event.amountDue > 0 && (
                                         <>
                                             {canTakeOnlinePayments && (
@@ -537,6 +562,17 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                                 {loading === 'markingPaid' && <Loader2 size={13} className="animate-spin" />}
                                                 They came — Mark Paid (Cash)
                                             </button>
+                                            {status === 'INCOMPLETE' && (
+                                                <button
+                                                    disabled={busy}
+                                                    onClick={handleMarkNoShow}
+                                                    className="flex items-center gap-1.5 rounded-full text-sm font-medium px-4 h-9 transition-colors hover:bg-[#F0EBE3] disabled:opacity-50"
+                                                    style={{ border: '1px solid #E8E2D6', color: '#1A1818', backgroundColor: 'transparent' }}
+                                                >
+                                                    {loading === 'markingNoShow' && <Loader2 size={13} className="animate-spin" />}
+                                                    They didn't come — Mark No-show
+                                                </button>
+                                            )}
                                         </>
                                     )}
 

@@ -11,13 +11,16 @@ export interface EOAReceiptProps {
     appointmentData: { id: string; start: string; end: string }
     serviceName: string
     amountPaid: number
+    /** Part of amountPaid that was a tip, in cents. */
+    tipCents?: number
     socials: { instagram: string }
 }
 
-export default function EOAReceiptEmail({ clientData, businessData, appointmentData, serviceName, amountPaid }: EOAReceiptProps) {
+export default function EOAReceiptEmail({ clientData, businessData, appointmentData, serviceName, amountPaid, tipCents = 0 }: EOAReceiptProps) {
     const date = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('cccc, LLLL d, yyyy')
     const time = DateTime.fromISO(appointmentData.start, { setZone: true }).toFormat('h:mm a')
     const amount = `$${(amountPaid / 100).toFixed(2)}`
+    const tip = tipCents > 0 ? `$${(tipCents / 100).toFixed(2)} (included in amount)` : undefined
 
     return (
         <Html lang="en">
@@ -62,6 +65,7 @@ export default function EOAReceiptEmail({ clientData, businessData, appointmentD
                                     service={serviceName}
                                     location={businessData.businessAddress}
                                     amount={amount}
+                                    tip={tip}
                                 />
 
                                 <Text
@@ -102,5 +106,6 @@ EOAReceiptEmail.PreviewProps = {
         start: '2025-09-18T15:00:00.000Z',
         end: '2025-09-18T17:00:00.000Z',
     },
-    amountPaid: 15000,
+    amountPaid: 18000,
+    tipCents: 3000,
 } satisfies EOAReceiptProps

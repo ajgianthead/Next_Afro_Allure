@@ -97,7 +97,8 @@ export const updateClientInfoAction = async (sessionId: string, clientInfo: Book
                 firstName: clientInfo!.firstName,
                 lastName: clientInfo!.lastName,
                 email: clientInfo!.email,
-                phoneNumber: clientInfo!.phoneNumber
+                phoneNumber: clientInfo!.phoneNumber,
+                smsConsent: clientInfo!.smsConsent === true,
             },
             status: 'details_completed',
             metaData: {},

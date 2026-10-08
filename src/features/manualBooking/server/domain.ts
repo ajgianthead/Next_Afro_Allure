@@ -16,6 +16,9 @@ import { isValidTimezone } from "@/lib/timezone"
 import { after } from "next/server"
 import { notifyWaitlistOfOpening } from "@/features/waitlist/server/notify"
 import { canPayBalance } from "@/features/stripe/balance"
+import { createAdminClient } from "@/app/utils/supabase/admin"
+import { clientConsentedToSms, sendSms } from "@/lib/sms/send"
+import { payLink, smsTemplates } from "@/lib/sms/templates"
 
 // Small grace window so a time picked "right now" isn't rejected by clock skew.
 const PAST_GRACE_MINUTES = 2
@@ -219,6 +222,19 @@ export const sendPaymentLink = async (appointmentId: string) => {
         } as any),
     })
     if (error) throw new Error('Failed to send payment link. Please try again.')
+
+    // Also by text, for businesses with the SMS add-on and clients who agreed.
+    await sendSms(createAdminClient(), {
+        businessId: business.id,
+        audience: 'client',
+        to: appointment.clientMetadata.phoneNumber,
+        clientConsent: clientConsentedToSms(appointment.clientMetadata),
+        body: smsTemplates.clientPaymentLink({
+            business: business.name,
+            service: appointment.serviceData.name,
+            url: payLink(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co', appointment.id),
+        }),
+    })
 }
 
 export const sendConfirmationLink = async (appointmentId: string) => {

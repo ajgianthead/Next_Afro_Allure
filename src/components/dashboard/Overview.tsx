@@ -8,7 +8,7 @@ import { TrendingDown, TrendingUp, Copy, Check, Plus, CreditCard, AlertCircle, X
 
 import { PostgrestSingleResponse } from '@supabase/supabase-js'
 import { toast } from 'sonner'
-import { sendPaymentLink } from 'app/dashboard/(other)/actions'
+import { sendPaymentLinkAction } from '@/features/manualBooking/server'
 import QRCode from 'react-qr-code'
 import { canPayBalance } from '@/features/stripe/balance'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -520,27 +520,15 @@ function AppointmentDetailsModal({ appointment, businessData, onClose }: { appoi
   const [emailSent, setEmailSent] = useState(false)
   const [sending, setSending] = useState(false)
 
+  // The server looks up the appointment and checks it belongs to this
+  // business and still has a balance; nothing about the email comes from here.
   const handleSend = async () => {
     if (!appointment) return
-    const apt = appointment as any
     setSending(true)
-    await sendPaymentLink({
-      clientData: {
-        firstName: apt.client_metadata.firstName,
-        lastName: apt.client_metadata.lastName,
-        email: apt.client_metadata.email,
-        phoneNumber: apt.client_metadata.phoneNumber,
-      },
-      businessData: {
-        id: apt.business,
-        name: businessData.business_name,
-        email: businessData.email,
-      },
-      appointmentID: apt.id,
-      serviceName: apt.service_data.name,
-    })
+    const res = await sendPaymentLinkAction((appointment as any).id)
     setSending(false)
-    setEmailSent(true)
+    if (res.ok) setEmailSent(true)
+    else toast.error(res.error)
   }
 
   return (

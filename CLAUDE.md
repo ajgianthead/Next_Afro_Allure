@@ -38,6 +38,11 @@ In the Vercel dashboard under **Project → Settings → Environment Variables**
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Multiple client components | Stripe.js / Connect init |
 | `STRIPE_GROWTH_PRICE_ID` | `src/app/for-businesses/actions.ts`, `src/features/billing/server/trial.ts` | Growth monthly price ($25/mo). Test price in Preview, live price in Production |
 | `STRIPE_GROWTH_YEARLY_PRICE_ID` | Same as above | Growth yearly price ($250/yr). Test price in Preview, live price in Production |
+| `STRIPE_SMS_PRICE_ID` | `src/features/billing/server/sms.ts` | SMS Reminders add-on monthly price ($10/mo, Growth only). Test price in Preview, live price in Production |
+| `STRIPE_SMS_YEARLY_PRICE_ID` | Same as above | SMS Reminders add-on yearly price ($100/yr), for yearly Growth subscriptions |
+| `TWILIO_ACCOUNT_SID` | `src/lib/sms/twilio.ts` | Twilio account. Needed in Vercel and Trigger.dev |
+| `TWILIO_AUTH_TOKEN` | `src/lib/sms/twilio.ts` | Twilio auth token. Needed in Vercel and Trigger.dev |
+| `TWILIO_FROM_NUMBER` | `src/lib/sms/twilio.ts` | Shared AfroAllure toll-free number (+1...). Texts are skipped while any Twilio variable is unset |
 | `SUB_WEBHOOK_SECRET` | `src/app/api/webhook/subscriptions/route.ts` | Stripe webhook verification |
 | `CONNECTED_ACCOUNT_WEBHOOK_SECRET` | `src/app/api/webhook/connected_accounts/route.ts` | Stripe webhook verification |
 | `NEXT_PUBLIC_SUPABASE_URL` | All Supabase clients | Dev project URL locally |
@@ -45,7 +50,7 @@ In the Vercel dashboard under **Project → Settings → Environment Variables**
 | `SUPABASE_ROLE_SECRET_KEY` | Server-side admin operations | Service role / secret key |
 | `NEXT_PUBLIC_SUPABASE_CONNECTION_STRING` | `src/app/utils/dbPool.ts` | Direct Postgres pool connection |
 | `RESEND_API_KEY` | Email sending (multiple files) | Resend API |
-| `NEXT_PUBLIC_TRIGGER_API_KEY` | `src/trigger/reminder.ts` | Trigger.dev task scheduling |
+| `TRIGGER_API_KEY` | `src/trigger/*.ts` | Trigger.dev task scheduling |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `lib/analytics.ts`, `lib/gtag.ts` | Google Analytics |
 | `NEXT_PUBLIC_ANALYTICS_API_SECRET` | `lib/analytics.ts` | GA measurement protocol |
 | `ANALYTICS_PROPERTY_ID` | `lib/analytics.ts` | GA property ID |
@@ -62,14 +67,14 @@ These were removed as part of the env cleanup (2025-04-25). Do not re-add them:
 - `STRIPE_SECRET_LIVE_KEY` — replaced by `STRIPE_SECRET_KEY` (Vercel injects correct value)
 - `NEXT_PUBLIC_STRIPE_LIVE_PUBLISHABLE_KEY` — replaced by `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `NEXT_PUBLIC_PROD_BASE_URL` — replaced by `NEXT_PUBLIC_BASE_URL`
-- `NEXT_PUBLIC_TRIGGER_PROD_KEY` — replaced by `NEXT_PUBLIC_TRIGGER_API_KEY`
+- `NEXT_PUBLIC_TRIGGER_PROD_KEY` — replaced by `TRIGGER_API_KEY`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — not referenced in code, removed
 - `NEXT_PUBLIC_SUPABASE_DEV_URL` — consolidated into `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_DEV_PUBLISHABLE_KEY` — consolidated into `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SECRET_KEY` — prod secret, removed; use `SUPABASE_ROLE_SECRET_KEY` (Vercel injects correct value)
 - `SUPABASE_DEV_SECRET_KEY` — renamed to `SUPABASE_ROLE_SECRET_KEY`
 - `NEXT_PUBLIC_SUPABASE_DEV_CONNECTION_STRING` — consolidated into `NEXT_PUBLIC_SUPABASE_CONNECTION_STRING`
-- `TRIGGER_API_KEY` — renamed to `NEXT_PUBLIC_TRIGGER_API_KEY`
+- `NEXT_PUBLIC_TRIGGER_API_KEY` — renamed to `TRIGGER_API_KEY` (a secret key must not carry the NEXT_PUBLIC_ prefix)
 
 ---
 

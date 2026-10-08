@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/app/utils/supabase/admin'
 import { describeSelectedOptions, remainingBalance, type SelectedOptions } from '@/features/services/pricing'
 import { canPayBalance } from './balance'
+import { tipBaseCents } from './tips'
 
 export interface BalanceSummary {
     state: 'payable' | 'paid' | 'invalid'
@@ -15,8 +16,10 @@ export interface BalanceSummary {
     clientName: string
     clientEmail: string
     lines: { label: string; cents: number }[]
-    /** What the client pays now (cents). */
+    /** What the client pays now (cents), before any tip. */
     dueNowCents: number
+    /** The appointment's full price, which suggested tip percentages are worked out on. */
+    tipBaseCents: number
 }
 
 /**
@@ -62,5 +65,6 @@ export async function getBalanceSummary(appointmentId: string): Promise<BalanceS
         clientEmail: cm.email ?? '',
         lines,
         dueNowCents: appt.service_paid ? 0 : remainingBalance(appt as any),
+        tipBaseCents: tipBaseCents(appt as any),
     }
 }

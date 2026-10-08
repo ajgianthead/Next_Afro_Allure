@@ -122,6 +122,15 @@ export const ClientInfo = ({
                     onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--t-primary)')}
                     onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--t-border)')}
                 />
+                {data.sms_enabled && (
+                    <BookingCheckbox
+                        id="sms-consent"
+                        checked={data.clientInfo.smsConsent}
+                        onChange={(v) => setData((prev) => ({ ...prev, clientInfo: { ...prev.clientInfo, smsConsent: v } }))}
+                    >
+                        Text me about this appointment: confirmation, reminders and payment link. Msg &amp; data rates may apply. Reply STOP to opt out.
+                    </BookingCheckbox>
+                )}
 
                 {clientPrep && (
                     <div className="flex flex-col gap-2 pt-3" style={{ borderTop: '1px solid var(--t-border)' }}>

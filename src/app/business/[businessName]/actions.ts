@@ -1,6 +1,7 @@
 'use server'
 import pool from "@/app/utils/dbPool";
 import { DateTime } from "luxon";
+import { after } from "next/server";
 import { Resend } from "resend";
 import { getSlots, OutputSlot } from "slot-calculator";
 import AppointmentRescheduled from "../../../../emails/appointment-rescheduled";
@@ -207,8 +208,9 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
             }
         })()
 
-        // Cancel old reminder jobs and schedule new ones — fire-and-forget, non-critical
-        ;(async () => {
+        // Cancel old reminder jobs and schedule new ones — non-critical, so it
+        // runs after the response; after() keeps the function alive until done.
+        after(async () => {
             try {
                 await AppointmentReminders.cancelAll(ogAppointment.reminder_ids, ogAppointment.payment_link_id)
 
@@ -234,7 +236,7 @@ export const rescheduleAppointment = async (appointmentID: string, timeSlot: {
             } catch (err) {
                 console.error('Failed to manage reminders after public reschedule:', err)
             }
-        })()
+        })
 
         return appointment
     } catch (error: any) {

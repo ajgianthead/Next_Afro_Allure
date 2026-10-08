@@ -7,6 +7,7 @@ import { createAdminClient } from "@/app/utils/supabase/admin";
 import { requireOwnBusinessId } from "@/lib/auth/requireBusinessOwner";
 import { TRIAL_DAYS, type BillingInterval } from "@/features/billing/plans";
 import { clearStaleSubscriptions, growthPriceId, hasLiveSubscription } from "@/features/billing/server/trial";
+import { growthItemOf, itemsForInterval, liveSubscription } from "@/features/billing/server/sms";
 
 const DOMAIN = process.env.NEXT_PUBLIC_BASE_URL
 
@@ -131,15 +132,15 @@ export const switchGrowthInterval = async (interval: BillingInterval): Promise<{
         .single()
     if (!biz?.stripe_customer_id) return { ok: false, error: 'No subscription found.' }
 
-    const subs = await stripe.subscriptions.list({ customer: biz.stripe_customer_id, status: 'all', limit: 10 })
-    const sub = subs.data.find(s => ['trialing', 'active', 'past_due'].includes(s.status))
-    const item = sub?.items.data[0]
+    const sub = await liveSubscription(biz.stripe_customer_id)
+    // The Growth item, not items[0]: the SMS add-on can sit on the same subscription.
+    const item = sub ? growthItemOf(sub) : undefined
     if (!sub || !item) return { ok: false, error: 'No subscription found.' }
 
-    const price = growthPriceId(interval)
-    if (item.price.id === price) return { ok: true }
+    if (item.price.id === growthPriceId(interval)) return { ok: true }
     await stripe.subscriptions.update(sub.id, {
-        items: [{ id: item.id, price }],
+        // SMS moves with Growth: a subscription's items must share one interval.
+        items: itemsForInterval(sub, interval),
         proration_behavior: sub.status === 'trialing' ? 'none' : 'create_prorations',
     })
     return { ok: true }

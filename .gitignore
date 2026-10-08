@@ -9,7 +9,7 @@
 config/
 
 tests/
-src/trigger/
+# src/trigger/
 
 # testing
 /coverage

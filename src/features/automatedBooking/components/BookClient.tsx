@@ -24,7 +24,7 @@ import { BookingStepper } from './BookingStepper'
 import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
 import { useRouter } from 'next/navigation'
 
-export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId, waitlistEnabled }: {
+export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId, waitlistEnabled, smsEnabled }: {
     businessData: PublicBusinessType,
     availabilities: AvailabilityType[],
     appointments: BusyInterval[],
@@ -35,9 +35,11 @@ export function BookClient({ businessData, availabilities, appointments, service
     preSelectedServiceId?: string
     /** Clients can ask to hear about openings. */
     waitlistEnabled?: boolean
+    /** The business has SMS Reminders and texting is set up, so clients can opt in. */
+    smsEnabled?: boolean
 }) {
     return (
-        <BookingWrapper businessData={businessData} availabilities={availabilities} appointments={appointments} services={services} policy={policy} waitlistEnabled={!!waitlistEnabled}>
+        <BookingWrapper businessData={businessData} availabilities={availabilities} appointments={appointments} services={services} policy={policy} waitlistEnabled={!!waitlistEnabled} smsEnabled={!!smsEnabled}>
             <Book businessName={businessData.urlName} businessData={businessData} bookingLimitReachedInitial={bookingLimitReached} themeData={themeData} preSelectedServiceId={preSelectedServiceId} />
         </BookingWrapper>
     )

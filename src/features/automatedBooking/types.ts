@@ -10,6 +10,8 @@ export interface BookingSessionData {
         lastName: string
         email: string
         phoneNumber: string
+        /** Ticked "Text me about this appointment" when booking. */
+        smsConsent?: boolean
     } | null
     selectDateTime: string | null
     paymentIntentId: string | null

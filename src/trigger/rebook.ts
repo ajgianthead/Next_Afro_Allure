@@ -1,17 +1,18 @@
-import { configure, schedules } from "@trigger.dev/sdk/v3";
+import { configure, schedules } from "@trigger.dev/sdk";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { runRebookReminders } from "../features/rebooking/server/run";
 
 configure({
-  secretKey: process.env.NEXT_PUBLIC_TRIGGER_API_KEY,
+  secretKey: process.env.TRIGGER_API_KEY,
 });
 
-// Daily at 14:00 UTC (morning across US timezones): email clients whose
+// Daily at 10:00 New York time (7:00 Pacific), all year — a timezone keeps it
+// from shifting an hour with daylight saving. Emails clients whose
 // maintenance cycle is up and who haven't rebooked.
 export const rebookReminders = schedules.task({
   id: "rebook-reminders",
-  cron: "0 14 * * *",
+  cron: { pattern: "0 10 * * *", timezone: "America/New_York" },
   run: async () => {
     const supabase = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

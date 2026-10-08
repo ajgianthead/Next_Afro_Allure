@@ -44,6 +44,7 @@ export type Database = {
           rebook_nudged_at: string | null
           late_fee_cents: number
           late_fee_added_at: string | null
+          tip_cents: number
           no_show_fee_status: string | null
           no_show_fee_cents: number | null
           no_show_fee_charge_id: string | null
@@ -92,6 +93,7 @@ export type Database = {
           rebook_nudged_at?: string | null
           late_fee_cents?: number
           late_fee_added_at?: string | null
+          tip_cents?: number
           no_show_fee_status?: string | null
           no_show_fee_cents?: number | null
           no_show_fee_charge_id?: string | null
@@ -140,6 +142,7 @@ export type Database = {
           rebook_nudged_at?: string | null
           late_fee_cents?: number
           late_fee_added_at?: string | null
+          tip_cents?: number
           no_show_fee_status?: string | null
           no_show_fee_cents?: number | null
           no_show_fee_charge_id?: string | null
@@ -498,6 +501,9 @@ export type Database = {
           total_booking_volume: number | null
           subscription_plan: string | null
           subscription_status: string | null
+          sms_enabled: boolean
+          sms_phone: string | null
+          sms_business_texts: boolean
         }
         Insert: {
           account_settings?: Json | null
@@ -541,6 +547,9 @@ export type Database = {
           total_booking_volume?: number | null
           subscription_plan?: string | null
           subscription_status?: string | null
+          sms_enabled?: boolean
+          sms_phone?: string | null
+          sms_business_texts?: boolean
         }
         Update: {
           account_settings?: Json | null
@@ -584,6 +593,9 @@ export type Database = {
           total_booking_volume?: number | null
           subscription_plan?: string | null
           subscription_status?: string | null
+          sms_enabled?: boolean
+          sms_phone?: string | null
+          sms_business_texts?: boolean
         }
         Relationships: []
       }
