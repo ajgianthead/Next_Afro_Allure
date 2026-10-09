@@ -9,7 +9,6 @@ import { createAdminClient } from '../utils/supabase/admin'
 import { Database } from '../../../lib/database.types'
 import { Time } from '@internationalized/date'
 import { stripe } from '@/lib/stripe/stripeClient'
-import type { BillingInterval } from '@/features/billing/plans'
 import Stripe from 'stripe'
 import { BusinessUser } from '@lib/businessUser/BusinessUser'
 
@@ -19,12 +18,12 @@ import { BusinessUser } from '@lib/businessUser/BusinessUser'
 // signup only showed "An error occurred in the Server Components render".
 export type AuthActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string }
 
-export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false, interval: BillingInterval = 'month'): Promise<AuthActionResult<ReturnType<BusinessUser['toClient']> & { needsEmailConfirmation: boolean }>> => {
+export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false): Promise<AuthActionResult<ReturnType<BusinessUser['toClient']> & { needsEmailConfirmation: boolean }>> => {
     try {
         const supabase = await createClient()
         const headerList = await headers()
         const ipAddress = headerList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
-        const businessUser = await BusinessUser.create(supabase, email, password, name, marketingOptIn, ipAddress, interval === 'year' ? 'year' : 'month')
+        const businessUser = await BusinessUser.create(supabase, email, password, name, marketingOptIn, ipAddress)
 
         // This is the main signup path (the ad-funnel path has its own
         // specialty/city/service wizard that sets is_onboarded itself on

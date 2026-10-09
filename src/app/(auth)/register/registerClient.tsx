@@ -1,11 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, AlertCircle, Check, Mail } from 'lucide-react'
 import { createBusinessUser } from '../actions'
-import type { BillingInterval } from '@/features/billing/plans'
 import { FeeDisclosure } from '@/components/FeeDisclosure'
 
 
@@ -56,10 +55,8 @@ function AgreementCheckbox({
 
 export default function Register() {
     const router = useRouter()
-    const searchParams = useSearchParams()
-    // Every signup starts a free Growth trial automatically — no card, no
-    // checkout. A pricing-page link (?subscription=year) starts it on yearly.
-    const interval: BillingInterval = searchParams.get('subscription') === 'year' ? 'year' : 'month'
+    // New businesses start on the free Starter plan; they can upgrade to
+    // Growth (with its free trial) from the dashboard whenever they like.
 
     const [formData, setFormData] = useState({ name: '', email: '', password: '' })
     const [agreement, setAgreement] = useState({ terms: false, privacy: false })
@@ -82,7 +79,7 @@ export default function Register() {
         setLoading(true)
         setError(null)
         try {
-            const res = await createBusinessUser(formData.email, formData.name, formData.password, marketingOptIn, interval)
+            const res = await createBusinessUser(formData.email, formData.name, formData.password, marketingOptIn)
             if (!res.ok) {
                 setError(res.error)
                 setLoading(false)
@@ -290,7 +287,7 @@ export default function Register() {
                             </AgreementCheckbox>
                         </div>
 
-                        <FeeDisclosure trial />
+                        <FeeDisclosure signup />
 
                         <button
                             type="submit"

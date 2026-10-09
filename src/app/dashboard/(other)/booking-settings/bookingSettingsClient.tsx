@@ -14,6 +14,7 @@ import { Button as ShadcnButton } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
 import { useRouter } from 'next/navigation'
+import { TRIAL_DAYS } from '@/features/billing/plans'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 const BRAND = {
@@ -166,7 +167,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                         ))}
                     </div>
                     <div>
-                        <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>$25/month · 14-day free trial</p>
+                        <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>$25/month · {TRIAL_DAYS}-day free trial</p>
                         <p className="text-xs mt-0.5" style={{ color: BRAND.warm }}>No credit card required</p>
                     </div>
                     <DialogFooter className="flex-col gap-2 sm:flex-col">

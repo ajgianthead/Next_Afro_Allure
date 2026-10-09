@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { sessionsCreate, subRetrieve, subUpdate } = vi.hoisted(() => {
+const { sessionsCreate, subRetrieve, subUpdate, biz } = vi.hoisted(() => {
     process.env.STRIPE_GROWTH_PRICE_ID = 'price_month'
     return {
+        biz: { had_trial: true, stripe_customer_id: 'cus_1' },
         sessionsCreate: vi.fn(async () => ({ url: 'https://checkout.stripe.test/session' })),
         subRetrieve: vi.fn(),
         subUpdate: vi.fn(async () => ({})),
@@ -21,7 +22,7 @@ vi.mock('@/app/utils/supabase/admin', () => ({
     createAdminClient: () => ({
         from: () => ({
             select: () => ({
-                eq: () => ({ single: async () => ({ data: { had_trial: true, stripe_customer_id: 'cus_1' } }) }),
+                eq: () => ({ single: async () => ({ data: { ...biz } }) }),
             }),
         }),
     }),
@@ -40,6 +41,7 @@ vi.mock('@/features/billing/server/sms', () => ({
 import { startGrowthCheckout, switchGrowthInterval } from './actions'
 
 beforeEach(() => {
+    biz.had_trial = true
     sessionsCreate.mockClear()
     subRetrieve.mockReset()
     subUpdate.mockClear()
@@ -86,5 +88,20 @@ describe('switching to yearly with a monthly promo', () => {
             items: [{ id: 'si_1', price: 'price_year' }],
             discounts: '',
         }))
+    })
+})
+
+describe('the Growth trial starts when a business upgrades', () => {
+    it('gives a business that never had one the free trial at checkout', async () => {
+        biz.had_trial = false
+        await startGrowthCheckout('month')
+        expect(sessionsCreate).toHaveBeenCalledWith(expect.objectContaining({
+            subscription_data: expect.objectContaining({ trial_period_days: 30 }),
+        }))
+    })
+
+    it('does not give a second trial', async () => {
+        await startGrowthCheckout('month')
+        expect(sessionsCreate).toHaveBeenCalledWith(expect.not.objectContaining({ subscription_data: expect.anything() }))
     })
 })

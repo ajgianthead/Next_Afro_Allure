@@ -6,7 +6,7 @@ const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 // Shown before signup and plan upgrades so the per-booking fees are
 // disclosed up front, not discovered later on a payout statement.
-export function FeeDisclosure({ trial = false }: { trial?: boolean }) {
+export function FeeDisclosure({ signup = false }: { signup?: boolean }) {
     const Row = ({ label, value }: { label: string; value: string }) => (
         <div className="flex justify-between gap-3">
             <span style={{ color: '#6F6863' }}>{label}</span>
@@ -22,7 +22,7 @@ export function FeeDisclosure({ trial = false }: { trial?: boolean }) {
             <Row label="AfroAllure fee on Growth" value="0%" />
             <Row label="Starter (free plan)" value="1% per card payment" />
             <Row label="Card processing (Stripe, at cost)" value="2.9% + $0.30 per card payment" />
-            {trial && (
+            {signup && (
                 <>
                     <div style={{ borderTop: '1px solid #E8E2D6', margin: '4px 0' }} />
                     <div className="flex justify-between font-medium">
@@ -32,7 +32,7 @@ export function FeeDisclosure({ trial = false }: { trial?: boolean }) {
                 </>
             )}
             <p className="text-xs mt-1" style={{ color: '#6F6863' }}>
-                {trial && `Every account starts with ${TRIAL_DAYS} days of Growth free — no card needed. If you don't choose a plan, you move to Starter. `}
+                {signup && `Every account starts on the free Starter plan. Upgrade to Growth whenever you like and try it free for ${TRIAL_DAYS} days, no card needed. `}
                 Fees only apply to card payments you collect from clients and come out of your payout, not charged to you
                 separately. Cash payments have no fees.
             </p>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
 import { FeeDisclosure } from '@/components/FeeDisclosure'
+import { TRIAL_DAYS } from '@/features/billing/plans'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -43,7 +44,7 @@ export function PlanGateCard({ featureName, description, businessData }: {
                 <p className="text-sm mt-1" style={{ color: '#6F6863' }}>{description}</p>
             </div>
             <div>
-                <p className="text-sm font-medium" style={{ color: '#1A1818' }}>$25/month · 14-day free trial</p>
+                <p className="text-sm font-medium" style={{ color: '#1A1818' }}>$25/month · {TRIAL_DAYS}-day free trial</p>
                 <p className="text-xs mt-0.5" style={{ color: '#6F6863' }}>No credit card required</p>
             </div>
             <FeeDisclosure />

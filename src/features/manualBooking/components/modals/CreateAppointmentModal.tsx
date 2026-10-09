@@ -23,6 +23,7 @@ import { addMinutesToTime, combineDateAndTime, minStartTimeFor, validateAppointm
 import { browserTimezone } from "@/lib/timezone";
 import { parseStyleOptions, quoteBooking, QuoteError, type StyleSelection } from "@/features/services/pricing";
 import { StylePicker } from "@/features/automatedBooking/components/StylePicker";
+import { TRIAL_DAYS } from '@/features/billing/plans'
 
 // StylePicker is themed with booking-site CSS variables; give it the dashboard's look.
 const PICKER_THEME = {
@@ -233,7 +234,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
                         ))}
                     </div>
                     <div>
-                        <p className="text-sm font-semibold" style={{ color: '#1A1818' }}>$25/month · 14-day free trial</p>
+                        <p className="text-sm font-semibold" style={{ color: '#1A1818' }}>$25/month · {TRIAL_DAYS}-day free trial</p>
                         <p className="text-xs" style={{ color: '#6F6863' }}>No credit card required</p>
                     </div>
                     <DialogFooter className="flex-col gap-2 sm:flex-col">

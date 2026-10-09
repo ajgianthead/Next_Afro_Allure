@@ -236,7 +236,7 @@ function Hero({ isLoggedIn, foundingMemberCount }: { isLoggedIn: boolean; foundi
                         display: 'inline-flex', alignItems: 'center', gap: 8,
                         textDecoration: 'none',
                     }}>
-                        Start Free for {TRIAL_DAYS} Days
+                        Start Free
                         <Icon d={ICONS.arrow} size={16} stroke={2} />
                     </a>
                     <a href="#pricing" style={{
@@ -789,18 +789,18 @@ function Pricing() {
                                 : <>Cancel anytime · or {dollars(GROWTH_YEARLY_CENTS)}/yr and save {YEARLY_SAVINGS_PERCENT}%</>}
                         </div>
 
-                        <a href={`/register?subscription=${interval}`} style={{
+                        <a href="/register" style={{
                             marginTop: 28, fontFamily: SANS, fontWeight: 600, fontSize: 14,
                             background: RED, color: '#fff', border: 'none',
                             padding: '14px 22px', borderRadius: 999, cursor: 'pointer',
                             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                             textDecoration: 'none',
                         }}>
-                            Start your {TRIAL_DAYS}-day free trial
+                            Get started free
                             <Icon d={ICONS.arrow} size={14} stroke={2} />
                         </a>
                         <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, marginTop: 10, textAlign: 'center' }}>
-                            No credit card to start · card processing 2.9% + 30¢ at cost
+                            Sign up free, then try Growth for {TRIAL_DAYS} days · no card needed
                         </div>
 
                         <div style={{
@@ -840,7 +840,7 @@ function Pricing() {
                             display: 'inline-block', textDecoration: 'none', textAlign: 'center',
                         }}>Start free</a>
                         <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, marginTop: 10, textAlign: 'center' }}>
-                            Every account starts with {TRIAL_DAYS} days of Growth
+                            Upgrade to Growth whenever you&apos;re ready
                         </div>
 
                         <div style={{
@@ -1136,7 +1136,7 @@ function Founding({ foundingMemberCount }: { foundingMemberCount: number }) {
                         }}>
                             {[
                                 ['First-listed in marketplace', 'When it opens'],
-                                [`${TRIAL_DAYS} days free`, 'Every feature, no card needed'],
+                                [`${TRIAL_DAYS}-day Growth trial`, 'When you upgrade, no card needed'],
                                 ['Rate locked forever', '$25/mo or $250/yr — always'],
                                 ['Founding-member badge', 'On your public page'],
                                 ['Priority support', 'Direct access to the team'],
@@ -1194,7 +1194,7 @@ function FinalCTA() {
                     color: 'rgba(250,247,242,.75)',
                     margin: '24px auto 40px', maxWidth: 560, fontWeight: 400,
                 }}>
-                    Every feature free for {TRIAL_DAYS} days, no card needed. Join now to lock in $25/mo forever
+                    Start free, then try every Growth feature free for {TRIAL_DAYS} days, no card needed. Join now to lock in $25/mo forever
                     and be first in the marketplace at launch.
                 </p>
 
