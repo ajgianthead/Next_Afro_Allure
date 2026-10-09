@@ -72,7 +72,7 @@ function Hero({ p, isLoggedIn }: { p: SwitchPlatform; isLoggedIn: boolean }) {
                 </p>
                 <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
                     <PrimaryCta href={isLoggedIn ? '/dashboard/clients' : '/register'}>
-                        {isLoggedIn ? 'Import your clients' : `Start free for ${TRIAL_DAYS} days`}
+                        {isLoggedIn ? 'Import your clients' : 'Start free'}
                     </PrimaryCta>
                     <a href="#how" style={{ fontFamily: SANS, fontSize: 15, color: WARM, fontWeight: 500 }}>How switching works</a>
                 </div>
@@ -239,7 +239,7 @@ function CostCompare({ p }: { p: SwitchPlatform }) {
 function HowToSwitch({ p }: { p: SwitchPlatform }) {
     const steps: { title: string; body: React.ReactNode }[] = [
         { title: `Export your client list from ${p.name}`, body: p.exportStep },
-        { title: 'Create your AfroAllure account and add your services', body: <>Start your free {TRIAL_DAYS}-day trial, with no card needed. Set up your menu with size and length pricing, deposits and policies, connect Stripe to get paid, and pick a look for your booking site.</> },
+        { title: 'Create your AfroAllure account and add your services', body: <>Sign up free, with no card needed. Set up your menu with size and length pricing, deposits and policies, connect Stripe to get paid, and pick a look for your booking site.</> },
         { title: 'Import your clients', body: <>In your dashboard, go to <strong>Clients → Import</strong> and upload the CSV. We match the columns for you, skip anyone already on your list, and send nothing to your clients.</> },
         { title: 'Swap your link and tell your clients', body: <>Put your new link in your Instagram bio and send the message below. {p.appointmentsNote}</> },
     ]
@@ -345,7 +345,7 @@ function FinalCta({ p, isLoggedIn }: { p: SwitchPlatform; isLoggedIn: boolean })
                     Your clients, your brand, your booking site.
                 </h2>
                 <p style={{ fontFamily: SANS, fontSize: 16, color: MUTED, margin: '0 0 30px' }}>
-                    {TRIAL_DAYS} days free, no card needed. Questions? Email{' '}
+                    Free to start, and Growth is free for {TRIAL_DAYS} days when you upgrade. Questions? Email{' '}
                     <a href="mailto:abijahnesbitt@afroallure.co" style={{ color: INK }}>abijahnesbitt@afroallure.co</a>{' '}
                     and we&apos;ll help you move.
                 </p>

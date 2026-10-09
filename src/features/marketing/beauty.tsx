@@ -6,7 +6,7 @@ import type { MarketingPageContent } from './content'
 import { dollars, GROWTH_MONTHLY_CENTS, GROWTH_YEARLY_CENTS, TRIAL_DAYS } from '../billing/plans'
 
 const GROWTH_PRICE = `${dollars(GROWTH_MONTHLY_CENTS)}/mo or ${dollars(GROWTH_YEARLY_CENTS)}/yr`
-const COST_FAQ: [string, string] = ['What does it cost?', `Growth is ${GROWTH_PRICE} with no fee on your payments. Starter is free and takes 1% per card payment. Every new account gets ${TRIAL_DAYS} days of Growth free, no card needed.`]
+const COST_FAQ: [string, string] = ['What does it cost?', `Growth is ${GROWTH_PRICE} with no fee on your payments. Starter is free and takes 1% per card payment. Every account starts free on Starter, and you can try Growth free for ${TRIAL_DAYS} days when you upgrade, no card needed.`]
 
 export type BeautySlug = 'nails' | 'lashes' | 'brows' | 'makeup'
 
@@ -15,7 +15,7 @@ export const BEAUTY: Record<BeautySlug, MarketingPageContent> = {
         slug: 'nails',
         kind: 'specialty',
         metaTitle: 'Booking App for Nail Techs | Shape × Length Pricing, Deposits & Fill Reminders | AfroAllure',
-        metaDescription: 'Booking for nail techs: price sets by shape and length, add nail art and soak-offs as add-ons, take deposits, and remind clients when their fill is due. 30 days free.',
+        metaDescription: 'Booking for nail techs: price sets by shape and length, add nail art and soak-offs as add-ons, take deposits, and remind clients when their fill is due. Start free.',
         eyebrow: 'For nail techs',
         heroTitle: <>Shape, length, art.<br /><em>Priced before they sit down.</em></>,
         heroBody: 'Clients pick the set, the shape and the length, add their art, and see the real price and time. Then they pay a deposit, and a nudge brings them back when their fill is due.',
@@ -96,7 +96,7 @@ export const BEAUTY: Record<BeautySlug, MarketingPageContent> = {
         slug: 'lashes',
         kind: 'specialty',
         metaTitle: 'Booking App for Lash Artists | Full Sets, Fills & Deposits | AfroAllure',
-        metaDescription: 'Booking for lash artists: price classic, hybrid and volume full sets and fills, take deposits, send prep instructions, and remind clients before their fill window closes. 30 days free.',
+        metaDescription: 'Booking for lash artists: price classic, hybrid and volume full sets and fills, take deposits, send prep instructions, and remind clients before their fill window closes. Start free.',
         eyebrow: 'For lash artists',
         heroTitle: <>Full sets booked.<br /><em>Fills on time.</em></>,
         heroBody: 'Classic, hybrid or volume, full set or fill, with the right time for each. Clients come prepped, pay a deposit to book, and get a nudge before their fill window closes.',
@@ -178,7 +178,7 @@ export const BEAUTY: Record<BeautySlug, MarketingPageContent> = {
         slug: 'brows',
         kind: 'specialty',
         metaTitle: 'Booking App for Brow Artists | Lamination, Tint & Wax Bookings | AfroAllure',
-        metaDescription: 'Booking for brow artists: lamination, tinting and shaping with prep and aftercare clients agree to, deposits, and rebook reminders when it\'s time for a touch-up. 30 days free.',
+        metaDescription: 'Booking for brow artists: lamination, tinting and shaping with prep and aftercare clients agree to, deposits, and rebook reminders when it\'s time for a touch-up. Start free.',
         eyebrow: 'For brow artists',
         heroTitle: <>Brows on a schedule.<br /><em>Clients on autopilot.</em></>,
         heroBody: 'Lamination every six weeks, shaping every four: AfroAllure reminds each client when they\'re due, sends your prep and aftercare, and holds the slot with a deposit.',
@@ -249,7 +249,7 @@ export const BEAUTY: Record<BeautySlug, MarketingPageContent> = {
         slug: 'makeup',
         kind: 'specialty',
         metaTitle: 'Booking App for Makeup Artists | Event & Bridal Deposits | AfroAllure',
-        metaDescription: 'Booking for makeup artists: soft glam, full glam and bridal with deposits that lock in the date, prep clients agree to, late fees and pay links for the balance. 30 days free.',
+        metaDescription: 'Booking for makeup artists: soft glam, full glam and bridal with deposits that lock in the date, prep clients agree to, late fees and pay links for the balance. Start free.',
         eyebrow: 'For makeup artists',
         heroTitle: <>Big days, booked<br /><em>and paid for.</em></>,
         heroBody: 'Weddings, birthdays, shoots. A deposit locks in the date, prep and policies are agreed up front, and the balance arrives by pay link, so your day is about the beat, not the paperwork.',

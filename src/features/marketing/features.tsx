@@ -87,7 +87,7 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
         slug: 'no-show-protection',
         kind: 'feature',
         metaTitle: 'No-Show Protection for Hair Stylists | Deposits, No-Show & Late Fees | AfroAllure',
-        metaDescription: 'Protect your time with deposits, a saved card for agreed no-show fees, late fees with a grace period, reminders and policies clients agree to before they book. 30 days free.',
+        metaDescription: 'Protect your time with deposits, a saved card for agreed no-show fees, late fees with a grace period, reminders and policies clients agree to before they book. Start free.',
         eyebrow: 'No-show protection',
         heroTitle: <>No deposit, no appointment.<br /><em>No show, no problem.</em></>,
         heroBody: 'Deposits hold the chair, the card is saved for an agreed no-show fee, late fees cover the clients who run behind, and reminders make sure they remember.',

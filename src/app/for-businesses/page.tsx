@@ -5,7 +5,7 @@ import { getFoundingMemberCount } from '@/lib/foundingMember';
 
 export const metadata: Metadata = {
     title: 'AfroAllure for Business | Booking Built for Black Beauty Professionals',
-    description: 'Booking sites for braiders, locticians, natural hair stylists and barbers: size × length pricing, deposits and no-show fees, reminders, loyalty and no percentage fee on Growth. 30 days free.',
+    description: 'Booking sites for braiders, locticians, natural hair stylists and barbers: size × length pricing, deposits and no-show fees, reminders, loyalty and no percentage fee on Growth. Start free.',
     alternates: { canonical: '/for-businesses' },
 }
 

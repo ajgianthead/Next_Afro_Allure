@@ -429,8 +429,8 @@ function WhatYouGet({ foundingMemberCount }: { foundingMemberCount: number }) {
               fontFamily: SERIF, fontSize: 'clamp(32px, 4vw, 44px)', fontWeight: 400,
               color: GOLD, letterSpacing: '-.025em', lineHeight: 1.05, marginBottom: 18,
             }}>
-              30 days free.<br />
-              <span style={{ color: WARM, fontSize: '0.72em' }}>Then $25/mo — locked forever.</span>
+              Free to start.<br />
+              <span style={{ color: WARM, fontSize: '0.72em' }}>Growth is $25/mo — locked forever.</span>
             </div>
 
             <p style={{
@@ -505,7 +505,7 @@ function FinalCTA() {
           fontFamily: SANS, fontSize: 13, color: MUTED, marginTop: 18,
           letterSpacing: '.01em',
         }}>
-          30 days free · No credit card required · Set up in 5 minutes
+          Free to start · No credit card required · Set up in 5 minutes
         </p>
       </div>
     </section>

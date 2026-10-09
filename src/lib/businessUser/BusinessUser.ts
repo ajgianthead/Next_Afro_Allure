@@ -17,8 +17,6 @@ import { Client } from "@lib/clients/Client";
 import { Appointment } from "@/features/manualBooking/server/models/Appointment";
 import { Notification } from "@lib/notifications/Notification";
 import { checkAndAssignFoundingMember } from "@/lib/foundingMember";
-import { startSignupTrial } from "@/features/billing/server/trial";
-import type { BillingInterval } from "@/features/billing/plans";
 import { Resend } from "resend";
 import FounderNotification from "../../../emails/FounderNotification";
 
@@ -179,7 +177,7 @@ export class BusinessUser {
         }
     }
 
-    static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string, marketingOptIn: boolean = false, ipAddress: string | null = null, interval: BillingInterval = 'month') {
+    static async create(supabase: SupabaseClient<Database, any>, email: string, password: string, name: string, marketingOptIn: boolean = false, ipAddress: string | null = null) {
         try {
             // The visitor isn't signed in yet, and row-level security only lets a
             // business touch its own rows — so the account's database records are
@@ -243,10 +241,8 @@ export class BusinessUser {
                 .eq('business_id', business.business_id)
 
             await checkAndAssignFoundingMember(business.business_id).catch(console.error)
-            if (await startSignupTrial(business.business_id, customer.id, interval)) {
-                business.plan_type = 'GROWTH'
-                business.had_trial = true
-            }
+            // New businesses start on Starter. The Growth trial starts only
+            // when they choose to upgrade (see growthCheckout).
 
             if (process.env.FOUNDER_EMAIL) {
                 try {

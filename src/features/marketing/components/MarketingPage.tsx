@@ -68,7 +68,7 @@ function Hero({ c, isLoggedIn, menu }: Ctx) {
                 {c.heroBody}
             </p>
             <Cta href={isLoggedIn ? '/dashboard' : '/register'} light={style === 'split-accent'}>
-                {isLoggedIn ? 'Go to your dashboard' : `Start free for ${TRIAL_DAYS} days`}
+                {isLoggedIn ? 'Go to your dashboard' : 'Start free'}
             </Cta>
             {!isLoggedIn && (
                 <p style={{ fontFamily: SANS, fontSize: 13, color: dark ? 'rgba(250,247,242,.6)' : MUTED, margin: '16px 0 0' }}>
@@ -441,7 +441,7 @@ function FinalCta({ c, isLoggedIn }: Ctx) {
                 <h2 style={{ fontFamily: SERIF, fontWeight: 400, fontSize: 'clamp(32px, 4.4vw, 56px)', letterSpacing: '-.02em', margin: '0 0 14px' }}>
                     Your clients, your brand,<br />your booking site.
                 </h2>
-                <p style={{ fontFamily: SANS, fontSize: 16, color: 'rgba(250,247,242,.7)', margin: '0 0 30px' }}>{TRIAL_DAYS} days free, no card needed.</p>
+                <p style={{ fontFamily: SANS, fontSize: 16, color: 'rgba(250,247,242,.7)', margin: '0 0 30px' }}>Start free. Try Growth free for {TRIAL_DAYS} days when you upgrade, no card needed.</p>
                 <Cta href={isLoggedIn ? '/dashboard' : '/register'}>{isLoggedIn ? 'Go to your dashboard' : 'Start free'}</Cta>
             </div>
             {related.length > 0 && (

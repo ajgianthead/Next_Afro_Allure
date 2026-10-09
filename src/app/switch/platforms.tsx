@@ -134,7 +134,7 @@ export const PLATFORMS: Record<PlatformSlug, SwitchPlatform> = {
         slug: 'acuity',
         name: 'Acuity',
         metaTitle: 'Switching from Acuity Scheduling | AfroAllure',
-        metaDescription: 'Move from Acuity Scheduling to AfroAllure: a booking site built for hair, with size × length pricing, deposits, no-show fees, loyalty rewards and rebook reminders. 30 days free.',
+        metaDescription: 'Move from Acuity Scheduling to AfroAllure: a booking site built for hair, with size × length pricing, deposits, no-show fees, loyalty rewards and rebook reminders. Start free.',
         heroTitle: <>From a scheduling link<br /><em>to a real booking site.</em></>,
         heroBody: 'Acuity is built for any appointment: tutors, therapists, consultants. AfroAllure is built for hair. Size and length pricing, deposits and no-show fees, loyalty and rebooking, on a site with your name on it.',
         gainsTitle: 'What you get on AfroAllure',
@@ -147,7 +147,7 @@ export const PLATFORMS: Record<PlatformSlug, SwitchPlatform> = {
             AFROALLURE_GAINS.rebook,
             AFROALLURE_GAINS.waitlist,
             AFROALLURE_GAINS.openings,
-            { title: 'A real free trial and a free plan', body: `${TRIAL_DAYS} days of everything with no card, then stay on Growth or drop to the free Starter plan. Acuity has a 7-day trial and no free plan.` },
+            { title: 'A real free trial and a free plan', body: `Start on the free Starter plan, and try Growth free for ${TRIAL_DAYS} days with no card whenever you upgrade. Acuity has a 7-day trial and no free plan.` },
             AFROALLURE_GAINS.import,
         ],
         compare: [

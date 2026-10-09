@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
 import { DashboardTour } from '@/features/tour/tours/DashboardTour'
 import { remainingBalance, serviceLabel } from '@/features/services/pricing'
+import { TRIAL_DAYS } from '@/features/billing/plans'
 
 // Price of what was booked: chosen style price (or base price) + hair + add-ons.
 const bookedPrice = (apt: any): number => {
@@ -351,7 +352,7 @@ function StarterUpgradeCard({ monthlyBookingCount, planType, businessData }: { m
       </div>
       <div className="mb-3">
         <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>$25/month</p>
-        <p className="text-xs" style={{ color: BRAND.warm }}>14-day free trial · no credit card required</p>
+        <p className="text-xs" style={{ color: BRAND.warm }}>{TRIAL_DAYS}-day free trial · no credit card required</p>
       </div>
       <button
         onClick={handleUpgrade}
