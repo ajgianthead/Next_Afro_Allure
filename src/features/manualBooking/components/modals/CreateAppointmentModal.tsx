@@ -23,7 +23,7 @@ import { addMinutesToTime, combineDateAndTime, minStartTimeFor, validateAppointm
 import { browserTimezone } from "@/lib/timezone";
 import { parseStyleOptions, quoteBooking, QuoteError, type StyleSelection } from "@/features/services/pricing";
 import { StylePicker } from "@/features/automatedBooking/components/StylePicker";
-import { TRIAL_DAYS } from '@/features/billing/plans'
+import { STARTER_LIMITS, TRIAL_DAYS } from '@/features/billing/plans'
 
 // StylePicker is themed with booking-site CSS variables; give it the dashboard's look.
 const PICKER_THEME = {
@@ -54,7 +54,7 @@ export const CreateAppointmentModal = ({ planType, monthlyBookingCount, hadTrial
     // the service-length default.
     const [endEdited, setEndEdited] = useState(false)
 
-    const atLimit = planType === 'STARTER' && monthlyBookingCount >= 10
+    const atLimit = planType === 'STARTER' && monthlyBookingCount >= STARTER_LIMITS.bookingsPerMonth
     const isOpen = manualBookingData?.openCreateAppointment ?? false
     const form = manualBookingData?.newAppointmentData
     const depositAvailable = !!manualBookingData?.policy.deposit.enabled && canTakeOnlinePayments

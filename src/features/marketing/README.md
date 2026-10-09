@@ -93,7 +93,7 @@ client agreed to it being shared publicly.
     alt: 'Stylist spotlight: boho knotless braids, waist length',
     credit: { name: 'Kayla Johnson', instagram: 'braidsbykayla', city: 'Atlanta' },
     permissionGiven: '2026-10-07',
-    pages: ['braiders', 'style-menus'],
+    pages: ['braiders', 'smart-pricing'],
 },
 ```
 

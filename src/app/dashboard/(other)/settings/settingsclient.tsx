@@ -582,7 +582,7 @@ function SubscriptionSection({
                     <StatusBadge label="Free" color="neutral" />
                 </div>
                 <p className="text-xs" style={{ color: '#6F6863' }}>
-                    Free, with a 1% fee on card payments and up to {STARTER_LIMITS.manualBookingsPerMonth} manual bookings a month.
+                    Free, with a 1% fee on card payments and up to {STARTER_LIMITS.bookingsPerMonth} bookings a month.
                     Growth removes the fee and unlocks unlimited bookings, reminders, loyalty and more —{' '}
                     {dollars(GROWTH_MONTHLY_CENTS)}/mo, or {dollars(GROWTH_YEARLY_CENTS)}/yr (save {YEARLY_SAVINGS_PERCENT}%).
                 </p>

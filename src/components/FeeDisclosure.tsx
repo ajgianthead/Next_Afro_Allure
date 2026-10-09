@@ -1,6 +1,7 @@
 import {
     dollars, GROWTH_MONTHLY_CENTS, GROWTH_YEARLY_CENTS, TRIAL_DAYS, YEARLY_SAVINGS_PERCENT,
 } from '@/features/billing/plans'
+import { INSTANT_PAYOUT_FEE_LABEL } from '@/lib/fees'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -22,6 +23,8 @@ export function FeeDisclosure({ signup = false }: { signup?: boolean }) {
             <Row label="AfroAllure fee on Growth" value="0%" />
             <Row label="Starter (free plan)" value="1% per card payment" />
             <Row label="Card processing (Stripe, at cost)" value="2.9% + $0.30 per card payment" />
+            <Row label="Payouts to your bank" value="Free (about 2 business days)" />
+            <Row label="Instant payouts (optional)" value={INSTANT_PAYOUT_FEE_LABEL} />
             {signup && (
                 <>
                     <div style={{ borderTop: '1px solid #E8E2D6', margin: '4px 0' }} />

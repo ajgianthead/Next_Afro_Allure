@@ -17,7 +17,7 @@ import {
     ACUITY, AFROALLURE_GROWTH_MONTHLY, AFROALLURE_GROWTH_YEARLY, CHECKED_ON as COMPETITORS_CHECKED_ON,
     GLOSSGENIUS, monthlyCost, STYLESEAT, type CostModel,
 } from '@/features/billing/competitors';
-import { STARTER_PLATFORM_FEE_PERCENT, STRIPE_PROCESSING_FIXED_CENTS, STRIPE_PROCESSING_PERCENT } from '@/lib/fees';
+import { INSTANT_PAYOUT_FEE_LABEL, STARTER_PLATFORM_FEE_PERCENT, STRIPE_PROCESSING_FIXED_CENTS, STRIPE_PROCESSING_PERCENT } from '@/lib/fees';
 
 
 const RED = '#FC6161';
@@ -686,7 +686,7 @@ function Pricing() {
         'Booking analytics & client management',
     ];
     const starter = [
-        `${STARTER_LIMITS.manualBookingsPerMonth} manual bookings a month`,
+        `${STARTER_LIMITS.bookingsPerMonth} bookings a month`,
         `${STARTER_LIMITS.availabilitySchedules} availability schedule`,
         'Online booking & deposits',
         '1% AfroAllure fee on card payments',
@@ -861,6 +861,11 @@ function Pricing() {
                         </div>
                     </div>
                 </div>
+
+                <p style={{ fontFamily: SANS, fontSize: 13, color: MUTED, lineHeight: 1.6, textAlign: 'center', maxWidth: 640, margin: '28px auto 0' }}>
+                    <strong style={{ color: INK }}>Payouts on every plan:</strong> standard payouts to your bank are free and usually arrive in 2 business days.
+                    Need it now? Instant payouts arrive in about 30 minutes, any day, for {INSTANT_PAYOUT_FEE_LABEL} of the amount. Always optional.
+                </p>
             </div>
         </section>
     );
@@ -1019,7 +1024,7 @@ function FeeTransparency() {
                         <p style={{ fontFamily: SANS, fontSize: 12, color: MUTED, fontStyle: 'italic', marginTop: 12, lineHeight: 1.5 }}>
                             Published pricing as of {COMPETITORS_CHECKED_ON}. StyleSeat also charges 30% of a new client&apos;s first visit (up to $50)
                             when its marketplace sends them. Acuity&apos;s Starter plan has no text reminders; its plan with them is $34/mo.
-                            Card rates assume standard US cards. Cash payments have no fees anywhere.
+                            Card rates assume standard US cards. Cash payments have no fees anywhere. Standard payouts are free; optional instant payouts cost {INSTANT_PAYOUT_FEE_LABEL}.
                         </p>
                     </div>
                 </div>

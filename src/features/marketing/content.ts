@@ -30,8 +30,10 @@ export type Widget =
     | { kind: 'calendar' }
     | { kind: 'payout'; amountCents: number }
     | { kind: 'rebook'; business: string; service: string; weeks: number }
+    | { kind: 'loyalty'; business: string; visits: number; reward: string }   // punch card filling up to a reward
+    | { kind: 'hours' }                                          // weekly hours, a day off, booking rules
     /** The AfroAllure dashboard on a laptop screen. */
-    | { kind: 'dashboard'; view: 'appointments' | 'services' | 'no-show'; business: string }
+    | { kind: 'dashboard'; view: 'appointments' | 'services' | 'no-show' | 'clients' | 'editor'; business: string }
 
 export interface Visual { widget: Widget; slot: SlotName }
 

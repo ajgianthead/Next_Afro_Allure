@@ -12,7 +12,8 @@
 export type MarketingPageSlug =
     | 'braiders' | 'locticians' | 'natural-hair' | 'wigs-and-installs'
     | 'nails' | 'lashes' | 'brows' | 'makeup'
-    | 'payments' | 'no-show-protection' | 'reminders' | 'style-menus'
+    | 'calendar' | 'website-builder' | 'smart-pricing' | 'reminders'
+    | 'payments' | 'no-show-protection' | 'loyalty' | 'client-management'
 
 export type MediaSource =
     /** A photo in /public, e.g. '/stylists/kayla-knotless.jpg'. */
@@ -63,7 +64,7 @@ export const STYLIST_MEDIA: StylistMedia[] = [
     //     alt: 'Stylist spotlight reel: boho knotless braids',
     //     credit: { name: 'Kayla Johnson', instagram: 'braidsbykayla', city: 'Atlanta' },
     //     permissionGiven: '2026-10-07',
-    //     pages: ['braiders', 'style-menus'],
+    //     pages: ['braiders', 'smart-pricing'],
     // },
 ]
 

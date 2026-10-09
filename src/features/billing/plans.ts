@@ -28,8 +28,11 @@ export const dollars = (cents: number) =>
 /** "$20.83" — the yearly plan expressed per month. */
 export const yearlyPerMonth = () => dollars(Math.round(GROWTH_YEARLY_CENTS / 12))
 
-/** Free Starter plan limits, matching the gates in availability and manual booking. */
+/**
+ * Free Starter plan limits. bookingsPerMonth counts every booking made this
+ * month, online or added by the business, except cancelled ones.
+ */
 export const STARTER_LIMITS = {
     availabilitySchedules: 1,
-    manualBookingsPerMonth: 10,
+    bookingsPerMonth: 10,
 }
