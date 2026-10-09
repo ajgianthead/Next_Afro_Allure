@@ -349,6 +349,84 @@ export function Rebook({ business, service, weeks }: { business: string; service
     )
 }
 
+// ─── Loyalty punch card ──────────────────────────────────────────────────────
+
+/** Visits stamp in one by one until the reward code is issued, as in the loyalty email. */
+export function Loyalty({ business, visits, reward }: { business: string; visits: number; reward: string }) {
+    const step = useCycle(visits + 2, 900, visits + 1)
+    const filled = Math.min(step, visits)
+    const earned = step > visits
+    return (
+        <Card style={{ width: '100%', maxWidth: 400, margin: '0 auto', padding: 24 }}>
+            <div className="aa-w">
+                <div style={{ fontSize: 11, color: MUTED, textTransform: 'uppercase', letterSpacing: '.12em', fontWeight: 600 }}>Rewards at {business}</div>
+                <div style={{ fontFamily: SERIF, fontSize: 22, margin: '6px 0 16px' }}>
+                    {earned ? `You earned ${reward}.` : `${visits - filled} visit${visits - filled === 1 ? '' : 's'} to ${reward}`}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${visits}, 1fr)`, gap: 8 }}>
+                    {Array.from({ length: visits }, (_, i) => (
+                        <span key={i} className="aa-w-cell" style={{
+                            aspectRatio: '1', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            border: `1.5px solid ${i < filled ? 'var(--acc)' : LINE}`, background: i < filled ? 'var(--acc)' : WARM,
+                            color: '#fff', fontSize: 15, fontWeight: 700,
+                        }}>{i < filled ? '✓' : ''}</span>
+                    ))}
+                </div>
+                <div style={{ marginTop: 18, minHeight: 58 }}>
+                    {earned ? (
+                        <div className="aa-w-in" style={{ background: WARM, border: `1.5px dashed var(--acc)`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+                            <div style={{ fontSize: 11, color: MUTED }}>Use this code on your next visit</div>
+                            <div style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 18, fontWeight: 700, letterSpacing: '.08em', marginTop: 2 }}>AA-7F3KQ2</div>
+                        </div>
+                    ) : (
+                        <p style={{ fontSize: 12, color: MUTED, lineHeight: 1.5, margin: 0 }}>Each completed appointment counts. Progress is emailed after every visit.</p>
+                    )}
+                </div>
+            </div>
+        </Card>
+    )
+}
+
+// ─── Working hours and booking rules ────────────────────────────────────────
+
+const HOURS: [string, string][] = [
+    ['Mon', 'Closed'], ['Tue', '9:00 AM – 6:00 PM'], ['Wed', '9:00 AM – 6:00 PM'], ['Thu', '9:00 AM – 1:00 PM, 3:00 – 8:00 PM'],
+    ['Fri', '8:00 AM – 6:00 PM'], ['Sat', '7:00 AM – 4:00 PM'], ['Sun', 'Closed'],
+]
+
+/** A weekly schedule, then a one-off day off and the booking rules clients book within. */
+export function Hours() {
+    const step = useCycle(3, 1800, 2)
+    return (
+        <Card style={{ width: '100%', maxWidth: 420, margin: '0 auto', padding: 22 }}>
+            <div className="aa-w">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                    <div style={{ fontFamily: SERIF, fontSize: 20 }}>Working hours</div>
+                    <span style={{ fontSize: 11, color: MUTED }}>Your time zone</span>
+                </div>
+                {HOURS.map(([d, h]) => (
+                    <div key={d} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, padding: '7px 0', borderBottom: `1px solid ${LINE}` }}>
+                        <strong style={{ width: 40 }}>{d}</strong>
+                        <span style={{ color: h === 'Closed' ? MUTED : INK, textAlign: 'right' }}>{h}</span>
+                    </div>
+                ))}
+                <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8, minHeight: 74 }}>
+                    {step >= 1 && (
+                        <div className="aa-w-in" style={{ fontSize: 12, padding: '8px 12px', borderRadius: 10, background: 'color-mix(in srgb, var(--acc) 12%, #fff)', display: 'flex', justifyContent: 'space-between' }}>
+                            <span><strong>Fri, Dec 26</strong> · day off</span><span style={{ color: MUTED }}>Date override</span>
+                        </div>
+                    )}
+                    {step >= 2 && (
+                        <div className="aa-w-in" style={{ fontSize: 12, color: MUTED, lineHeight: 1.5 }}>
+                            Clients book up to 8 weeks ahead and can reschedule up to 2 days before.
+                        </div>
+                    )}
+                </div>
+            </div>
+        </Card>
+    )
+}
+
 export function WidgetView({ widget, menu }: { widget: Widget; menu?: SampleMenu }) {
     switch (widget.kind) {
         case 'price-picker': return menu ? <PricePicker menu={menu} /> : null
@@ -359,6 +437,8 @@ export function WidgetView({ widget, menu }: { widget: Widget; menu?: SampleMenu
         case 'calendar': return <Calendar />
         case 'payout': return <Payout amountCents={widget.amountCents} />
         case 'rebook': return <Rebook {...widget} />
+        case 'loyalty': return <Loyalty {...widget} />
+        case 'hours': return <Hours />
         case 'dashboard': return <DashboardDemo view={widget.view} business={widget.business} />
     }
 }

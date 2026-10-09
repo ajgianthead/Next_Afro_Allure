@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { fetchUser } from 'app/dashboard/(other)/actions'
 import { MarketingPage } from '@/features/marketing/components/MarketingPage'
-import { FEATURES, type FeatureSlug } from '@/features/marketing/features'
+import { FEATURE_REDIRECTS, FEATURES, type FeatureSlug } from '@/features/marketing/features'
 
 type Params = Promise<{ feature: string }>
 
@@ -26,6 +26,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function Page({ params }: { params: Params }) {
     const { feature } = await params
+    // Renamed pages keep their old links working.
+    if (FEATURE_REDIRECTS[feature]) permanentRedirect(`/features/${FEATURE_REDIRECTS[feature]}`)
     if (!isFeature(feature)) notFound()
     const user = await fetchUser()
     return <MarketingPage content={FEATURES[feature]} isLoggedIn={!!user} />

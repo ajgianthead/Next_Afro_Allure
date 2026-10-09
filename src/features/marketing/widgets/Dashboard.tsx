@@ -16,7 +16,7 @@ const LINE = '#E8E2D6'
 const WARM = '#FAF7F2'
 const SERIF = "'Fraunces', 'Times New Roman', serif"
 
-export type DashboardView = 'appointments' | 'services' | 'no-show'
+export type DashboardView = 'appointments' | 'services' | 'no-show' | 'clients' | 'editor'
 
 const NAV: { label?: string; items: string[] }[] = [
     { items: ['Dashboard', 'Appointments', 'Clients', 'Rewards', 'Analytics'] },
@@ -249,12 +249,130 @@ function NoShow({ business }: { business: string }) {
     )
 }
 
+// ─── Clients: the list, then a client banned from booking ───────────────────
+
+const CLIENTS = [
+    ['Ashley', 'Reed', 'ashley.r@gmail.com', '(404) 555-0182'],
+    ['Monique', 'Taylor', 'mtaylor@yahoo.com', '(678) 555-0139'],
+    ['Jordan', 'King', 'jordank@icloud.com', '(470) 555-0117'],
+    ['Tasha', 'Williams', 'tasha.w@gmail.com', '(404) 555-0164'],
+    ['Kim', 'Davis', 'kimd@outlook.com', '(770) 555-0128'],
+    ['Bria', 'Lewis', 'bria.lewis@gmail.com', '(678) 555-0101'],
+]
+
+function Clients({ business }: { business: string }) {
+    const step = useCycle(5, 1500, 4)
+    const target = 4
+    const selected = step >= 1
+    const banned = step >= 3
+    return (
+        <>
+            <Sidebar active="Clients" business={business} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: WARM, minWidth: 0 }}>
+                <Header title="Clients" />
+                <div style={{ flex: 1, display: 'flex', gap: 18, padding: 22, minHeight: 0 }}>
+                    <div style={{ flex: 1, background: '#fff', border: `1px solid ${LINE}`, borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <div style={{ fontFamily: SERIF, fontSize: 24 }}>Clients</div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <Button>Banned List{banned ? ' (1)' : ''}</Button>
+                                <Button>Import</Button>
+                                <Button primary>Add Client</Button>
+                            </div>
+                        </div>
+                        <div style={{ fontSize: 13, color: MUTED, marginBottom: 16 }}>Add, import, edit, and remove clients. Ban clients to block future bookings.</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.6fr 1.2fr 90px', fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: MUTED, fontWeight: 600, padding: '0 12px 10px', borderBottom: `1px solid ${LINE}` }}>
+                            <span>First Name</span><span>Last Name</span><span>Email</span><span>Phone Number</span><span />
+                        </div>
+                        {CLIENTS.map((c, i) => {
+                            const isTarget = i === target
+                            const gone = isTarget && banned
+                            return (
+                                <div key={c[2]} className="aa-w-cell" style={{
+                                    display: 'grid', gridTemplateColumns: '1fr 1fr 1.6fr 1.2fr 90px', alignItems: 'center', fontSize: 14, padding: '12px', borderBottom: `1px solid ${LINE}`,
+                                    background: isTarget && selected && !gone ? WARM : 'transparent', opacity: gone ? .45 : 1,
+                                }}>
+                                    <span>{c[0]}</span><span>{c[1]}</span><span style={{ color: MUTED }}>{c[2]}</span><span style={{ color: MUTED }}>{c[3]}</span>
+                                    <span style={{ textAlign: 'right' }}>
+                                        {gone
+                                            ? <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: 'rgba(220,38,38,.1)', color: '#DC2626' }}>Banned</span>
+                                            : isTarget && selected
+                                                ? <span className={step === 2 ? 'aa-w-pulse' : ''} style={{ fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 999, background: '#DC2626', color: '#fff' }}>Ban</span>
+                                                : null}
+                                    </span>
+                                </div>
+                            )
+                        })}
+                        <div style={{ marginTop: 'auto', fontSize: 13, color: MUTED, minHeight: 20, paddingTop: 14 }}>
+                            {banned ? 'Kim can no longer book online with that email or phone number.' : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+}
+
+// ─── Booking site: the drag-and-drop editor building a page ─────────────────
+
+const PALETTE = ['Navbar', 'Hero', 'Services', 'Gallery', 'About', 'Footer']
+
+function Editor({ business }: { business: string }) {
+    const step = useCycle(PALETTE.length + 2, 900, PALETTE.length + 1)
+    const placed = Math.min(step, PALETTE.length)
+    const recolor = step > PALETTE.length
+    const accent = recolor ? '#2F7D5B' : 'var(--acc)'
+    const block = (name: string) => {
+        switch (name) {
+            case 'Navbar': return <div style={{ height: 42, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', background: '#fff' }}><strong style={{ fontFamily: SERIF, fontSize: 16 }}>{business}</strong><span style={{ fontSize: 11, color: MUTED }}>Services · Gallery · Book</span></div>
+            case 'Hero': return <div style={{ height: 130, padding: 20, color: '#fff', background: `linear-gradient(135deg, ${accent}, #0F0E0E)`, transition: 'background .5s' }}><div style={{ fontFamily: SERIF, fontSize: 26 }}>Braids, done right.</div><div style={{ marginTop: 12, display: 'inline-block', fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 999, background: '#fff', color: INK }}>Book now</div></div>
+            case 'Services': return <div style={{ padding: 14, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, background: WARM }}>{['Knotless', 'Boho', 'Cornrows'].map(s => <div key={s} style={{ background: '#fff', borderRadius: 10, padding: 10, fontSize: 12, fontWeight: 600 }}>{s}<div style={{ fontSize: 11, color: MUTED, fontWeight: 400 }}>from $90</div></div>)}</div>
+            case 'Gallery': return <div style={{ padding: 14, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, background: '#fff' }}>{[0, 1, 2, 3].map(i => <div key={i} style={{ aspectRatio: '1', borderRadius: 8, background: `color-mix(in srgb, ${recolor ? '#2F7D5B' : '#C9974A'} ${30 + i * 15}%, #fff)`, transition: 'background .5s' }} />)}</div>
+            case 'About': return <div style={{ padding: '14px 18px', background: WARM, fontSize: 12, color: MUTED, lineHeight: 1.5 }}><strong style={{ color: INK }}>About me</strong> · Braiding in Atlanta for 8 years. Protective styles that last.</div>
+            default: return <div style={{ height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', background: '#0F0E0E' }}>© {business} · Booking by AfroAllure</div>
+        }
+    }
+    return (
+        <>
+            <Sidebar active="Booking Site" business={business} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: WARM, minWidth: 0 }}>
+                <Header title="Drag & Drop Editor" />
+                <div style={{ flex: 1, display: 'flex', gap: 18, padding: 22, minHeight: 0 }}>
+                    <div style={{ width: 200, flexShrink: 0, background: '#fff', border: `1px solid ${LINE}`, borderRadius: 16, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: MUTED, fontWeight: 600, marginBottom: 4 }}>Components</div>
+                        {PALETTE.map((p, i) => (
+                            <div key={p} className={i === placed ? 'aa-w-pulse' : ''} style={{ fontSize: 13, padding: '9px 12px', borderRadius: 10, border: `1.5px solid ${i === placed ? 'var(--acc)' : LINE}`, background: i < placed ? WARM : '#fff', color: i < placed ? MUTED : INK }}>⋮⋮ {p}</div>
+                        ))}
+                        <div style={{ marginTop: 'auto', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: MUTED, fontWeight: 600 }}>Brand color</div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                            {['#FC6161', '#2F7D5B', '#C9974A', '#3B6FD9'].map(c => <span key={c} style={{ width: 24, height: 24, borderRadius: '50%', background: c, boxShadow: (recolor ? c === '#2F7D5B' : c === '#FC6161') ? `0 0 0 2px #fff, 0 0 0 4px ${c}` : 'none' }} />)}
+                        </div>
+                    </div>
+                    <div style={{ flex: 1, background: '#fff', border: `1px solid ${LINE}`, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontSize: 11, color: MUTED, padding: '8px 14px', borderBottom: `1px solid ${LINE}` }}>{business.toLowerCase().replace(/[^a-z]/g, '')}.afroallure.co</div>
+                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                            {PALETTE.slice(0, placed).map(p => <div key={p} className="aa-w-in">{block(p)}</div>)}
+                            {placed < PALETTE.length && (
+                                <div style={{ margin: 14, height: 54, borderRadius: 12, border: '2px dashed var(--acc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: MUTED }}>Drop {PALETTE[placed]} here</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+}
+
 export function DashboardDemo({ view, business }: { view: DashboardView; business: string }) {
     return (
         <LaptopFrame canvas>
             {/* textAlign: centered page sections must not center the app's own text. */}
             <div className="aa-w" style={{ width: 1280, height: 800, display: 'flex', background: WARM, textAlign: 'left' }}>
-                {view === 'services' ? <Services business={business} /> : view === 'no-show' ? <NoShow business={business} /> : <Appointments business={business} />}
+                {view === 'services' ? <Services business={business} />
+                    : view === 'no-show' ? <NoShow business={business} />
+                        : view === 'clients' ? <Clients business={business} />
+                            : view === 'editor' ? <Editor business={business} />
+                                : <Appointments business={business} />}
             </div>
         </LaptopFrame>
     )

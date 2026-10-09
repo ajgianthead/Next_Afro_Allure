@@ -89,7 +89,7 @@ export const BEAUTY: Record<BeautySlug, MarketingPageContent> = {
             ['Do clients get reminded about fills?', 'Yes. Set how many weeks a service lasts and clients get a rebook reminder when it\'s time.'],
             COST_FAQ,
         ],
-        related: ['/features/style-menus', '/features/reminders', '/for/lashes'],
+        related: ['/features/smart-pricing', '/features/reminders', '/for/lashes'],
     },
 
     lashes: {

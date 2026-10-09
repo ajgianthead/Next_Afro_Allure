@@ -102,7 +102,7 @@ export const SPECIALTIES: Record<SpecialtySlug, MarketingPageContent> = {
             ['Can clients book on Instagram?', 'Put your booking link in your bio and stories. Clients book on your own site at yourname.afroallure.co, with your colors and photos.'],
             ['What does it cost?', `Growth is ${GROWTH_PRICE} with no fee on your payments. Starter is free and takes 1% per card payment. Every account starts free on Starter, and you can try Growth free for ${TRIAL_DAYS} days when you upgrade, no card needed.`],
         ],
-        related: ['/features/style-menus', '/features/no-show-protection', '/switch/styleseat'],
+        related: ['/features/smart-pricing', '/features/no-show-protection', '/switch/styleseat'],
     },
 
     locticians: {
@@ -188,7 +188,7 @@ export const SPECIALTIES: Record<SpecialtySlug, MarketingPageContent> = {
             ['Can I bring my current clients?', 'Yes. Import a CSV from StyleSeat, GlossGenius, Acuity or a spreadsheet. Nobody gets a message when you import.'],
             ['What does it cost?', `Growth is ${GROWTH_PRICE} with no fee on your payments. Starter is free and takes 1% per card payment. Every account starts free on Starter, and you can try Growth free for ${TRIAL_DAYS} days when you upgrade, no card needed.`],
         ],
-        related: ['/features/reminders', '/features/style-menus', '/switch/glossgenius'],
+        related: ['/features/reminders', '/features/smart-pricing', '/switch/glossgenius'],
     },
 
     'natural-hair': {

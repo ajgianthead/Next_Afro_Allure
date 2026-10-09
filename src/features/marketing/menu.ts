@@ -17,10 +17,14 @@ export const SPECIALTY_LINKS: MenuLink[] = [
 ]
 
 export const FEATURE_LINKS: MenuLink[] = [
-    { label: 'Payments & 0% fees', href: '/features/payments', blurb: 'Keep what you earn on Growth' },
-    { label: 'No-show protection', href: '/features/no-show-protection', blurb: 'Deposits, no-show and late fees' },
-    { label: 'Reminders & SMS', href: '/features/reminders', blurb: 'Email, text, rebook nudges' },
-    { label: 'Style menus & prep', href: '/features/style-menus', blurb: 'Price by size, length and hair' },
+    { label: 'Calendar & scheduling', href: '/features/calendar', blurb: 'Hours, online booking, waitlist', column: 'Get booked' },
+    { label: 'Website builder', href: '/features/website-builder', blurb: 'Templates and drag-and-drop', column: 'Get booked' },
+    { label: 'Smart pricing', href: '/features/smart-pricing', blurb: 'Price by size, length and hair', column: 'Get booked' },
+    { label: 'Reminders & SMS', href: '/features/reminders', blurb: 'Email, text, rebook nudges', column: 'Get booked' },
+    { label: 'Payments & 0% fees', href: '/features/payments', blurb: 'Deposits, pay links, payouts', column: 'Run your business' },
+    { label: 'No-show protection', href: '/features/no-show-protection', blurb: 'Deposits, fees and a ban list', column: 'Run your business' },
+    { label: 'Loyalty program', href: '/features/loyalty', blurb: 'Rewards by visits or spend', column: 'Run your business' },
+    { label: 'Client management', href: '/features/client-management', blurb: 'Your list, import, bans', column: 'Run your business' },
 ]
 
 export const SWITCH_LINKS: MenuLink[] = [
