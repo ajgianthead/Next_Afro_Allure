@@ -98,7 +98,7 @@ export const FEATURES: Record<FeatureSlug, MarketingPageContent> = {
             ['Can clients reschedule themselves?', 'Yes, from the link in their confirmation email, within the number of reschedules and the cutoff you set.'],
             ['Can I take a day off?', 'Yes. Add a date override to close a day or change its hours, without touching your weekly schedule.'],
             ['Can different services use different hours?', 'Yes, on Growth. Create more than one schedule and choose which one each service uses.'],
-            ['What does it cost?', `Every plan includes the calendar and online booking. Starter covers up to ${STARTER_LIMITS.manualBookingsPerMonth} bookings a month and one schedule. Growth (${GROWTH_PRICE}) is unlimited.`],
+            ['What does it cost?', `Every plan includes the calendar and online booking. Starter covers up to ${STARTER_LIMITS.bookingsPerMonth} bookings a month and one schedule. Growth (${GROWTH_PRICE}) is unlimited.`],
         ],
         related: ['/features/website-builder', '/features/reminders', '/for/natural-hair'],
     },

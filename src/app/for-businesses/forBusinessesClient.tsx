@@ -686,7 +686,7 @@ function Pricing() {
         'Booking analytics & client management',
     ];
     const starter = [
-        `${STARTER_LIMITS.manualBookingsPerMonth} manual bookings a month`,
+        `${STARTER_LIMITS.bookingsPerMonth} bookings a month`,
         `${STARTER_LIMITS.availabilitySchedules} availability schedule`,
         'Online booking & deposits',
         '1% AfroAllure fee on card payments',

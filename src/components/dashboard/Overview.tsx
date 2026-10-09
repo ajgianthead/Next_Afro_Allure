@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
 import { DashboardTour } from '@/features/tour/tours/DashboardTour'
 import { remainingBalance, serviceLabel } from '@/features/services/pricing'
-import { TRIAL_DAYS } from '@/features/billing/plans'
+import { STARTER_LIMITS, TRIAL_DAYS } from '@/features/billing/plans'
 
 // Price of what was booked: chosen style price (or base price) + hair + add-ons.
 const bookedPrice = (apt: any): number => {
@@ -260,8 +260,9 @@ function BookingLimitBanner({ monthlyBookingCount, planType, businessData }: { m
 
   if (planType === 'GROWTH') return null
 
-  const isAtLimit = monthlyBookingCount >= 10
-  const isNearLimit = monthlyBookingCount >= 7 && monthlyBookingCount < 10
+  const limit = STARTER_LIMITS.bookingsPerMonth
+  const isAtLimit = monthlyBookingCount >= limit
+  const isNearLimit = monthlyBookingCount >= limit - 3 && monthlyBookingCount < limit
 
   if (!isAtLimit && !isNearLimit) return null
   if (isNearLimit && dismissed) return null
@@ -293,7 +294,7 @@ function BookingLimitBanner({ monthlyBookingCount, planType, businessData }: { m
     )
   }
 
-  const remaining = 10 - monthlyBookingCount
+  const remaining = limit - monthlyBookingCount
   return (
     <div className="flex items-center justify-between px-4 py-3 rounded-xl text-sm"
       style={{ backgroundColor: 'rgba(201,151,74,0.1)', border: '1px solid rgba(201,151,74,0.3)', color: '#C9974A' }}>
@@ -325,7 +326,7 @@ function StarterUpgradeCard({ monthlyBookingCount, planType, businessData }: { m
 
   const handleUpgrade = () => openUpgrade()
 
-  const pct = Math.min((monthlyBookingCount / 10) * 100, 100)
+  const pct = Math.min((monthlyBookingCount / STARTER_LIMITS.bookingsPerMonth) * 100, 100)
 
   return (
     <div className="rounded-2xl p-5 border" style={{ backgroundColor: BRAND.cream, borderColor: BRAND.sand }}>
@@ -333,7 +334,7 @@ function StarterUpgradeCard({ monthlyBookingCount, planType, businessData }: { m
       <div className="mt-3 mb-4">
         <div className="flex justify-between text-xs mb-1.5" style={{ color: BRAND.warm }}>
           <span>Monthly bookings</span>
-          <span>{monthlyBookingCount} / 10 used</span>
+          <span>{monthlyBookingCount} / {STARTER_LIMITS.bookingsPerMonth} used</span>
         </div>
         <div className="h-1.5 rounded-full" style={{ backgroundColor: BRAND.sand }}>
           <div

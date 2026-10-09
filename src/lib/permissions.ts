@@ -1,6 +1,8 @@
+import { STARTER_LIMITS } from '@/features/billing/plans'
+
 export const PLAN_LIMITS = {
   STARTER: {
-    maxMonthlyBookings: 10,
+    maxMonthlyBookings: STARTER_LIMITS.bookingsPerMonth,
     maxAvailabilities: 1,
     canUseDragDropEditor: false,
     canUseAdvancedPayments: false,
