@@ -16,7 +16,7 @@ import { BusinessUser } from '@lib/businessUser/BusinessUser'
 // Server actions return plain { ok, error } objects: in production Next.js
 // hides the message of any Error passed to the browser, so a failed login or
 // signup only showed "An error occurred in the Server Components render".
-export type AuthActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string }
+export type AuthActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string; code?: string }
 
 export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false): Promise<AuthActionResult<ReturnType<BusinessUser['toClient']> & { needsEmailConfirmation: boolean }>> => {
     try {
@@ -60,6 +60,9 @@ export const loginBusinessUser = async (email: string, password: string): Promis
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) {
             console.error('Login failed:', error.message)
+            if (error.code === 'email_not_confirmed') {
+                return { ok: false, error: 'Please confirm your email first. Use the button below to get a new link.', code: 'email_not_confirmed' }
+            }
             return { ok: false, error: error.message }
         }
         if (data.user?.user_metadata?.account_type !== 'business') {
@@ -95,6 +98,31 @@ export const requestPasswordReset = async (email: string): Promise<AuthActionRes
         }
     } catch (error: any) {
         console.error('Password reset email failed:', error)
+    }
+    return { ok: true, data: undefined }
+}
+
+/**
+ * Sends the "Confirm your email" email again. Like the reset form, it always
+ * reports success unless Supabase is rate limiting.
+ */
+export const resendConfirmationEmail = async (email: string): Promise<AuthActionResult> => {
+    const trimmed = email.trim()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return { ok: false, error: 'Enter a valid email address.' }
+    try {
+        const supabase = await createClient()
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email: trimmed,
+            // Becomes {{ .RedirectTo }} in the email (see supabase/templates).
+            options: { emailRedirectTo: process.env.NEXT_PUBLIC_BASE_URL },
+        })
+        if (error) {
+            console.error('Confirmation email resend failed:', error.message)
+            if (error.status === 429) return { ok: false, error: 'Too many requests. Please wait a minute and try again.' }
+        }
+    } catch (error: any) {
+        console.error('Confirmation email resend failed:', error)
     }
     return { ok: true, data: undefined }
 }

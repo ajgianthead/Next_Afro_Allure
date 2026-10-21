@@ -5,13 +5,16 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { loginBusinessUser } from '../actions'
+import { ResendConfirmationButton } from '../ResendConfirmationButton'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
 /** Messages for `/login?error=…` (set by the auth email routes). */
 const LINK_ERRORS: Record<string, string> = {
     link_expired: 'That link has expired or was already used. Sign in below, or create your account again if you never confirmed your email.',
-    confirmation_failed: 'We couldn\'t confirm that link. Please try signing in.',
+    // Usually a link opened in a different browser than signup: the email is
+    // confirmed, but the session couldn't be started there.
+    confirmation_failed: 'Your email is confirmed. Sign in below to continue. (Resetting your password? Request a new link.)',
 }
 
 export default function Login({ linkError }: { linkError?: string }) {
@@ -19,16 +22,19 @@ export default function Login({ linkError }: { linkError?: string }) {
     const [cred, setCred] = useState({ email: '', password: '' })
     const [error, setError] = useState<string | null>(linkError ? LINK_ERRORS[linkError] ?? null : null)
     const [loading, setLoading] = useState(false)
+    const [unconfirmed, setUnconfirmed] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (loading) return
         setLoading(true)
         setError(null)
+        setUnconfirmed(false)
         try {
             const res = await loginBusinessUser(cred.email, cred.password)
             if (!res.ok) {
                 setError(res.error)
+                setUnconfirmed(res.code === 'email_not_confirmed')
                 setLoading(false)
                 return
             }
@@ -72,6 +78,11 @@ export default function Login({ linkError }: { linkError?: string }) {
                         >
                             <AlertCircle size={14} className="shrink-0" />
                             {error}
+                        </div>
+                    )}
+                    {unconfirmed && (
+                        <div className="mb-5">
+                            <ResendConfirmationButton email={cred.email} />
                         </div>
                     )}
 
