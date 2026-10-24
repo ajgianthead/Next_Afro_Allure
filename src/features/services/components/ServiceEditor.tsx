@@ -91,7 +91,8 @@ function CategoryTagsInput({
     )
 }
 import { DeleteServiceDialog } from './DeleteServiceDialog'
-import { StyleOptionsEditor, EMPTY_STYLE_OPTIONS, styleOptionProblems } from './StyleOptionsEditor'
+import { StyleOptionsEditor, EMPTY_STYLE_OPTIONS } from './StyleOptionsEditor'
+import { serviceFormProblem, styleOptionProblems, toServicePayload } from '../serviceForm'
 import { PrepEditor, EMPTY_PREP } from './PrepEditor'
 import { RateCheck } from './RateCheck'
 
@@ -177,13 +178,9 @@ export function ServiceEditor({
     }
 
     const handleSave = async () => {
-        if (!form.name.trim()) return
-        if (optionProblems.length > 0) {
-            toast.error(optionProblems[0])
-            return
-        }
-        if (styleOptions.enabled && !(form.length > 0)) {
-            toast.error('Set a base duration for this service.')
+        const problem = serviceFormProblem(form, styleOptions)
+        if (problem) {
+            toast.error(problem)
             return
         }
         setIsSaving(true)
@@ -204,17 +201,11 @@ export function ServiceEditor({
                 imagePath = path
             }
 
-            const payload: ServiceData = {
-                ...form,
-                // With size/length pricing, the stored base price is the
-                // lowest combination, used for "from $X" and sorting.
-                price: styleOptions.enabled ? fromPrice : form.price,
-                addons: Array.from(checkedAddons),
-                photo_url,
-                imagePath,
-                style_options: styleOptions.enabled ? styleOptions : null,
+            const payload = toServicePayload(
+                { ...form, addons: Array.from(checkedAddons), photo_url, imagePath },
+                styleOptions,
                 prep,
-            }
+            )
 
             let saved: any
             if (isEditing) {
