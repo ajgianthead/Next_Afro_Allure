@@ -7,10 +7,10 @@ import { bookingUrl } from '@/lib/bookingUrl'
 import type { BookedAppointment } from './FirstAppointmentStep'
 import { BRAND, StepHeader } from '../shared'
 
-export function DoneStep({ urlName, booked }: { urlName: string; booked: BookedAppointment | null }) {
+export function DoneStep({ urlName, booked, siteCreated }: { urlName: string; booked: BookedAppointment | null; siteCreated?: boolean }) {
     const [copied, setCopied] = useState(false)
-    // The booking page works before the site is designed or published.
-    const link = urlName ? bookingUrl(urlName, '/book') : ''
+    // With a website, share the site; otherwise the booking page, which works without one.
+    const link = urlName ? bookingUrl(urlName, siteCreated ? '' : '/book') : ''
 
     const copy = async () => {
         try {
@@ -27,13 +27,13 @@ export function DoneStep({ urlName, booked }: { urlName: string; booked: BookedA
             <StepHeader icon={IconConfetti} eyebrow="All set" title="You're ready to take bookings">
                 {booked
                     ? `${booked.clientName} is booked for ${booked.serviceName} on ${booked.when}. They'll get a confirmation email.`
-                    : 'Your services, hours and policies are saved.'}
+                    : siteCreated ? 'Your website is live, and your services, hours and policies are saved.' : 'Your services, hours and policies are saved.'}
             </StepHeader>
 
             {link && (
                 <div className="flex flex-col gap-2">
                     <p className="text-xs font-medium" style={{ color: BRAND.warm }}>
-                        Share your booking link in your bio and DMs. Clients can book you right now.
+                        {siteCreated ? 'Share your website' : 'Share your booking link'} in your bio and DMs. Clients can book you right now.
                     </p>
                     <div
                         className="flex items-center gap-2 rounded-xl pl-3 pr-1.5 py-1.5"
@@ -73,7 +73,7 @@ export function DoneStep({ urlName, booked }: { urlName: string; booked: BookedA
 
             <ul className="flex flex-col gap-2 text-sm" style={{ color: BRAND.ink }}>
                 {[
-                    'Design your booking site in Booking Site',
+                    siteCreated ? 'Fine-tune your website anytime in Booking Site' : 'Make your website anytime in Booking Site',
                     'Connect payments in Monetization to take deposits',
                     'Turn on reminders in Notifications to cut no-shows',
                 ].map(item => (

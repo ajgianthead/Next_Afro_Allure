@@ -16,8 +16,13 @@ import {
     saveWelcomeLocationAction,
     saveWelcomePoliciesAction,
     saveWelcomeServicesAction,
+    markWelcomeWebsiteAction,
     type WelcomePolicy,
 } from '../server/actions'
+import { defaultSiteData, type SiteData, type SiteInfo } from '@/features/siteBuilder/siteData'
+import { deleteSiteMediaAction, getSitePreviewInfoAction, saveTemplateSiteAction } from '@/features/siteBuilder/server/actions'
+import { useSiteUploads } from '@/features/siteBuilder/components/MediaPanel'
+import { WebsiteSetupStep } from '@/features/siteBuilder/components/WebsiteSetupStep'
 import { firstUnfinishedStep, isUntouchedExampleService, scheduleProblem, WELCOME_STEPS, type WelcomeStep as Step } from '../progress'
 import { blankDraft, draftFromService, draftPayload, draftProblem, type ServiceDraft } from '../serviceDrafts'
 import { BRAND } from './shared'
@@ -33,7 +38,7 @@ const realServices = (services: ServiceData[]) => services.filter(s => !isUntouc
 
 /**
  * First-run setup for a new business: location, hours, services (with Smart
- * Pricing), booking policies and, optionally, a first appointment. Each step
+ * Pricing), booking policies, an optional website and, optionally, a first appointment. Each step
  * saves when they continue, so leaving halfway resumes where they stopped.
  */
 export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onComplete: () => void }) {
@@ -44,6 +49,7 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
+    const [businessId, setBusinessId] = useState('')
     const [businessName, setBusinessName] = useState('')
     const [urlName, setUrlName] = useState('')
     const [planType, setPlanType] = useState<PlanType>('STARTER')
@@ -62,6 +68,13 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
     const [savedServices, setSavedServices] = useState<ServiceData[]>([])
 
     const [policy, setPolicy] = useState<WelcomePolicy>({ cancelDayLimit: 0, rescheduleDayLimit: 0, rescheduleLimit: 0, bookAheadValue: '1 month', readBeforeBooking: '' })
+    const [siteDraft, setSiteDraft] = useState<SiteData>(() => defaultSiteData())
+    const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null)
+    const [siteCreated, setSiteCreated] = useState(false)
+    const removedSitePaths = useRef<Set<string>>(new Set())
+    const uploads = useSiteUploads(businessId, update => setSiteDraft(prev => update(prev)), paths => paths.forEach(p => removedSitePaths.current.add(p)))
+    const siteUploading = Object.keys(uploads.progress).length > 0
+
     const [booked, setBooked] = useState<BookedAppointment | null>(null)
     const [finished, setFinished] = useState(false)
 
@@ -73,7 +86,9 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
             return
         }
         const data = res.data
+        setBusinessId(data.businessId)
         setBusinessName(data.businessName)
+        if (data.site) setSiteDraft(data.site)
         setUrlName(data.urlName)
         setPlanType(data.planType)
         setAddress({ ...EMPTY_ADDRESS, ...(data.address ?? {}) })
@@ -117,6 +132,12 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
             setSaving(false)
         }
     }
+    // The website step previews templates with the business's own services, hours and reviews.
+    useEffect(() => {
+        if (step !== 'website' || siteInfo) return
+        getSitePreviewInfoAction().then(res => { if (res.ok) setSiteInfo(res.data) }).catch(() => { })
+    }, [step, siteInfo])
+
     useEffect(() => {
         if (step === 'done' && !finished) finish()
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -191,6 +212,38 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
     const savePolicies = () => run(async () => {
         const res = await saveWelcomePoliciesAction(policy)
         return res.ok ? null : res.error
+    }, 'website')
+
+    // First photo or video becomes the cover; the rest go in the gallery.
+    const addSiteMedia = (files: File[]) => {
+        const needsCover = !siteDraft.media.cover && uploads.progress.cover === undefined
+        if (needsCover && files[0]) uploads.setSingle('cover', files[0])
+        const rest = needsCover ? files.slice(1) : files
+        if (rest.length) uploads.addToGallery(rest, rest.length)
+    }
+
+    const saveWebsite = () => run(async () => {
+        if (siteUploading) return 'Wait for your uploads to finish.'
+        const res = await saveTemplateSiteAction(siteDraft, { publish: true })
+        if (!res.ok) return res.error
+        setSiteDraft(res.data)
+        setSiteCreated(true)
+        const stale = [...removedSitePaths.current]
+        removedSitePaths.current.clear()
+        if (stale.length) deleteSiteMediaAction(stale).catch(() => { })
+        await markWelcomeWebsiteAction()
+        return null
+    }, 'appointment')
+
+    const skipWebsite = () => run(async () => {
+        // Nothing was saved, so files uploaded on this step aren't needed.
+        const uploaded = [siteDraft.media.logo, siteDraft.media.cover, siteDraft.media.about, ...siteDraft.media.gallery]
+            .map(m => m?.path).filter((p): p is string => !!p)
+        const paths = [...new Set([...removedSitePaths.current, ...(siteCreated ? [] : uploaded)])]
+        removedSitePaths.current.clear()
+        if (paths.length) deleteSiteMediaAction(paths).catch(() => { })
+        await markWelcomeWebsiteAction()
+        return null
     }, 'appointment')
 
     const primary: Record<Step, { label: string; action: () => void } | null> = {
@@ -199,12 +252,13 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
         hours: { label: 'Save and continue', action: saveHours },
         services: { label: 'Save and continue', action: saveServices },
         policies: { label: 'Save and continue', action: savePolicies },
+        website: { label: siteCreated ? 'Update my site' : 'Create my site', action: saveWebsite },
         appointment: { label: 'Skip for now', action: () => go('done') },
         done: finished ? { label: 'Go to dashboard', action: () => { router.refresh(); onComplete() } } : { label: saving ? 'Finishing' : 'Try again', action: finish },
     }
     const current = primary[step]
     const canGoBack = index > 0 && step !== 'done'
-    const wide = step === 'services' || step === 'hours'
+    const wide = step === 'services' || step === 'hours' || step === 'website'
     const shownAddressErrors = addressTouched ? validateBusinessAddress(address, { required: true }) : addressErrors
 
     return (
@@ -269,6 +323,18 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
                                     />
                                 )}
                                 {step === 'policies' && <PoliciesStep policy={policy} onChange={setPolicy} />}
+                                {step === 'website' && (
+                                    <WebsiteSetupStep
+                                        info={siteInfo}
+                                        site={siteDraft}
+                                        onChange={p => {
+                                            setSiteDraft(prev => ({ ...prev, ...p }))
+                                            setError(null)
+                                        }}
+                                        uploads={uploads}
+                                        addMedia={addSiteMedia}
+                                    />
+                                )}
                                 {step === 'appointment' && (
                                     <FirstAppointmentStep
                                         services={savedServices}
@@ -278,7 +344,7 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
                                         }}
                                     />
                                 )}
-                                {step === 'done' && <DoneStep urlName={urlName} booked={booked} />}
+                                {step === 'done' && <DoneStep urlName={urlName} booked={booked} siteCreated={siteCreated} />}
                             </>
                         )}
                     </div>
@@ -290,6 +356,17 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
                         style={{ borderTop: `1px solid ${BRAND.border}`, backgroundColor: BRAND.cream }}
                     >
                         {error && <p role="alert" className="text-xs" style={{ color: BRAND.error }}>{error}</p>}
+                        {step === 'website' && !siteCreated && (
+                            <button
+                                type="button"
+                                onClick={skipWebsite}
+                                disabled={saving}
+                                className="self-end min-h-9 text-xs underline disabled:opacity-50"
+                                style={{ color: BRAND.warm }}
+                            >
+                                Skip for now, I&apos;ll make it later
+                            </button>
+                        )}
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-1.5" aria-label={`Step ${index + 1} of ${WELCOME_STEPS.length}`}>
                                 {WELCOME_STEPS.map((s, i) => (
@@ -316,7 +393,7 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
                                     <button
                                         type="button"
                                         onClick={current.action}
-                                        disabled={saving}
+                                        disabled={saving || (step === 'website' && siteUploading)}
                                         className="flex items-center gap-1.5 rounded-full h-9 px-4 text-sm font-medium disabled:opacity-50"
                                         style={step === 'appointment'
                                             ? { border: `1px solid ${BRAND.border}`, color: BRAND.ink, backgroundColor: '#FFFFFF' }

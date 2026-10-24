@@ -270,35 +270,35 @@ export const TOUR_STEPS: Record<string, Step[]> = {
         },
     ],
 
-    // Steps shown when the user hasn't published a site yet (SelectEditorType page)
+    // Steps shown before the business has a site (template gallery)
     webBuilder: [
         {
-            target: '[data-tour="builder-type"]',
-            title: 'Choose your builder',
-            content: 'Start with a blank canvas for full control, or pick a template to get a polished page up in minutes.',
+            target: '[data-tour="builder-templates"]',
+            title: 'Pick a template',
+            content: 'Every template fills itself in with your services, hours, policies and reviews. Pick the look you like; you can switch anytime.',
             placement: 'bottom',
             data: d('WEB BUILDER TOUR'),
             skipBeacon: false,
-        },
-        {
-            target: '[data-tour="builder-templates"]',
-            title: 'Two editor styles',
-            content: 'Drag & Drop gives you full visual control; Section Editor gets you live in minutes. Both are fully editable — you can switch later.',
-            placement: 'bottom',
-            data: d('WEB BUILDER TOUR'),
-            skipBeacon: true,
         },
     ],
 
-    // Steps shown once a site is published (ManageBookingSite page)
+    // Steps shown in the Simple Builder once a site exists
     webBuilderManage: [
         {
-            target: '[data-tour="builder-publish"]',
-            title: 'Your live booking site',
-            content: 'Your site is live at your AfroAllure URL. Click "Edit Page" to open the editor, update your appearance, or copy your link to share with clients.',
+            target: '[data-tour="builder-tabs"]',
+            title: 'Make it yours',
+            content: 'Switch templates, choose your colors and font, add your logo, photos and videos, and write a little about you.',
             placement: 'bottom',
             data: d('BOOKING SITE TOUR'),
             skipBeacon: false,
+        },
+        {
+            target: '[data-tour="builder-publish"]',
+            title: 'Save and go live',
+            content: 'Save your changes and publish your site, then share your link in your bio. Your services and hours stay up to date on their own.',
+            placement: 'bottom',
+            data: d('BOOKING SITE TOUR'),
+            skipBeacon: true,
         },
     ],
 }
@@ -327,8 +327,8 @@ export const TOUR_DESCRIPTIONS: Record<string, string> = {
     bookingSettings: 'Deposits, cancellation, and reschedule policies',
     analytics: 'Revenue, retention, and performance insights',
     monetization: 'Stripe setup and payment tracking',
-    webBuilder: 'Choosing your editor style when setting up',
-    webBuilderManage: 'Managing your live site, appearance, and URL',
+    webBuilder: 'Picking a template for your booking site',
+    webBuilderManage: 'Customizing and publishing your booking site',
 }
 
 export const TOUR_ROUTES: Record<string, string> = {

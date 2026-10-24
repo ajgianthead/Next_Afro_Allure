@@ -13,6 +13,7 @@ import { createServiceAction, deleteServiceAction, updateServiceAction } from '@
 import { parseStyleOptions, type StyleOptions } from '@/features/services/pricing'
 import { serviceFormProblem } from '@/features/services/serviceForm'
 import type { ServiceData } from '@/features/services/types'
+import { parseSiteData, type SiteData } from '@/features/siteBuilder/siteData'
 import { isUntouchedExampleService, isValidBookAhead, progressKey, scheduleProblem, type SavedWelcomeStep } from '../progress'
 
 type Result<T = undefined> = { ok: true; data: T } | { ok: false; error: string }
@@ -27,6 +28,7 @@ export interface WelcomePolicy {
 }
 
 export interface WelcomeSetupData {
+    businessId: string
     businessName: string
     urlName: string
     planType: PlanType
@@ -35,6 +37,8 @@ export interface WelcomeSetupData {
     schedules: AvailabilityData[]
     services: ServiceData[]
     policy: WelcomePolicy
+    /** Settings of an existing template site, to start the website step from. */
+    site: SiteData | null
 }
 
 const SIGNED_OUT = 'You are signed out. Please sign in again.'
@@ -110,15 +114,18 @@ export async function getWelcomeSetupAction(): Promise<Result<WelcomeSetupData>>
     const business = await ownBusiness(supabase)
     if (!business) return { ok: false, error: SIGNED_OUT }
 
-    const [schedules, services, policyRow] = await Promise.all([
+    const [schedules, services, policyRow, editorRes] = await Promise.all([
         loadSchedules(supabase, business.business_id),
         loadServices(supabase, business.business_id),
         activePolicyRow(supabase, business.business_id, business.booking_policies),
+        supabase.from('web_editors').select('type, site_data').eq('business_id', business.business_id).maybeSingle(),
     ])
+    const editor = editorRes.data
     const settings = (business.account_settings ?? {}) as Record<string, any>
     return {
         ok: true,
         data: {
+            businessId: business.business_id,
             businessName: business.business_name ?? '',
             urlName: business.url_name ?? '',
             planType: effectivePlanType(business.plan_type),
@@ -133,6 +140,7 @@ export async function getWelcomeSetupAction(): Promise<Result<WelcomeSetupData>>
                 bookAheadValue: policyRow?.book_ahead_value && isValidBookAhead(policyRow.book_ahead_value) ? policyRow.book_ahead_value : '1 month',
                 readBeforeBooking: policyRow?.read_before_booking ?? '',
             },
+            site: editor?.type === 'TEMPLATE' ? parseSiteData(editor.site_data) : null,
         },
     }
 }
@@ -312,6 +320,15 @@ export async function saveWelcomePoliciesAction(policy: WelcomePolicy): Promise<
     }
     await supabase.from('business_users').update({ booking_policies: inserted.id }).eq('business_id', businessId)
     await markStep(supabase, businessId, 'policies')
+    return { ok: true, data: undefined }
+}
+
+/** Records the website step as done, whether the site was made or skipped. */
+export async function markWelcomeWebsiteAction(): Promise<Result> {
+    const supabase = await createClient()
+    const business = await ownBusiness(supabase)
+    if (!business) return { ok: false, error: SIGNED_OUT }
+    await markStep(supabase, business.business_id, 'website')
     return { ok: true, data: undefined }
 }
 

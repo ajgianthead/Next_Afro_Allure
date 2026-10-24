@@ -10,15 +10,21 @@ import { RuntimeFontLoader } from './runtimeFontLoader';
 import { Button } from '@/components/ui/button';
 import { SectionsRenderer } from './sectionsRenderer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { Metadata } from 'next';
+import { createAdminClient } from '@/app/utils/supabase/admin';
+import { SiteRenderer } from '@/features/siteBuilder/templates';
+import { parseSiteData } from '@/features/siteBuilder/siteData';
+import { resolveTheme } from '@/features/siteBuilder/themes';
+import { loadSiteInfo } from '@/features/siteBuilder/server/loadSite';
 
-function FoundingMemberBadge({ memberNumber }: { memberNumber: number }) {
+function FoundingMemberBadge({ memberNumber, bottom = 20 }: { memberNumber: number; bottom?: number }) {
     const padded = String(memberNumber).padStart(3, '0')
     return (
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div style={{
-                        position: 'fixed', bottom: 20, right: 20, zIndex: 50,
+                        position: 'fixed', bottom, right: 20, zIndex: 50,
                         display: 'inline-flex', alignItems: 'center', gap: 6,
                         background: '#C9974A', color: '#fff',
                         fontFamily: "'Inter', system-ui, sans-serif",
@@ -49,6 +55,29 @@ interface PageProps {
     };
 }
 
+/** Title, description and preview image for shared links (template sites use their own bio and cover). */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { businessName } = await params
+    const { data } = await createAdminClient()
+        .from('business_users')
+        .select('business_name, web_editors(type, site_data)')
+        .eq('url_name', businessName)
+        .maybeSingle()
+    if (!data) return {}
+    const editor = (data.web_editors as any)?.[0] ?? (data.web_editors as any)
+    const title = `${data.business_name} | Book online`
+    if (editor?.type !== 'TEMPLATE') return { title }
+    const site = parseSiteData(editor.site_data)
+    const description = (site.content.tagline || site.content.bio || `Book with ${data.business_name} online.`).slice(0, 160)
+    const image = [site.media.cover, ...site.media.gallery, site.media.about].find(m => m?.kind === 'image')?.url
+    return {
+        title,
+        description,
+        openGraph: { title, description, ...(image ? { images: [image] } : {}) },
+        twitter: { card: image ? 'summary_large_image' : 'summary', title, description, ...(image ? { images: [image] } : {}) },
+    }
+}
+
 export default async function Page({ params }: PageProps) {
 
     const { businessName } = await params;
@@ -77,6 +106,27 @@ export default async function Page({ params }: PageProps) {
 
     const isFoundingMember = result.result.founding_member === true
     const memberNumber = result.result.founding_member_number as number | null
+
+    if (result.result.web_editors[0].type === 'TEMPLATE') {
+        // Template sites can be unpublished; their booking page keeps working.
+        const info = result.result.published_site ? await loadSiteInfo(result.result.business_id) : null
+        if (!info) {
+            return (
+                <div className="flex items-center justify-center min-h-screen">
+                    <p className="text-muted-foreground">This booking page is not yet published.</p>
+                </div>
+            )
+        }
+        const site = parseSiteData((result.result.web_editors[0] as any).site_data)
+        const theme = resolveTheme(site.templateId, site.scheme, site.customColors, site.fontPairing)
+        return (
+            <div className="min-h-screen">
+                <SiteRenderer info={info} site={site} theme={theme} basePath={basePath} />
+                {/* Raised so it clears the sticky Book bar on phones. */}
+                {isFoundingMember && memberNumber && <FoundingMemberBadge memberNumber={memberNumber} bottom={96} />}
+            </div>
+        )
+    }
 
     if (result.result.web_editors[0].type === 'SECTIONS') {
         const brandColor = result.result.brand_color ?? '#FC6161'

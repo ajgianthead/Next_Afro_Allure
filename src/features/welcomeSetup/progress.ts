@@ -6,11 +6,11 @@ import type { WeekDay } from '@/features/availability/utils'
  * that leaves halfway comes back to the first step it hasn't finished.
  * `welcome: true` is set once they reach the end.
  */
-export const WELCOME_STEPS = ['welcome', 'location', 'hours', 'services', 'policies', 'appointment', 'done'] as const
+export const WELCOME_STEPS = ['welcome', 'location', 'hours', 'services', 'policies', 'website', 'appointment', 'done'] as const
 export type WelcomeStep = typeof WELCOME_STEPS[number]
 
-/** Steps whose completion is stored (the others save nothing). */
-export const SAVED_STEPS = ['location', 'hours', 'services', 'policies'] as const
+/** Steps whose completion is stored (the others save nothing). The website step counts once it's made or skipped. */
+export const SAVED_STEPS = ['location', 'hours', 'services', 'policies', 'website'] as const
 export type SavedWelcomeStep = typeof SAVED_STEPS[number]
 
 export const progressKey = (step: SavedWelcomeStep) => `welcome_${step}`

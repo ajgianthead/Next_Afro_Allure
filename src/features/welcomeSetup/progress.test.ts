@@ -13,8 +13,12 @@ describe('firstUnfinishedStep', () => {
         expect(firstUnfinishedStep({ welcome_location: true, welcome_hours: true, welcome_services: true })).toBe('policies')
     })
 
-    it('goes to the optional appointment once everything is saved', () => {
-        expect(firstUnfinishedStep({ welcome_location: true, welcome_hours: true, welcome_services: true, welcome_policies: true })).toBe('appointment')
+    it('offers the website step after policies', () => {
+        expect(firstUnfinishedStep({ welcome_location: true, welcome_hours: true, welcome_services: true, welcome_policies: true })).toBe('website')
+    })
+
+    it('goes to the optional appointment once everything is saved or skipped', () => {
+        expect(firstUnfinishedStep({ welcome_location: true, welcome_hours: true, welcome_services: true, welcome_policies: true, welcome_website: true })).toBe('appointment')
     })
 
     it('is done once the welcome is finished', () => {
@@ -37,8 +41,9 @@ describe('isUntouchedExampleService', () => {
 })
 
 describe('scheduleProblem', () => {
-    const range = (sh: number, eh: number) => ({ start: { hour: sh, minute: 0 }, end: { hour: eh, minute: 0 } })
-    const day = (isChecked: boolean, ranges = [range(9, 17)]) => ({ isChecked, timeRanges: ranges })
+    type Range = { start: { hour: number; minute: number } | null; end: { hour: number; minute: number } | null }
+    const range = (sh: number, eh: number): Range => ({ start: { hour: sh, minute: 0 }, end: { hour: eh, minute: 0 } })
+    const day = (isChecked: boolean, ranges: Range[] = [range(9, 17)]) => ({ isChecked, timeRanges: ranges })
     const week = (first = day(true)) => [first, ...Array.from({ length: 6 }, () => day(false))]
 
     it('accepts a normal week', () => {

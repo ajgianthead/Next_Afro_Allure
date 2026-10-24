@@ -1324,6 +1324,7 @@ export type Database = {
           id: string
           image_objects: Json[] | null
           section_data: Json[] | null
+          site_data: Json
           theme_data: Json
           type: Database["public"]["Enums"]["web_editor"] | null
           updated_at: string | null
@@ -1335,6 +1336,7 @@ export type Database = {
           id?: string
           image_objects?: Json[] | null
           section_data?: Json[] | null
+          site_data?: Json
           theme_data?: Json
           type?: Database["public"]["Enums"]["web_editor"] | null
           updated_at?: string | null
@@ -1346,6 +1348,7 @@ export type Database = {
           id?: string
           image_objects?: Json[] | null
           section_data?: Json[] | null
+          site_data?: Json
           theme_data?: Json
           type?: Database["public"]["Enums"]["web_editor"] | null
           updated_at?: string | null
@@ -2532,7 +2535,7 @@ export type Database = {
         | "INCOMPLETE"
         | "NO_SHOW"
         | "REFUNDED"
-      web_editor: "SECTIONS" | "CUSTOM"
+      web_editor: "SECTIONS" | "CUSTOM" | "TEMPLATE"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2691,7 +2694,7 @@ export const Constants = {
         "NO_SHOW",
         "REFUNDED",
       ],
-      web_editor: ["SECTIONS", "CUSTOM"],
+      web_editor: ["SECTIONS", "CUSTOM", "TEMPLATE"],
     },
   },
 } as const

@@ -15,6 +15,7 @@ const SETUP_STEPS = [
     'The hours you take bookings',
     'Your services and prices',
     'Your cancellation and booking rules',
+    'Your website (optional)',
     'Your first appointment (optional)',
 ]
 

@@ -22,6 +22,7 @@ import { BOOKING_SELECTION_KEY, quoteForBooking } from '../hooks/useBookingQuote
 import { createBookingSessionAction, updateDateTimeAction, updateClientInfoAction, getBookingSessionAction } from '../server'
 import { BookingStepper } from './BookingStepper'
 import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
+import { siteFontWeights } from '@/features/siteBuilder/themes'
 import { useRouter } from 'next/navigation'
 
 export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId, waitlistEnabled, smsEnabled }: {
@@ -170,7 +171,10 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
         const link = document.createElement('link')
         link.id = id
         link.rel = 'stylesheet'
-        link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@400;500;600;700&display=swap`
+        // Single-weight display fonts (Anton, Bebas Neue…) fail to load if
+        // weights they don't have are requested.
+        const weights = siteFontWeights(font) ?? [400, 500, 600, 700]
+        link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@${weights.join(';')}&display=swap`
         document.head.appendChild(link)
     }, [theme.fontFamily])
 
