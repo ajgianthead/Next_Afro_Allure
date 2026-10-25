@@ -43,6 +43,13 @@ export async function middleware(request: NextRequest) {
         return NextResponse.rewrite(url)
     }
 
+    // Supabase's default auth emails land on the site root with ?code=…;
+    // exchange it so the person arrives signed in.
+    if (url.pathname === '/' && url.searchParams.has('code') && request.method === 'GET') {
+        url.pathname = '/auth/callback'
+        return NextResponse.redirect(url)
+    }
+
     // Once subdomains are live, send old app-domain links
     // (beta.afroallure.co/business/kayla/book) to the subdomain. GET only —
     // server actions POST to the page path and must not be redirected.

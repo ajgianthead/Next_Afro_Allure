@@ -4,8 +4,7 @@ import React, { createContext, useCallback, useEffect, useRef, useState } from '
 import { Joyride, EVENTS, STATUS, ACTIONS } from 'react-joyride'
 import type { Step, EventData } from 'react-joyride'
 import { ensureTimezoneAction, markTourComplete } from './actions'
-import { WelcomeModal } from './WelcomeModal'
-import type { BusinessAddress } from '@/lib/businessAddress'
+import { WelcomeSetupModal } from '@/features/welcomeSetup/components/WelcomeSetupModal'
 import { browserTimezone } from '@/lib/timezone'
 import { TOUR_STEPS } from './tourSteps'
 import { TourTooltip } from './TourTooltip'
@@ -49,15 +48,13 @@ interface TourProviderProps {
     toursCompleted: Record<string, boolean>
     businessId: string
     isOnboarded: boolean
-    businessName?: string
-    businessAddress?: Partial<BusinessAddress> | null
     hasTimezone?: boolean
 }
 
-export function TourProvider({ children, toursCompleted: initial, businessId, isOnboarded, businessName = '', businessAddress, hasTimezone = true }: TourProviderProps) {
+export function TourProvider({ children, toursCompleted: initial, businessId, isOnboarded, hasTimezone = true }: TourProviderProps) {
     const [toursCompleted, setToursCompleted] = useState<Record<string, boolean>>(initial)
-    // New businesses see the welcome slideshow (ending with their address)
-    // before any product tour. Businesses that already went through the
+    // New businesses go through the welcome setup (location, hours,
+    // services, policies, first appointment) before any product tour. Businesses that already went through the
     // dashboard tour are never shown it.
     const [showWelcome, setShowWelcome] = useState(
         isOnboarded && !initial?.welcome && !initial?.dashboard
@@ -207,10 +204,8 @@ export function TourProvider({ children, toursCompleted: initial, businessId, is
             unregisterStepSetup,
         }}>
             {children}
-            <WelcomeModal
+            <WelcomeSetupModal
                 open={showWelcome}
-                businessName={businessName}
-                initialAddress={businessAddress}
                 onComplete={() => {
                     showWelcomeRef.current = false
                     setShowWelcome(false)

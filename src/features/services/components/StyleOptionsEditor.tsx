@@ -10,6 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { fillGrid, gridKey, type HairMode, type ServicePrep, type StyleCell, type StyleOption, type StyleOptions } from '../pricing'
 import { applyTemplate, newOptionId, STYLE_TEMPLATES } from './styleTemplates'
 import { formatDuration } from '../utils'
+import { styleOptionProblems } from '../serviceForm'
+
+// Kept here too so existing imports from this file keep working.
+export { styleOptionProblems }
 
 export const EMPTY_STYLE_OPTIONS: StyleOptions = {
     enabled: false,
@@ -23,33 +27,6 @@ const dollars = (cents: number | undefined) => (cents === undefined || Number.is
 const toCents = (v: string) => {
     const n = parseFloat(v)
     return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : NaN
-}
-
-/** Problems that would stop a client booking; shown under the grid and checked before saving. */
-export function styleOptionProblems(options: StyleOptions): string[] {
-    if (!options.enabled) return []
-    const problems: string[] = []
-    if (options.sizes.length === 0 && options.lengths.length === 0) problems.push('Add at least one size or length.')
-    const labels = (list: StyleOption[]) => list.map(o => o.label.trim().toLowerCase())
-    for (const [name, list] of [['size', options.sizes], ['length', options.lengths]] as const) {
-        if (list.some(o => !o.label.trim())) problems.push(`Every ${name} needs a name.`)
-        const l = labels(list)
-        if (new Set(l).size !== l.length) problems.push(`Two ${name}s have the same name.`)
-    }
-    const sizeIds = options.sizes.length ? options.sizes.map(s => s.id) : [null]
-    const lengthIds = options.lengths.length ? options.lengths.map(l => l.id) : [null]
-    let bookable = 0
-    let missing = 0
-    for (const s of sizeIds) for (const l of lengthIds) {
-        const cell = options.grid[gridKey(s, l)]
-        if (cell?.available === false) continue
-        if (!cell || !Number.isFinite(cell.price) || cell.price <= 0) missing++
-        else bookable++
-    }
-    if (missing) problems.push(`${missing} combination${missing === 1 ? ' has' : 's have'} no price — add one or switch it off.`)
-    if (!missing && bookable === 0) problems.push('Switch on at least one combination.')
-    if (options.hair.mode === 'optional' && !(options.hair.price > 0)) problems.push('Set a price for supplying hair.')
-    return problems
 }
 
 function OptionListEditor({ label, placeholder, items, onChange }: {

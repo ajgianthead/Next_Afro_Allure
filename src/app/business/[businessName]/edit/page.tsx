@@ -6,6 +6,7 @@ import { PostgrestError } from '@supabase/supabase-js';
 import { EditorWrapper } from '@/app/utils/context/EditorContext';
 import { createClient } from '@/app/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import { effectivePlanType } from '@/lib/beta';
 
 const Page = async ({ params, searchParams }: { params: Promise<{ businessName: string }>; searchParams: Promise<{ template?: string }> }) => {
     const user = await fetchUser();
@@ -18,6 +19,10 @@ const Page = async ({ params, searchParams }: { params: Promise<{ businessName: 
 
     if (!business || business.url_name !== businessName) {
         redirect('/dashboard')
+    }
+    // The Custom Builder is part of Growth; everyone else uses the Simple Builder.
+    if (effectivePlanType(business.plan_type) !== 'GROWTH') {
+        redirect('/dashboard/booking-site')
     }
 
     const editorData = await getEditorData(business.business_id)

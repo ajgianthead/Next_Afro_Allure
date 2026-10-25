@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Loader2, AlertCircle, Check, Mail } from 'lucide-react'
 import { createBusinessUser } from '../actions'
 import { FeeDisclosure } from '@/components/FeeDisclosure'
+import { ResendConfirmationButton } from '../ResendConfirmationButton'
 
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
@@ -131,6 +132,9 @@ export default function Register() {
                         <p className="text-xs leading-relaxed mt-4" style={{ color: '#6F6863' }}>
                             Don&apos;t see it? Check your spam or promotions folder.
                         </p>
+                        <div className="mt-5">
+                            <ResendConfirmationButton email={checkEmail} />
+                        </div>
                     </div>
                 ) : (
                 <div
