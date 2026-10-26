@@ -19,6 +19,9 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
     SidebarProvider,
 } from '@/components/ui/sidebar'
 import {
@@ -40,6 +43,8 @@ import {
     IconGift,
     IconHourglass,
     IconPhoto,
+    IconBuildingStore,
+    IconChevronDown,
     type Icon,
 } from '@tabler/icons-react'
 import { signOutAction } from '@/app/(auth)/actions'
@@ -55,10 +60,19 @@ interface NavItem {
     icon: Icon
 }
 
+/** A dropdown in the sidebar that holds related pages. */
+interface NavParent {
+    title: string
+    icon: Icon
+    children: NavItem[]
+}
+
 interface NavGroup {
     label?: string
-    items: NavItem[]
+    items: (NavItem | NavParent)[]
 }
+
+const isParent = (item: NavItem | NavParent): item is NavParent => 'children' in item
 
 const NAV_GROUPS: NavGroup[] = [
     {
@@ -73,8 +87,15 @@ const NAV_GROUPS: NavGroup[] = [
     {
         label: 'Booking',
         items: [
-            { title: 'Website', url: '/dashboard/booking-site', icon: IconWorld },
-            { title: 'Booking Page', url: '/dashboard/booking-page', icon: IconCalendarCheck },
+            {
+                // Everything clients see online: the website and the page they book on.
+                title: 'Storefront',
+                icon: IconBuildingStore,
+                children: [
+                    { title: 'Website', url: '/dashboard/booking-site', icon: IconWorld },
+                    { title: 'Booking Page', url: '/dashboard/booking-page', icon: IconCalendarCheck },
+                ],
+            },
             { title: 'Availability', url: '/dashboard/availability', icon: IconClock },
             { title: 'Waitlist', url: '/dashboard/waitlist', icon: IconHourglass },
             { title: 'Booking Settings', url: '/dashboard/booking-settings', icon: IconAdjustments },
@@ -100,6 +121,8 @@ export default function LayoutComp({ children, businessData }: { children: React
     const pathname = usePathname()
     const router = useRouter()
     const [helpOpen, setHelpOpen] = useState(false)
+    // Dropdowns the business opened or closed; otherwise one is open while you're on one of its pages.
+    const [openParents, setOpenParents] = useState<Record<string, boolean>>({})
 
     const isActive = (url: string) =>
         url === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(url)
@@ -145,6 +168,46 @@ export default function LayoutComp({ children, businessData }: { children: React
                                     )}
                                     <SidebarMenu className="gap-0.5">
                                         {group.items.map((item) => {
+                                            if (isParent(item)) {
+                                                const childActive = item.children.some(c => isActive(c.url))
+                                                const open = openParents[item.title] ?? childActive
+                                                return (
+                                                    <SidebarMenuItem key={item.title}>
+                                                        <SidebarMenuButton
+                                                            tooltip={item.title}
+                                                            aria-expanded={open}
+                                                            onClick={() => setOpenParents(prev => ({ ...prev, [item.title]: !open }))}
+                                                            className="rounded-xl transition-colors"
+                                                            style={{ color: '#1A1818', fontWeight: childActive && !open ? 600 : undefined }}
+                                                        >
+                                                            <item.icon size={16} />
+                                                            <span className="text-sm">{item.title}</span>
+                                                            <IconChevronDown size={14} className={`ml-auto transition-transform ${open ? 'rotate-180' : ''}`} />
+                                                        </SidebarMenuButton>
+                                                        {open && (
+                                                            <SidebarMenuSub className="mt-0.5">
+                                                                {item.children.map(child => {
+                                                                    const active = isActive(child.url)
+                                                                    return (
+                                                                        <SidebarMenuSubItem key={child.title}>
+                                                                            <SidebarMenuSubButton
+                                                                                href={child.url}
+                                                                                isActive={active}
+                                                                                onClick={e => { e.preventDefault(); router.push(child.url) }}
+                                                                                className="h-8 rounded-lg"
+                                                                                style={active ? { backgroundColor: '#0F0E0E', color: '#FFFFFF' } : { color: '#1A1818' }}
+                                                                            >
+                                                                                <child.icon size={15} color={active ? '#FFFFFF' : undefined} />
+                                                                                <span>{child.title}</span>
+                                                                            </SidebarMenuSubButton>
+                                                                        </SidebarMenuSubItem>
+                                                                    )
+                                                                })}
+                                                            </SidebarMenuSub>
+                                                        )}
+                                                    </SidebarMenuItem>
+                                                )
+                                            }
                                             const active = isActive(item.url)
                                             return (
                                                 <SidebarMenuItem key={item.title}>
