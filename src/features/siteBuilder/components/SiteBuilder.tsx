@@ -24,7 +24,8 @@ import { MediaPanel, useSiteUploads } from './MediaPanel'
 import { SitePreview } from './SitePreview'
 import { TemplatePicker } from './TemplatePicker'
 
-type Tab = 'template' | 'look' | 'media' | 'about' | 'booking'
+type Tab = 'template' | 'look' | 'media' | 'about'
+type Section = 'website' | 'booking'
 /** What the business has today: nothing, a template site, or an older Section Editor / Custom Builder site. */
 export type SiteMode = 'new' | 'template' | 'sections' | 'custom'
 
@@ -33,13 +34,14 @@ const TABS: { id: Tab; label: string; icon: typeof Palette }[] = [
     { id: 'look', label: 'Colors & font', icon: Palette },
     { id: 'media', label: 'Photos & videos', icon: ImageIcon },
     { id: 'about', label: 'About & contact', icon: Type },
-    { id: 'booking', label: 'Booking page', icon: CalendarCheck },
 ]
 
-export function SiteBuilder({ info, initialSite, mode: initialMode, bookingTheme: initialBookingTheme, businessId, urlName: initialUrlName, published: initialPublished, planType, gatable }: {
+export function SiteBuilder({ info, initialSite, mode: initialMode, initialSection = 'website', bookingTheme: initialBookingTheme, businessId, urlName: initialUrlName, published: initialPublished, planType, gatable }: {
     info: SiteInfo
     initialSite: SiteData
     mode: SiteMode
+    /** Which part opens first: the website or the booking page (their own sidebar entries). */
+    initialSection?: Section
     /** The booking page's saved look (web_editors.theme_data). */
     bookingTheme: BookingTheme | null
     businessId: string
@@ -61,6 +63,12 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, bookingTheme
     const [gateOpen, setGateOpen] = useState(false)
     const removedPaths = useRef<Set<string>>(new Set())
     const [bookingTheme, setBookingTheme] = useState<BookingTheme | null>(initialBookingTheme)
+    const [section, setSectionState] = useState<Section>(initialSection)
+    // Switching keeps unsaved website edits; the URL follows so the sidebar highlights the right entry.
+    const setSection = (next: Section) => {
+        setSectionState(next)
+        window.history.replaceState(null, '', next === 'booking' ? '/dashboard/booking-page' : '/dashboard/booking-site')
+    }
     // The booking theme is saved on its own; keep the site's flag in step without marking the site unsaved.
     const onBookingSaved = ({ theme, matchesSite }: { theme: BookingTheme; matchesSite: boolean }) => {
         setBookingTheme(theme)
@@ -170,9 +178,15 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, bookingTheme
     // ── First visit: choose a template ────────────────────────────────────────
     if (mode === 'new') {
         return (
-            <div className="min-h-screen px-4 pb-16 pt-8 sm:px-6 sm:pt-12" style={{ backgroundColor: BRAND.cream }}>
+            <div className="min-h-screen px-4 pb-16 pt-6 sm:px-6 sm:pt-10" style={{ backgroundColor: BRAND.cream }}>
                 <WebBuilderTour />
                 <div className="mx-auto max-w-5xl">
+                    <SectionSwitch section={section} onChange={setSection} className="mx-auto mb-8 max-w-sm" />
+                    {section === 'booking' ? (
+                        <BookingSection link={link}>
+                            <BookingThemePanel site={site} canMatchSite={false} initialTheme={bookingTheme} onSaved={onBookingSaved} />
+                        </BookingSection>
+                    ) : (<>
                     <div className="mx-auto mb-8 max-w-xl text-center">
                         <h1 className="mb-3 text-2xl sm:text-3xl" style={{ fontFamily: SERIF, color: BRAND.ink }}>Pick a look for your website</h1>
                         <p className="text-sm leading-relaxed" style={{ color: BRAND.warm }}>
@@ -187,11 +201,7 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, bookingTheme
                             </div>
                         )}
                     </div>
-                    <div className="mx-auto mt-10 max-w-xl rounded-2xl p-4 sm:p-6" style={{ backgroundColor: '#FFFFFF', border: `1px solid ${BRAND.border}` }}>
-                        <h2 className="mb-1 text-lg" style={{ fontFamily: SERIF, color: BRAND.ink }}>Your booking page</h2>
-                        <p className="mb-4 text-xs" style={{ color: BRAND.warm }}>Not ready for a website? You can still style the page clients book on: {link.replace(/^https?:\/\//, '')}/book</p>
-                        <BookingThemePanel site={site} canMatchSite={false} initialTheme={bookingTheme} onSaved={onBookingSaved} />
-                    </div>
+                    </>)}
                 </div>
             </div>
         )
@@ -237,35 +247,47 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, bookingTheme
             <header className="sticky top-0 z-20 border-b px-4 py-3 backdrop-blur sm:px-6" style={{ borderColor: BRAND.border, backgroundColor: 'rgba(250,247,242,.92)' }}>
                 <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
-                        <h1 className="truncate text-lg sm:text-xl" style={{ fontFamily: SERIF, color: BRAND.ink }}>Your website</h1>
-                        {statusPill}
+                        <h1 className="truncate text-lg sm:text-xl" style={{ fontFamily: SERIF, color: BRAND.ink }}>{section === 'booking' ? 'Booking page' : 'Your website'}</h1>
+                        {section === 'website' && statusPill}
                     </div>
                     <div data-tour="builder-publish" className="flex shrink-0 items-center gap-2">
                         <a href={link} target="_blank" rel="noreferrer" className="hidden h-10 items-center gap-1.5 rounded-full px-4 text-sm font-medium sm:flex" style={{ border: `1px solid ${BRAND.border}`, color: BRAND.ink, backgroundColor: '#FFFFFF' }}>
                             <ExternalLink size={14} /> Visit
                         </a>
-                        <div className="hidden lg:block">{primaryButton}</div>
+                        {section === 'website' && <div className="hidden lg:block">{primaryButton}</div>}
                     </div>
                 </div>
             </header>
 
-            {mode === 'sections' && (
+            <div className="mx-auto max-w-[1400px] px-4 pt-4 sm:px-6">
+                <SectionSwitch section={section} onChange={setSection} className="max-w-sm" />
+            </div>
+
+            {section === 'booking' && (
+                <div className="mx-auto max-w-[1400px] px-4 pt-4 sm:px-6">
+                    <BookingSection link={link}>
+                        <BookingThemePanel site={saved} canMatchSite={mode === 'template'} initialTheme={bookingTheme} onSaved={onBookingSaved} />
+                    </BookingSection>
+                </div>
+            )}
+
+            {section === 'website' && mode === 'sections' && (
                 <Banner>
                     Your site was made with the old Section Editor, which is being retired. We brought over your text and photos; pick a
                     template and save to switch. Your current site stays up until you do.
                 </Banner>
             )}
-            {mode === 'custom' && (
+            {section === 'website' && mode === 'custom' && (
                 <Banner>
                     Your live site was made in the Custom Builder. Saving here switches your site to this template; your custom page is kept
                     {planType === 'GROWTH' ? ' and you can go back to it anytime.' : ', but editing it needs Growth.'}
                 </Banner>
             )}
 
-            <main className="mx-auto grid max-w-[1400px] gap-6 px-4 pt-4 sm:px-6 lg:grid-cols-[minmax(360px,440px)_1fr] lg:gap-8 lg:pt-6">
+            {section === 'website' && <main className="mx-auto grid max-w-[1400px] gap-6 px-4 pt-4 sm:px-6 lg:grid-cols-[minmax(360px,440px)_1fr] lg:gap-8 lg:pt-6">
                 {/* Settings */}
                 <aside className={`${mobileView === 'preview' ? 'hidden lg:flex' : 'flex'} min-w-0 flex-col gap-4`}>
-                    <nav data-tour="builder-tabs" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0" aria-label="Website settings">
+                    <nav data-tour="builder-tabs" className="flex flex-wrap gap-1.5" aria-label="Website settings">
                         {TABS.map(t => {
                             const Icon = t.icon
                             const active = tab === t.id
@@ -294,7 +316,6 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, bookingTheme
                         {tab === 'look' && <ColorsFontPanel site={site} onChange={patch} />}
                         {tab === 'media' && <MediaPanel site={site} setSite={u => setSite(prev => u(prev))} uploads={uploads} />}
                         {tab === 'about' && <AboutPanel site={site} info={info} onChange={patchContent} />}
-                        {tab === 'booking' && <BookingThemePanel site={saved} canMatchSite={mode === 'template'} initialTheme={bookingTheme} onSaved={onBookingSaved} />}
                     </div>
 
                     <BookingLinkCard businessId={businessId} urlName={urlName} onChanged={setUrlName} published={published && mode === 'template'} onUnpublish={onUnpublish} busy={busy === 'publish'} />
@@ -336,10 +357,10 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, bookingTheme
                         </div>
                     </div>
                 </section>
-            </main>
+            </main>}
 
             {/* Phone: Edit / Preview switch and save, always in reach */}
-            <div className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 lg:hidden" style={{ borderColor: BRAND.border, backgroundColor: 'rgba(255,255,255,.96)' }}>
+            {section === 'website' && <div className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 lg:hidden" style={{ borderColor: BRAND.border, backgroundColor: 'rgba(255,255,255,.96)' }}>
                 <div className="flex flex-1 rounded-full p-1" style={{ backgroundColor: BRAND.cream }}>
                     {([['edit', PencilLine, 'Edit'], ['preview', Eye, 'Preview']] as const).map(([id, Icon, label]) => (
                         <button key={id} type="button" onClick={() => { setMobileView(id); window.scrollTo({ top: 0 }) }} aria-pressed={mobileView === id} className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full text-sm font-medium" style={mobileView === id ? { backgroundColor: '#FFFFFF', color: BRAND.ink, boxShadow: '0 1px 3px rgba(0,0,0,.08)' } : { color: BRAND.warm }}>
@@ -348,7 +369,46 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, bookingTheme
                     ))}
                 </div>
                 {primaryButton}
+            </div>}
+        </div>
+    )
+}
+
+/** Website | Booking page: the two things a business styles here. */
+function SectionSwitch({ section, onChange, className }: { section: Section; onChange: (s: Section) => void; className?: string }) {
+    return (
+        <div className={`flex rounded-full p-1 ${className ?? ''}`} style={{ backgroundColor: '#FFFFFF', border: `1px solid ${BRAND.border}` }} role="tablist" aria-label="What to edit">
+            {([['website', LayoutTemplate, 'Website'], ['booking', CalendarCheck, 'Booking page']] as const).map(([id, Icon, label]) => (
+                <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={section === id}
+                    onClick={() => onChange(id)}
+                    className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full text-sm font-semibold"
+                    style={section === id ? { backgroundColor: BRAND.dark, color: '#FFFFFF' } : { color: BRAND.warm }}
+                >
+                    <Icon size={15} /> {label}
+                </button>
+            ))}
+        </div>
+    )
+}
+
+function BookingSection({ link, children }: { link: string; children: React.ReactNode }) {
+    const bookLink = `${link.replace(/\/$/, '')}/book`
+    return (
+        <div className="mx-auto max-w-xl rounded-2xl p-4 sm:p-6" style={{ backgroundColor: '#FFFFFF', border: `1px solid ${BRAND.border}` }}>
+            <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <h2 className="text-lg" style={{ fontFamily: SERIF, color: BRAND.ink }}>Your booking page</h2>
+                    <p className="truncate text-xs" style={{ color: BRAND.warm }}>{bookLink.replace(/^https?:\/\//, '')}</p>
+                </div>
+                <a href={bookLink} target="_blank" rel="noreferrer" className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-medium" style={{ border: `1px solid ${BRAND.border}`, color: BRAND.ink }}>
+                    <ExternalLink size={13} /> Open
+                </a>
             </div>
+            {children}
         </div>
     )
 }

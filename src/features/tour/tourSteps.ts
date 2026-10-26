@@ -314,7 +314,7 @@ export const TOUR_DISPLAY_NAMES: Record<string, string> = {
     analytics: 'Analytics',
     monetization: 'Monetization',
     webBuilder: 'Web Builder Setup',
-    webBuilderManage: 'Booking Site',
+    webBuilderManage: 'Website',
 }
 
 export const TOUR_DESCRIPTIONS: Record<string, string> = {
