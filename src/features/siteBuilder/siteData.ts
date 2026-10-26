@@ -39,6 +39,8 @@ export interface SiteData {
         gallery: SiteMedia[]
     }
     content: SiteContent
+    /** The booking page (/book) uses the site's colors and fonts; false once the business styles it separately. */
+    bookingMatchesSite: boolean
 }
 
 export const MAX_GALLERY = 12
@@ -55,6 +57,7 @@ export function defaultSiteData(templateId: TemplateId = 'quickstart'): SiteData
         fontPairing: '',
         media: { logo: null, cover: null, about: null, gallery: [] },
         content: { ...EMPTY_CONTENT },
+        bookingMatchesSite: true,
     }
 }
 
@@ -105,6 +108,7 @@ export function parseSiteData(raw: unknown): SiteData {
             instagram: cleanHandle(content.instagram),
             tiktok: cleanHandle(content.tiktok),
         },
+        bookingMatchesSite: d.bookingMatchesSite !== false,
     }
 }
 

@@ -45,7 +45,8 @@ export default async function Page({ params, searchParams }: {
     const services = (await Service.fetch(supabase, business.id)) as Service[]
     let serviceClient: ServiceType[] = []
     services.forEach((service) => {
-        serviceClient.push({ ...service.toClient(), photo_url: service.photo_url.length ? `${service.photo_url}?t=${Date.now()}` : "" })
+        // Services without a photo store null (the editor's default); that used to crash this page.
+        serviceClient.push({ ...service.toClient(), photo_url: service.photo_url?.length ? `${service.photo_url}?t=${Date.now()}` : "" })
     })
     serviceClient = await assignAddons(supabase, serviceClient as any) as ServiceType[]
 
