@@ -27,6 +27,7 @@ import {
     IconUsers,
     IconChartBar,
     IconWorld,
+    IconCalendarCheck,
     IconClock,
     IconAdjustments,
     IconScissors,
@@ -72,7 +73,8 @@ const NAV_GROUPS: NavGroup[] = [
     {
         label: 'Booking',
         items: [
-            { title: 'Booking Site', url: '/dashboard/booking-site', icon: IconWorld },
+            { title: 'Website', url: '/dashboard/booking-site', icon: IconWorld },
+            { title: 'Booking Page', url: '/dashboard/booking-page', icon: IconCalendarCheck },
             { title: 'Availability', url: '/dashboard/availability', icon: IconClock },
             { title: 'Waitlist', url: '/dashboard/waitlist', icon: IconHourglass },
             { title: 'Booking Settings', url: '/dashboard/booking-settings', icon: IconAdjustments },

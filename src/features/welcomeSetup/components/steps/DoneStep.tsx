@@ -73,7 +73,7 @@ export function DoneStep({ urlName, booked, siteCreated }: { urlName: string; bo
 
             <ul className="flex flex-col gap-2 text-sm" style={{ color: BRAND.ink }}>
                 {[
-                    siteCreated ? 'Fine-tune your website anytime in Booking Site' : 'Make your website anytime in Booking Site',
+                    siteCreated ? 'Fine-tune your website anytime under Website in the menu' : 'Make your website anytime under Website in the menu',
                     'Connect payments in Monetization to take deposits',
                     'Turn on reminders in Notifications to cut no-shows',
                 ].map(item => (
