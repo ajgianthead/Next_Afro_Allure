@@ -109,7 +109,10 @@ export default async function Page({ params }: PageProps) {
 
     if (result.result.web_editors[0].type === 'TEMPLATE') {
         // Template sites can be unpublished; their booking page keeps working.
-        const info = result.result.published_site ? await loadSiteInfo(result.result.business_id) : null
+        // A row that only holds a booking-page look (no template chosen) isn't a site yet.
+        const rawSite = (result.result.web_editors[0] as any).site_data
+        const chosen = !!rawSite && typeof rawSite.templateId === 'string'
+        const info = result.result.published_site && chosen ? await loadSiteInfo(result.result.business_id) : null
         if (!info) {
             return (
                 <div className="flex items-center justify-center min-h-screen">
@@ -117,7 +120,7 @@ export default async function Page({ params }: PageProps) {
                 </div>
             )
         }
-        const site = parseSiteData((result.result.web_editors[0] as any).site_data)
+        const site = parseSiteData(rawSite)
         const theme = resolveTheme(site.templateId, site.scheme, site.customColors, site.fontPairing)
         return (
             <div className="min-h-screen">

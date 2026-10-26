@@ -230,3 +230,56 @@ export function siteFontWeights(family: string): number[] | undefined {
     }
     return undefined
 }
+
+// ─── Booking page theme (edited on its own) ──────────────────────────────────
+
+/** Fonts offered for the booking page: the site pairings' fonts plus common choices. */
+export const BOOKING_FONTS = [...new Set([
+    ...FONT_PAIRINGS.flatMap(f => [f.heading.family, f.body.family]),
+    'Roboto', 'Lato', 'Montserrat', 'Nunito', 'Open Sans',
+])].sort()
+
+export const BOOKING_RADII = [
+    { label: 'Sharp', value: '4px' },
+    { label: 'Rounded', value: '12px' },
+    { label: 'Pill', value: '9999px' },
+]
+
+/** The colors and fonts a business picks for its booking page. Everything else is worked out from them. */
+export interface BookingThemeChoice {
+    primaryColor: string
+    backgroundColor: string
+    cardColor: string
+    textColor: string
+    accentColor: string
+    fontFamily: string
+    bodyFontFamily: string
+    buttonRadius: string
+}
+
+/** A complete, valid booking theme from a business's choices (unknown values fall back to `base`). */
+export function bookingThemeFromChoice(choice: Partial<BookingThemeChoice>, base: BookingTheme): BookingTheme {
+    const color = (v: unknown, fallback: string) => (isHexColor(v) ? v : fallback)
+    const font = (v: unknown, fallback: string) => (typeof v === 'string' && BOOKING_FONTS.includes(v) ? v : fallback)
+    const radius = BOOKING_RADII.some(r => r.value === choice.buttonRadius) ? choice.buttonRadius! : base.buttonRadius
+    const bg = color(choice.backgroundColor, base.backgroundColor)
+    const text = color(choice.textColor, base.textColor)
+    const primary = color(choice.primaryColor, base.primaryColor)
+    const card = color(choice.cardColor, base.cardColor)
+    const expand = (hex: string) => (hex.length === 4 ? '#' + hex.slice(1).split('').map(c => c + c).join('') : hex)
+    return {
+        primaryColor: primary,
+        primaryTextColor: textOn(expand(primary)),
+        backgroundColor: bg,
+        cardColor: card,
+        borderColor: mix(expand(text), expand(bg), 0.16),
+        textColor: text,
+        mutedColor: mix(expand(text), expand(bg), 0.66),
+        accentColor: color(choice.accentColor, base.accentColor),
+        fontFamily: font(choice.fontFamily, base.fontFamily),
+        bodyFontFamily: font(choice.bodyFontFamily, base.bodyFontFamily),
+        buttonRadius: radius,
+        inputRadius: radius === '9999px' ? '12px' : radius,
+        cardRadius: radius === '4px' ? '6px' : '16px',
+    }
+}

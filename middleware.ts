@@ -14,8 +14,10 @@ import { businessSubdomainFromHost } from './src/lib/businessHost'
 const ROOT = process.env.NEXT_PUBLIC_BOOKING_ROOT_DOMAIN?.toLowerCase()
 const APP_ORIGIN = process.env.NEXT_PUBLIC_BASE_URL
 
-// App pages that must never be served on a business subdomain.
-const APP_ONLY = /^\/(dashboard|edit|login|register|forgot-password|onboarding|appointment|auth|admin|set-password|subscriptionResult)(\/|$)/
+// App pages that must never be served on a business subdomain. The legal and
+// help pages linked from the site-wide footer live on the app domain too
+// (on a subdomain they 404'd as /business/<name>/privacy).
+const APP_ONLY = /^\/(dashboard|edit|login|register|forgot-password|onboarding|appointment|auth|admin|set-password|subscriptionResult|privacy|terms|refunds|cookies|beta-agreement|data-deletion|feedback|support)(\/|$)/
 // Business-site paths that should stay as-is (Next internals, API, static files).
 const PASS_THROUGH = /^\/(api|_next|monitoring)(\/|$)|\.[a-z0-9]+$/i
 

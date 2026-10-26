@@ -59,15 +59,20 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
 
     return (
         <>
-            {/* Service detail modal */}
+            {/* Service detail sheet: a bottom sheet on phones, a centered card on larger
+                screens. It scrolls inside, with the total and Select button always in view
+                (it used to grow past the screen, leaving the button unreachable on phones). */}
             {openModal && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                    className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:px-4"
                     style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
                     onClick={() => setOpenModal(false)}
                 >
                     <div
-                        className="w-full max-w-md overflow-hidden"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={service.name}
+                        className="flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden sm:max-h-[85dvh]"
                         style={{
                             backgroundColor: 'var(--t-card)',
                             border: '1px solid var(--t-border)',
@@ -76,13 +81,14 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Close */}
-                        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--t-border)' }}>
+                        <div className="flex shrink-0 items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--t-border)' }}>
                             <h3 className="text-base font-semibold" style={{ color: 'var(--t-text)' }}>{service.name}</h3>
-                            <button onClick={() => setOpenModal(false)} style={{ color: 'var(--t-muted)' }} className="hover:opacity-70 transition-opacity">
+                            <button onClick={() => setOpenModal(false)} style={{ color: 'var(--t-muted)' }} className="-mr-2 flex h-10 w-10 items-center justify-center hover:opacity-70 transition-opacity" aria-label="Close">
                                 <X size={18} />
                             </button>
                         </div>
 
+                        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
                         {/* Image */}
                         {service.photo_url && (
                             <div className="w-full h-48 overflow-hidden">
@@ -121,7 +127,15 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                                     (service.addons as any[]).map((addon: any) => (
                                         <label
                                             key={addon.id}
-                                            className="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors"
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                const next = new Set(selectedAddons)
+                                                if (selectedAddons.has(addon.id)) next.delete(addon.id)
+                                                else next.add(addon.id)
+                                                setSelectedAddons(next)
+                                                setData((prev) => ({ ...prev, selectedAddons: Array.from(next) }))
+                                            }}
+                                            className="flex min-h-12 items-center justify-between p-3 rounded-lg cursor-pointer transition-colors"
                                             style={{
                                                 border: `1px solid ${selectedAddons.has(addon.id) ? 'var(--t-primary)' : 'var(--t-border)'}`,
                                                 backgroundColor: selectedAddons.has(addon.id) ? 'rgba(var(--t-primary), 0.04)' : 'transparent',
@@ -136,13 +150,6 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                                                         border: selectedAddons.has(addon.id) ? 'none' : '1.5px solid var(--t-border)',
                                                         backgroundColor: selectedAddons.has(addon.id) ? 'var(--t-primary)' : 'transparent',
                                                     }}
-                                                    onClick={() => {
-                                                        const next = new Set(selectedAddons)
-                                                        if (selectedAddons.has(addon.id)) next.delete(addon.id)
-                                                        else next.add(addon.id)
-                                                        setSelectedAddons(next)
-                                                        setData((prev) => ({ ...prev, selectedAddons: Array.from(next) }))
-                                                    }}
                                                 >
                                                     {selectedAddons.has(addon.id) && <Check size={11} color="var(--t-primary-text)" strokeWidth={3} />}
                                                 </div>
@@ -156,9 +163,10 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                                 )}
                             </div>
                         </div>
+                        </div>
 
                         {/* Footer */}
-                        <div className="px-5 pb-5 flex items-center justify-between" style={{ borderTop: '1px solid var(--t-border)', paddingTop: 16 }}>
+                        <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-[max(20px,env(safe-area-inset-bottom))]" style={{ borderTop: '1px solid var(--t-border)', paddingTop: 16 }}>
                             <div>
                                 <span className="text-xs" style={{ color: 'var(--t-muted)' }}>Total</span>
                                 <span className="ml-2 text-lg font-bold" style={{ color: 'var(--t-primary)', fontFamily: 'var(--t-font)' }}>
@@ -181,7 +189,7 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                                     }))
                                     setOpenModal(false)
                                 }}
-                                className="text-sm font-medium px-4 py-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="min-h-11 shrink-0 text-sm font-medium px-5 py-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                                 style={{
                                     backgroundColor: 'var(--t-primary)',
                                     color: 'var(--t-primary-text)',

@@ -150,16 +150,16 @@ export const DateTimePicker = () => {
     const isDisabled = (day: Date): boolean => {
         const bookAheadValue: string = data.booking_policy.bookAheadValue
         const luxon = DateTime.fromJSDate(day).setZone(userZone)
-        const startDate = DateTime.now().setZone(userZone).startOf('month')
-        let endDate: DateTime
-        if (bookAheadValue === '1 month' || bookAheadValue === '28 day' || bookAheadValue === '4 week') {
-            endDate = DateTime.now().setZone(userZone).endOf('month')
-        } else {
-            const splitValue = bookAheadValue.split(' ')
-            const plusData = splitValue[1] === 'month' ? { month: Number(splitValue[0]) } : (splitValue[1] === 'week' ? { weeks: Number(splitValue[0]) } : { days: Number(splitValue[0]) })
-            endDate = DateTime.now().setZone(userZone).startOf('month').plus(plusData)
-        }
-        return !(luxon >= startDate && luxon <= endDate)
+        // Bookable from today through today + the business's booking window
+        // ("1 month" = a month from today). This used to start at the 1st of
+        // the month (past days were clickable) and end "1 month" at the end of
+        // the calendar month, leaving only a few days near month-end.
+        const today = DateTime.now().setZone(userZone).startOf('day')
+        const [amount, unit] = (bookAheadValue ?? '1 month').split(' ')
+        const n = Number(amount) || 1
+        const plusData = unit?.startsWith('week') ? { weeks: n } : unit?.startsWith('day') ? { days: n } : { months: n }
+        const endDate = today.plus(plusData).endOf('day')
+        return !(luxon >= today && luxon <= endDate)
     }
 
     const selectedLuxon = selectedDate ? DateTime.fromJSDate(selectedDate).setZone(userZone) : null

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Check, Copy, ExternalLink, Eye, Image as ImageIcon, LayoutTemplate, Loader2, Lock, Monitor, Palette, PencilLine, PencilRuler, Smartphone, Type } from 'lucide-react'
+import { CalendarCheck, Check, Copy, ExternalLink, Eye, Image as ImageIcon, LayoutTemplate, Loader2, Lock, Monitor, Palette, PencilLine, PencilRuler, Smartphone, Type } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PlanGateCard, type GatableBusinessData } from '@/components/dashboard/PlanGate'
 import { BRAND, INPUT_CLASS, SERIF, inputStyle } from '@/features/welcomeSetup/components/shared'
@@ -17,12 +17,14 @@ import { MAX_GALLERY, type SiteContent, type SiteData, type SiteInfo } from '../
 import { templateMeta, type TemplateId } from '../themes'
 import { customBuilderLinkAction, deleteSiteMediaAction, importSectionContentAction, saveTemplateSiteAction, setSitePublishedAction } from '../server/actions'
 import { AboutPanel } from './AboutPanel'
+import { BookingThemePanel } from './BookingThemePanel'
+import type { BookingTheme } from '@/features/automatedBooking/types/theme'
 import { ColorsFontPanel } from './ColorsFontPanel'
 import { MediaPanel, useSiteUploads } from './MediaPanel'
 import { SitePreview } from './SitePreview'
 import { TemplatePicker } from './TemplatePicker'
 
-type Tab = 'template' | 'look' | 'media' | 'about'
+type Tab = 'template' | 'look' | 'media' | 'about' | 'booking'
 /** What the business has today: nothing, a template site, or an older Section Editor / Custom Builder site. */
 export type SiteMode = 'new' | 'template' | 'sections' | 'custom'
 
@@ -31,12 +33,15 @@ const TABS: { id: Tab; label: string; icon: typeof Palette }[] = [
     { id: 'look', label: 'Colors & font', icon: Palette },
     { id: 'media', label: 'Photos & videos', icon: ImageIcon },
     { id: 'about', label: 'About & contact', icon: Type },
+    { id: 'booking', label: 'Booking page', icon: CalendarCheck },
 ]
 
-export function SiteBuilder({ info, initialSite, mode: initialMode, businessId, urlName: initialUrlName, published: initialPublished, planType, gatable }: {
+export function SiteBuilder({ info, initialSite, mode: initialMode, bookingTheme: initialBookingTheme, businessId, urlName: initialUrlName, published: initialPublished, planType, gatable }: {
     info: SiteInfo
     initialSite: SiteData
     mode: SiteMode
+    /** The booking page's saved look (web_editors.theme_data). */
+    bookingTheme: BookingTheme | null
     businessId: string
     urlName: string
     published: boolean
@@ -55,6 +60,13 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, businessId, 
     const [busy, setBusy] = useState<null | 'save' | 'publish' | 'custom'>(null)
     const [gateOpen, setGateOpen] = useState(false)
     const removedPaths = useRef<Set<string>>(new Set())
+    const [bookingTheme, setBookingTheme] = useState<BookingTheme | null>(initialBookingTheme)
+    // The booking theme is saved on its own; keep the site's flag in step without marking the site unsaved.
+    const onBookingSaved = ({ theme, matchesSite }: { theme: BookingTheme; matchesSite: boolean }) => {
+        setBookingTheme(theme)
+        setSite(prev => ({ ...prev, bookingMatchesSite: matchesSite }))
+        setSaved(prev => ({ ...prev, bookingMatchesSite: matchesSite }))
+    }
 
     const dirty = useMemo(() => JSON.stringify(site) !== JSON.stringify(saved), [site, saved])
     const uploads = useSiteUploads(businessId, update => setSite(prev => update(prev)), paths => paths.forEach(p => removedPaths.current.add(p)))
@@ -175,6 +187,11 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, businessId, 
                             </div>
                         )}
                     </div>
+                    <div className="mx-auto mt-10 max-w-xl rounded-2xl p-4 sm:p-6" style={{ backgroundColor: '#FFFFFF', border: `1px solid ${BRAND.border}` }}>
+                        <h2 className="mb-1 text-lg" style={{ fontFamily: SERIF, color: BRAND.ink }}>Your booking page</h2>
+                        <p className="mb-4 text-xs" style={{ color: BRAND.warm }}>Not ready for a website? You can still style the page clients book on: {link.replace(/^https?:\/\//, '')}/book</p>
+                        <BookingThemePanel site={site} canMatchSite={false} initialTheme={bookingTheme} onSaved={onBookingSaved} />
+                    </div>
                 </div>
             </div>
         )
@@ -277,6 +294,7 @@ export function SiteBuilder({ info, initialSite, mode: initialMode, businessId, 
                         {tab === 'look' && <ColorsFontPanel site={site} onChange={patch} />}
                         {tab === 'media' && <MediaPanel site={site} setSite={u => setSite(prev => u(prev))} uploads={uploads} />}
                         {tab === 'about' && <AboutPanel site={site} info={info} onChange={patchContent} />}
+                        {tab === 'booking' && <BookingThemePanel site={saved} canMatchSite={mode === 'template'} initialTheme={bookingTheme} onSaved={onBookingSaved} />}
                     </div>
 
                     <BookingLinkCard businessId={businessId} urlName={urlName} onChanged={setUrlName} published={published && mode === 'template'} onUnpublish={onUnpublish} busy={busy === 'publish'} />
