@@ -44,6 +44,8 @@ export type BookingData = {
     acknowledged: boolean;
     /** A reward code the client checked on the contact step ('' = none). Re-checked on the server. */
     rewardCode: string;
+    /** Service whose details sheet should open by itself (picked on the website and needs size/length or add-ons). */
+    focusServiceId: string;
     selectedDateTime: {
         start?: string,
         end?: string
@@ -88,6 +90,7 @@ export function BookingWrapper({ children, businessData, availabilities, appoint
         styleSelection: null,
         acknowledged: false,
         rewardCode: '',
+        focusServiceId: '',
         selectedDateTime: {},
         bookingSession: null
     });

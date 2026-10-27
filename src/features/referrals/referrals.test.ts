@@ -58,8 +58,8 @@ describe('friend discount at checkout', () => {
         expect(friendDiscountCents({ rewardType: 'amount_off', rewardValue: 50000 }, appt)).toBe(10000)
     })
 
-    it('counts the whole price when the deposit is not subtracted', () => {
-        expect(friendDiscountCents({ rewardType: 'amount_off', rewardValue: 1000 }, { amountDueCents: 10000, requireDeposit: true, subtraction: false, depositCents: 9500 })).toBe(1000)
+    it('leaves room for the deposit in either deposit mode', () => {
+        expect(friendDiscountCents({ rewardType: 'amount_off', rewardValue: 1000 }, { amountDueCents: 10000, requireDeposit: true, subtraction: false, depositCents: 9500 })).toBe(500)
     })
 })
 

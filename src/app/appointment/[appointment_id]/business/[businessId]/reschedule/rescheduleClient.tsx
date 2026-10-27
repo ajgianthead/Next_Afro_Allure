@@ -158,7 +158,7 @@ export default function RescheduleClient() {
         return (
             <div className="w-full h-screen flex flex-col justify-center items-center gap-3 px-5 text-center" style={{ backgroundColor: '#FAF7F2' }}>
                 <p className="text-base font-medium" style={{ color: '#1A1818' }}>
-                    You've reached the maximum number of reschedules for this booking.
+                    You&apos;ve reached the maximum number of reschedules for this booking.
                 </p>
                 <p className="text-sm" style={{ color: '#6F6863' }}>
                     Contact {businessName || 'the business'} directly to reschedule.

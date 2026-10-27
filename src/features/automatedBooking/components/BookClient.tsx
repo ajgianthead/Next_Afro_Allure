@@ -18,7 +18,8 @@ import { DateTimePicker } from './DateTimePicker';
 import { ClientInfo } from './ClientInfomation';
 import { DepositPayment } from './DepositPayment';
 import { useBooking } from '../hooks/useBookingData'
-import { BOOKING_SELECTION_KEY, quoteForBooking } from '../hooks/useBookingQuote'
+import { BOOKING_SELECTION_KEY, quoteForBooking, selectedServiceText } from '../hooks/useBookingQuote'
+import { parseStyleOptions } from '@/features/services/pricing'
 import { createBookingSessionAction, updateDateTimeAction, updateClientInfoAction, getBookingSessionAction } from '../server'
 import { BookingStepper } from './BookingStepper'
 import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
@@ -111,13 +112,11 @@ function BookingCheckbox({
 function PreSelectionBar({ onChangeService }: { onChangeService: () => void }) {
     const { data } = useBooking()
     const service = data.services.find((s: any) => s.id === data.selectedService)
-    if (!service) return null
-
-    const addonsTotal = (data.selectedAddons ?? []).reduce((sum: number, id: string) => {
-        const addon = (service as any).addons?.find((a: any) => a.id === id)
-        return sum + (addon?.price ?? 0)
-    }, 0)
-    const total = (service.price ?? 0) + addonsTotal
+    // Same price the server charges: the size/length price, braiding hair and add-ons (cents).
+    const text = selectedServiceText(data)
+    if (!service || !text) return null
+    const priceText = text.price
+    const optionsText = text.options
 
     return (
         <div
@@ -130,7 +129,8 @@ function PreSelectionBar({ onChangeService }: { onChangeService: () => void }) {
         >
             <div>
                 <span className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>{service.name}</span>
-                <span className="text-sm" style={{ color: 'var(--t-muted)' }}> · ${total.toFixed(2)}</span>
+                <span className="text-sm" style={{ color: 'var(--t-muted)' }}> · {priceText}</span>
+                {optionsText && <div style={{ color: 'var(--t-muted)', fontSize: 12, marginTop: 2 }}>{optionsText}</div>}
                 {(data.selectedAddons ?? []).length > 0 && (
                     <div style={{ color: 'var(--t-muted)', fontSize: 12, marginTop: 2 }}>
                         {(data.selectedAddons ?? []).map((id: string) => {
@@ -142,10 +142,10 @@ function PreSelectionBar({ onChangeService }: { onChangeService: () => void }) {
             </div>
             <button
                 onClick={onChangeService}
-                className="text-xs font-medium transition-opacity hover:opacity-70 ml-4 shrink-0"
+                className="min-h-11 text-xs font-medium transition-opacity hover:opacity-70 ml-4 shrink-0"
                 style={{ color: 'var(--t-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
-                ← Change service
+                Change service
             </button>
         </div>
     )
@@ -198,6 +198,8 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     const [rbbOpen, setRbbOpen] = useState(false)
     const [rbbAccepted, setRbbAccepted] = useState<boolean>(false)
     const [preSelected, setPreSelected] = useState(false)
+    // Set when a website-picked service is confirmed in its sheet; acted on once the choice is saved.
+    const [advanceAfterSelect, setAdvanceAfterSelect] = useState(false)
     const router = useRouter()
 
     const steps = !data.booking_policy ? [] : data.booking_policy.deposit.enabled
@@ -213,11 +215,19 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
 
         if (preSelectedServiceId) {
             if (sessionId) localStorage.removeItem('bookingSessionId')
+            localStorage.removeItem(BOOKING_SELECTION_KEY)
+            // A service with size/length pricing or add-ons needs the client's
+            // choices first, so its details sheet opens; otherwise straight to Date & Time.
+            const picked = data.services.find(s => s.id === preSelectedServiceId)
+            const needsChoices = !!picked && (!!parseStyleOptions(picked.style_options) || ((picked.addons as any[]) ?? []).length > 0)
             createBookingSessionAction(data.business_id, preSelectedServiceId).then((session) => {
                 localStorage.setItem('bookingSessionId', session.id!)
                 setData((prev) => ({
                     ...prev,
                     selectedService: preSelectedServiceId,
+                    styleSelection: null,
+                    selectedAddons: [],
+                    focusServiceId: needsChoices ? preSelectedServiceId : '',
                     bookingSession: {
                         id: session.id,
                         businessId: session.business_id,
@@ -235,7 +245,11 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                     }
                 }))
                 setPreSelected(true)
-                setActiveStep(1)
+                setActiveStep(needsChoices ? 0 : 1)
+                setIsLoading(false)
+            }).catch(() => {
+                // Couldn't start a session: fall back to the normal flow with the sheet open.
+                setData((prev) => ({ ...prev, focusServiceId: preSelectedServiceId }))
                 setIsLoading(false)
             })
             return
@@ -285,7 +299,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     const renderActiveStep = () => {
         const sharedProps = { setRbbOpen, setAgreedAfroAllure, setAgreedBusiness, agreedAfroAllure, agreedBusiness }
         switch (activeStep) {
-            case 0: return <ServiceSelection />
+            case 0: return <ServiceSelection onConfirm={() => { if (preSelected) setAdvanceAfterSelect(true) }} />
             case 1: return <DateTimePicker />
             case 2: return <ClientInfo {...sharedProps} />
             case 3: return <DepositPayment {...sharedProps} setError={setError} setOpenErrorDialog={setOpenErrorDialog} />
@@ -332,7 +346,8 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                 selectedAddons: data.selectedAddons,
             }))
         }
-        if (activeStep === 0 && !data.bookingSession && data.selectedService.length > 0) {
+        // A new session when there isn't one, or the client switched away from the service it was made for.
+        if (activeStep === 0 && data.selectedService.length > 0 && (!data.bookingSession || data.bookingSession.serviceId !== data.selectedService)) {
             const session = await createBookingSessionAction(data.business_id, data.selectedService)
             localStorage.setItem('bookingSessionId', session.id!)
             setData((prev) => ({
@@ -383,10 +398,19 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     const handleChangeService = () => {
         localStorage.removeItem('bookingSessionId')
         localStorage.removeItem(BOOKING_SELECTION_KEY)
-        setData((prev) => ({ ...prev, selectedService: '', selectedAddons: [], styleSelection: null, acknowledged: false, bookingSession: null }))
+        setData((prev) => ({ ...prev, selectedService: '', selectedAddons: [], styleSelection: null, acknowledged: false, bookingSession: null, focusServiceId: '' }))
         setPreSelected(false)
-        router.push(sitePath('/book'))
+        // Back to the service list (this used to leave the client on Date & Time with no service).
+        setActiveStep(0)
+        router.replace(sitePath('/book'))
     }
+
+    useEffect(() => {
+        if (!advanceAfterSelect || activeStep !== 0) return
+        setAdvanceAfterSelect(false)
+        if (quoteForBooking(data).quote) handleNext()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [advanceAfterSelect, data.selectedService, data.styleSelection, data.selectedAddons])
 
     // A service with size/length options can't move on until it's priced,
     // and prep that needs agreement must be confirmed on the contact step.

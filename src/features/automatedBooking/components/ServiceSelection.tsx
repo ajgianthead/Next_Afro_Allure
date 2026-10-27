@@ -4,7 +4,7 @@ import { BookingData } from "@/features/automatedBooking/context/BookingDataCont
 import { ServiceType } from "@/lib/service/Service";
 import Image from "next/image";
 import { Check, X } from "lucide-react";
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import { useBooking } from "../hooks/useBookingData";
 import { StylePicker } from "./StylePicker";
 import { parseStyleOptions, quoteBooking, QuoteError, startingPrice, type StyleSelection } from "@/features/services/pricing";
@@ -16,7 +16,8 @@ const duration = (minutes: number) => {
 }
 
 
-export const ServiceSelection = () => {
+/** `onConfirm` runs after the client picks a service in its details sheet. */
+export const ServiceSelection = ({ onConfirm }: { onConfirm?: () => void }) => {
     const { data }: { data: BookingData } = useBooking();
     return (
         <div>
@@ -26,17 +27,23 @@ export const ServiceSelection = () => {
             </div>
             <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-3">
                 {data.services.map((service) => (
-                    <ServiceCard key={service.id} service={service} />
+                    <ServiceCard key={service.id} service={service} onConfirm={onConfirm} />
                 ))}
             </div>
         </div>
     )
 }
 
-const ServiceCard = ({ service }: { service: ServiceType }) => {
+const ServiceCard = ({ service, onConfirm }: { service: ServiceType; onConfirm?: () => void }) => {
     const { data, setData }: { data: BookingData, setData: Dispatch<SetStateAction<BookingData>> } = useBooking();
     const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set<string>([...data.selectedAddons]))
-    const [openModal, setOpenModal] = useState<boolean>(false)
+    // Opens by itself when the client picked this service on the website and it has choices to make.
+    const [openModal, setOpenModal] = useState<boolean>(data.focusServiceId === service.id)
+    useEffect(() => {
+        if (data.focusServiceId !== service.id) return
+        setOpenModal(true)
+        setData(prev => ({ ...prev, focusServiceId: '' }))
+    }, [data.focusServiceId, service.id, setData])
     const selected = service.id === data.selectedService
     const styleOptions = useMemo(() => parseStyleOptions(service.style_options), [service.style_options])
     const [selection, setSelection] = useState<StyleSelection>(
@@ -155,7 +162,7 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                                                 </div>
                                                 <p className="text-sm" style={{ color: 'var(--t-text)' }}>{addon.name}</p>
                                             </div>
-                                            <span className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>+${addon.price / 100}</span>
+                                            <span className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>+{money(Number(addon.price ?? 0))}</span>
                                         </label>
                                     ))
                                 ) : (
@@ -188,6 +195,7 @@ const ServiceCard = ({ service }: { service: ServiceType }) => {
                                         acknowledged: prev.selectedService === service.id ? prev.acknowledged : false,
                                     }))
                                     setOpenModal(false)
+                                    onConfirm?.()
                                 }}
                                 className="min-h-11 shrink-0 text-sm font-medium px-5 py-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                                 style={{

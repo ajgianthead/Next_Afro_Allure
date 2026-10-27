@@ -41,7 +41,7 @@ export async function applyRewardCore(
 ): Promise<ApplyRewardResult> {
     const { data: appt } = await db
         .from('appointments')
-        .select('id, status, amount_due, deposit_price, paid_deposit, substraction, service_paid, loyalty_reward_id, discount_cents')
+        .select('id, status, amount_due, deposit_price, paid_deposit, require_deposit, substraction, service_paid, loyalty_reward_id, discount_cents')
         .eq('id', appointmentId)
         .eq('business', businessId)
         .maybeSingle()
@@ -66,7 +66,10 @@ export async function applyRewardCore(
     }
 
     // Percent rewards are taken off the full price; never more than what's left to pay.
-    const balance = remainingBalance(appt as any)
+    // A deposit that's still to be paid (online bookings, before Stripe
+    // confirms it) will be credited against this balance too, so leave room for it.
+    const unpaidDeposit = appt.require_deposit && !appt.paid_deposit ? Math.round(Number(appt.deposit_price ?? 0)) : 0
+    const balance = Math.max(0, remainingBalance(appt as any) - unpaidDeposit)
     const fullPrice = Number(appt.amount_due ?? 0) + (appt.paid_deposit && appt.substraction ? Number(appt.deposit_price ?? 0) : 0)
     const discount = Math.min(balance, rewardDiscountCents(found, fullPrice))
     if (discount <= 0) return { ok: false, error: 'There is no balance left to discount.' }

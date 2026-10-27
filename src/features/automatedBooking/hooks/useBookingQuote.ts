@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { parsePrep, parseStyleOptions, quoteBooking, QuoteError, type Quote } from '@/features/services/pricing'
+import { describeSelectedOptions, parsePrep, parseStyleOptions, quoteBooking, QuoteError, startingPrice, type Quote } from '@/features/services/pricing'
 import type { BookingData } from '../context/BookingDataContext'
 import { useBooking } from './useBookingData'
 
@@ -22,6 +22,20 @@ export function quoteForBooking(data: Pick<BookingData, 'services' | 'selectedSe
     } catch (err) {
         return { service, quote: null, error: err instanceof QuoteError ? err.message : 'This service can’t be priced right now.', hasOptions, prep }
     }
+}
+
+const money = (cents: number) => `$${(cents / 100).toFixed(2).replace(/\.00$/, '')}`
+
+/**
+ * Price and choices for the selected service, as shown in the booking flow:
+ * "$195" once it's priced (size/length price, hair and add-ons, from cents),
+ * "from $160" while a size or length still has to be picked.
+ */
+export function selectedServiceText(data: Pick<BookingData, 'services' | 'selectedService' | 'selectedAddons' | 'styleSelection'>): { price: string; options: string } | null {
+    const { service, quote } = quoteForBooking(data)
+    if (!service) return null
+    if (!quote) return { price: `from ${money(startingPrice(service))}`, options: '' }
+    return { price: money(quote.totalCents), options: describeSelectedOptions(quote.selectedOptions) }
 }
 
 export function useBookingQuote() {
