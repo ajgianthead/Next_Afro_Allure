@@ -53,6 +53,16 @@ export default function CompleteClient() {
                         <h2 className="text-lg font-semibold" style={{ color: '#1A1818' }}>{copy.title}</h2>
                     </div>
                     <p className="text-sm max-w-sm" style={{ color: '#6F6863' }}>{copy.body}</p>
+                    {outcome === 'failed' && (
+                        <button
+                            type="button"
+                            onClick={() => window.history.back()}
+                            className="mt-2 min-h-11 rounded-full px-6 text-sm font-semibold"
+                            style={{ backgroundColor: '#0F0E0E', color: '#FFFFFF' }}
+                        >
+                            Try again
+                        </button>
+                    )}
                 </>
             )}
         </div>

@@ -95,7 +95,8 @@ export function friendDiscountCents(
     appt: { amountDueCents: number; requireDeposit: boolean; subtraction: boolean; depositCents: number },
 ): number {
     const raw = p.rewardType === 'amount_off' ? p.rewardValue : Math.round(appt.amountDueCents * p.rewardValue / 100)
-    const cap = appt.amountDueCents - (appt.requireDeposit && appt.subtraction ? appt.depositCents : 0)
+    // The deposit is credited against the balance in both deposit modes.
+    const cap = appt.amountDueCents - (appt.requireDeposit ? appt.depositCents : 0)
     return Math.max(0, Math.min(raw, cap))
 }
 

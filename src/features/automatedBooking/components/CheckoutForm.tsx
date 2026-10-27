@@ -14,6 +14,9 @@ import { useBooking } from "../hooks/useBookingData";
 import { useParams, useRouter } from "next/navigation";
 import { clearStoredReferral, storedReferralCode } from '@/features/referrals/clientStorage'
 
+/** $170 / $12.50 from cents. */
+const money = (cents: number) => `$${(cents / 100).toFixed(2).replace(/\.00$/, '')}`
+
 
 function BookingCheckbox({
     id, checked, onChange, children,
@@ -112,7 +115,7 @@ export const CheckoutForm = ({
     const endDT = data.selectedDateTime.end ? DateTime.fromISO(data.selectedDateTime.end) : null
     // Same calculation the server charges (dollars, for display).
     const totalCents = quote?.totalCents ?? service.price + Math.round(addonSum * 100)
-    const dueNow = calculateDeposit(data.booking_policy.deposit as any, totalCents) / 100
+    const dueNowCents = calculateDeposit(data.booking_policy.deposit as any, totalCents)
     const optionsText = describeSelectedOptions(quote?.selectedOptions)
 
     return (
@@ -149,7 +152,7 @@ export const CheckoutForm = ({
                         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--t-muted)' }}>Service</p>
                         <p className="text-sm" style={{ color: 'var(--t-text)' }}>{service.name}</p>
                         {optionsText && <p className="text-xs" style={{ color: 'var(--t-muted)' }}>{optionsText}</p>}
-                        <p className="text-sm" style={{ color: 'var(--t-muted)' }}>${(totalCents / 100).toFixed(2).replace(/\.00$/, '')} total</p>
+                        <p className="text-sm" style={{ color: 'var(--t-muted)' }}>{money(totalCents)} total</p>
                     </div>
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--t-muted)' }}>Client</p>
@@ -166,7 +169,7 @@ export const CheckoutForm = ({
                             {selectedAddons.map((addon: any, idx: number) => (
                                 <div key={idx} className="flex items-center justify-between text-sm" style={{ color: 'var(--t-text)' }}>
                                     <span>{addon.name}</span>
-                                    <span>${addon.price / 100}</span>
+                                    <span>{money(Number(addon.price ?? 0))}</span>
                                 </div>
                             ))}
                         </div>
@@ -178,7 +181,7 @@ export const CheckoutForm = ({
                 <div className="flex items-center justify-between">
                     <p className="text-sm" style={{ color: 'var(--t-muted)' }}>Due now</p>
                     <p className="text-xl font-bold" style={{ color: 'var(--t-primary)', fontFamily: 'var(--t-font)' }}>
-                        ${dueNow}
+                        {money(dueNowCents)}
                     </p>
                 </div>
             </div>

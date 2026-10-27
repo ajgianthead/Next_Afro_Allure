@@ -265,8 +265,10 @@ begin
        and appt.loyalty_reward_id is null and coalesce(appt.discount_cents, 0) = 0 then
         v_discount := case when prog.reward_type = 'amount_off' then prog.reward_value
                            else round(coalesce(appt.amount_due, 0) * prog.reward_value / 100.0)::integer end;
+        -- The deposit is credited against the balance in both deposit modes
+        -- (taken off amount_due when paid, or subtracted at checkout).
         v_cap := coalesce(appt.amount_due, 0)
-                 - case when appt.require_deposit and appt.substraction then coalesce(appt.deposit_price, 0)::integer else 0 end;
+                 - case when appt.require_deposit then coalesce(appt.deposit_price, 0)::integer else 0 end;
         v_discount := greatest(0, least(v_discount, v_cap));
         if v_discount > 0 then
             update public.appointments
