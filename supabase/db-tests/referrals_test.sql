@@ -19,12 +19,17 @@ begin
     raise notice 'ok - %', what;
 end $$;
 
+-- Each test booking gets its own 2-hour slot (the database blocks overlapping bookings).
+create temporary sequence referral_test_slot;
+
 create function pg_temp.book(p_business uuid, p_email text, p_phone text, p_amount int, p_first text default 'Friend')
 returns uuid language plpgsql as $$
-declare v_id uuid;
+declare
+    v_id uuid;
+    v_start timestamptz := date_trunc('hour', now()) + interval '30 days' + nextval('referral_test_slot') * interval '3 hours';
 begin
     insert into public.appointments (business, start, "end", status, client_metadata, amount_due, require_deposit, substraction)
-    values (p_business, now() + interval '3 days', now() + interval '3 days 2 hours', 'CONFIRMED',
+    values (p_business, v_start, v_start + interval '2 hours', 'CONFIRMED',
             jsonb_build_object('firstName', p_first, 'lastName', 'Test', 'email', p_email, 'phoneNumber', p_phone),
             p_amount, false, false)
     returning id into v_id;
