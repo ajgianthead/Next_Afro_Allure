@@ -287,10 +287,17 @@ export default function LayoutComp({ children, businessData }: { children: React
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             </SidebarMenu>
+                            {/* Legal links (the page-wide footer isn't shown in the dashboard). */}
+                            <p className="flex flex-wrap gap-x-3 gap-y-1 px-2 pt-2 text-[11px] group-data-[collapsible=icon]:hidden" style={{ color: '#6F6863' }}>
+                                <a href="/privacy" className="hover:underline">Privacy</a>
+                                <a href="/terms" className="hover:underline">Terms</a>
+                                <a href="/refunds" className="hover:underline">Refunds</a>
+                                <a href="/data-deletion" className="hover:underline">Delete my data</a>
+                            </p>
                         </SidebarFooter>
                     </Sidebar>
 
-                    <SidebarInset className="px-5">
+                    <SidebarInset className="px-5 min-w-0">
                         <SiteHeader
                             businessId={businessData?.business_id ?? ''}
                             initialUnreadCount={((businessData?.notifications ?? []) as { read: boolean }[]).filter(n => !n.read).length}

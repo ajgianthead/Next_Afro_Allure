@@ -120,9 +120,9 @@ export default function ServicesClient({
             <ServicesTour />
             <AddonsTour />
             {/* Header */}
-            <div data-tour="services-header" className="w-full mt-5 flex justify-between items-center gap-6">
+            <div data-tour="services-header" className="w-full mt-5 flex flex-wrap justify-between items-center gap-x-6 gap-y-3">
                 <h2 className="text-lg font-semibold">Services</h2>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <div data-tour="addons-create">
                         <AddonManager
                             addons={addons}

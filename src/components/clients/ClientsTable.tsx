@@ -231,7 +231,7 @@ export const ClientsTable = ({
                         Add, import, edit, and remove clients. Ban clients to block future bookings.
                     </p>
                 </div>
-                <div className="flex items-center gap-2 sm:shrink-0">
+                <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                     <Button
                         variant="outline"
                         size="sm"
@@ -293,8 +293,9 @@ export const ClientsTable = ({
                             ))}
                         </ul>
 
-                        {/* Desktop table */}
-                        <table className="w-full hidden sm:table">
+                        {/* Desktop table (scrolls sideways rather than cutting off long emails) */}
+                        <div className="hidden sm:block overflow-x-auto">
+                        <table className="w-full">
                             <thead>
                                 <tr style={{ borderBottom: '1px solid #E8E2D6', backgroundColor: '#FAF7F2' }}>
                                     {['First Name', 'Last Name', 'Email', 'Phone Number'].map(h => (
@@ -334,9 +335,10 @@ export const ClientsTable = ({
                                 ))}
                             </tbody>
                         </table>
+                        </div>
                     </>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                    <div className="flex flex-col items-center justify-center py-16 px-4 gap-3 text-center">
                         <UserX size={32} style={{ color: '#E8E2D6' }} />
                         <p className="text-sm italic" style={{ color: '#6F6863' }}>
                             You have no current clients
@@ -344,7 +346,7 @@ export const ClientsTable = ({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="rounded-xl"
+                            className="rounded-xl h-auto min-h-9 max-w-full whitespace-normal py-2"
                             style={{ borderColor: '#E8E2D6', color: '#1A1818', fontSize: '13px' }}
                             onClick={() => setOpenImport(true)}
                         >

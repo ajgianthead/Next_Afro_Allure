@@ -367,7 +367,7 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
                                 Skip for now, I&apos;ll make it later
                             </button>
                         )}
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-1.5" aria-label={`Step ${index + 1} of ${WELCOME_STEPS.length}`}>
                                 {WELCOME_STEPS.map((s, i) => (
                                     <span
@@ -377,7 +377,7 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
                                     />
                                 ))}
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="ml-auto flex items-center gap-2 shrink-0">
                                 {canGoBack && (
                                     <button
                                         type="button"

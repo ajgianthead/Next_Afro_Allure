@@ -59,7 +59,7 @@ export function Heading({ as: Tag = 'h2', className, style, children }: {
     style?: React.CSSProperties
     children: React.ReactNode
 }) {
-    return <Tag className={cx('font-semibold leading-[1.08] tracking-[-0.01em] text-balance', className)} style={{ fontFamily: 'var(--s-heading)', ...style }}>{children}</Tag>
+    return <Tag className={cx('font-semibold leading-[1.08] tracking-[-0.01em] text-balance [overflow-wrap:anywhere]', className)} style={{ fontFamily: 'var(--s-heading)', ...style }}>{children}</Tag>
 }
 
 export function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -203,7 +203,8 @@ export function Header({ centered, transparent }: { centered?: boolean; transpar
     return (
         <header
             className={cx('z-30 w-full', transparent ? 'absolute inset-x-0 top-0' : 'sticky top-0')}
-            style={transparent ? { color: '#fff' } : { background: 'var(--s-bg)', borderBottom: '1px solid var(--s-border)' }}
+            // Over a hero, take the hero's text color (white on a cover photo, the scheme's color without one).
+            style={transparent ? { color: 'inherit' } : { background: 'var(--s-bg)', borderBottom: '1px solid var(--s-border)' }}
         >
             <div className={cx(PAD_X, INNER, 'flex h-16 items-center justify-between gap-3 @3xl:h-20')}>
                 <a href="#top" className={cx('flex min-h-11 min-w-0 items-center gap-2.5', centered && '@3xl:order-2')} onClick={() => setOpen(false)}>
@@ -251,7 +252,7 @@ export function Header({ centered, transparent }: { centered?: boolean; transpar
 export function MobileBookBar() {
     const { bookHref, info } = useSite()
     return (
-        <div className="sticky bottom-0 z-20 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 @3xl:hidden" style={{ background: 'linear-gradient(to top, var(--s-bg) 65%, transparent)' }}>
+        <div data-book-bar className="sticky bottom-0 z-20 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 @3xl:hidden" style={{ background: 'linear-gradient(to top, var(--s-bg) 65%, transparent)' }}>
             <Button href={bookHref()} size="lg" className="w-full">Book with {info.businessName}</Button>
         </div>
     )

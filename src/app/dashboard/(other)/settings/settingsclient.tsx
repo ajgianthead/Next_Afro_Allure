@@ -883,14 +883,14 @@ export default function SettingsClient({
                 style={{ border: '1px solid #E8E2D6', backgroundColor: '#FFFFFF' }}
             >
                 {/* Tab nav */}
-                <div className="flex" style={{ borderBottom: '1px solid #E8E2D6', backgroundColor: '#FAF7F2' }}>
+                <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ borderBottom: '1px solid #E8E2D6', backgroundColor: '#FAF7F2' }}>
                     {TABS.map(tab => {
                         const active = activeTab === tab.key
                         return (
                             <button
                                 key={tab.key}
-                                onClick={() => setActiveTab(tab.key)}
-                                className="relative px-5 py-3 transition-colors"
+                                onClick={(e) => { setActiveTab(tab.key); e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }) }}
+                                className="relative shrink-0 whitespace-nowrap px-4 sm:px-5 py-3 transition-colors"
                                 style={{ color: active ? '#1A1818' : '#6F6863', fontSize: '13px', fontWeight: active ? 600 : 400 }}
                             >
                                 {tab.label}

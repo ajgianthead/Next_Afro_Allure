@@ -30,14 +30,18 @@ export function TemplatePicker({ info, site, selected, onPick, layout = 'grid', 
             {TEMPLATES.map(t => {
                 const active = selected === t.id
                 const preview: SiteData = { ...site, templateId: t.id, scheme: site.templateId === t.id ? site.scheme : '', fontPairing: site.templateId === t.id ? site.fontPairing : '' }
+                // A div, not a <button>: the preview inside has the site's own links
+                // and buttons, and a button can't contain other buttons.
                 return (
-                    <button
+                    <div
                         key={t.id}
-                        type="button"
                         role="radio"
+                        tabIndex={0}
                         aria-checked={active}
+                        aria-label={t.name}
                         onClick={() => onPick(t.id)}
-                        className={`group flex flex-col overflow-hidden rounded-2xl text-left transition-shadow ${layout === 'row' ? 'w-[68%] shrink-0 snap-start sm:w-[44%]' : ''}`}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(t.id) } }}
+                        className={`group flex cursor-pointer flex-col outline-none focus-visible:ring-2 focus-visible:ring-black/40 focus-visible:ring-offset-2 overflow-hidden rounded-2xl text-left transition-shadow ${layout === 'row' ? 'w-[68%] shrink-0 snap-start sm:w-[44%]' : ''}`}
                         style={{ border: `2px solid ${active ? BRAND.dark : BRAND.border}`, backgroundColor: '#FFFFFF', boxShadow: active ? '0 8px 24px -12px rgba(15,14,14,.35)' : undefined }}
                     >
                         <div className="relative w-full overflow-hidden" style={{ height: previewHeight, backgroundColor: BRAND.cream }}>
@@ -52,7 +56,7 @@ export function TemplatePicker({ info, site, selected, onPick, layout = 'grid', 
                             <span className="text-sm font-semibold" style={{ color: BRAND.ink }}>{t.name}</span>
                             <span className="text-xs" style={{ color: BRAND.warm }}>{t.tagline}</span>
                         </div>
-                    </button>
+                    </div>
                 )
             })}
         </div>
