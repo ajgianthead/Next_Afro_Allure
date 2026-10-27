@@ -42,6 +42,7 @@ import {
     IconLifebuoy,
     IconGift,
     IconUserPlus,
+    IconUsersGroup,
     IconHourglass,
     IconPhoto,
     IconBuildingStore,
@@ -80,9 +81,16 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
             { title: 'Dashboard', url: '/dashboard', icon: IconLayoutDashboard },
             { title: 'Appointments', url: '/dashboard/appointments', icon: IconCalendarEvent },
-            { title: 'Clients', url: '/dashboard/clients', icon: IconUsers },
-            { title: 'Rewards', url: '/dashboard/rewards', icon: IconGift },
-            { title: 'Referrals', url: '/dashboard/referrals', icon: IconUserPlus },
+            {
+                // Everything about the people who book: who they are, what they've earned, who they've sent.
+                title: 'Clientele',
+                icon: IconUsersGroup,
+                children: [
+                    { title: 'Clients', url: '/dashboard/clients', icon: IconUsers },
+                    { title: 'Rewards', url: '/dashboard/rewards', icon: IconGift },
+                    { title: 'Referrals', url: '/dashboard/referrals', icon: IconUserPlus },
+                ],
+            },
             { title: 'Analytics', url: '/dashboard/analytics', icon: IconChartBar },
         ],
     },
