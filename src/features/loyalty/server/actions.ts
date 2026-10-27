@@ -5,10 +5,10 @@ import { createAdminClient } from '@/app/utils/supabase/admin'
 import { requireOwnBusinessId } from '@/lib/auth/requireBusinessOwner'
 import { effectivePlanType } from '@/lib/beta'
 import { getBusinessPermissions } from '@/lib/permissions'
-import { remainingBalance } from '@/features/services/pricing'
+import { applyRewardCore, CLOSED_STATUSES } from './applyReward'
 import {
-    isRewardUsable, normalizeRewardCode, programFromRow, programProblems, programToRow, progressFor,
-    rewardDiscountCents, rewardFromRow, type LoyaltyProgram, type LoyaltyReward, type Progress,
+    isRewardUsable, programFromRow, programProblems, programToRow, progressFor,
+    rewardFromRow, type LoyaltyProgram, type LoyaltyReward, type Progress,
 } from '../loyalty'
 
 // Every action here is a public endpoint: each one works out the caller's own
@@ -16,8 +16,6 @@ import {
 // go through the service role because rewards and the ledger aren't writable
 // by businesses directly (so nobody can mint rewards from the browser).
 
-/** Appointments that can't take a reward any more. */
-const CLOSED_STATUSES = ['CANCELLED', 'COMPLETED', 'NO_SHOW', 'DENIED', 'REFUNDED']
 
 type Result<T = {}> = ({ ok: true } & T) | { ok: false; error: string }
 type Admin = ReturnType<typeof createAdminClient>
@@ -267,8 +265,10 @@ export interface AppointmentLoyalty {
     progress: Progress | null
     available: LoyaltyReward[]
     applied: { reward: LoyaltyReward; discountCents: number } | null
-    /** Whether a reward can still be applied (unpaid, not cancelled). */
+    /** Whether a reward can still be applied (unpaid, not cancelled, no referral discount). */
     canApply: boolean
+    /** A referred friend's first-visit discount on this appointment (cents), 0 if none. */
+    referralDiscountCents: number
 }
 
 export async function getAppointmentLoyalty(appointmentId: string): Promise<Result<{ loyalty: AppointmentLoyalty }>> {
@@ -286,6 +286,8 @@ export async function getAppointmentLoyalty(appointmentId: string): Promise<Resu
     const program = await loadProgram(supabase, businessId)
     const clientId = await clientIdFor(supabase, appt.client_metadata)
 
+    // A discount with no reward attached is a referred friend's first-visit discount.
+    const referralDiscountCents = !appt.loyalty_reward_id ? Number(appt.discount_cents ?? 0) : 0
     let applied: AppointmentLoyalty['applied'] = null
     if (appt.loyalty_reward_id) {
         const { data } = await supabase.from('loyalty_rewards').select('*').eq('id', appt.loyalty_reward_id).maybeSingle()
@@ -316,7 +318,8 @@ export async function getAppointmentLoyalty(appointmentId: string): Promise<Resu
             progress,
             available,
             applied,
-            canApply: !appt.service_paid && !CLOSED_STATUSES.includes(appt.status as string),
+            canApply: !appt.service_paid && !CLOSED_STATUSES.includes(appt.status as string) && !referralDiscountCents,
+            referralDiscountCents,
         },
     }
 }
@@ -329,66 +332,10 @@ export async function getAppointmentLoyalty(appointmentId: string): Promise<Resu
 export async function applyRewardToAppointment(appointmentId: string, reward: { id?: string; code?: string }): Promise<Result<{ discountCents: number }>> {
     const businessId = await ownBusiness()
     if (!businessId) return { ok: false, error: 'Please sign in again.' }
-    const supabase = createAdminClient()
-
-    const { data: appt } = await supabase
-        .from('appointments')
-        .select('id, status, amount_due, deposit_price, paid_deposit, substraction, service_paid, loyalty_reward_id')
-        .eq('id', appointmentId)
-        .eq('business', businessId)
-        .maybeSingle()
-    if (!appt) return { ok: false, error: 'Appointment not found.' }
-    if (appt.loyalty_reward_id) return { ok: false, error: 'A reward is already applied to this appointment.' }
-    if (appt.service_paid || CLOSED_STATUSES.includes(appt.status as string))
-        return { ok: false, error: 'Rewards can only be applied before the appointment is paid.' }
-
-    let query = supabase.from('loyalty_rewards').select('*').eq('business_id', businessId)
-    if (reward.id) query = query.eq('id', reward.id)
-    else if (reward.code?.trim()) query = query.eq('code', normalizeRewardCode(reward.code))
-    else return { ok: false, error: 'Choose a reward or enter a code.' }
-    const { data: row } = await query.maybeSingle()
-    if (!row) return { ok: false, error: "That code doesn't match a reward for your business." }
-    const found = rewardFromRow(row)
-    if (!isRewardUsable(found)) return { ok: false, error: found.status === 'used' ? 'That reward was already used.' : 'That reward has expired.' }
-
-    // Percent rewards are taken off the full price; never more than what's left to pay.
-    const balance = remainingBalance(appt as any)
-    const fullPrice = Number(appt.amount_due ?? 0) + (appt.paid_deposit && appt.substraction ? Number(appt.deposit_price ?? 0) : 0)
-    const discount = Math.min(balance, rewardDiscountCents(found, fullPrice))
-    if (discount <= 0) return { ok: false, error: 'There is no balance left to discount.' }
-
-    const now = new Date().toISOString()
-    const { data: claimed } = await supabase
-        .from('loyalty_rewards')
-        .update({ status: 'used', used_at: now, used_appointment_id: appointmentId, used_amount_cents: discount })
-        .eq('id', found.id)
-        .eq('status', 'available')
-        .select('id')
-    if (!claimed?.length) return { ok: false, error: 'That reward was just used.' }
-
-    const { data: updated, error } = await supabase
-        .from('appointments')
-        .update({ amount_due: Number(appt.amount_due) - discount, loyalty_reward_id: found.id, discount_cents: discount })
-        .eq('id', appointmentId)
-        .is('loyalty_reward_id', null)
-        .eq('amount_due', appt.amount_due)
-        .select('id')
-    if (error || !updated?.length) {
-        await supabase.from('loyalty_rewards')
-            .update({ status: 'available', used_at: null, used_appointment_id: null, used_amount_cents: null })
-            .eq('id', found.id)
-        return { ok: false, error: 'The appointment changed — please try again.' }
-    }
-
-    const { data: client } = await supabase.from('loyalty_rewards').select('client_id').eq('id', found.id).single()
-    if (client) {
-        await supabase.from('loyalty_ledger').insert({
-            business_id: businessId, client_id: client.client_id, appointment_id: appointmentId,
-            kind: 'redeem', reward_id: found.id, note: `Used ${found.code}`,
-        })
-    }
+    const res = await applyRewardCore(createAdminClient(), businessId, appointmentId, reward)
+    if (!res.ok) return res
     revalidatePath('/dashboard/appointments')
-    return { ok: true, discountCents: discount }
+    return { ok: true, discountCents: res.discountCents }
 }
 
 /** Undoes an applied reward (before the appointment is paid) and gives it back to the client. */

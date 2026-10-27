@@ -14,6 +14,7 @@ import { notifyLoyaltyForAppointment } from "@/features/loyalty/server/notify";
 import { createAdminClient } from "@/app/utils/supabase/admin";
 import { sendConfirmationTexts } from "@/features/shared/appointments/confirmation";
 import { splitBalancePayment } from "@/features/stripe/tips";
+import { notifyReferralForAppointment } from '@/features/referrals/server/notify'
 
 export async function POST(request: NextRequest) {
   const endpointSecret = process.env.CONNECTED_ACCOUNT_WEBHOOK_SECRET!;
@@ -275,6 +276,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, clien
 
       // Paid in full = visit completed: tell the client their loyalty progress.
       await notifyLoyaltyForAppointment(eoaRes.id);
+      await notifyReferralForAppointment(eoaRes.id);
     }
     return;
   }

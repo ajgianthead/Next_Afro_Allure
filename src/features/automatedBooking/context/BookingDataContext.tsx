@@ -42,6 +42,8 @@ export type BookingData = {
     styleSelection: StyleSelection | null;
     /** Client confirmed the service's prep instructions. */
     acknowledged: boolean;
+    /** A reward code the client checked on the contact step ('' = none). Re-checked on the server. */
+    rewardCode: string;
     selectedDateTime: {
         start?: string,
         end?: string
@@ -85,6 +87,7 @@ export function BookingWrapper({ children, businessData, availabilities, appoint
         selectedService: "",
         styleSelection: null,
         acknowledged: false,
+        rewardCode: '',
         selectedDateTime: {},
         bookingSession: null
     });

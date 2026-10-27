@@ -1023,6 +1023,168 @@ export type Database = {
           },
         ]
       }
+      referral_programs: {
+        Row: {
+          business_id: string
+          enabled: boolean
+          reward_type: string
+          reward_value: number
+          recipients: string
+          reward_expiry_days: number | null
+          max_rewards_per_referrer: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          enabled?: boolean
+          reward_type?: string
+          reward_value?: number
+          recipients?: string
+          reward_expiry_days?: number | null
+          max_rewards_per_referrer?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          enabled?: boolean
+          reward_type?: string
+          reward_value?: number
+          recipients?: string
+          reward_expiry_days?: number | null
+          max_rewards_per_referrer?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referral_codes: {
+        Row: {
+          id: string
+          business_id: string
+          client_id: string
+          code: string
+          access_token: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          client_id: string
+          code: string
+          access_token?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          client_id?: string
+          code?: string
+          access_token?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          id: string
+          business_id: string
+          code_id: string
+          referrer_client_id: string
+          referred_client_id: string | null
+          referred_email: string
+          referred_phone: string
+          appointment_id: string
+          status: string
+          void_reason: string | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          business_id: string
+          code_id: string
+          referrer_client_id: string
+          referred_client_id?: string | null
+          referred_email?: string
+          referred_phone?: string
+          appointment_id: string
+          status?: string
+          void_reason?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          business_id?: string
+          code_id?: string
+          referrer_client_id?: string
+          referred_client_id?: string | null
+          referred_email?: string
+          referred_phone?: string
+          appointment_id?: string
+          status?: string
+          void_reason?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
+      referral_rewards: {
+        Row: {
+          id: string
+          referral_id: string
+          business_id: string
+          recipient: string
+          client_id: string | null
+          reward_type: string
+          value: number
+          status: string
+          loyalty_reward_id: string | null
+          redeemed_appointment_id: string | null
+          redeemed_amount_cents: number | null
+          available_at: string | null
+          redeemed_at: string | null
+          notified_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          referral_id: string
+          business_id: string
+          recipient: string
+          client_id?: string | null
+          reward_type: string
+          value: number
+          status?: string
+          loyalty_reward_id?: string | null
+          redeemed_appointment_id?: string | null
+          redeemed_amount_cents?: number | null
+          available_at?: string | null
+          redeemed_at?: string | null
+          notified_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          referral_id?: string
+          business_id?: string
+          recipient?: string
+          client_id?: string | null
+          reward_type?: string
+          value?: number
+          status?: string
+          loyalty_reward_id?: string | null
+          redeemed_appointment_id?: string | null
+          redeemed_amount_cents?: number | null
+          available_at?: string | null
+          redeemed_at?: string | null
+          notified_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       refunds: {
         Row: {
           amount: number
@@ -1409,6 +1571,18 @@ export type Database = {
       }
     }
     Functions: {
+      referral_attribute: {
+        Args: { p_appointment: string; p_code: string }
+        Returns: Json
+      }
+      referral_code_for: {
+        Args: { p_business: string; p_client: string }
+        Returns: Database["public"]["Tables"]["referral_codes"]["Row"]
+      }
+      referral_is_new_client: {
+        Args: { p_business: string; p_email: string; p_phone: string; p_exclude_appointment: string }
+        Returns: boolean
+      }
       refresh_appointment_refund_totals: {
         Args: { p_appointment_id: string }
         Returns: undefined

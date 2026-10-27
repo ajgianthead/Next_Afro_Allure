@@ -8,6 +8,7 @@ import { Service } from "@/lib/service/Service";
 import { ServiceData } from "@/features/services/types";
 import { remainingBalance } from "@/features/services/pricing";
 import { notifyLoyaltyForAppointment } from "@/features/loyalty/server/notify";
+import { notifyReferralForAppointment } from '@/features/referrals/server/notify'
 
 
 
@@ -46,6 +47,7 @@ export const markAppointmentAs = async (businessId: string, status: Enums<'statu
             .single()
         if (error) throw new Error(error.message)
         await notifyLoyaltyForAppointment(id)
+        await notifyReferralForAppointment(id)
         return data
     }
 
@@ -62,7 +64,10 @@ export const markAppointmentAs = async (businessId: string, status: Enums<'statu
         .select('id, status, amount_due, paid_amount')
         .single()
     if (error) throw new Error(error.message)
-    if (status === 'COMPLETED') await notifyLoyaltyForAppointment(id)
+    if (status === 'COMPLETED') {
+        await notifyLoyaltyForAppointment(id)
+        await notifyReferralForAppointment(id)
+    }
     return data
 }
 

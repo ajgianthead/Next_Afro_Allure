@@ -12,6 +12,7 @@ import { bookAppointment } from "../../../app/business/[businessName]/actions";
 import { Check, Loader2 } from "lucide-react";
 import { useBooking } from "../hooks/useBookingData";
 import { useParams, useRouter } from "next/navigation";
+import { clearStoredReferral, storedReferralCode } from '@/features/referrals/clientStorage'
 
 
 function BookingCheckbox({
@@ -84,9 +85,12 @@ export const CheckoutForm = ({
                 { start: data.selectedDateTime.start!, end: data.selectedDateTime.end!, appointmentLength: quote?.durationMinutes ?? service.length },
                 Intl.DateTimeFormat().resolvedOptions().timeZone,
                 data.styleSelection,
-                data.acknowledged
+                data.acknowledged,
+                storedReferralCode(businessName) || null,
+                data.rewardCode || null,
             )
             localStorage.removeItem(BOOKING_SELECTION_KEY)
+            clearStoredReferral(businessName)
             const { error } = await stripe.confirmPayment({
                 elements,
                 redirect: 'if_required',

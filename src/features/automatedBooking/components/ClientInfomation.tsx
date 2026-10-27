@@ -7,6 +7,7 @@ import { Dispatch, SetStateAction } from "react";
 import { useBooking } from "../hooks/useBookingData";
 import { useBookingQuote } from "../hooks/useBookingQuote";
 import { clientPrepFor } from "@/features/services/pricing";
+import { RewardCodeField } from "./RewardCodeField";
 
 
 function BookingCheckbox({
@@ -159,6 +160,8 @@ export const ClientInfo = ({
                         )}
                     </div>
                 )}
+
+                <RewardCodeField />
 
                 {describeLateFee(parseLateFee(data.booking_policy.late_fee)) && (
                     <p className="text-xs" style={{ color: 'var(--t-muted)' }}>
