@@ -37,6 +37,17 @@ export function AppointmentRewards({ appointmentId, onBalanceChange }: {
     }, [appointmentId])
 
     if (!data) return null
+    // A referred friend's first-visit discount (no reward code involved).
+    if (data.referralDiscountCents > 0) {
+        return (
+            <div className="flex items-center justify-between gap-2 pt-3" style={{ borderTop: '1px solid #F0EBE3' }}>
+                <span className="text-sm flex items-center gap-1.5" style={{ color: '#15803D' }}>
+                    <Gift size={13} /> Referral discount (new client)
+                </span>
+                <span style={{ fontFamily: SERIF, fontSize: 14, color: '#15803D' }}>−{fmt(data.referralDiscountCents)}</span>
+            </div>
+        )
+    }
     // Nothing to show when the program is off and no reward was ever applied here.
     if (!data.enabled && !data.applied) return null
 

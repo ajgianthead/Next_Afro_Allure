@@ -17,6 +17,8 @@ import { AppointmentReminders } from "@/features/shared/appointments/Appointment
 import { quoteFromDb } from "@/features/services/server/quote";
 import { calculateDeposit, parsePrep, QuoteError, type StyleSelection } from "@/features/services/pricing";
 import { stripe } from "@/lib/stripe/stripeClient";
+import { attributeReferral } from '@/features/referrals/server/attribute'
+import { applyRewardCore } from '@/features/loyalty/server/applyReward'
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -251,7 +253,7 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
     start?: string;
     end?: string;
     appointmentLength: number;
-}, zone: string, styleSelection?: StyleSelection | null, acknowledged?: boolean) => {
+}, zone: string, styleSelection?: StyleSelection | null, acknowledged?: boolean, referralCode?: string | null, rewardCode?: string | null) => {
     // Price, duration, add-ons and the deposit come from the database. The
     // service object and amounts sent by the browser are not trusted.
     let priced: Awaited<ReturnType<typeof quoteFromDb>>
@@ -358,8 +360,25 @@ export const bookAppointment = async (addons: any, paymentIntentID: string, busi
             })
         }
 
+        // A referral link takes the friend's discount off this booking; it's
+        // checked and recorded in the same transaction as the appointment.
+        let booked = appointment.rows[0]
+        const referral = await attributeReferral(booked.id, referralCode, client)
+        if (referral.discountCents > 0) {
+            booked = (await client.query(`SELECT * FROM appointments WHERE id = $1`, [booked.id])).rows[0]
+        }
+
         await client.query('COMMIT');
-        return appointment.rows[0]
+
+        // A reward code from the client (checked again here, and only for the
+        // person it was issued to). Never blocks the booking.
+        if (rewardCode?.trim() && referral.discountCents === 0) {
+            const applied = await applyRewardCore(createAdminClient(), businessId, booked.id, { code: rewardCode },
+                { email: String(client_metadata?.email ?? ''), phone: String(client_metadata?.phoneNumber ?? '') })
+            if (applied.ok) booked = { ...booked, amount_due: Number(booked.amount_due) - applied.discountCents, discount_cents: applied.discountCents }
+            else console.warn('Reward code not applied at booking:', applied.error)
+        }
+        return booked
     } catch (error: any) {
         await client.query('ROLLBACK')
         throw new Error(error.message)

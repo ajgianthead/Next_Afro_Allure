@@ -15,6 +15,8 @@ import { parsePrep, QuoteError, type StyleSelection } from "@/features/services/
 import { resolveTimezone } from "@/lib/timezone"
 import { after } from "next/server"
 import { notifyWaitlistOfOpening } from "@/features/waitlist/server/notify"
+import { attributeReferral } from '@/features/referrals/server/attribute'
+import { applyRewardCore } from '@/features/loyalty/server/applyReward'
 
 export const getAppointmentByIdAction = async (id: string) => {
     const supabase = createAdminClient()
@@ -142,6 +144,10 @@ export const createAppointmentAction = async (body: {
     style_selection?: StyleSelection | null
     /** Client ticked the prep / policy agreement. */
     acknowledged?: boolean
+    /** Code from a client's referral link (?ref=), checked on the server. */
+    referral_code?: string | null
+    /** A reward code the client entered, applied only if it's theirs. */
+    reward_code?: string | null
 }) => {
     const isBanned = await isClientBannedFromBusiness(
         body.client_metadata?.email,
@@ -243,6 +249,22 @@ export const createAppointmentAction = async (body: {
         .select('*, business_users(*)')
         .single()
     if (error) throw new Error(error.message)
+
+    // A referral link takes the friend's discount off this booking. Runs before
+    // the client is added to the clientele, so they still count as new.
+    const referral = await attributeReferral(data.id, body.referral_code)
+    if (referral.discountCents > 0) {
+        data.amount_due = Number(data.amount_due) - referral.discountCents
+        data.discount_cents = referral.discountCents
+    } else if (body.reward_code?.trim()) {
+        // A reward code from the client, checked again here and only for the person it was issued to.
+        const applied = await applyRewardCore(supabase, business.business_id, data.id, { code: body.reward_code },
+            { email: clientMetadata.email, phone: clientMetadata.phoneNumber })
+        if (applied.ok) {
+            data.amount_due = Number(data.amount_due) - applied.discountCents
+            data.discount_cents = applied.discountCents
+        } else console.warn('Reward code not applied at booking:', applied.error)
+    }
 
     const settings = data.business_users.account_settings as any
     const client_metadata = data.client_metadata as any

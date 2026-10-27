@@ -14,6 +14,7 @@ const ROUTE_LABELS: Record<string, string> = {
     '/dashboard/availability': 'Availability',
     '/dashboard/booking-site': 'Website',
     '/dashboard/booking-page': 'Booking Page',
+    '/dashboard/referrals': 'Referrals',
     '/dashboard/booking-settings': 'Booking Settings',
     '/dashboard/monetization': 'Monetization',
     '/dashboard/services': 'Services',

@@ -24,6 +24,8 @@ import { BookingStepper } from './BookingStepper'
 import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
 import { siteFontWeights } from '@/features/siteBuilder/themes'
 import { useRouter } from 'next/navigation'
+import { getReferralOfferAction, type ReferralOffer } from '@/features/referrals/server/offer'
+import { clearStoredReferral, rememberReferralFromUrl, storedReferralCode } from '@/features/referrals/clientStorage'
 
 export function BookClient({ businessData, availabilities, appointments, services, policy, bookingLimitReached, themeData, preSelectedServiceId, waitlistEnabled, smsEnabled }: {
     businessData: PublicBusinessType,
@@ -157,6 +159,12 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     preSelectedServiceId?: string
 }) => {
     const theme = { ...DEFAULT_BOOKING_THEME, ...themeData }
+    // A referral link (?ref=CODE): remember it and show the friend what they get.
+    const [referralOffer, setReferralOffer] = useState<ReferralOffer | null>(null)
+    useEffect(() => {
+        const code = rememberReferralFromUrl(businessName)
+        if (code) getReferralOfferAction(businessData.id, code).then(setReferralOffer).catch(() => { })
+    }, [businessName, businessData.id])
     // Links stay on the host the client is on (kayla.afroallure.co or the app
     // domain). Resolved after mount so server and client render the same HTML.
     const [siteHost, setSiteHost] = useState<string | null>(null)
@@ -308,8 +316,11 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
             selected_addons: data.selectedAddons,
             style_selection: data.styleSelection,
             acknowledged: data.acknowledged,
+            referral_code: storedReferralCode(businessName) || null,
+            reward_code: data.rewardCode || null,
         })
         localStorage.removeItem(BOOKING_SELECTION_KEY)
+        clearStoredReferral(businessName)
         return true
     }
 
@@ -504,6 +515,20 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                             <BookingFullMessage businessData={businessData} />
                         ) : (
                             <>
+                                {referralOffer && (
+                                    <div
+                                        className="mb-5 flex items-start gap-3 px-4 py-3 text-sm"
+                                        style={{ backgroundColor: 'var(--t-card)', border: '1px solid var(--t-border)', borderRadius: 'var(--t-card-r)', color: 'var(--t-text)' }}
+                                    >
+                                        <span aria-hidden className="text-lg leading-none">🎁</span>
+                                        <p>
+                                            <strong>{referralOffer.referrerFirstName} sent you here.</strong>{' '}
+                                            {referralOffer.friendReward
+                                                ? <>New clients get <strong>{referralOffer.friendReward}</strong> their first visit, taken off when you book.</>
+                                                : <>Thanks for booking with a friend&apos;s link.</>}
+                                        </p>
+                                    </div>
+                                )}
                                 <BookingStepper steps={steps} activeStep={activeStep} />
                                 {preSelected && activeStep >= 1 && (
                                     <PreSelectionBar onChangeService={handleChangeService} />
