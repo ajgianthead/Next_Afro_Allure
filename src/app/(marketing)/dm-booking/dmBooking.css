@@ -78,7 +78,11 @@
 
 /* ── Simple landing page steps grid ─────────────────── */
 .dm-landing-steps {
-  grid-template-columns: repeat(4, 1fr) !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+/* Tablets: four demo cards don't fit side by side, so show two per row. */
+@media (min-width: 721px) and (max-width: 1000px) {
+  .dm-landing-steps { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
 /* Scroll arrow hidden on desktop */

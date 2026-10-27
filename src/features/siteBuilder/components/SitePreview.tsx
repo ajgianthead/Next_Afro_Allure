@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { SiteRenderer } from '../templates'
 import type { SiteData, SiteInfo } from '../siteData'
 import { resolveTheme } from '../themes'
@@ -56,13 +56,17 @@ export function ScaledSite({ info, site, width, height, editing = true, interact
             <div style={{ height: contentHeight * scale, position: 'relative' }}>
                 <div
                     ref={inner}
-                    // transform makes the sticky header/book bar and the lightbox stay inside the frame
-                    style={{ width: layoutWidth, transform: `scale(${scale})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0, pointerEvents: interactive ? undefined : 'none' }}
+                    // Thumbnails (not interactive) hide the floating Book bar, which would cover the hero.
+                    className={interactive ? undefined : '[&_[data-book-bar]]:hidden'}
+                    // transform makes the sticky header/book bar and the lightbox stay inside the frame.
+                    // --site-vh sizes "full screen" heroes to this frame rather than the browser window.
+                    style={{ width: layoutWidth, transform: `scale(${scale})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0, pointerEvents: interactive ? undefined : 'none', ...(height ? { '--site-vh': `${height / scale / 100}px` } : {}) } as CSSProperties}
                     onClickCapture={e => {
                         const link = (e.target as HTMLElement).closest('a')
                         if (link) e.preventDefault()
                     }}
                     aria-hidden={!interactive || undefined}
+                    inert={!interactive || undefined}
                 >
                     <SiteRenderer info={info} site={site} theme={theme} basePath="" editing={editing} />
                 </div>

@@ -12,7 +12,7 @@ export function FadeHouse() {
     const names = info.services.map(s => s.name)
     return (
         <Root>
-            <section id="top" className="relative flex min-h-[88svh] flex-col @3xl:min-h-[640px]" style={{ background: 'var(--s-fg)', color: cover ? '#ffffff' : 'var(--s-bg)' }}>
+            <section id="top" className="relative flex min-h-[calc(var(--site-vh,1svh)*88)] flex-col @3xl:min-h-[640px]" style={{ background: 'var(--s-fg)', color: cover ? '#ffffff' : 'var(--s-bg)' }}>
                 {cover && (
                     <div className="absolute inset-0">
                         <MediaView media={cover} alt={info.businessName} eager />

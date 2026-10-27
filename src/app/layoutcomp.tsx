@@ -13,6 +13,8 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 
 const inter = Inter({ subsets: ["latin"] });
+// Full-screen app pages that don't get the page-wide footer.
+const APP_SHELL = /^\/(dashboard|editor)(\/|$)|^\/business\/[^/]+\/edit(\/|$)/
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", weight: ["400", "500", "600", "700"] });
 
 export default function RootLayout({
@@ -86,7 +88,10 @@ export default function RootLayout({
                     <div id="main-content">
                         {children}
                     </div>
-                    <SiteFooter />
+                    {/* The dashboard and editors are full-screen app layouts with a fixed
+                        sidebar: the page-wide legal bar slid underneath it there. Their
+                        legal links live in the sidebar instead. */}
+                    {!APP_SHELL.test(pathname ?? '') && <SiteFooter />}
                     <CookieBanner />
                 </body>
             </html>

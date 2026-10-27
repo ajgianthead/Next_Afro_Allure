@@ -263,8 +263,9 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                     <>
                         {/* Header */}
                         <div className="flex flex-col gap-2 p-5 pb-4" style={{ borderBottom: '1px solid #F0EBE3' }}>
-                            <div className="flex items-start justify-between gap-3">
-                                <p style={{ fontFamily: SERIF, fontSize: 18, color: '#1A1818', lineHeight: 1.3 }}>
+                            {/* pr-8 keeps the status badge clear of the dialog's close button */}
+                            <div className="flex items-start justify-between gap-3 pr-8">
+                                <p className="min-w-0 break-words" style={{ fontFamily: SERIF, fontSize: 18, color: '#1A1818', lineHeight: 1.3 }}>
                                     {event.serviceData.name}
                                     {optionsText && (
                                         <span className="block text-sm" style={{ fontFamily: 'inherit', color: '#6F6863' }}>{optionsText}</span>
@@ -311,7 +312,7 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                     {event.clientData.firstName} {event.clientData.lastName}
                                 </p>
                                 <div className="flex flex-col gap-0.5">
-                                    <p className="text-sm" style={{ color: '#6F6863' }}>{event.clientData.email}</p>
+                                    <p className="text-sm break-all" style={{ color: '#6F6863' }}>{event.clientData.email}</p>
                                     {event.clientData.phoneNumber && (
                                         <p className="text-sm" style={{ color: '#6F6863' }}>
                                             {formatPhone(event.clientData.phoneNumber)}
@@ -327,16 +328,16 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                 </p>
 
                                 <div className="flex flex-col gap-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm" style={{ color: '#1A1818' }}>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="min-w-0 text-sm" style={{ color: '#1A1818' }}>
                                             {event.serviceData.name}
                                         </span>
-                                        <span style={{ fontFamily: SERIF, fontSize: 14, color: '#1A1818' }}>
+                                        <span className="shrink-0" style={{ fontFamily: SERIF, fontSize: 14, color: '#1A1818' }}>
                                             {fmt(stylePrice)}
                                         </span>
                                     </div>
 
-                                    {hairAdded && (
+                                    {hairAdded > 0 && (
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm" style={{ color: '#6F6863' }}>+ Braiding hair</span>
                                             <span style={{ fontFamily: SERIF, fontSize: 14, color: '#6F6863' }}>{fmt(hairAdded)}</span>

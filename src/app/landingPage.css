@@ -1,4 +1,6 @@
 .aa-landing-root, .aa-landing-root * { box-sizing: border-box; }
+/* Let grid columns shrink below their content's width so mockups never push past the screen. */
+.aa-landing-root .aa-dashboard > *, .aa-landing-root .aa-marketplace-mock > * { min-width: 0; }
 
 @media (max-width: 1024px) {
   .aa-landing-root .aa-section { padding-left: 36px !important; padding-right: 36px !important; }
@@ -27,7 +29,7 @@
   .aa-landing-root .aa-features-cell:last-child { border-bottom: none !important; }
   .aa-landing-root .aa-marketplace-mock { grid-template-columns: 1fr !important; gap: 16px !important; padding: 16px !important; }
   .aa-landing-root .aa-marketplace-coming { right: 8px !important; top: -14px !important; }
-  .aa-landing-root .aa-dashboard { grid-template-columns: 1fr !important; padding: 16px !important; gap: 14px !important; }
+  .aa-landing-root .aa-dashboard { grid-template-columns: minmax(0, 1fr) !important; padding: 16px !important; gap: 14px !important; }
   .aa-landing-root .aa-dashboard-earnings { grid-column: span 1 !important; }
   .aa-landing-root .aa-cta-form { flex-direction: column !important; border-radius: 18px !important; padding: 8px !important; gap: 6px !important; }
   .aa-landing-root .aa-cta-form input { padding: 10px 14px !important; }

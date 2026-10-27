@@ -173,7 +173,7 @@ export default function OpeningsClient({ services, businessName, brandColor, boo
             </div>
             <Separator className="my-3" />
 
-            <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
                 <div className="flex flex-col gap-4">
                     <label className="flex flex-col gap-1.5 text-sm font-medium">
                         Service

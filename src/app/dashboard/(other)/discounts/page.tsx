@@ -35,7 +35,7 @@ export default function page() {
 const DiscountCard = () => {
     return (
         <div>
-            <Card className='max-w-[400px] min-w-[350px] space-y-1'>
+            <Card className='w-full max-w-[400px] sm:min-w-[350px] space-y-1'>
                 <Title>Loc Discount</Title>
                 <div>
                     <Caption>Expiration Date: 8/23/2024</Caption>

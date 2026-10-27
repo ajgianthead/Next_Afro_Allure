@@ -50,7 +50,7 @@ export function TimeRangeRow({
                 value={startStr}
                 min={startMin}
                 max="23:58"
-                className="w-28 text-sm"
+                className="min-w-0 flex-1 max-w-36 px-2 text-sm sm:flex-none sm:w-32"
                 onChange={(e) => onStartChange(e.target.value)}
             />
             <span className="text-sm text-muted-foreground">–</span>
@@ -59,7 +59,7 @@ export function TimeRangeRow({
                 value={endStr}
                 min={endMin}
                 max="23:59"
-                className="w-28 text-sm"
+                className="min-w-0 flex-1 max-w-36 px-2 text-sm sm:flex-none sm:w-32"
                 onChange={(e) => onEndChange(e.target.value)}
             />
 

@@ -492,7 +492,7 @@ export default function BookingSettingsClient({ businessUser, policyData, paymen
                                             </Select>
                                         </React.Fragment>
                                     }
-                                    sx={{ width: 260 }}
+                                    sx={{ width: '100%', maxWidth: 260 }}
                                 />
                                 {bookingAdvanceError && (
                                     <FormHelperText>
