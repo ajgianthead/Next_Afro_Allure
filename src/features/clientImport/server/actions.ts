@@ -36,7 +36,7 @@ export async function importClientBatch(rows: ImportedClient[], businessId: stri
 
     for (let i = 0; i < clean.length; i += CONCURRENCY) {
         const slice = clean.slice(i, i + CONCURRENCY)
-        const outcomes = await Promise.all(slice.map(c => upsertBusinessClient(supabase, c, businessId)))
+        const outcomes = await Promise.all(slice.map(c => upsertBusinessClient(supabase, c, businessId, { updateName: false })))
         outcomes.forEach((outcome, j) => {
             if (outcome.ok) {
                 if (outcome.linked) {
