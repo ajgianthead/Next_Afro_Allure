@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { gridKey } from '@/features/services/pricing'
-import { quoteForBooking, selectedServiceText } from './useBookingQuote'
+import { canResumeBookingSession, quoteForBooking, selectedServiceText } from './useBookingQuote'
 
 const plain = { id: 'silk', name: 'Silk press', price: 17000, length: 120, addons: [{ id: 'trim', name: 'Trim', price: 2500 }], style_options: null } as any
 const knotless = {
@@ -47,5 +47,34 @@ describe('quoteForBooking', () => {
     it('needs a size and length before a size/length-priced service can be booked', () => {
         expect(quoteForBooking(data({ selectedService: 'knot' })).quote).toBeNull()
         expect(quoteForBooking(data({ selectedService: 'knot', styleSelection: { sizeId: 'm', lengthId: 'w' } })).quote?.durationMinutes).toBe(240)
+    })
+})
+
+describe('canResumeBookingSession (picking an unfinished booking back up)', () => {
+    const biz = 'biz-1'
+    const now = Date.parse('2026-10-27T12:00:00Z')
+    const session = (patch: Record<string, unknown> = {}) => ({ businessId: biz, status: 'details_completed', expiresAt: '2026-10-27T13:00:00Z', ...patch })
+
+    it('resumes this business\'s unfinished booking', () => {
+        expect(canResumeBookingSession(session(), biz, now)).toBe(true)
+        expect(canResumeBookingSession(session({ status: 'initiated' }), biz, now)).toBe(true)
+    })
+
+    it('never resumes a finished booking (the next person on the device starts fresh)', () => {
+        for (const status of ['confirmed', 'payment_pending', 'expired', 'canceled']) {
+            expect(canResumeBookingSession(session({ status }), biz, now)).toBe(false)
+        }
+    })
+
+    it('never resumes another business\'s booking', () => {
+        expect(canResumeBookingSession(session({ businessId: 'other' }), biz, now)).toBe(false)
+    })
+
+    it('never resumes an expired session', () => {
+        expect(canResumeBookingSession(session({ expiresAt: '2026-10-27T11:59:00Z' }), biz, now)).toBe(false)
+    })
+
+    it('handles a missing session', () => {
+        expect(canResumeBookingSession(null, biz, now)).toBe(false)
     })
 })

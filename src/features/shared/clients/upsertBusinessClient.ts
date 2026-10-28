@@ -26,7 +26,9 @@ export type UpsertClientResult =
 export async function upsertBusinessClient(
     supabase: SupabaseClient<any, any, any>,
     client: ClientInput,
-    businessId: string
+    businessId: string,
+    /** Imports pass false: an old export shouldn't overwrite a name the client updated since. */
+    options: { updateName?: boolean } = {},
 ): Promise<UpsertClientResult> {
     const email = client.email?.trim().toLowerCase() ?? ''
     const phone = client.phone_number?.trim() ?? ''
@@ -34,11 +36,21 @@ export async function upsertBusinessClient(
 
     try {
         let clientId: string | null = null
+        let rename: { first_name: string; last_name: string } | null = null
         if (email) {
             // Case-insensitive exact match; escape LIKE wildcards (`_` is common in emails).
             const pattern = email.replace(/[\\%_]/g, c => `\\${c}`)
-            const { data } = await supabase.from('client_users').select('client_id').ilike('email', pattern).limit(1)
-            clientId = data?.[0]?.client_id ?? null
+            const { data } = await supabase.from('client_users').select('client_id, first_name, last_name').ilike('email', pattern).limit(1)
+            const match = data?.[0]
+            clientId = match?.client_id ?? null
+            // Same email, so the same person: keep the name they used most
+            // recently ("Bri" → "Brianna", a new last name). Not done for a
+            // phone-only match, which can be a family member sharing a phone.
+            const first = client.first_name?.trim() ?? ''
+            const last = client.last_name?.trim() ?? ''
+            if (match && options.updateName !== false && first && last && (first !== match.first_name || last !== match.last_name)) {
+                rename = { first_name: first, last_name: last }
+            }
         }
         if (!clientId && phone) {
             const { data } = await supabase.from('client_users').select('client_id').eq('phone_number', phone).limit(1)
@@ -69,6 +81,13 @@ export async function upsertBusinessClient(
             .eq('client_id', clientId)
             .limit(1)
         if (banned && banned.length > 0) return { ok: false, reason: 'banned' }
+
+        if (rename) {
+            const { error } = await supabase.from('client_users')
+                .update({ ...rename, updated_at: new Date().toISOString() })
+                .eq('client_id', clientId)
+            if (error) console.error('Could not update client name:', error.message)
+        }
 
         const { data: existingLink } = await supabase
             .from('business_clients')

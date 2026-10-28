@@ -17,6 +17,7 @@ import { after } from "next/server"
 import { notifyWaitlistOfOpening } from "@/features/waitlist/server/notify"
 import { canPayBalance } from "@/features/stripe/balance"
 import { createAdminClient } from "@/app/utils/supabase/admin"
+import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient"
 import { clientConsentedToSms, sendSms } from "@/lib/sms/send"
 import { payLink, smsTemplates } from "@/lib/sms/templates"
 
@@ -333,6 +334,16 @@ export const createNewManualAppointment = async (payload: CreateAppointmentPaylo
             selected_options: quote.selectedOptions,
         })
         if (Array.isArray(appointment)) throw new Error('Unexpected: appointment creation returned multiple results')
+
+        // The business typed these details in, so the client joins its client
+        // list now rather than only once the appointment is confirmed.
+        // (Ownership was checked above; matching an existing client needs the service role.)
+        await upsertBusinessClientAsAdmin({
+            first_name: c.firstName.trim(),
+            last_name: c.lastName.trim(),
+            email: c.email.trim(),
+            phone_number: c.phoneNumber.trim(),
+        }, ownBusiness.business_id)
 
         rememberTimezone(supabase, ownBusiness, payload.timezone).catch(console.error)
 
