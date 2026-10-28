@@ -1,7 +1,7 @@
 'use client'
 
 import { calculateDeposit, describeSelectedOptions } from '@/features/services/pricing'
-import { BOOKING_SELECTION_KEY, useBookingQuote } from '../hooks/useBookingQuote'
+import { clearBookingProgress, useBookingQuote } from '../hooks/useBookingQuote'
 import { businessSitePath } from '@/lib/businessHost'
 import { BookingData } from "@/features/automatedBooking/context/BookingDataContext";
 import { ServiceType } from "@/lib/service/Service";
@@ -92,7 +92,7 @@ export const CheckoutForm = ({
                 storedReferralCode(businessName) || null,
                 data.rewardCode || null,
             )
-            localStorage.removeItem(BOOKING_SELECTION_KEY)
+            clearBookingProgress()
             clearStoredReferral(businessName)
             const { error } = await stripe.confirmPayment({
                 elements,

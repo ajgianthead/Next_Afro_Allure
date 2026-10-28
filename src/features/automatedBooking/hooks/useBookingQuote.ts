@@ -48,3 +48,27 @@ export function useBookingQuote() {
 
 /** Choices kept across page reloads alongside the booking session id. */
 export const BOOKING_SELECTION_KEY = 'bookingSelection'
+/** The in-progress booking session, so a reload picks up where the client left off. */
+export const BOOKING_SESSION_KEY = 'bookingSessionId'
+
+/**
+ * Forget the in-progress booking in this browser. Called once a booking is
+ * made: otherwise the next person to book on the same phone or computer (a
+ * friend opening a referral link, the business testing its own page) was
+ * dropped into the previous booking, with its time slot and, past the
+ * Contact step, the previous person's name, email and phone.
+ */
+export function clearBookingProgress() {
+    try {
+        localStorage.removeItem(BOOKING_SESSION_KEY)
+        localStorage.removeItem(BOOKING_SELECTION_KEY)
+    } catch { /* storage blocked: nothing was kept */ }
+}
+
+/** A saved session is only picked back up if it's this business's and still in progress. */
+export function canResumeBookingSession(session: { businessId?: string | null; status?: string | null; expiresAt?: string | null } | null | undefined, businessId: string, now = Date.now()): boolean {
+    if (!session || session.businessId !== businessId) return false
+    if (!['initiated', 'date_selected', 'details_completed'].includes(session.status ?? '')) return false
+    if (session.expiresAt && new Date(session.expiresAt).getTime() <= now) return false
+    return true
+}

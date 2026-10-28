@@ -18,7 +18,7 @@ import { DateTimePicker } from './DateTimePicker';
 import { ClientInfo } from './ClientInfomation';
 import { DepositPayment } from './DepositPayment';
 import { useBooking } from '../hooks/useBookingData'
-import { BOOKING_SELECTION_KEY, quoteForBooking, selectedServiceText } from '../hooks/useBookingQuote'
+import { BOOKING_SELECTION_KEY, BOOKING_SESSION_KEY, canResumeBookingSession, clearBookingProgress, quoteForBooking, selectedServiceText } from '../hooks/useBookingQuote'
 import { parseStyleOptions } from '@/features/services/pricing'
 import { createBookingSessionAction, updateDateTimeAction, updateClientInfoAction, getBookingSessionAction } from '../server'
 import { BookingStepper } from './BookingStepper'
@@ -211,17 +211,27 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     }, [data.booking_policy])
 
     useEffect(() => {
-        const sessionId = typeof window !== 'undefined' ? localStorage.getItem('bookingSessionId') : null
+        // Opening a referral link starts a new booking (it's a new person on this
+        // device); otherwise an unfinished booking for this business is picked
+        // back up. The code itself is remembered above, so ?ref= comes off the
+        // address and a reload mid-booking doesn't start over.
+        const url = new URL(window.location.href)
+        if (url.searchParams.get('ref')) {
+            clearBookingProgress()
+            url.searchParams.delete('ref')
+            window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
+        }
+        const sessionId = typeof window !== 'undefined' ? localStorage.getItem(BOOKING_SESSION_KEY) : null
 
         if (preSelectedServiceId) {
-            if (sessionId) localStorage.removeItem('bookingSessionId')
+            if (sessionId) localStorage.removeItem(BOOKING_SESSION_KEY)
             localStorage.removeItem(BOOKING_SELECTION_KEY)
             // A service with size/length pricing or add-ons needs the client's
             // choices first, so its details sheet opens; otherwise straight to Date & Time.
             const picked = data.services.find(s => s.id === preSelectedServiceId)
             const needsChoices = !!picked && (!!parseStyleOptions(picked.style_options) || ((picked.addons as any[]) ?? []).length > 0)
             createBookingSessionAction(data.business_id, preSelectedServiceId).then((session) => {
-                localStorage.setItem('bookingSessionId', session.id!)
+                localStorage.setItem(BOOKING_SESSION_KEY, session.id!)
                 setData((prev) => ({
                     ...prev,
                     selectedService: preSelectedServiceId,
@@ -266,8 +276,14 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
         let saved: { serviceId?: string; styleSelection?: any; selectedAddons?: string[] } = {}
         try { saved = JSON.parse(localStorage.getItem(BOOKING_SELECTION_KEY) ?? '{}') } catch { saved = {} }
 
+        const startFresh = () => {
+            clearBookingProgress()
+            setData((prev) => ({ ...prev, bookingSession: null }))
+            setIsLoading(false)
+        }
         getBookingSessionAction(sessionId).then((sessionData) => {
-            if (!sessionData) { setIsLoading(false); return }
+            // Finished, expired, or another business's booking: don't reuse it.
+            if (!canResumeBookingSession(sessionData, data.business_id)) { startFresh(); return }
             setData((prev) => {
                 const sameService = saved.serviceId === sessionData.serviceId
                 const restored = {
@@ -293,7 +309,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
             else if (sessionData.status === 'details_completed') setActiveStep(data.booking_policy.deposit.enabled ? 3 : 2)
             else setActiveStep(0)
             setIsLoading(false)
-        })
+        }).catch(startFresh)
     }, [])
 
     const renderActiveStep = () => {
@@ -333,7 +349,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
             referral_code: storedReferralCode(businessName) || null,
             reward_code: data.rewardCode || null,
         })
-        localStorage.removeItem(BOOKING_SELECTION_KEY)
+        clearBookingProgress()
         clearStoredReferral(businessName)
         return true
     }
@@ -349,7 +365,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
         // A new session when there isn't one, or the client switched away from the service it was made for.
         if (activeStep === 0 && data.selectedService.length > 0 && (!data.bookingSession || data.bookingSession.serviceId !== data.selectedService)) {
             const session = await createBookingSessionAction(data.business_id, data.selectedService)
-            localStorage.setItem('bookingSessionId', session.id!)
+            localStorage.setItem(BOOKING_SESSION_KEY, session.id!)
             setData((prev) => ({
                 ...prev, bookingSession: {
                     id: session.id,
@@ -396,7 +412,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     }
 
     const handleChangeService = () => {
-        localStorage.removeItem('bookingSessionId')
+        localStorage.removeItem(BOOKING_SESSION_KEY)
         localStorage.removeItem(BOOKING_SELECTION_KEY)
         setData((prev) => ({ ...prev, selectedService: '', selectedAddons: [], styleSelection: null, acknowledged: false, bookingSession: null, focusServiceId: '' }))
         setPreSelected(false)
