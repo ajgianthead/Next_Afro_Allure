@@ -153,3 +153,11 @@
     cursor: not-allowed;
   }
 }
+
+/* Each page's top-level wrapper fills the space between the top of the screen
+   and the site footer. Many pages set min-h-screen on it, which pushed the
+   footer just below the fold; with flex-grow they reach the footer instead. */
+#main-content > * {
+  flex: 1 0 auto;
+  min-height: 0 !important;
+}

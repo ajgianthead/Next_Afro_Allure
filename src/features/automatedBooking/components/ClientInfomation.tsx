@@ -68,7 +68,7 @@ export const ClientInfo = ({
                         placeholder="First Name"
                         value={data.clientInfo.firstName}
                         onChange={(e) => setData((prev) => ({ ...prev, clientInfo: { ...prev.clientInfo, firstName: e.target.value } }))}
-                        className="flex-1 text-sm px-3.5 py-2.5 outline-none transition-colors"
+                        className="min-w-0 flex-1 text-sm px-3.5 py-2.5 outline-none transition-colors"
                         style={{
                             borderRadius: 'var(--t-input-r)',
                             border: '1px solid var(--t-border)',
@@ -82,7 +82,7 @@ export const ClientInfo = ({
                         placeholder="Last Name"
                         value={data.clientInfo.lastName}
                         onChange={(e) => setData((prev) => ({ ...prev, clientInfo: { ...prev.clientInfo, lastName: e.target.value } }))}
-                        className="flex-1 text-sm px-3.5 py-2.5 outline-none transition-colors"
+                        className="min-w-0 flex-1 text-sm px-3.5 py-2.5 outline-none transition-colors"
                         style={{
                             borderRadius: 'var(--t-input-r)',
                             border: '1px solid var(--t-border)',
