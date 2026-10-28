@@ -3,6 +3,7 @@
 import { stripe } from "@/lib/stripe/stripeClient";
 import { createClient } from "@/app/utils/supabase/server";
 import { createAdminClient } from "@/app/utils/supabase/admin";
+import { registerPaymentMethodDomains } from "@/lib/stripe/paymentMethodDomains";
 
 export type OnboardingReturnResult = 'complete' | 'incomplete'
 
@@ -14,7 +15,7 @@ export const updateStripeOnboardInfo = async (stripeId: string): Promise<Onboard
     if (!user) throw new Error('Not signed in')
     const { data: business } = await supabase
         .from('business_users')
-        .select('business_id, payment_method_config_id')
+        .select('business_id, url_name, payment_method_config_id')
         .eq('stripe_acc_id', stripeId)
         .eq('user_id', user.id)
         .maybeSingle()
@@ -40,6 +41,7 @@ export const updateStripeOnboardInfo = async (stripeId: string): Promise<Onboard
             const paymentConfig = await stripe.paymentMethodConfigurations.create({
                 name: `aa-${stripeId}`,
                 card: { display_preference: { preference: 'on' } },
+                // Wallets are Growth features each business switches on in Booking Settings.
                 google_pay: { display_preference: { preference: 'off' } },
                 apple_pay: { display_preference: { preference: 'off' } },
                 amazon_pay: { display_preference: { preference: 'off' } },
@@ -59,6 +61,9 @@ export const updateStripeOnboardInfo = async (stripeId: string): Promise<Onboard
         ...(paymentConfigId ? { payment_method_config_id: paymentConfigId } : {}),
     }).eq('business_id', business.business_id)
     if (error) throw new Error(error.message)
+
+    // Ready for Apple Pay / Google Pay if the business switches them on (Growth).
+    await registerPaymentMethodDomains(stripeId, business.url_name)
 
     return 'complete'
 }

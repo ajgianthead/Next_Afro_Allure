@@ -18,8 +18,9 @@ const APP_ORIGIN = process.env.NEXT_PUBLIC_BASE_URL
 // help pages linked from the site-wide footer live on the app domain too
 // (on a subdomain they 404'd as /business/<name>/privacy).
 const APP_ONLY = /^\/(dashboard|edit|login|register|forgot-password|onboarding|appointment|auth|admin|set-password|subscriptionResult|privacy|terms|refunds|cookies|beta-agreement|data-deletion|feedback|support)(\/|$)/
-// Business-site paths that should stay as-is (Next internals, API, static files).
-const PASS_THROUGH = /^\/(api|_next|monitoring)(\/|$)|\.[a-z0-9]+$/i
+// Business-site paths that should stay as-is (Next internals, API, static
+// files, and /.well-known — Apple Pay checks each subdomain for its file there).
+const PASS_THROUGH = /^\/(api|_next|monitoring|\.well-known)(\/|$)|\.[a-z0-9]+$/i
 
 export async function middleware(request: NextRequest) {
     const host = (request.headers.get('host') ?? '').toLowerCase()

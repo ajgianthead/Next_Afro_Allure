@@ -11,6 +11,7 @@ import NewSubscription from "../../../../../emails/subscription-welcome";
 import FounderNotification from "../../../../../emails/FounderNotification";
 import { hasLiveSubscription } from "@/features/billing/server/trial";
 import { syncSmsEnabled } from "@/features/billing/server/sms";
+import { turnOffGrowthPaymentMethods } from "@/lib/stripe/growthPaymentMethods";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'AfroAllure <noreply@reminder.afroallure.co>';
@@ -174,6 +175,8 @@ async function handleSubscriptionPaused(customerId: string) {
         .select()
         .maybeSingle();
     if (error) throw error;
+    // Back on Starter: checkout offers cards only (wallets are a Growth feature).
+    await turnOffGrowthPaymentMethods(business?.stripe_acc_id, business?.payment_method_config_id);
 
     try {
         await resend.emails.send({
@@ -200,6 +203,8 @@ async function handleSubscriptionDeleted(customerId: string) {
         .select()
         .maybeSingle();
     if (error) throw error;
+    // Back on Starter: checkout offers cards only (wallets are a Growth feature).
+    await turnOffGrowthPaymentMethods(business?.stripe_acc_id, business?.payment_method_config_id);
 
     try {
         await resend.emails.send({
