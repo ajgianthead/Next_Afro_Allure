@@ -41,9 +41,9 @@ export const updateStripeOnboardInfo = async (stripeId: string): Promise<Onboard
             const paymentConfig = await stripe.paymentMethodConfigurations.create({
                 name: `aa-${stripeId}`,
                 card: { display_preference: { preference: 'on' } },
-                // Wallets on by default; they only show on registered addresses (below).
-                google_pay: { display_preference: { preference: 'on' } },
-                apple_pay: { display_preference: { preference: 'on' } },
+                // Wallets are Growth features each business switches on in Booking Settings.
+                google_pay: { display_preference: { preference: 'off' } },
+                apple_pay: { display_preference: { preference: 'off' } },
                 amazon_pay: { display_preference: { preference: 'off' } },
                 cashapp: { display_preference: { preference: 'off' } },
             }, { stripeAccount: stripeId })
@@ -62,7 +62,7 @@ export const updateStripeOnboardInfo = async (stripeId: string): Promise<Onboard
     }).eq('business_id', business.business_id)
     if (error) throw new Error(error.message)
 
-    // So Apple Pay / Google Pay can show on this business's booking pages.
+    // Ready for Apple Pay / Google Pay if the business switches them on (Growth).
     await registerPaymentMethodDomains(stripeId, business.url_name)
 
     return 'complete'

@@ -1,5 +1,6 @@
 import { configure, schedules } from "@trigger.dev/sdk";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { turnOffGrowthPaymentMethods } from "../lib/stripe/growthPaymentMethods";
 
 configure({
   secretKey: process.env.TRIGGER_API_KEY,
@@ -22,8 +23,10 @@ export const endComplimentaryAccess = schedules.task({
       .update({ plan_type: "STARTER", subscription_status: "complimentary_ended" })
       .eq("subscription_status", "complimentary")
       .lt("complimentary_until", new Date().toISOString())
-      .select("business_id");
+      .select("business_id, stripe_acc_id, payment_method_config_id");
     if (error) throw error;
+    // Back on Starter: checkout offers cards only (wallets are a Growth feature).
+    for (const b of data ?? []) await turnOffGrowthPaymentMethods(b.stripe_acc_id, b.payment_method_config_id);
     console.log(`Ended complimentary access for ${data?.length ?? 0} businesses`);
     return { ended: data?.length ?? 0 };
   },

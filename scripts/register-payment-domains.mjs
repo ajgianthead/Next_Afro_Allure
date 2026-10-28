@@ -9,7 +9,8 @@
 //   vercel env pull .env.production.local --environment=production
 //   node --env-file=.env.production.local scripts/register-payment-domains.mjs            # dry run: lists what it would do
 //   node --env-file=.env.production.local scripts/register-payment-domains.mjs --apply    # registers the addresses
-//   ... --apply --wallets-on   also switches Apple Pay and Google Pay on for every business
+//   ... --apply --wallets-on   also switches Apple Pay and Google Pay on for Growth businesses
+//                              (they're Growth features; Starter businesses are never changed)
 //
 // Delete .env.production.local afterwards. Safe to re-run: registered
 // addresses are skipped.
@@ -46,7 +47,7 @@ const db = createClient(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_ROLE_SECRET_KEY, { au
 console.log(`${APPLY ? 'APPLYING' : 'DRY RUN (add --apply to make changes)'} · Stripe ${STRIPE_SECRET_KEY.startsWith('sk_live') ? 'LIVE' : 'test'} · ${new URL(NEXT_PUBLIC_SUPABASE_URL).hostname}`)
 
 const { data: businesses, error } = await db.from('business_users')
-    .select('business_name, url_name, stripe_acc_id, payment_method_config_id')
+    .select('business_name, url_name, stripe_acc_id, payment_method_config_id, plan_type')
     .eq('completed_stripe_onboarding', true)
     .not('stripe_acc_id', 'is', null)
 if (error) { console.error(error.message); process.exit(1) }
@@ -72,7 +73,7 @@ for (const b of businesses) {
             console.error(`${b.business_name}: ${domain_name} failed — ${err.message}`)
         }
     }
-    if (WALLETS_ON && b.payment_method_config_id) {
+    if (WALLETS_ON && b.payment_method_config_id && b.plan_type === 'GROWTH') {
         console.log(`${b.business_name}: switch Apple Pay + Google Pay on`)
         if (APPLY) {
             try {
