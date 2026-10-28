@@ -78,14 +78,17 @@ export default function RootLayout({
                         </>
                     )}
                 </head>
-                <body className={`${inter.className} ${fraunces.variable}`}>
+                {/* A full-height column: the content grows so the footer sits at the
+                    bottom of the screen even when a page is short. */}
+                <body className={`${inter.className} ${fraunces.variable} flex min-h-svh flex-col`}>
                     <a
                         href="#main-content"
                         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded"
                     >
                         Skip to main content
                     </a>
-                    <div id="main-content">
+                    <div id="main-content" className="flex flex-1 flex-col">
+                        {/* Pages fill the space above the footer (see #main-content in globals.css). */}
                         {children}
                     </div>
                     {/* The dashboard and editors are full-screen app layouts with a fixed
