@@ -3,6 +3,7 @@
 import { createClient } from "@/app/utils/supabase/server";
 import { BookingSettings, PaymentConfig } from "./bookingSettingsClient";
 import { stripe } from "@/lib/stripe/stripeClient";
+import { registerPaymentMethodDomains } from "@/lib/stripe/paymentMethodDomains";
 import { NO_SHOW_FEE_OFF, parseNoShowFee } from "@/features/noShowFees/noShowFee";
 import { parseLateFee } from "@/features/lateFees/lateFee";
 
@@ -25,7 +26,7 @@ export const handleBookingSettings = async (
 
     const { data: bizData } = await supabase
         .from('business_users')
-        .select('completed_stripe_onboarding, stripe_acc_id')
+        .select('completed_stripe_onboarding, stripe_acc_id, url_name')
         .eq('business_id', businessId)
         .maybeSingle()
 
@@ -46,6 +47,11 @@ export const handleBookingSettings = async (
             { stripeAccount: bizData?.stripe_acc_id! }
         )
     }
+    // Apple Pay / Google Pay only show on addresses registered on the
+    // business's Stripe account. Checked on every save, so businesses set up
+    // before registration existed get theirs too (already-registered ones are skipped).
+    const walletOn = [paymentConfig.apple_pay, paymentConfig.google_pay].some(m => m?.display_preference.preference === 'on')
+    if (walletOn && bizData?.completed_stripe_onboarding) await registerPaymentMethodDomains(bizData.stripe_acc_id, bizData.url_name)
 
     const { data: policyData, error: policyError } = await supabase
         .from('business_policies')

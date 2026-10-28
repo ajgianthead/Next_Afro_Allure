@@ -2,6 +2,7 @@
 
 import { createClient } from "@/app/utils/supabase/server"
 import { validateSlug } from "@/lib/businessSlug"
+import { registerPaymentMethodDomains } from "@/lib/stripe/paymentMethodDomains"
 
 export type UpdateUrlResult = { ok: true; urlName: string } | { ok: false; error: string }
 
@@ -20,7 +21,7 @@ export const updateBusinessURL = async (businessId: string, urlName: string): Pr
 
     const { data: business } = await supabase
         .from('business_users')
-        .select('business_id, url_name, legacy_url_names')
+        .select('business_id, url_name, legacy_url_names, stripe_acc_id, completed_stripe_onboarding')
         .eq('business_id', businessId)
         .eq('user_id', user.id)
         .single()
@@ -42,6 +43,8 @@ export const updateBusinessURL = async (businessId: string, urlName: string): Pr
         if (updateError.code === '23505') return { ok: false, error: 'This URL name is already taken' }
         return { ok: false, error: 'Something went wrong. Please try again.' }
     }
+    // The new subdomain needs registering for Apple Pay / Google Pay.
+    if (business.completed_stripe_onboarding) await registerPaymentMethodDomains(business.stripe_acc_id, slug)
     return { ok: true, urlName: slug }
 }
 
