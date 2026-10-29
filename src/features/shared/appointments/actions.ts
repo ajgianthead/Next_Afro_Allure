@@ -10,6 +10,7 @@ import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBus
 import { scheduleAndStoreReminders, sendConfirmationTexts } from "@/features/shared/appointments/confirmation"
 import { DateTime } from "luxon"
 import { getBusyIntervals } from "./busyIntervals"
+import { isSlotOpen } from "@/features/availability/server/slotCheck"
 import { quoteFromDb } from "@/features/services/server/quote"
 import { parsePrep, QuoteError, type StyleSelection } from "@/features/services/pricing"
 import { resolveTimezone } from "@/lib/timezone"
@@ -214,15 +215,15 @@ export const createAppointmentAction = async (body: {
         throw new Error('This business requires a deposit to book.')
     }
 
-    const { data: conflicts } = await supabase
-        .from('appointments')
-        .select('id')
-        .eq('business', business.business_id)
-        .in('status', ['CONFIRMED', 'PENDING'])
-        .lt('start', end.toUTC().toISO()!)
-        .gt('end', start.toUTC().toISO()!)
-        .limit(1)
-    if (conflicts && conflicts.length > 0) throw new Error('That time was just booked. Please pick another.')
+    // Same rules as the booking page: inside the business's hours (in its
+    // timezone) and clear of every appointment that isn't cancelled.
+    const open = await isSlotOpen(supabase, {
+        businessId: business.business_id,
+        availabilityId: service.availability,
+        start: body.start,
+        durationMinutes: quote.durationMinutes,
+    })
+    if (!open) throw new Error('That time was just booked. Please pick another.')
 
     const { data, error } = await supabase
         .from('appointments')
@@ -248,6 +249,8 @@ export const createAppointmentAction = async (body: {
         }])
         .select('*, business_users(*)')
         .single()
+    // no_overlapping_bookings: someone else booked it in the same moment.
+    if (error?.code === '23P01') throw new Error('That time was just booked. Please pick another.')
     if (error) throw new Error(error.message)
 
     // A referral link takes the friend's discount off this booking. Runs before
@@ -372,11 +375,13 @@ export const getBusinessByIdAction = async (businessId: string) => {
     const supabase = createAdminClient()
     const { data, error } = await supabase
         .from('business_users')
-        .select('business_id, business_name, url_name, stripe_acc_id')
+        .select('business_id, business_name, url_name, stripe_acc_id, account_settings')
         .eq('business_id', businessId)
         .single()
     if (error) throw new Error(error.message)
-    return data
+    // Only the timezone leaves the server, not the rest of the settings.
+    const { account_settings, ...business } = data
+    return { ...business, timezone: resolveTimezone((account_settings as any)?.timezone) }
 }
 
 /** Busy start/end times for the public reschedule page — no client details. */

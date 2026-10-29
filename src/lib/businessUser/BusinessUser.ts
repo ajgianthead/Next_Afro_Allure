@@ -1,4 +1,5 @@
 import { effectivePlanType } from '@/lib/beta'
+import { resolveTimezone } from "@/lib/timezone";
 import { createClient } from "@/app/utils/supabase/server";
 import { createAdminClient } from "@/app/utils/supabase/admin";
 import { Database } from "../../../lib/database.types";
@@ -37,7 +38,10 @@ export interface BusinessType {
     paymentMethodConfigId: string
 }
 
-export type PublicBusinessType = Pick<BusinessType, 'id' | 'name' | 'email' | 'urlName' | 'stripeAccountId' | 'planType'>
+export type PublicBusinessType = Pick<BusinessType, 'id' | 'name' | 'email' | 'urlName' | 'stripeAccountId' | 'planType'> & {
+    /** The timezone the business's hours are written in. */
+    timezone: string
+}
 
 interface AccountSettings {
     business_address: {
@@ -126,6 +130,7 @@ export class BusinessUser {
             urlName: this.urlName,
             stripeAccountId: this.stripeAccountId,
             planType: this.planType,
+            timezone: resolveTimezone((this.accountSettings as any)?.timezone),
         }
     }
 
