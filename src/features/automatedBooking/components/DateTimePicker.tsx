@@ -5,8 +5,7 @@ import { BookingData } from "@/features/automatedBooking/context/BookingDataCont
 import { ServiceType } from "@/lib/service/Service";
 import { DateTime } from "luxon";
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { getAvailability, getUnavailability } from "../../../app/business/[businessName]/actions";
-import { getSlots } from "slot-calculator";
+import { startTimesByDay } from "@/features/availability/slots";
 import { Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { useBooking } from "../hooks/useBookingData";
@@ -22,8 +21,9 @@ export const DateTimePicker = () => {
             : undefined
     );
     const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [month, setMonth] = useState<Date>(() => selectedDate ?? new Date())
     const [slotsLoading, setSlotsLoading] = useState<boolean>(false)
-    const [slots, setSlots] = useState<Record<string, string[][]>>({})
+    const [slots, setSlots] = useState<Record<string, string[]>>({})
     const [currSlots, setCurrSlots] = useState<DateTime[]>([]);
 
     // Real duration for the chosen size/length (falls back to the service length).
@@ -31,72 +31,32 @@ export const DateTimePicker = () => {
         quoteForBooking(data).quote?.durationMinutes
         ?? data.services.find((s: ServiceType) => s.id === data.selectedService)?.length ?? 60
 
+    // Start times for the chosen service, from the business's hours (read in
+    // its timezone), grouped by the client's calendar day.
     const getData = async (startDate: string, endDate: string) => {
-        const serviceLength = getServiceLength()
         const availability = data.services.find((s) => s.id === data.selectedService)?.availability
-        const currAvailability = data.availabilities?.find((el: any) => el.id === availability)
-        const formattedAvailability = await getAvailability(startDate, endDate, currAvailability, userZone)
-        const formattedUnavailability = await getUnavailability(startDate, endDate, data.appointments!, userZone)
-        const { availableSlotsByDay } = getSlots({
+        const result = startTimesByDay({
+            schedule: data.availabilities?.find((el: any) => el.id === availability) as any,
+            busy: data.appointments ?? [],
             from: startDate,
             to: endDate,
-            duration: serviceLength,
-            availability: formattedAvailability,
-            unavailability: formattedUnavailability,
-            outputTimezone: userZone,
+            tz: data.business_timezone,
+            displayZone: userZone,
+            durationMinutes: getServiceLength(),
         })
-        const days = Object.keys(availableSlotsByDay)
-        const slotValues = Object.values(availableSlotsByDay)
-
-        const result: Record<string, string[][]> = {}
-        for (let i = 0; i < slotValues.length; i++) {
-            if (!slotValues[i].length) continue
-            result[days[i]] = [[slotValues[i][0].from]]
-            for (let j = 0; j < slotValues[i].length; j++) {
-                if (j === slotValues[i].length - 1) {
-                    const temp = [...result[days[i]]]
-                    temp[temp.length - 1].push(slotValues[i][j].to)
-                    result[days[i]] = temp
-                    continue
-                }
-                if (slotValues[i][j].to !== slotValues[i][j + 1].from) {
-                    const temp = [...result[days[i]]]
-                    temp[temp.length - 1].push(slotValues[i][j].to)
-                    temp.push([slotValues[i][j + 1].from])
-                    result[days[i]] = temp
-                }
-            }
-        }
-
         setSlots(result)
         return result
     }
 
-    const buildSlotsForDay = (fetchedSlots: string[][]): DateTime[] => {
-        const serviceLength = getServiceLength()
-        const res: DateTime[] = []
-        for (let i = 0; i < fetchedSlots.length; i++) {
-            let timeStart = DateTime.fromISO(fetchedSlots[i][0]).setZone(userZone)
-            let movingTime = timeStart
-            const timeEnd = DateTime.fromISO(fetchedSlots[i][fetchedSlots[i].length - 1]).setZone(userZone)
-            while (movingTime < timeEnd) {
-                movingTime = timeStart.plus({ minutes: serviceLength })
-                if (movingTime <= timeEnd) {
-                    res.push(timeStart)
-                    timeStart = timeStart.plus({ minutes: 10 })
-                } else {
-                    break
-                }
-            }
-        }
-        return res
-    }
+    const buildSlotsForDay = (starts: string[]): DateTime[] =>
+        starts.map(iso => DateTime.fromISO(iso).setZone(userZone))
 
     useEffect(() => {
         const initialize = async () => {
             if (data.availabilities && Object.keys(data.availabilities).length) {
                 const startDate = DateTime.now().setZone(userZone).startOf("day").toISO()!
-                const endDate = DateTime.now().setZone(userZone).endOf("month").toISO()!
+                // Through the end of the month on show (a date picked earlier may be next month).
+                const endDate = DateTime.fromJSDate(month).setZone(userZone).endOf("month").toISO()!
                 const result = await getData(startDate, endDate)
                 if (data.selectedDateTime.start) {
                     const key = DateTime.fromISO(data.selectedDateTime.start).setZone(userZone).toISODate()!
@@ -109,26 +69,14 @@ export const DateTimePicker = () => {
         initialize()
     }, [data.availabilities, data.appointments])
 
+    // The calendar's month is kept here: it used to be hidden behind a spinner
+    // while loading, which remounted it on the current month, so clients
+    // could never get past this month.
     const handleMonthChange = async (month: Date) => {
-        const bookAheadValue: string = data.booking_policy.bookAheadValue
-        setIsLoading(true)
-        const luxonMonth = DateTime.fromJSDate(month).setZone(userZone)
-        let startDate = ""
-        let endDate = ""
-        if (luxonMonth.month === DateTime.now().setZone(userZone).month) {
-            startDate = DateTime.now().setZone(userZone).startOf("day").toISO()!
-            endDate = luxonMonth.endOf("month").toISO()!
-        } else if (bookAheadValue !== '1 month' && bookAheadValue !== '28 day' && bookAheadValue !== '4 week') {
-            startDate = luxonMonth.toISO()!
-            endDate = luxonMonth.endOf("month").toISO()!
-        } else {
-            const splitValue = bookAheadValue.split(' ')
-            const plusData = splitValue[1] === 'month' ? { month: Number(splitValue[0]) } : (splitValue[1] === 'week' ? { weeks: Number(splitValue[0]) } : { days: Number(splitValue[0]) })
-            startDate = DateTime.now().setZone(userZone).startOf("day").toISO()!
-            endDate = DateTime.fromISO(startDate).setZone(userZone).plus(plusData).toISO()!
-        }
-        await getData(startDate, endDate)
-        setIsLoading(false)
+        setMonth(month)
+        const first = DateTime.fromJSDate(month).setZone(userZone).startOf('month')
+        const today = DateTime.now().setZone(userZone).startOf('day')
+        await getData((first < today ? today : first).toISO()!, first.endOf('month').toISO()!)
     }
 
     const handleDateSelect = async (day: Date | undefined) => {
@@ -169,6 +117,11 @@ export const DateTimePicker = () => {
             <div className="mb-5">
                 <h2 className="text-xl font-semibold" style={{ color: 'var(--t-text)', fontFamily: 'var(--t-font)' }}>Select Date & Time</h2>
                 <p className="text-sm mt-1" style={{ color: 'var(--t-muted)' }}>Pick a date and time from the available slots</p>
+                {data.business_timezone && DateTime.now().setZone(userZone).offset !== DateTime.now().setZone(data.business_timezone).offset && (
+                    <p className="text-xs mt-1" style={{ color: 'var(--t-muted)' }}>
+                        Times are shown in your time zone ({DateTime.now().setZone(userZone).toFormat('ZZZZ')}).
+                    </p>
+                )}
             </div>
 
             {isLoading ? (
@@ -193,6 +146,7 @@ export const DateTimePicker = () => {
                             mode="single"
                             selected={selectedDate}
                             onSelect={handleDateSelect}
+                            month={month}
                             onMonthChange={handleMonthChange}
                             disabled={isDisabled}
                             fromDate={new Date()}

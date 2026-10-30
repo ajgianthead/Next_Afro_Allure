@@ -3,13 +3,18 @@
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { CircleCheckBig, Loader2 } from 'lucide-react'
-import { getAvailability, getUnavailability, rescheduleAppointment } from 'app/business/[businessName]/actions'
+import { rescheduleAppointment } from 'app/business/[businessName]/actions'
 import { DateTime } from 'luxon'
+import { resolveTimezone } from '@/lib/timezone'
 import { useParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
-import { getSlots } from 'slot-calculator'
+import { startTimesByDay } from '@/features/availability/slots'
 import { getAvailabilitiesAction } from '@/features/availability/server/actions'
 import { getAppointmentByIdAction, getBusinessByIdAction, getBusyIntervalsAction } from '@/features/shared/appointments/actions'
+
+/** The appointment's own length — what the new time keeps. */
+const lengthOf = (appt: any) =>
+    Math.round((new Date(appt?.end).getTime() - new Date(appt?.start).getTime()) / 60000) || appt?.service_data?.length || 60
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 
@@ -18,7 +23,7 @@ export default function RescheduleClient() {
 
     const [date, setDate] = useState<Date | undefined>()
     const [isLoading, setIsLoading] = useState(true)
-    const [slots, setSlots] = useState<Record<string, string[][]>>({})
+    const [slots, setSlots] = useState<Record<string, string[]>>({})
     const [currSlots, setCurrSlots] = useState<DateTime[]>([])
     const [appointments, setAppointments] = useState<any[]>([])
     const [availabilities, setAvailabilities] = useState<any[]>([])
@@ -27,6 +32,7 @@ export default function RescheduleClient() {
     const [selectedDateTime, setSelectedDateTime] = useState<{ start: string; end: string }>({ start: '', end: '' })
     const [canReschedule, setCanReschedule] = useState<boolean | null>(null)
     const [businessName, setBusinessName] = useState('')
+    const [zone, setZone] = useState('')
     const [confirmed, setConfirmed] = useState(false)
     const [sendingData, setSendingData] = useState(false)
     const [rescheduleError, setRescheduleError] = useState('')
@@ -34,7 +40,7 @@ export default function RescheduleClient() {
 
     // `busy` is start/end times only; this client's own appointment comes from
     // its id (the link they were emailed), never from a list of everyone's.
-    const computeSlots = async (startDate: string, endDate: string, avs: any[], busy: any[], appt: any) => {
+    const computeSlots = async (startDate: string, endDate: string, avs: any[], busy: any[], appt: any, tz = zone) => {
         if (!appt) return
         const av = avs.find((a: any) => a.id === appt.service_data.availability)
         if (!av) return
@@ -51,42 +57,16 @@ export default function RescheduleClient() {
             end: DateTime.fromJSDate(new Date(appt.end)).toISO()!,
         })
 
-        const formattedAv = await getAvailability(
-            startDate, endDate, av.availability_data,
-            Intl.DateTimeFormat().resolvedOptions().timeZone
-        )
-        const formattedUnav = await getUnavailability(
-            startDate, endDate,
+        setSlots(startTimesByDay({
+            schedule: av.availability_data,
             // Their current slot shouldn't block itself.
-            busy.filter((b: any) => !(new Date(b.start).getTime() === new Date(appt.start).getTime() && new Date(b.end).getTime() === new Date(appt.end).getTime())),
-            Intl.DateTimeFormat().resolvedOptions().timeZone
-        )
-        const { availableSlotsByDay } = getSlots({
+            busy: busy.filter((b: any) => !(new Date(b.start).getTime() === new Date(appt.start).getTime() && new Date(b.end).getTime() === new Date(appt.end).getTime())),
             from: startDate,
             to: endDate,
-            duration: 1,
-            availability: formattedAv,
-            unavailability: formattedUnav,
-            outputTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        })
-
-        const days = Object.keys(availableSlotsByDay)
-        const slotValues = Object.values(availableSlotsByDay)
-        const result: Record<string, string[][]> = {}
-        for (let i = 0; i < slotValues.length; i++) {
-            result[days[i]] = [[slotValues[i][0].from]]
-            for (let j = 0; j < slotValues[i].length; j++) {
-                if (j === slotValues[i].length - 1) {
-                    result[days[i]][result[days[i]].length - 1].push(slotValues[i][j].to)
-                    continue
-                }
-                if (slotValues[i][j].to !== slotValues[i][j + 1].from) {
-                    result[days[i]][result[days[i]].length - 1].push(slotValues[i][j].to)
-                    result[days[i]].push([slotValues[i][j + 1].from])
-                }
-            }
-        }
-        setSlots(result)
+            tz,
+            displayZone: DateTime.local().zoneName!,
+            durationMinutes: lengthOf(appt),
+        }))
     }
 
     useEffect(() => {
@@ -100,10 +80,12 @@ export default function RescheduleClient() {
             setAvailabilities(avs as any)
             setAppointments(appts as any)
             if (business?.business_name) setBusinessName(business.business_name)
+            const tz = business?.timezone ?? resolveTimezone(null)
+            setZone(tz)
 
             const startDate = DateTime.now().startOf('day').toISO()!
             const endDate = DateTime.now().endOf('month').toISO()!
-            await computeSlots(startDate, endDate, avs as any, appts as any, ownAppointment)
+            await computeSlots(startDate, endDate, avs as any, appts as any, ownAppointment, tz)
             setIsLoading(false)
         }
         init()
@@ -129,19 +111,7 @@ export default function RescheduleClient() {
         const fetchedSlots = slots[key]
         if (!fetchedSlots) { setCurrSlots([]); return }
 
-        const res: DateTime[] = []
-        for (const range of fetchedSlots) {
-            let timeStart = DateTime.fromISO(range[0])
-            const timeEnd = DateTime.fromISO(range[range.length - 1])
-            while (timeStart < timeEnd) {
-                const next = timeStart.plus({ minutes: appointment.service_data?.length ?? 60 })
-                if (next <= timeEnd) {
-                    res.push(timeStart)
-                    timeStart = timeStart.plus({ minutes: 10 })
-                } else break
-            }
-        }
-        setCurrSlots(res)
+        setCurrSlots(fetchedSlots.map(iso => DateTime.fromISO(iso)))
     }
 
     // Loading state
@@ -236,7 +206,7 @@ export default function RescheduleClient() {
                                                     <button
                                                         key={i}
                                                         onClick={() => {
-                                                            const end = slot.plus({ minutes: appointment.service_data?.length ?? 60 }).toISO()!
+                                                            const end = slot.plus({ minutes: lengthOf(appointment) }).toISO()!
                                                             setSelectedDateTime({ start: iso, end })
                                                             const origStart = DateTime.fromJSDate(new Date(appointment.start)).toISO()
                                                             setIsDisabled(origStart === iso)
@@ -278,7 +248,7 @@ export default function RescheduleClient() {
                                     {
                                         start: selectedDateTime.start,
                                         end: selectedDateTime.end,
-                                        appointmentLength: appointment.service_data?.length ?? 60,
+                                        appointmentLength: lengthOf(appointment),
                                     },
                                     businessId,
                                     availability.id,

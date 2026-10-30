@@ -26,6 +26,8 @@ type Props = {
 }
 export type BookingData = {
     business_id: string;
+    /** The timezone the business's hours are written in. */
+    business_timezone: string;
     /** Clients can join the cancellation waitlist. */
     waitlist_enabled?: boolean;
     /** Clients can opt in to appointment texts. */
@@ -68,6 +70,7 @@ export type BookingData = {
 export function BookingWrapper({ children, businessData, availabilities, appointments, services, policy, waitlistEnabled, smsEnabled }: Props) {
     let [data, setData] = useState<BookingData>({
         business_id: businessData.id,
+        business_timezone: businessData.timezone,
         waitlist_enabled: !!waitlistEnabled,
         sms_enabled: !!smsEnabled,
         availabilities: availabilities,
