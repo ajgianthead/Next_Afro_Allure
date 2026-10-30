@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
     decodeStoredReferral, describeOffer, encodeStoredReferral, friendDiscountCents, normalizeReferralCode,
-    referralProgramFromRow, referralProgramProblems, referralStats, DEFAULT_REFERRAL_PROGRAM,
+    referralProgramFromRow, referralProgramProblems, referralStats, startsNewVisit, DEFAULT_REFERRAL_PROGRAM,
     type ReferralRecord, type RewardRecord,
 } from './referrals'
 
@@ -35,12 +35,28 @@ describe('referral codes', () => {
         expect(normalizeReferralCode('ABCDEFGHIJ-1234')).toBe('')
     })
 
-    it('remembers a code for 30 days', () => {
-        const saved = encodeStoredReferral('BRIA-7F3K', new Date('2026-10-01T00:00:00Z'))
-        expect(decodeStoredReferral(saved, new Date('2026-10-20T00:00:00Z'))).toBe('BRIA-7F3K')
-        expect(decodeStoredReferral(saved, new Date('2026-11-05T00:00:00Z'))).toBe('')
+    it('remembers a code for one visit, never days later', () => {
+        const saved = encodeStoredReferral('BRIA-7F3K', new Date('2026-10-01T12:00:00Z'))
+        expect(decodeStoredReferral(saved, new Date('2026-10-01T13:30:00Z'))).toBe('BRIA-7F3K')
+        expect(decodeStoredReferral(saved, new Date('2026-10-01T19:00:00Z'))).toBe('')
+        expect(decodeStoredReferral(saved, new Date('2026-10-20T00:00:00Z'))).toBe('')
         expect(decodeStoredReferral('not json')).toBe('')
         expect(decodeStoredReferral(null)).toBe('')
+    })
+})
+
+describe('startsNewVisit', () => {
+    const origin = 'https://kayla.afroallure.co'
+    it('continues the visit when moving around the same site, reloading or going back', () => {
+        expect(startsNewVisit({ referrer: 'https://kayla.afroallure.co/', origin, navigationType: 'navigate' })).toBe(false)
+        expect(startsNewVisit({ referrer: '', origin, navigationType: 'reload' })).toBe(false)
+        expect(startsNewVisit({ referrer: 'https://instagram.com/', origin, navigationType: 'back_forward' })).toBe(false)
+    })
+    it('starts a new visit when arriving from elsewhere or typing the address', () => {
+        expect(startsNewVisit({ referrer: '', origin, navigationType: 'navigate' })).toBe(true)
+        expect(startsNewVisit({ referrer: 'https://www.instagram.com/', origin, navigationType: 'navigate' })).toBe(true)
+        expect(startsNewVisit({ referrer: 'https://beta.afroallure.co/business/kayla', origin })).toBe(true)
+        expect(startsNewVisit({ referrer: 'not a url', origin })).toBe(true)
     })
 })
 

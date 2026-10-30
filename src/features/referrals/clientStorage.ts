@@ -1,28 +1,51 @@
 'use client'
 
-import { decodeStoredReferral, encodeStoredReferral, normalizeReferralCode, referralStorageKey } from './referrals'
+import { decodeStoredReferral, encodeStoredReferral, normalizeReferralCode, referralStorageKey, startsNewVisit } from './referrals'
+
+// A referral code from a shared link (?ref=) is remembered for that visit only
+// (website → booking, in the same tab), in sessionStorage. The server
+// re-checks everything when they book.
+
+const checkedThisLoad = new Set<string>()
 
 /**
- * Remembers a referral code from a shared link (?ref=) in this browser, per
- * business, so it still counts if the friend books later or after browsing
- * the website first. The server re-checks everything when they book.
+ * Once per page load and business: drop any code left from an earlier visit
+ * when this load starts a new one. Also clears the 30-day copy older versions
+ * kept in localStorage, which is what brought referrals back on later visits.
  */
+function forgetEarlierVisit(key: string) {
+    if (checkedThisLoad.has(key)) return
+    checkedThisLoad.add(key)
+    try { window.localStorage.removeItem(key) } catch { /* storage blocked */ }
+    const nav = performance.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming | undefined
+    if (startsNewVisit({ referrer: document.referrer, origin: window.location.origin, navigationType: nav?.type })) {
+        try { window.sessionStorage.removeItem(key) } catch { /* storage blocked */ }
+    }
+}
+
+function codeInUrl(): string {
+    return normalizeReferralCode(new URLSearchParams(window.location.search).get('ref'))
+}
+
+/** Remembers a ?ref= code for this visit and returns the code that applies now ('' for none). */
 export function rememberReferralFromUrl(urlName: string): string {
     if (typeof window === 'undefined' || !urlName) return ''
-    const fromUrl = normalizeReferralCode(new URLSearchParams(window.location.search).get('ref'))
+    const key = referralStorageKey(urlName)
+    forgetEarlierVisit(key)
+    const fromUrl = codeInUrl()
     try {
-        if (fromUrl) window.localStorage.setItem(referralStorageKey(urlName), encodeStoredReferral(fromUrl))
-    } catch { /* storage blocked: the code still works on this visit */ }
+        if (fromUrl) window.sessionStorage.setItem(key, encodeStoredReferral(fromUrl))
+    } catch { /* storage blocked: the code still works on this page */ }
     return fromUrl || storedReferralCode(urlName)
 }
 
-/** The remembered code for this business, or '' (expired after 30 days). */
+/** The code for this visit, or ''. */
 export function storedReferralCode(urlName: string): string {
     if (typeof window === 'undefined' || !urlName) return ''
     try {
-        const fromUrl = normalizeReferralCode(new URLSearchParams(window.location.search).get('ref'))
-        if (fromUrl) return fromUrl
-        return decodeStoredReferral(window.localStorage.getItem(referralStorageKey(urlName)))
+        const key = referralStorageKey(urlName)
+        forgetEarlierVisit(key)
+        return codeInUrl() || decodeStoredReferral(window.sessionStorage.getItem(key))
     } catch {
         return ''
     }
@@ -30,5 +53,7 @@ export function storedReferralCode(urlName: string): string {
 
 /** Forget the code once a booking has used it. */
 export function clearStoredReferral(urlName: string) {
-    try { window.localStorage.removeItem(referralStorageKey(urlName)) } catch { /* ignore */ }
+    const key = referralStorageKey(urlName)
+    try { window.sessionStorage.removeItem(key) } catch { /* ignore */ }
+    try { window.localStorage.removeItem(key) } catch { /* ignore */ }
 }

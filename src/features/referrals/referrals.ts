@@ -102,24 +102,43 @@ export function friendDiscountCents(
 
 // ─── Remembering the code on the booking page ────────────────────────────────
 
-/** How long a shared link counts after someone opens it. */
-export const REFERRAL_TTL_DAYS = 30
+// A code from a shared link (?ref=) counts for that visit only: browsing the
+// website and then booking, in the same tab. It used to be kept for 30 days,
+// so a later visit without the link still got the referral.
+
+/** Upper bound on one visit, in case the browser restores an old tab. */
+export const REFERRAL_VISIT_HOURS = 6
 export const referralStorageKey = (scope: string) => `aa.ref.${scope}`
 
 export function encodeStoredReferral(code: string, now: Date = new Date()): string {
     return JSON.stringify({ code, savedAt: now.toISOString() })
 }
 
-/** The saved code, unless it's missing, malformed or older than REFERRAL_TTL_DAYS. */
+/** The saved code, unless it's missing, malformed or older than REFERRAL_VISIT_HOURS. */
 export function decodeStoredReferral(raw: string | null, now: Date = new Date()): string {
     if (!raw) return ''
     try {
         const { code, savedAt } = JSON.parse(raw)
         const age = now.getTime() - new Date(savedAt).getTime()
-        if (!Number.isFinite(age) || age < 0 || age > REFERRAL_TTL_DAYS * 86400000) return ''
+        if (!Number.isFinite(age) || age < 0 || age > REFERRAL_VISIT_HOURS * 3600000) return ''
         return normalizeReferralCode(code)
     } catch {
         return ''
+    }
+}
+
+/**
+ * Whether this page load starts a new visit, which drops a remembered code.
+ * Following a link from this same site, reloading, or going back/forward
+ * continues the visit; arriving from anywhere else (another site, a typed
+ * address, a bookmark) starts a new one.
+ */
+export function startsNewVisit(entry: { referrer: string; origin: string; navigationType?: string }): boolean {
+    if (entry.navigationType === 'reload' || entry.navigationType === 'back_forward') return false
+    try {
+        return !entry.referrer || new URL(entry.referrer).origin !== entry.origin
+    } catch {
+        return true
     }
 }
 
