@@ -1,9 +1,8 @@
 'use server'
 import { createClient } from "@/app/utils/supabase/server";
-import { Database } from "../../../../lib/database.types";
 
 export const getUser = async () => {
-    const supabase = await createClient<Database>();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         return user

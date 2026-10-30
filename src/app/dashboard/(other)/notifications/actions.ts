@@ -1,11 +1,10 @@
 'use server'
 
 import { createClient } from '@/app/utils/supabase/server';
-import { Database } from '../../../../../lib/database.types';
 import { fetchBusinessUser, fetchUser } from '../actions';
 
 export const updateNotificationState = async (notiId: string) => {
-    const supabase = await createClient<Database>();
+    const supabase = await createClient();
     const user = await fetchUser()
     if (!user) throw new Error('Unauthorized')
     const business = await fetchBusinessUser(user.id)
@@ -24,7 +23,7 @@ export const updateNotificationState = async (notiId: string) => {
 }
 
 export const markAllAsRead = async () => {
-    const supabase = await createClient<Database>()
+    const supabase = await createClient()
     const user = await fetchUser()
     if (!user) throw new Error('Unauthorized')
     const business = await fetchBusinessUser(user.id)
@@ -40,7 +39,7 @@ export const markAllAsRead = async () => {
 
 export const deleteNotification = async (notiIds: Set<string>) => {
     const notiArray = Array.from(notiIds)
-    const supabase = await createClient<Database>()
+    const supabase = await createClient()
     const user = await fetchUser()
     if (!user) throw new Error('Unauthorized')
     const business = await fetchBusinessUser(user.id)

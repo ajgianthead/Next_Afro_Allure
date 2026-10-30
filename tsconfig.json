@@ -1,26 +1,37 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
     "types": [
       "vitest/globals"
     ],
     "target": "es2017",
-    "baseUrl": "./src",
+    // Keep: Turbopack needs baseUrl to resolve next/font/google (builds fail
+    // with "Can't resolve @vercel/turbopack-next/internal/font/google/font"
+    // without it). Paths below are written relative to it.
+    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ],
       "@tailus-ui/*": [
-        "components/tailus-ui/*"
+        "./src/components/tailus-ui/*"
       ],
       "@lib/*": [
-        "lib/*"
+        "./src/lib/*"
       ],
       "@components/*": [
-        "components/*"
+        "./src/components/*"
       ],
       "@utils/*": [
-        "../utils/*"
+        "./utils/*"
+      ],
+      "app/*": [
+        "./src/app/*"
+      ],
+      "trigger/*": [
+        "./src/trigger/*"
+      ],
+      "useGoogleFonts": [
+        "./src/useGoogleFonts"
       ]
     },
     "lib": [

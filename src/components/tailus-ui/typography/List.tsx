@@ -63,7 +63,6 @@ export const List: React.FC<ListProps> = ({
             inside,
             type,
             neutral,
-            weight,
             class : twMerge("space-y-2 my-6", className)
         })} {...props}>
             {children}

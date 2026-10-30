@@ -40,7 +40,7 @@ export const CardComponent: ComponentConfig<Card> = {
 
         return updateSlotColors()
     },
-    render: (({ puck, cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service, width, widthUnit, height, heightUnit }) => {
+    render: (({ puck, cardContent: Content, variant, cardCover, imageSource, videoSource, linkToService, service, width, widthUnit, height, heightUnit }: any) => {
         const router = useRouter()
         const pathname = usePathname()
         const businessName = pathname?.split('/')[2] ?? ''

@@ -57,7 +57,6 @@ In the Vercel dashboard under **Project → Settings → Environment Variables**
 | `GOOGLE_ANALYTICS_KEY` | `lib/analytics.ts` | Service account JSON (stringified) |
 | `GOOGLE_MAPS_KEY` | `src/app/marketplace/actions.ts` | Google Maps geocoding |
 | `NEXT_PUBLIC_GOOGLE_FONTS_API_KEY` | `src/useGoogleFonts.ts` | Google Fonts API |
-| `NEXT_PUBLIC_MAILCHIMP_API_KEY` | `src/app/utils/bull_mq.ts` | Mailchimp |
 | `NEXT_PUBLIC_BASE_URL` | Multiple files | `http://localhost:3000` locally, `https://beta.afroallure.co` in Vercel prod |
 | `NEXT_PUBLIC_BOOKING_ROOT_DOMAIN` | `middleware.ts`, `src/lib/bookingUrl.ts`, `src/lib/businessHost.ts` | Root domain for business booking subdomains (`kayla.afroallure.co`). `afroallure.co` in Vercel Production, unset in Preview (falls back to `/business/<name>`), optionally `localhost:3000` locally |
 | `NEXT_PUBLIC_SECRET` | `src/app/business/[businessName]/edit/components/prebuitComponents/card/index.tsx` | Encryption key |
@@ -75,6 +74,7 @@ These were removed as part of the env cleanup (2025-04-25). Do not re-add them:
 - `SUPABASE_DEV_SECRET_KEY` — renamed to `SUPABASE_ROLE_SECRET_KEY`
 - `NEXT_PUBLIC_SUPABASE_DEV_CONNECTION_STRING` — consolidated into `NEXT_PUBLIC_SUPABASE_CONNECTION_STRING`
 - `NEXT_PUBLIC_TRIGGER_API_KEY` — renamed to `TRIGGER_API_KEY` (a secret key must not carry the NEXT_PUBLIC_ prefix)
+- `NEXT_PUBLIC_MAILCHIMP_API_KEY` — only used by the old BullMQ reminder queue, removed (2026-10-30); reminders run on Trigger.dev
 
 ---
 

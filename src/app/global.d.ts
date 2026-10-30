@@ -1,6 +1,10 @@
 import type { Database } from "../../lib/database.types";
 
 declare global {
+    interface Window {
+        /** Google Analytics, loaded by the gtag script in the root layout. */
+        gtag?: (...args: any[]) => void
+    }
     type Service = Database['public']['Tables']['services']['Row']
     type Appointment = Database['public']['Tables']['appointments']['Row']
     type Client = Database['public']['Tables']['client_users']['Row']

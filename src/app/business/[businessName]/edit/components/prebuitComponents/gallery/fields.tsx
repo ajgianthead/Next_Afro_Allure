@@ -11,7 +11,7 @@ const ImageUrlField = ({ value, onChange }: { value: string; onChange: (v: strin
     const [open, setOpen] = useState(false)
     return (
         <div style={row}>
-            <ImageModal open={open} onClose={() => setOpen(false)} onChange={onChange} value={value} />
+            <ImageModal open={open} onClose={() => setOpen(false)} onChange={(v) => onChange(v ?? '')} value={value} />
             <Button size="sm" variant="outline" onClick={() => setOpen(true)} style={{ height: 26, fontSize: 11, flex: 1 }}>
                 <ImageIcon size={12} className="mr-1" /> Change Image
             </Button>

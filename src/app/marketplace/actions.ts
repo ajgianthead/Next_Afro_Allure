@@ -2,7 +2,6 @@
 
 import { createClient } from "@/app/utils/supabase/server"
 import { createAdminClient } from "@/app/utils/supabase/admin"
-import { Database } from "../../../lib/database.types"
 import { Client } from "@googlemaps/google-maps-services-js";
 import { DateTime } from "luxon";
 import { number } from "motion/react";
@@ -213,7 +212,7 @@ export const getPopularServicesFromMultipleBusinesses = async (
 
 // Create
 export const createMarketplaceProfile = async (profileData: MarketplaceProfile) => {
-    const supabase = await createClient<Database>();
+    const supabase = await createClient();
     const coords = await getCoordsFromAddress(profileData.address)
 
     const profileImgUrl = await supabase.storage.from('marketplace-profile_photos').upload(`private/${profileData.businessId}/${crypto.randomUUID()}`, profileData.profilePhoto).then((data) => {
@@ -257,7 +256,7 @@ export const createMarketplaceProfile = async (profileData: MarketplaceProfile) 
 //     categories: string[]
 //     yearsOfExperience: number
 // }) => {
-//     const supabase = await createClient<Database>();
+//     const supabase = await createClient();
 
 //     if (profileData.profilePhoto instanceof Blob) {
 //         await supabase.storage.from('marketplace-profile_photos').upload(`private/${profileData.businessId}/${crypto.randomUUID()}`, profileData.profilePhoto)

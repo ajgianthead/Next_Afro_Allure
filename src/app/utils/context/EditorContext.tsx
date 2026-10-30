@@ -2,20 +2,24 @@
 import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
 import { fetchGoogleFonts, GoogleFont } from "useGoogleFonts";
 
-const EditorContext = createContext<{ editorState: EditorConxtextProps, setEditorState: Dispatch<SetStateAction<EditorConxtextProps>> | null }>({
+const EditorContext = createContext<{
+    editorState: EditorConxtextProps,
+    setEditorState: Dispatch<SetStateAction<EditorConxtextProps>> | null,
+}>({
     editorState: {
         fonts: null,
         sections: new Set<string>(),
         businessName: "",
         services: []
     },
-    setEditorState: null
+    setEditorState: null,
 });
 export interface EditorConxtextProps {
     fonts: GoogleFont[] | null,
     sections: Set<string>,
     businessName: string,
-    services: Service[]
+    /** Only id and name are used (the card's "link to service" picker). */
+    services: { id: string, name: string }[]
 }
 
 
