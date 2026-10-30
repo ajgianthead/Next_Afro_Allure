@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canPayBalance } from './balance'
+import { canPayBalance, canShowPaymentQr } from './balance'
 
 const base = { status: 'CONFIRMED', service_paid: false, amount_due: 15000, deposit_price: 3000, paid_deposit: true, substraction: true }
 
@@ -18,5 +18,21 @@ describe('canPayBalance', () => {
         expect(canPayBalance({ ...base, status: 'COMPLETED' })).toBe(false)
         // Deposit not subtracted from amount_due yet and equal to it → nothing left.
         expect(canPayBalance({ ...base, amount_due: 3000, substraction: false })).toBe(false)
+    })
+})
+
+describe('canShowPaymentQr', () => {
+    it('shows for confirmed appointments that still owe money', () => {
+        expect(canShowPaymentQr(base)).toBe(true)
+    })
+    it('never shows once paid, or for anything but a confirmed appointment', () => {
+        expect(canShowPaymentQr({ ...base, service_paid: true })).toBe(false)
+        for (const status of ['NO_SHOW', 'INCOMPLETE', 'PENDING', 'PROCESSING', 'CANCELLED', 'COMPLETED']) {
+            expect(canShowPaymentQr({ ...base, status })).toBe(false)
+        }
+    })
+    it('never shows when nothing is left to pay', () => {
+        expect(canShowPaymentQr({ ...base, amount_due: 0 })).toBe(false)
+        expect(canShowPaymentQr({ ...base, amount_due: 3000, substraction: false })).toBe(false)
     })
 })

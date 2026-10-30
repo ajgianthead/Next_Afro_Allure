@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Loader2, CheckCircle2, AlertCircle, QrCode } from 'lucide-react'
 import {
     Dialog,
     DialogContent,
@@ -23,6 +23,7 @@ import { describeSelectedOptions, type SelectedOptions } from '@/features/servic
 import { AppointmentRewards } from '@/features/loyalty/components/AppointmentRewards'
 import { NoShowFeePanel } from '@/features/noShowFees/components/NoShowFeePanel'
 import { LateFeePanel } from '@/features/lateFees/components/LateFeePanel'
+import { PaymentQrDialog } from './PaymentQrDialog'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
 const MONO = 'ui-monospace, monospace'
@@ -63,6 +64,9 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
     const { manualBookingData, setManualBookingData } = useManualBooking()
     const [loading, setLoading] = useState<LoadingState>('idle')
     const [cancelStep, setCancelStep] = useState(false)
+    const [qrOpen, setQrOpen] = useState(false)
+    // Paid while the QR was open: this window's details are out of date, so closing the QR closes it too.
+    const [paidByQr, setPaidByQr] = useState(false)
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
     const [view, setView] = useState<'details' | 'refund'>('details')
     const [refunds, setRefunds] = useState<RefundRecord[]>([])
@@ -239,6 +243,8 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
 
     const handleClose = () => {
         setView('details')
+        setQrOpen(false)
+        setPaidByQr(false)
         setCancelStep(false)
         setFeedback(null)
         setLoading('idle')
@@ -510,6 +516,18 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                                                         Send Payment Link
                                                     </button>
                                                     )}
+                                                    {/* In person: the client scans and pays by card. Confirmed and unpaid only. */}
+                                                    {canTakeOnlinePayments && !event.servicePaid && (
+                                                    <button
+                                                        disabled={busy}
+                                                        onClick={() => { setFeedback(null); setQrOpen(true) }}
+                                                        className="flex items-center gap-1.5 rounded-full text-sm font-medium px-4 h-9 transition-colors hover:bg-[#F0EBE3] disabled:opacity-50"
+                                                        style={{ border: '1px solid #E8E2D6', color: '#1A1818', backgroundColor: 'transparent' }}
+                                                    >
+                                                        <QrCode size={13} />
+                                                        Show Payment QR
+                                                    </button>
+                                                    )}
                                                     <button
                                                         disabled={busy}
                                                         onClick={handleMarkPaid}
@@ -618,6 +636,19 @@ export function AppointmentDetailModal({ event, onClose, canTakeOnlinePayments }
                     </>
                 )}
             </DialogContent>
+            {event && (
+                <PaymentQrDialog
+                    appointmentId={event.id}
+                    clientName={event.clientData.firstName}
+                    open={qrOpen}
+                    onClose={() => { setQrOpen(false); if (paidByQr) handleClose() }}
+                    onPaid={() => {
+                        setPaidByQr(true)
+                        updateEventInContext({ servicePaid: true, servicePaidType: 'PLATFORM', status: 'COMPLETED' })
+                        toast.success('Payment received')
+                    }}
+                />
+            )}
         </Dialog>
     )
 }

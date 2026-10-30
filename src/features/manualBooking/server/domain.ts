@@ -15,7 +15,8 @@ import { AppointmentEmails, formatBusinessAddress } from "@/lib/appointmentEmail
 import { isValidTimezone } from "@/lib/timezone"
 import { after } from "next/server"
 import { notifyWaitlistOfOpening } from "@/features/waitlist/server/notify"
-import { canPayBalance } from "@/features/stripe/balance"
+import { canPayBalance, canShowPaymentQr } from "@/features/stripe/balance"
+import { remainingBalance } from "@/features/services/pricing"
 import { createAdminClient } from "@/app/utils/supabase/admin"
 import { upsertBusinessClientAsAdmin } from "@/features/shared/clients/upsertBusinessClient"
 import { clientConsentedToSms, sendSms } from "@/lib/sms/send"
@@ -177,6 +178,40 @@ export const confirmAppointment = async (appointmentId: string, depositChargeId:
     })
 
     return { id: appointment.id, status: 'CONFIRMED' }
+}
+
+export type PaymentQr =
+    | { paid: true }
+    | { paid: false; url: string; amountCents: number }
+
+/**
+ * The payment QR a business shows a client in person. Only for its own
+ * confirmed, unpaid appointments; once the client pays it reports paid, so
+ * the open QR can switch to a confirmation.
+ */
+export const getPaymentQr = async (appointmentId: string): Promise<PaymentQr> => {
+    const supabase = await createClient()
+    const ownBusiness = await requireOwnBusiness(supabase)
+    const { data: appt } = await supabase
+        .from('appointments')
+        .select('id, business, status, service_paid, amount_due, deposit_price, paid_deposit, substraction')
+        .eq('id', appointmentId)
+        .maybeSingle()
+    if (!appt || appt.business !== ownBusiness.business_id) throw new Error('Appointment not found')
+    if (appt.service_paid) return { paid: true }
+    if (!ownBusiness.completed_stripe_onboarding) {
+        throw new Error('Set up Monetization to take payments by QR code.')
+    }
+    if (!canShowPaymentQr(appt)) {
+        throw new Error(appt.status === 'CONFIRMED'
+            ? 'There is nothing left to pay for this appointment.'
+            : 'Payment QR codes are only for confirmed appointments.')
+    }
+    return {
+        paid: false,
+        url: payLink(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co', appt.id),
+        amountCents: remainingBalance(appt),
+    }
 }
 
 export const sendPaymentLink = async (appointmentId: string) => {

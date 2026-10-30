@@ -10,7 +10,8 @@ import { PostgrestSingleResponse } from '@supabase/supabase-js'
 import { toast } from 'sonner'
 import { sendPaymentLinkAction } from '@/features/manualBooking/server'
 import QRCode from 'react-qr-code'
-import { canPayBalance } from '@/features/stripe/balance'
+import { canPayBalance, canShowPaymentQr } from '@/features/stripe/balance'
+import { payLink } from '@/lib/sms/templates'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
@@ -562,17 +563,26 @@ function AppointmentDetailsModal({ appointment, businessData, onClose }: { appoi
               )}
               {businessData.completed_stripe_onboarding && canPayBalance(apt) && (
                 <div className="pt-3 border-t" style={{ borderColor: BRAND.sand }}>
-                  <p className="text-xs mb-3" style={{ color: BRAND.warm }}>
-                    Client scans to pay {`$${(remainingBalance(apt) / 100).toFixed(2).replace(/\.00$/, '')}`}
-                  </p>
-                  <div style={{ height: 160, width: '100%' }}>
-                    <QRCode
-                      size={256}
-                      style={{ height: '100%', maxWidth: '100%', width: '100%' }}
-                      value={`${process.env.NEXT_PUBLIC_BASE_URL}/appointment/${apt.id}/business/${apt.business}/eoa-payment`}
-                      viewBox="0 0 256 256"
-                    />
-                  </div>
+                  {/* The in-person QR is for confirmed, unpaid appointments only; a late payer gets the link instead. */}
+                  {canShowPaymentQr(apt) ? (
+                    <>
+                      <p className="text-xs mb-3" style={{ color: BRAND.warm }}>
+                        Client scans to pay {`$${(remainingBalance(apt) / 100).toFixed(2).replace(/\.00$/, '')}`}
+                      </p>
+                      <div style={{ height: 160, width: '100%' }}>
+                        <QRCode
+                          size={256}
+                          style={{ height: '100%', maxWidth: '100%', width: '100%' }}
+                          value={payLink(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://beta.afroallure.co', apt.id)}
+                          viewBox="0 0 256 256"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs" style={{ color: BRAND.warm }}>
+                      {`$${(remainingBalance(apt) / 100).toFixed(2).replace(/\.00$/, '')}`} still due. Send the client a payment link.
+                    </p>
+                  )}
                   <button
                     disabled={sending || emailSent}
                     onClick={handleSend}
