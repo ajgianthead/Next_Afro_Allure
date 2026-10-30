@@ -5,9 +5,6 @@ import { fetchGoogleFonts, GoogleFont } from "useGoogleFonts";
 const EditorContext = createContext<{
     editorState: EditorConxtextProps,
     setEditorState: Dispatch<SetStateAction<EditorConxtextProps>> | null,
-    /** The old drag-and-drop editor turns dragging off while an element is being resized. */
-    isResizing: boolean,
-    setIsResizing: (resizing: boolean) => void,
 }>({
     editorState: {
         fonts: null,
@@ -16,8 +13,6 @@ const EditorContext = createContext<{
         services: []
     },
     setEditorState: null,
-    isResizing: false,
-    setIsResizing: () => {},
 });
 export interface EditorConxtextProps {
     fonts: GoogleFont[] | null,
@@ -35,7 +30,6 @@ export function EditorWrapper({ children }: any) {
         businessName: "",
         services: []
     });
-    const [isResizing, setIsResizing] = useState(false)
     useEffect(() => {
         (async () => {
             const fonts = await fetchGoogleFonts()
@@ -45,7 +39,7 @@ export function EditorWrapper({ children }: any) {
     }, []);
 
     return (
-        <EditorContext.Provider value={{ editorState, setEditorState, isResizing, setIsResizing }}>
+        <EditorContext.Provider value={{ editorState, setEditorState }}>
             {children}
         </EditorContext.Provider>
     )
