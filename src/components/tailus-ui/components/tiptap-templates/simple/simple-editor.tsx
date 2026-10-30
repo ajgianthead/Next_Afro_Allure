@@ -182,7 +182,7 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function SimpleEditor({ initialContent, ref, embedded }: { initialContent?: Content, ref: any, embedded?: boolean }) {
+export function SimpleEditor({ initialContent, ref, embedded }: { initialContent?: Content, ref?: any, embedded?: boolean }) {
   const isMobile = useIsMobile()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = React.useState<

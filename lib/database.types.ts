@@ -10,12 +10,34 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.3"
   }
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          id: string
+          log_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          log_type: string
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          log_type?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
+          acknowledged_at: string | null
           amount_due: number
           business: string
           cancellation_reason: string[] | null
@@ -25,31 +47,32 @@ export type Database = {
           deposit_charge_id: string | null
           deposit_price: number | null
           deposit_tax_transaction: string | null
+          discount_cents: number
           end: string
           eoa_tax_transaction: string | null
           id: string
+          late_fee_added_at: string | null
+          late_fee_cents: number
+          loyalty_reward_id: string | null
+          no_show_fee_cents: number | null
+          no_show_fee_charge_id: string | null
+          no_show_fee_charged_at: string | null
+          no_show_fee_error: string | null
+          no_show_fee_status: string | null
           paid_amount: number
           paid_deposit: boolean
           payment_link_id: string
           policy_id: string | null
+          rebook_nudged_at: string | null
+          refund_id: string | null
+          refund_status: Database["public"]["Enums"]["refund_status"]
+          refunded_amount: number | null
+          refunded_at: string | null
           reminder_ids: Json | null
           require_deposit: boolean
           reschedules: number
           selected_addons: Json[]
           selected_options: Json | null
-          acknowledged_at: string | null
-          loyalty_reward_id: string | null
-          discount_cents: number
-          waitlist_notified_at: string | null
-          rebook_nudged_at: string | null
-          late_fee_cents: number
-          late_fee_added_at: string | null
-          tip_cents: number
-          no_show_fee_status: string | null
-          no_show_fee_cents: number | null
-          no_show_fee_charge_id: string | null
-          no_show_fee_error: string | null
-          no_show_fee_charged_at: string | null
           service_charge_id: string | null
           service_data: Json | null
           service_paid: boolean | null
@@ -58,13 +81,12 @@ export type Database = {
           status: Database["public"]["Enums"]["status"]
           substraction: boolean
           time_range: unknown
+          tip_cents: number
           updated_at: string
-          refund_id: string | null
-          refunded_amount: number | null
-          refunded_at: string | null
-          refund_status: Database["public"]["Enums"]["refund_status"]
+          waitlist_notified_at: string | null
         }
         Insert: {
+          acknowledged_at?: string | null
           amount_due?: number
           business?: string
           cancellation_reason?: string[] | null
@@ -74,31 +96,32 @@ export type Database = {
           deposit_charge_id?: string | null
           deposit_price?: number | null
           deposit_tax_transaction?: string | null
+          discount_cents?: number
           end: string
           eoa_tax_transaction?: string | null
           id?: string
+          late_fee_added_at?: string | null
+          late_fee_cents?: number
+          loyalty_reward_id?: string | null
+          no_show_fee_cents?: number | null
+          no_show_fee_charge_id?: string | null
+          no_show_fee_charged_at?: string | null
+          no_show_fee_error?: string | null
+          no_show_fee_status?: string | null
           paid_amount?: number
           paid_deposit?: boolean
           payment_link_id?: string
           policy_id?: string | null
+          rebook_nudged_at?: string | null
+          refund_id?: string | null
+          refund_status?: Database["public"]["Enums"]["refund_status"]
+          refunded_amount?: number | null
+          refunded_at?: string | null
           reminder_ids?: Json | null
           require_deposit?: boolean
           reschedules?: number
           selected_addons?: Json[]
           selected_options?: Json | null
-          acknowledged_at?: string | null
-          loyalty_reward_id?: string | null
-          discount_cents?: number
-          waitlist_notified_at?: string | null
-          rebook_nudged_at?: string | null
-          late_fee_cents?: number
-          late_fee_added_at?: string | null
-          tip_cents?: number
-          no_show_fee_status?: string | null
-          no_show_fee_cents?: number | null
-          no_show_fee_charge_id?: string | null
-          no_show_fee_error?: string | null
-          no_show_fee_charged_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -107,13 +130,12 @@ export type Database = {
           status?: Database["public"]["Enums"]["status"]
           substraction?: boolean
           time_range?: unknown
+          tip_cents?: number
           updated_at?: string
-          refund_id?: string | null
-          refunded_amount?: number | null
-          refunded_at?: string | null
-          refund_status?: Database["public"]["Enums"]["refund_status"]
+          waitlist_notified_at?: string | null
         }
         Update: {
+          acknowledged_at?: string | null
           amount_due?: number
           business?: string
           cancellation_reason?: string[] | null
@@ -123,31 +145,32 @@ export type Database = {
           deposit_charge_id?: string | null
           deposit_price?: number | null
           deposit_tax_transaction?: string | null
+          discount_cents?: number
           end?: string
           eoa_tax_transaction?: string | null
           id?: string
+          late_fee_added_at?: string | null
+          late_fee_cents?: number
+          loyalty_reward_id?: string | null
+          no_show_fee_cents?: number | null
+          no_show_fee_charge_id?: string | null
+          no_show_fee_charged_at?: string | null
+          no_show_fee_error?: string | null
+          no_show_fee_status?: string | null
           paid_amount?: number
           paid_deposit?: boolean
           payment_link_id?: string
           policy_id?: string | null
+          rebook_nudged_at?: string | null
+          refund_id?: string | null
+          refund_status?: Database["public"]["Enums"]["refund_status"]
+          refunded_amount?: number | null
+          refunded_at?: string | null
           reminder_ids?: Json | null
           require_deposit?: boolean
           reschedules?: number
           selected_addons?: Json[]
           selected_options?: Json | null
-          acknowledged_at?: string | null
-          loyalty_reward_id?: string | null
-          discount_cents?: number
-          waitlist_notified_at?: string | null
-          rebook_nudged_at?: string | null
-          late_fee_cents?: number
-          late_fee_added_at?: string | null
-          tip_cents?: number
-          no_show_fee_status?: string | null
-          no_show_fee_cents?: number | null
-          no_show_fee_charge_id?: string | null
-          no_show_fee_error?: string | null
-          no_show_fee_charged_at?: string | null
           service_charge_id?: string | null
           service_data?: Json | null
           service_paid?: boolean | null
@@ -156,11 +179,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["status"]
           substraction?: boolean
           time_range?: unknown
+          tip_cents?: number
           updated_at?: string
-          refund_id?: string | null
-          refunded_amount?: number | null
-          refunded_at?: string | null
-          refund_status?: Database["public"]["Enums"]["refund_status"]
+          waitlist_notified_at?: string | null
         }
         Relationships: [
           {
@@ -169,6 +190,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "business_users"
             referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "appointments_loyalty_reward_id_fkey"
+            columns: ["loyalty_reward_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_rewards"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -240,60 +268,6 @@ export type Database = {
           },
         ]
       }
-      booking_waitlist: {
-        Row: {
-          id: string
-          business_id: string
-          service_id: string | null
-          first_name: string
-          last_name: string
-          email: string
-          phone: string
-          from_date: string
-          to_date: string
-          time_of_day: string
-          note: string | null
-          status: string
-          notified_count: number
-          last_notified_at: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          business_id: string
-          service_id?: string | null
-          first_name: string
-          last_name?: string
-          email: string
-          phone?: string
-          from_date: string
-          to_date: string
-          time_of_day?: string
-          note?: string | null
-          status?: string
-          notified_count?: number
-          last_notified_at?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          business_id?: string
-          service_id?: string | null
-          first_name?: string
-          last_name?: string
-          email?: string
-          phone?: string
-          from_date?: string
-          to_date?: string
-          time_of_day?: string
-          note?: string | null
-          status?: string
-          notified_count?: number
-          last_notified_at?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      }
       booking_sessions: {
         Row: {
           amount: number | null
@@ -360,6 +334,75 @@ export type Database = {
           },
         ]
       }
+      booking_waitlist: {
+        Row: {
+          business_id: string
+          created_at: string
+          email: string
+          first_name: string
+          from_date: string
+          id: string
+          last_name: string
+          last_notified_at: string | null
+          note: string | null
+          notified_count: number
+          phone: string
+          service_id: string | null
+          status: string
+          time_of_day: string
+          to_date: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          email: string
+          first_name: string
+          from_date: string
+          id?: string
+          last_name?: string
+          last_notified_at?: string | null
+          note?: string | null
+          notified_count?: number
+          phone?: string
+          service_id?: string | null
+          status?: string
+          time_of_day?: string
+          to_date: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          email?: string
+          first_name?: string
+          from_date?: string
+          id?: string
+          last_name?: string
+          last_notified_at?: string | null
+          note?: string | null
+          notified_count?: number
+          phone?: string
+          service_id?: string | null
+          status?: string
+          time_of_day?: string
+          to_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_waitlist_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "booking_waitlist_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_clients: {
         Row: {
           banned: boolean
@@ -386,14 +429,14 @@ export type Database = {
           {
             foreignKeyName: "business_clients_business_fkey"
             columns: ["business"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "business_users"
             referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "business_clients_client_fkey"
             columns: ["client"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "client_users"
             referencedColumns: ["client_id"]
           },
@@ -467,43 +510,44 @@ export type Database = {
           business_name: string
           clients: string[] | null
           completed_stripe_onboarding: boolean
+          complimentary_until: string | null
           created_at: string
           current_onboarding_link: string | null
           default_availability: string
-          early_access: boolean
+          early_access: boolean | null
           email: string
-          founding_member: boolean
+          founding_member: boolean | null
           founding_member_number: number | null
           founding_member_since: string | null
           had_trial: boolean
           has_marketplace_profile: boolean | null
           is_onboarded: boolean
+          last_checkin_sent_at: string | null
           latitude: number | null
           legacy_url_names: string[]
-          waitlist_enabled: boolean
           location: unknown
           longitude: number | null
+          marketing_opt_in: boolean
           payment_method_config_id: string
           plan_type: Database["public"]["Enums"]["plan_type"]
           published_site: boolean
+          sms_business_texts: boolean
+          sms_enabled: boolean
+          sms_phone: string | null
           stripe_acc_id: string | null
           stripe_customer_id: string | null
+          subscription_plan: string | null
+          subscription_status: string | null
+          tos_accepted_at: string | null
+          tos_ip_address: string | null
+          total_booking_volume: number | null
           tours_completed: Json | null
+          unsubscribe_token: string | null
           updated_at: string
           upgrade_prompt_dismissed_at: string | null
           url_name: string
           user_id: string
-          tos_accepted_at: string | null
-          tos_ip_address: string | null
-          marketing_opt_in: boolean
-          unsubscribe_token: string | null
-          last_checkin_sent_at: string | null
-          total_booking_volume: number | null
-          subscription_plan: string | null
-          subscription_status: string | null
-          sms_enabled: boolean
-          sms_phone: string | null
-          sms_business_texts: boolean
+          waitlist_enabled: boolean
         }
         Insert: {
           account_settings?: Json | null
@@ -513,43 +557,44 @@ export type Database = {
           business_name: string
           clients?: string[] | null
           completed_stripe_onboarding?: boolean
+          complimentary_until?: string | null
           created_at?: string
           current_onboarding_link?: string | null
           default_availability?: string
-          early_access?: boolean
+          early_access?: boolean | null
           email: string
-          founding_member?: boolean
+          founding_member?: boolean | null
           founding_member_number?: number | null
           founding_member_since?: string | null
           had_trial?: boolean
           has_marketplace_profile?: boolean | null
           is_onboarded?: boolean
+          last_checkin_sent_at?: string | null
           latitude?: number | null
           legacy_url_names?: string[]
-          waitlist_enabled?: boolean
           location?: unknown
           longitude?: number | null
+          marketing_opt_in?: boolean
           payment_method_config_id?: string
           plan_type?: Database["public"]["Enums"]["plan_type"]
           published_site?: boolean
+          sms_business_texts?: boolean
+          sms_enabled?: boolean
+          sms_phone?: string | null
           stripe_acc_id?: string | null
           stripe_customer_id?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
+          tos_accepted_at?: string | null
+          tos_ip_address?: string | null
+          total_booking_volume?: number | null
           tours_completed?: Json | null
+          unsubscribe_token?: string | null
           updated_at?: string
           upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
-          tos_accepted_at?: string | null
-          tos_ip_address?: string | null
-          marketing_opt_in?: boolean
-          unsubscribe_token?: string | null
-          last_checkin_sent_at?: string | null
-          total_booking_volume?: number | null
-          subscription_plan?: string | null
-          subscription_status?: string | null
-          sms_enabled?: boolean
-          sms_phone?: string | null
-          sms_business_texts?: boolean
+          waitlist_enabled?: boolean
         }
         Update: {
           account_settings?: Json | null
@@ -559,124 +604,44 @@ export type Database = {
           business_name?: string
           clients?: string[] | null
           completed_stripe_onboarding?: boolean
+          complimentary_until?: string | null
           created_at?: string
           current_onboarding_link?: string | null
           default_availability?: string
-          early_access?: boolean
+          early_access?: boolean | null
           email?: string
-          founding_member?: boolean
+          founding_member?: boolean | null
           founding_member_number?: number | null
           founding_member_since?: string | null
           had_trial?: boolean
           has_marketplace_profile?: boolean | null
           is_onboarded?: boolean
+          last_checkin_sent_at?: string | null
           latitude?: number | null
           legacy_url_names?: string[]
-          waitlist_enabled?: boolean
           location?: unknown
           longitude?: number | null
+          marketing_opt_in?: boolean
           payment_method_config_id?: string
           plan_type?: Database["public"]["Enums"]["plan_type"]
           published_site?: boolean
+          sms_business_texts?: boolean
+          sms_enabled?: boolean
+          sms_phone?: string | null
           stripe_acc_id?: string | null
           stripe_customer_id?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
+          tos_accepted_at?: string | null
+          tos_ip_address?: string | null
+          total_booking_volume?: number | null
           tours_completed?: Json | null
+          unsubscribe_token?: string | null
           updated_at?: string
           upgrade_prompt_dismissed_at?: string | null
           url_name?: string
           user_id?: string
-          tos_accepted_at?: string | null
-          tos_ip_address?: string | null
-          marketing_opt_in?: boolean
-          unsubscribe_token?: string | null
-          last_checkin_sent_at?: string | null
-          total_booking_volume?: number | null
-          subscription_plan?: string | null
-          subscription_status?: string | null
-          sms_enabled?: boolean
-          sms_phone?: string | null
-          sms_business_texts?: boolean
-        }
-        Relationships: []
-      }
-      feedback: {
-        Row: {
-          id: string
-          business_id: string | null
-          business_name: string | null
-          email: string | null
-          type: string
-          message: string
-          status: string
-          created_at: string | null
-          resolved_at: string | null
-          founder_notes: string | null
-        }
-        Insert: {
-          id?: string
-          business_id?: string | null
-          business_name?: string | null
-          email?: string | null
-          type: string
-          message: string
-          status?: string
-          created_at?: string | null
-          resolved_at?: string | null
-          founder_notes?: string | null
-        }
-        Update: {
-          id?: string
-          business_id?: string | null
-          business_name?: string | null
-          email?: string | null
-          type?: string
-          message?: string
-          status?: string
-          created_at?: string | null
-          resolved_at?: string | null
-          founder_notes?: string | null
-        }
-        Relationships: []
-      }
-      support_tickets: {
-        Row: {
-          id: string
-          business_id: string | null
-          business_name: string | null
-          email: string | null
-          subject: string
-          message: string
-          status: string
-          priority: string
-          created_at: string | null
-          resolved_at: string | null
-          founder_reply: string | null
-        }
-        Insert: {
-          id?: string
-          business_id?: string | null
-          business_name?: string | null
-          email?: string | null
-          subject: string
-          message: string
-          status?: string
-          priority?: string
-          created_at?: string | null
-          resolved_at?: string | null
-          founder_reply?: string | null
-        }
-        Update: {
-          id?: string
-          business_id?: string | null
-          business_name?: string | null
-          email?: string | null
-          subject?: string
-          message?: string
-          status?: string
-          priority?: string
-          created_at?: string | null
-          resolved_at?: string | null
-          founder_reply?: string | null
+          waitlist_enabled?: boolean
         }
         Relationships: []
       }
@@ -746,6 +711,77 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          created_at: string | null
+          early_access_only: boolean | null
+          feature_name: string
+          id: string
+          is_public: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          early_access_only?: boolean | null
+          feature_name: string
+          id?: string
+          is_public?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          early_access_only?: boolean | null
+          feature_name?: string
+          id?: string
+          is_public?: boolean | null
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          business_id: string | null
+          business_name: string | null
+          created_at: string | null
+          email: string | null
+          founder_notes: string | null
+          id: string
+          message: string
+          resolved_at: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          business_id?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          founder_notes?: string | null
+          id?: string
+          message: string
+          resolved_at?: string | null
+          status?: string
+          type: string
+        }
+        Update: {
+          business_id?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          founder_notes?: string | null
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       image_section: {
         Row: {
           created_at: string
@@ -786,144 +822,203 @@ export type Database = {
       }
       loyalty_ledger: {
         Row: {
-          id: string
+          appointment_id: string | null
           business_id: string
           client_id: string
-          appointment_id: string | null
+          created_at: string
+          id: string
           kind: string
-          visits: number
-          spend_cents: number
-          reward_id: string | null
           note: string | null
           notified_at: string | null
-          created_at: string
+          reward_id: string | null
+          spend_cents: number
+          visits: number
         }
         Insert: {
-          id?: string
+          appointment_id?: string | null
           business_id: string
           client_id: string
-          appointment_id?: string | null
+          created_at?: string
+          id?: string
           kind: string
-          visits?: number
-          spend_cents?: number
-          reward_id?: string | null
           note?: string | null
           notified_at?: string | null
-          created_at?: string
+          reward_id?: string | null
+          spend_cents?: number
+          visits?: number
         }
         Update: {
-          id?: string
+          appointment_id?: string | null
           business_id?: string
           client_id?: string
-          appointment_id?: string | null
+          created_at?: string
+          id?: string
           kind?: string
-          visits?: number
-          spend_cents?: number
-          reward_id?: string | null
           note?: string | null
           notified_at?: string | null
-          created_at?: string
+          reward_id?: string | null
+          spend_cents?: number
+          visits?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_ledger_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_ledger_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "loyalty_ledger_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_users"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "loyalty_ledger_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_rewards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       loyalty_programs: {
         Row: {
           business_id: string
-          enabled: boolean
+          created_at: string
           earn_type: string
-          visits_required: number
-          spend_threshold_cents: number
-          reward_type: string
-          reward_value: number
-          reward_expiry_days: number | null
+          enabled: boolean
           rebook_bonus_enabled: boolean
           rebook_within_days: number
           referral_enabled: boolean
           referral_reward_cents: number
-          created_at: string
+          reward_expiry_days: number | null
+          reward_type: string
+          reward_value: number
+          spend_threshold_cents: number
           updated_at: string
+          visits_required: number
         }
         Insert: {
           business_id: string
-          enabled?: boolean
+          created_at?: string
           earn_type?: string
-          visits_required?: number
-          spend_threshold_cents?: number
-          reward_type?: string
-          reward_value?: number
-          reward_expiry_days?: number | null
+          enabled?: boolean
           rebook_bonus_enabled?: boolean
           rebook_within_days?: number
           referral_enabled?: boolean
           referral_reward_cents?: number
-          created_at?: string
+          reward_expiry_days?: number | null
+          reward_type?: string
+          reward_value?: number
+          spend_threshold_cents?: number
           updated_at?: string
+          visits_required?: number
         }
         Update: {
           business_id?: string
-          enabled?: boolean
+          created_at?: string
           earn_type?: string
-          visits_required?: number
-          spend_threshold_cents?: number
-          reward_type?: string
-          reward_value?: number
-          reward_expiry_days?: number | null
+          enabled?: boolean
           rebook_bonus_enabled?: boolean
           rebook_within_days?: number
           referral_enabled?: boolean
           referral_reward_cents?: number
-          created_at?: string
+          reward_expiry_days?: number | null
+          reward_type?: string
+          reward_value?: number
+          spend_threshold_cents?: number
           updated_at?: string
+          visits_required?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_programs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
       }
       loyalty_rewards: {
         Row: {
-          id: string
           business_id: string
           client_id: string
           code: string
-          status: string
-          reward_type: string
-          value: number
-          source: string
-          issued_at: string
           expires_at: string | null
-          used_at: string | null
-          used_appointment_id: string | null
+          id: string
+          issued_at: string
+          reward_type: string
+          source: string
+          status: string
           used_amount_cents: number | null
+          used_appointment_id: string | null
+          used_at: string | null
+          value: number
         }
         Insert: {
-          id?: string
           business_id: string
           client_id: string
           code: string
-          status?: string
-          reward_type: string
-          value: number
-          source?: string
-          issued_at?: string
           expires_at?: string | null
-          used_at?: string | null
-          used_appointment_id?: string | null
+          id?: string
+          issued_at?: string
+          reward_type: string
+          source?: string
+          status?: string
           used_amount_cents?: number | null
+          used_appointment_id?: string | null
+          used_at?: string | null
+          value: number
         }
         Update: {
-          id?: string
           business_id?: string
           client_id?: string
           code?: string
-          status?: string
-          reward_type?: string
-          value?: number
-          source?: string
-          issued_at?: string
           expires_at?: string | null
-          used_at?: string | null
-          used_appointment_id?: string | null
+          id?: string
+          issued_at?: string
+          reward_type?: string
+          source?: string
+          status?: string
           used_amount_cents?: number | null
+          used_appointment_id?: string | null
+          used_at?: string | null
+          value?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_rewards_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "loyalty_rewards_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_users"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "loyalty_rewards_used_appointment_id_fkey"
+            columns: ["used_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketplace_profile: {
         Row: {
@@ -1023,174 +1118,269 @@ export type Database = {
           },
         ]
       }
+      referral_codes: {
+        Row: {
+          access_token: string
+          business_id: string
+          client_id: string
+          code: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          access_token?: string
+          business_id: string
+          client_id: string
+          code: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          access_token?: string
+          business_id?: string
+          client_id?: string
+          code?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_codes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "referral_codes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_users"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
       referral_programs: {
         Row: {
           business_id: string
+          created_at: string
           enabled: boolean
-          reward_type: string
-          reward_value: number
+          max_rewards_per_referrer: number | null
           recipients: string
           reward_expiry_days: number | null
-          max_rewards_per_referrer: number | null
-          created_at: string
+          reward_type: string
+          reward_value: number
           updated_at: string
         }
         Insert: {
           business_id: string
+          created_at?: string
           enabled?: boolean
-          reward_type?: string
-          reward_value?: number
+          max_rewards_per_referrer?: number | null
           recipients?: string
           reward_expiry_days?: number | null
-          max_rewards_per_referrer?: number | null
-          created_at?: string
+          reward_type?: string
+          reward_value?: number
           updated_at?: string
         }
         Update: {
           business_id?: string
+          created_at?: string
           enabled?: boolean
-          reward_type?: string
-          reward_value?: number
+          max_rewards_per_referrer?: number | null
           recipients?: string
           reward_expiry_days?: number | null
-          max_rewards_per_referrer?: number | null
-          created_at?: string
+          reward_type?: string
+          reward_value?: number
           updated_at?: string
         }
-        Relationships: []
-      }
-      referral_codes: {
-        Row: {
-          id: string
-          business_id: string
-          client_id: string
-          code: string
-          access_token: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          business_id: string
-          client_id: string
-          code: string
-          access_token?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          business_id?: string
-          client_id?: string
-          code?: string
-          access_token?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      referrals: {
-        Row: {
-          id: string
-          business_id: string
-          code_id: string
-          referrer_client_id: string
-          referred_client_id: string | null
-          referred_email: string
-          referred_phone: string
-          appointment_id: string
-          status: string
-          void_reason: string | null
-          created_at: string
-          completed_at: string | null
-        }
-        Insert: {
-          id?: string
-          business_id: string
-          code_id: string
-          referrer_client_id: string
-          referred_client_id?: string | null
-          referred_email?: string
-          referred_phone?: string
-          appointment_id: string
-          status?: string
-          void_reason?: string | null
-          created_at?: string
-          completed_at?: string | null
-        }
-        Update: {
-          id?: string
-          business_id?: string
-          code_id?: string
-          referrer_client_id?: string
-          referred_client_id?: string | null
-          referred_email?: string
-          referred_phone?: string
-          appointment_id?: string
-          status?: string
-          void_reason?: string | null
-          created_at?: string
-          completed_at?: string | null
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "referral_programs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
       }
       referral_rewards: {
         Row: {
-          id: string
-          referral_id: string
-          business_id: string
-          recipient: string
-          client_id: string | null
-          reward_type: string
-          value: number
-          status: string
-          loyalty_reward_id: string | null
-          redeemed_appointment_id: string | null
-          redeemed_amount_cents: number | null
           available_at: string | null
-          redeemed_at: string | null
-          notified_at: string | null
+          business_id: string
+          client_id: string | null
           created_at: string
+          id: string
+          loyalty_reward_id: string | null
+          notified_at: string | null
+          recipient: string
+          redeemed_amount_cents: number | null
+          redeemed_appointment_id: string | null
+          redeemed_at: string | null
+          referral_id: string
+          reward_type: string
+          status: string
+          value: number
         }
         Insert: {
-          id?: string
-          referral_id: string
-          business_id: string
-          recipient: string
-          client_id?: string | null
-          reward_type: string
-          value: number
-          status?: string
-          loyalty_reward_id?: string | null
-          redeemed_appointment_id?: string | null
-          redeemed_amount_cents?: number | null
           available_at?: string | null
-          redeemed_at?: string | null
-          notified_at?: string | null
+          business_id: string
+          client_id?: string | null
           created_at?: string
+          id?: string
+          loyalty_reward_id?: string | null
+          notified_at?: string | null
+          recipient: string
+          redeemed_amount_cents?: number | null
+          redeemed_appointment_id?: string | null
+          redeemed_at?: string | null
+          referral_id: string
+          reward_type: string
+          status?: string
+          value: number
         }
         Update: {
-          id?: string
-          referral_id?: string
-          business_id?: string
-          recipient?: string
-          client_id?: string | null
-          reward_type?: string
-          value?: number
-          status?: string
-          loyalty_reward_id?: string | null
-          redeemed_appointment_id?: string | null
-          redeemed_amount_cents?: number | null
           available_at?: string | null
-          redeemed_at?: string | null
-          notified_at?: string | null
+          business_id?: string
+          client_id?: string | null
           created_at?: string
+          id?: string
+          loyalty_reward_id?: string | null
+          notified_at?: string | null
+          recipient?: string
+          redeemed_amount_cents?: number | null
+          redeemed_appointment_id?: string | null
+          redeemed_at?: string | null
+          referral_id?: string
+          reward_type?: string
+          status?: string
+          value?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_users"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_loyalty_reward_id_fkey"
+            columns: ["loyalty_reward_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_redeemed_appointment_id_fkey"
+            columns: ["redeemed_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          appointment_id: string
+          business_id: string
+          code_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          referred_client_id: string | null
+          referred_email: string
+          referred_phone: string
+          referrer_client_id: string
+          status: string
+          void_reason: string | null
+        }
+        Insert: {
+          appointment_id: string
+          business_id: string
+          code_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referred_client_id?: string | null
+          referred_email?: string
+          referred_phone?: string
+          referrer_client_id: string
+          status?: string
+          void_reason?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          business_id?: string
+          code_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referred_client_id?: string | null
+          referred_email?: string
+          referred_phone?: string
+          referrer_client_id?: string
+          status?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+          {
+            foreignKeyName: "referrals_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referred_client_id_fkey"
+            columns: ["referred_client_id"]
+            isOneToOne: false
+            referencedRelation: "client_users"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_client_id_fkey"
+            columns: ["referrer_client_id"]
+            isOneToOne: false
+            referencedRelation: "client_users"
+            referencedColumns: ["client_id"]
+          },
+        ]
       }
       refunds: {
         Row: {
           amount: number
           appointment_id: string
           business_id: string
-          charge_type: "DEPOSIT" | "SERVICE"
+          charge_type: string
           created_at: string
           failure_reason: string | null
           id: string
@@ -1198,7 +1388,7 @@ export type Database = {
           note: string | null
           payment_intent_id: string
           reason: string | null
-          status: "pending" | "requires_action" | "succeeded" | "failed" | "canceled"
+          status: string
           stripe_refund_id: string
           updated_at: string
         }
@@ -1206,7 +1396,7 @@ export type Database = {
           amount: number
           appointment_id: string
           business_id: string
-          charge_type: "DEPOSIT" | "SERVICE"
+          charge_type: string
           created_at?: string
           failure_reason?: string | null
           id?: string
@@ -1214,7 +1404,7 @@ export type Database = {
           note?: string | null
           payment_intent_id: string
           reason?: string | null
-          status: "pending" | "requires_action" | "succeeded" | "failed" | "canceled"
+          status: string
           stripe_refund_id: string
           updated_at?: string
         }
@@ -1222,7 +1412,7 @@ export type Database = {
           amount?: number
           appointment_id?: string
           business_id?: string
-          charge_type?: "DEPOSIT" | "SERVICE"
+          charge_type?: string
           created_at?: string
           failure_reason?: string | null
           id?: string
@@ -1230,7 +1420,7 @@ export type Database = {
           note?: string | null
           payment_intent_id?: string
           reason?: string | null
-          status?: "pending" | "requires_action" | "succeeded" | "failed" | "canceled"
+          status?: string
           stripe_refund_id?: string
           updated_at?: string
         }
@@ -1334,10 +1524,10 @@ export type Database = {
           length: number
           name: string
           photo_url: string | null
-          price: number
           prep: Json | null
-          style_options: Json | null
+          price: number
           rebook_weeks: number | null
+          style_options: Json | null
           updated_at: string | null
         }
         Insert: {
@@ -1352,10 +1542,10 @@ export type Database = {
           length: number
           name: string
           photo_url?: string | null
-          price: number
           prep?: Json | null
-          style_options?: Json | null
+          price: number
           rebook_weeks?: number | null
+          style_options?: Json | null
           updated_at?: string | null
         }
         Update: {
@@ -1370,10 +1560,10 @@ export type Database = {
           length?: number
           name?: string
           photo_url?: string | null
-          price?: number
           prep?: Json | null
-          style_options?: Json | null
+          price?: number
           rebook_weeks?: number | null
+          style_options?: Json | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1387,6 +1577,47 @@ export type Database = {
           {
             foreignKeyName: "services_business_fkey"
             columns: ["business"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
+      sms_opt_outs: {
+        Row: {
+          opted_out_at: string
+          phone: string
+        }
+        Insert: {
+          opted_out_at?: string
+          phone: string
+        }
+        Update: {
+          opted_out_at?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      sms_usage: {
+        Row: {
+          business_id: string
+          month: string
+          sent: number
+        }
+        Insert: {
+          business_id: string
+          month: string
+          sent?: number
+        }
+        Update: {
+          business_id?: string
+          month?: string
+          sent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_usage_business_id_fkey"
+            columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_users"
             referencedColumns: ["business_id"]
@@ -1443,6 +1674,56 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          business_id: string | null
+          business_name: string | null
+          created_at: string | null
+          email: string | null
+          founder_reply: string | null
+          id: string
+          message: string
+          priority: string
+          resolved_at: string | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          business_id?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          founder_reply?: string | null
+          id?: string
+          message: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+        }
+        Update: {
+          business_id?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          founder_reply?: string | null
+          id?: string
+          message?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_users"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       user_feedback: {
         Row: {
           business_id: string | null
@@ -1482,9 +1763,11 @@ export type Database = {
         Row: {
           business_id: string | null
           created_at: string
+          draft_data: string | null
           editor_data: string | null
           id: string
           image_objects: Json[] | null
+          published_at: string | null
           section_data: Json[] | null
           site_data: Json
           theme_data: Json
@@ -1494,9 +1777,11 @@ export type Database = {
         Insert: {
           business_id?: string | null
           created_at?: string
+          draft_data?: string | null
           editor_data?: string | null
           id?: string
           image_objects?: Json[] | null
+          published_at?: string | null
           section_data?: Json[] | null
           site_data?: Json
           theme_data?: Json
@@ -1506,9 +1791,11 @@ export type Database = {
         Update: {
           business_id?: string | null
           created_at?: string
+          draft_data?: string | null
           editor_data?: string | null
           id?: string
           image_objects?: Json[] | null
+          published_at?: string | null
           section_data?: Json[] | null
           site_data?: Json
           theme_data?: Json
@@ -1571,22 +1858,6 @@ export type Database = {
       }
     }
     Functions: {
-      referral_attribute: {
-        Args: { p_appointment: string; p_code: string }
-        Returns: Json
-      }
-      referral_code_for: {
-        Args: { p_business: string; p_client: string }
-        Returns: Database["public"]["Tables"]["referral_codes"]["Row"]
-      }
-      referral_is_new_client: {
-        Args: { p_business: string; p_email: string; p_phone: string; p_exclude_appointment: string }
-        Returns: boolean
-      }
-      refresh_appointment_refund_totals: {
-        Args: { p_appointment_id: string }
-        Returns: undefined
-      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
@@ -1714,6 +1985,15 @@ export type Database = {
             }
             Returns: string
           }
+      assign_founding_member: {
+        Args: { p_business_id: string }
+        Returns: number
+      }
+      claim_sms_slot: {
+        Args: { p_business: string; p_limit: number }
+        Returns: boolean
+      }
+      cleanup_processing_appointments: { Args: never; Returns: Json }
       confirm_booking_session:
         | {
             Args: {
@@ -1758,12 +2038,13 @@ export type Database = {
             }
             Returns: undefined
           }
+      daily_cleanup: { Args: never; Returns: Json }
       dashboard_bookings_this_month: {
-        Args: { business: string }
+        Args: { p_business: string }
         Returns: number
       }
       dashboard_new_clients_this_month: {
-        Args: { business: string }
+        Args: { p_business: string }
         Returns: number
       }
       dashboard_returning_rate: { Args: { business: string }; Returns: number }
@@ -1804,6 +2085,8 @@ export type Database = {
         | { Args: { table_name: string }; Returns: string }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      expire_booking_sessions: { Args: never; Returns: Json }
+      expire_pending_appointments: { Args: never; Returns: Json }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
         Args: { geom1: unknown; geom2: unknown }
@@ -2034,7 +2317,17 @@ export type Database = {
         }[]
       }
       gettransactionid: { Args: never; Returns: unknown }
+      is_business_owner: { Args: { bid: string }; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      loyalty_client_for: {
+        Args: { appt: Database["public"]["Tables"]["appointments"]["Row"] }
+        Returns: string
+      }
+      loyalty_issue_rewards: {
+        Args: { p_appointment?: string; p_business: string; p_client: string }
+        Returns: number
+      }
+      loyalty_new_code: { Args: never; Returns: string }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -2075,6 +2368,42 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      referral_attribute: {
+        Args: { p_appointment: string; p_code: string }
+        Returns: Json
+      }
+      referral_code_for: {
+        Args: { p_business: string; p_client: string }
+        Returns: {
+          access_token: string
+          business_id: string
+          client_id: string
+          code: string
+          created_at: string
+          id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "referral_codes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      referral_digits: { Args: { p: string }; Returns: string }
+      referral_is_new_client: {
+        Args: {
+          p_business: string
+          p_email: string
+          p_exclude_appointment: string
+          p_phone: string
+        }
+        Returns: boolean
+      }
+      refresh_appointment_refund_totals: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
+      release_sms_slot: { Args: { p_business: string }; Returns: undefined }
       search_stylists_nearby: {
         Args: { radius_km: number; user_lat: number; user_lon: number }
         Returns: {
@@ -2733,12 +3062,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2762,11 +3091,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2787,11 +3116,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2812,11 +3141,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2829,11 +3158,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

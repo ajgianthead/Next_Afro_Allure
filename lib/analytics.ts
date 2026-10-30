@@ -72,7 +72,7 @@ export async function formatGA4Report(response: google.analytics.data.v1beta.IRu
 }
 
 export async function runCancelledReasonReport(filters: ReportFilters) {
-    const [response] = await analyticsDataClient.runReport({
+    const [response] = await getAnalyticsDataClient().runReport({
         property: `properties/${propertyId}`,
         dimensions: [
             { name: 'customEvent:reason' }
@@ -97,7 +97,7 @@ export async function runCancelledReasonReport(filters: ReportFilters) {
 }
 
 export async function runTrafficSourceReport(filters: ReportFilters) {
-    const [response] = await analyticsDataClient.runReport({
+    const [response] = await getAnalyticsDataClient().runReport({
         property: `properties/${propertyId}`,
         dimensions: [
             { name: 'sessionSource' },
@@ -126,7 +126,7 @@ export async function runTrafficSourceReport(filters: ReportFilters) {
 
 // Page Views
 export async function runPageViewReport(filters: ReportFilters) {
-    const [response] = await analyticsDataClient.runReport({
+    const [response] = await getAnalyticsDataClient().runReport({
         property: `properties/${propertyId}`,
         dimensions: [
             { name: 'customEvent:business_slug' }, // must match exactly your custom dimension name
@@ -165,7 +165,7 @@ export async function runPageViewReport(filters: ReportFilters) {
 
 // Could be used for appointment_booked, appointment_completed, appointment_cancelled, etc.
 export async function runTotalReport(filters: ReportFilters) {
-    const [response] = await analyticsDataClient.runReport({
+    const [response] = await getAnalyticsDataClient().runReport({
         property: `properties/${propertyId}`,
         dimensions: [
             { name: 'customEvent:business_id' },
@@ -206,7 +206,7 @@ export async function runTotalReport(filters: ReportFilters) {
 
 // Give # of appointment_booked byt each service
 export async function runServiceReport(filters: ReportFilters) {
-    const [response] = await analyticsDataClient.runReport({
+    const [response] = await getAnalyticsDataClient().runReport({
         property: `properties/${propertyId}`,
         dimensions: [
             { name: 'customEvent:service_name' },
@@ -241,7 +241,7 @@ export async function runServiceReport(filters: ReportFilters) {
         },
     })
 
-    return response.rows?.map(row => ({
+    return response.rows?.map((row: google.analytics.data.v1beta.IRow) => ({
         serviceId: row.dimensionValues?.[0]?.value,
         bookings: Number(row.metricValues?.[0]?.value),
     })) ?? [];

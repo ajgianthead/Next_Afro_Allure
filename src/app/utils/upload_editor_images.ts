@@ -1,10 +1,9 @@
 'use server'
 
-import { Database } from "../../../lib/database.types";
 import { createClient } from "./supabase/server";
 
 export const getImages = async (businessId: string) => {
-    const supabase = await createClient<Database>();
+    const supabase = await createClient();
     const { data, error } = await supabase.storage.from('editor-media-pool').list(`editor/${businessId}/image/`)
     if (error) {
         throw Error(error.message)
@@ -19,7 +18,7 @@ export const getImages = async (businessId: string) => {
 }
 
 export const uploadImage = async (file: File, business: string) => {
-    const supabase = await createClient<Database>();
+    const supabase = await createClient();
     const id = crypto.randomUUID();
     const path = `editor/${business}/image/${id}`
     const { error } = await supabase.storage.from('editor-media-pool').upload(path, file, {

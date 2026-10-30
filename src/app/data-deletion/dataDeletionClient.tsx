@@ -20,7 +20,7 @@ export default function DataDeletionClient() {
         const result = await submitDataDeletionRequest(name, email, reason)
         setLoading(false)
         if ('error' in result) {
-            setError(result.error)
+            setError(result.error ?? "Something went wrong. Please try again.")
             return
         }
         setSubmitted(true)

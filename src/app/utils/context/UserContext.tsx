@@ -35,20 +35,9 @@ export function UserWrapper({ children }: { children: React.ReactNode }) {
                             client_id: undefined
                         })
                     }
-                } else if (session?.user.user_metadata.account_type === 'client') {
-                    let { data, error } = await supabase.from('client_users').select("client_id").eq("user_id", session?.user.id)
-                    if (error) {
-                        console.error(error)
-                    }
-                    if (data?.length) {
-                        setUser({
-                            user_id: session?.user.id,
-                            role: session?.user.user_metadata.account_type,
-                            client_id: data[0].client_id,
-                            business_id: undefined
-                        })
-                    }
                 }
+                // Clients don't sign in (client_users has no login), so only
+                // business accounts are looked up here.
 
             }
             if (event === "SIGNED_OUT") {

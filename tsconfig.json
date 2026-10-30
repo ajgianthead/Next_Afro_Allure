@@ -1,26 +1,33 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
     "types": [
       "vitest/globals"
     ],
     "target": "es2017",
-    "baseUrl": "./src",
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ],
       "@tailus-ui/*": [
-        "components/tailus-ui/*"
+        "./src/components/tailus-ui/*"
       ],
       "@lib/*": [
-        "lib/*"
+        "./src/lib/*"
       ],
       "@components/*": [
-        "components/*"
+        "./src/components/*"
       ],
       "@utils/*": [
-        "../utils/*"
+        "./utils/*"
+      ],
+      "app/*": [
+        "./src/app/*"
+      ],
+      "trigger/*": [
+        "./src/trigger/*"
+      ],
+      "useGoogleFonts": [
+        "./src/useGoogleFonts"
       ]
     },
     "lib": [

@@ -13,7 +13,6 @@ import { ImageContainer } from './Image'
 import { Video } from './Video'
 import { Hyperlink } from './Hyperlink'
 import { createClient } from '@/app/utils/supabase/client'
-import { Database } from '../../../lib/database.types'
 
 export default function Toolbox() {
     const { connectors } = useEditor();
@@ -21,7 +20,7 @@ export default function Toolbox() {
     const fileInput = useRef<any>(null)
     const { editor_id } = useParams()
     const [imageUrls, setImageUrls] = useState<string[]>([]);
-    const supabase = createClient<Database>();
+    const supabase = createClient();
 
     useEffect(() => {
         const getImages = async () => {
