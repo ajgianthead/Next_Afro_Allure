@@ -6,7 +6,7 @@
 -- leaves no data behind. Each check raises an exception on failure; success
 -- prints "ALL REFERRAL TESTS PASSED".
 --
--- Covers: attribution (valid, self-referral, existing client, duplicate,
+-- Covers: attribution (valid, self-referral incl. phone/email variants, existing client, duplicate,
 -- bad code, program off, Starter plan), the friend's discount, the reward
 -- lifecycle (completed / cancelled / refunded / per-client limit / code
 -- used), and row-level security between businesses.
@@ -49,6 +49,7 @@ declare
     a1 uuid; a2 uuid; a3 uuid; a4 uuid;
     n int;
     v_reward uuid;
+    v_referral uuid;
 begin
     -- ── Fixtures ────────────────────────────────────────────────────────────
     -- Foreign-key checks off while making bare-bones fixtures (a real business
@@ -93,6 +94,15 @@ begin
     a2 := pg_temp.book(biz_a, 'other@referral.test', '5550000001', 10000);
     res := public.referral_attribute(a2, code.code);
     perform pg_temp.check(res->>'reason' = 'self_referral', 'self-referral by phone is blocked');
+    -- Small changes to the same email or phone don't make a different person.
+    a2 := pg_temp.book(biz_a, 'other2@referral.test', '+1 (555) 000-0001', 10000);
+    res := public.referral_attribute(a2, code.code);
+    perform pg_temp.check(res->>'reason' = 'self_referral', 'self-referral by phone with +1 is blocked');
+    a2 := pg_temp.book(biz_a, ' Bri+deal@Referral.TEST ', '', 10000, 'Brianna');
+    res := public.referral_attribute(a2, code.code);
+    perform pg_temp.check(res->>'reason' = 'self_referral', 'self-referral by a +tag email alias is blocked');
+    perform pg_temp.check(public.referral_email('B.R.I+x@googlemail.com') = 'bri@gmail.com', 'Gmail ignores dots and googlemail.com');
+    perform pg_temp.check(public.referral_email('jane.doe@yahoo.com') = 'jane.doe@yahoo.com', 'other providers keep their dots');
 
     a3 := pg_temp.book(biz_a, 'maya@referral.test', '', 10000, 'Maya');
     res := public.referral_attribute(a3, code.code);
@@ -103,6 +113,9 @@ begin
     a3 := pg_temp.book(biz_a, 'old@referral.test', '', 10000);
     res := public.referral_attribute(a3, code.code);
     perform pg_temp.check(res->>'reason' = 'not_new', 'existing (imported) clients don''t count as referrals');
+    a3 := pg_temp.book(biz_a, 'maya+again@referral.test', '555-000-0098', 10000, 'Maya');
+    res := public.referral_attribute(a3, code.code);
+    perform pg_temp.check(res->>'status' = 'skipped', 'a friend can''t be referred again with an email alias');
 
     a3 := pg_temp.book(biz_a, 'nobody@referral.test', '', 10000);
     res := public.referral_attribute(a3, 'ZZZZ-9999');
@@ -167,6 +180,9 @@ begin
     perform pg_temp.check((select r.status from public.referral_rewards r join public.referrals f on f.id = r.referral_id where f.appointment_id = a3 and r.recipient = 'referrer') = 'void', 'no reward past the per-client limit');
 
     -- ── Row-level security ──────────────────────────────────────────────────
+    -- A real referral id, read before switching roles: as another business the
+    -- referral is invisible, so an insert…select would copy nothing and prove nothing.
+    v_referral := (select id from public.referrals where appointment_id = a1);
     perform set_config('request.jwt.claims', json_build_object('sub', owner_b, 'role', 'authenticated')::text, true);
     set local role authenticated;
     perform pg_temp.check((select count(*) from public.referrals) = 0, 'another business sees none of these referrals');
@@ -175,7 +191,7 @@ begin
     perform pg_temp.check((select count(*) from public.referral_programs where business_id = biz_a) = 0, 'another business can''t read this program');
     begin
         insert into public.referral_rewards (referral_id, business_id, recipient, reward_type, value)
-        select id, business_id, 'referrer', 'amount_off', 99999 from public.referrals limit 1;
+        values (v_referral, biz_b, 'referrer', 'amount_off', 99999);
         raise exception 'FAILED: a business could insert a reward';
     exception when insufficient_privilege or others then
         if sqlerrm like 'FAILED:%' then raise; end if;
