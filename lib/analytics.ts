@@ -1,4 +1,6 @@
-'use server'
+// Server-only helpers (called from server actions, route handlers and tasks).
+// Not a 'use server' module: that would make every export, including the
+// platform-wide report functions, callable as a public endpoint.
 import fetch from 'node-fetch'
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { google } from '@google-analytics/data/build/protos/protos';
