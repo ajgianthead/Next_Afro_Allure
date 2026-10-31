@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useTurnstile } from '@/lib/abuse/useTurnstile'
 import { useRouter } from 'next/navigation'
 import { createAdFunnelUser } from '@/app/(marketing)/dm-booking/signupActions'
 
@@ -22,6 +23,7 @@ export default function SignupModal({ open, onClose }: Props) {
     const [email, setEmail] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const { turnstile, getToken } = useTurnstile('signup')
     const nameRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
 
@@ -51,7 +53,7 @@ export default function SignupModal({ open, onClose }: Props) {
         setLoading(true)
         setError(null)
 
-        const result = await createAdFunnelUser(email, businessName)
+        const result = await createAdFunnelUser(email, businessName, await getToken())
 
         if ('error' in result) {
             setError(result.error)
@@ -185,6 +187,7 @@ export default function SignupModal({ open, onClose }: Props) {
                     >
                         {loading ? 'Setting things up…' : 'Set it up →'}
                     </button>
+                    {turnstile}
                 </form>
 
             </div>

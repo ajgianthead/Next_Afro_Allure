@@ -1,7 +1,10 @@
 'use server'
 
+import { guardPublicAction } from '@/lib/abuse/guard'
 import { createAdminClient } from '@/app/utils/supabase/admin'
-export async function joinClientWaitlist(email: string, city?: string) {
+export async function joinClientWaitlist(email: string, city?: string, turnstileToken: string | null = null) {
+    const blocked = await guardPublicAction('client-waitlist', { turnstileToken, perIp: { max: 5, window: '1 h' } })
+    if (blocked) throw new Error(blocked)
     const supabase = createAdminClient()
     const { error } = await supabase
         .from('client_waitlist')

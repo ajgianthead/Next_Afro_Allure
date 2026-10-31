@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTurnstile } from '@/lib/abuse/useTurnstile'
 import { submitDataDeletionRequest } from './actions'
 
 const SERIF = 'var(--font-fraunces, "Fraunces", "Times New Roman", serif)'
@@ -12,12 +13,13 @@ export default function DataDeletionClient() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [submitted, setSubmitted] = useState(false)
+    const { turnstile, getToken } = useTurnstile('data_deletion')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         setError(null)
-        const result = await submitDataDeletionRequest(name, email, reason)
+        const result = await submitDataDeletionRequest(name, email, reason, await getToken())
         setLoading(false)
         if ('error' in result) {
             setError(result.error ?? "Something went wrong. Please try again.")
@@ -97,6 +99,7 @@ export default function DataDeletionClient() {
             >
                 {loading ? 'Sending…' : 'Submit Request'}
             </button>
+            {turnstile}
         </form>
     )
 }

@@ -11,6 +11,7 @@ import { scheduleAndStoreReminders, sendConfirmationTexts } from "@/features/sha
 import { DateTime } from "luxon"
 import { getBusyIntervals } from "./busyIntervals"
 import { isSlotOpen } from "@/features/availability/server/slotCheck"
+import { guardPublicAction } from "@/lib/abuse/guard"
 import { quoteFromDb } from "@/features/services/server/quote"
 import { parsePrep, QuoteError, type StyleSelection } from "@/features/services/pricing"
 import { resolveTimezone } from "@/lib/timezone"
@@ -152,7 +153,19 @@ export const createAppointmentAction = async (body: {
     referral_code?: string | null
     /** A reward code the client entered, applied only if it's theirs. */
     reward_code?: string | null
+    /** Cloudflare Turnstile token from the booking form. */
+    turnstile_token?: string | null
 }) => {
+    // Public and unauthenticated: stop scripts filling a calendar or sending
+    // confirmation emails to strangers. Returned (not thrown) so the person
+    // sees why; Next hides thrown messages in production.
+    const blocked = await guardPublicAction('booking', {
+        turnstileToken: body.turnstile_token,
+        perIp: { max: 10, window: '10 m' },
+        perKey: { key: String(body.business), max: 30, window: '1 h' },
+    })
+    if (blocked) return { blocked }
+
     const isBanned = await isClientBannedFromBusiness(
         body.client_metadata?.email,
         body.client_metadata?.phoneNumber,

@@ -1,11 +1,14 @@
 'use server'
 
+import { guardPublicAction } from '@/lib/abuse/guard'
 import { Resend } from 'resend'
 
 const FROM = 'AfroAllure <noreply@reminder.afroallure.co>'
 const TO = 'privacy@afroallure.co'
 
-export async function submitDataDeletionRequest(name: string, email: string, reason: string) {
+export async function submitDataDeletionRequest(name: string, email: string, reason: string, turnstileToken: string | null = null) {
+    const blocked = await guardPublicAction('data-deletion', { turnstileToken, perIp: { max: 3, window: '1 h' } })
+    if (blocked) return { error: blocked }
     const trimmedName = name.trim()
     const trimmedEmail = email.trim()
 

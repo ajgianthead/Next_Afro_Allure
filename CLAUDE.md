@@ -50,6 +50,10 @@ In the Vercel dashboard under **Project → Settings → Environment Variables**
 | `SUPABASE_ROLE_SECRET_KEY` | Server-side admin operations | Service role / secret key |
 | `SUPABASE_CONNECTION_STRING` | `src/app/utils/dbPool.ts` | Direct Postgres pool connection (contains the DB password — never `NEXT_PUBLIC_`) |
 | `RESEND_API_KEY` | Email sending (multiple files) | Resend API |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | `src/lib/abuse/useTurnstile.tsx` | Cloudflare Turnstile site key (bot check on public forms). Public by design. Unset = no widget |
+| `TURNSTILE_SECRET_KEY` | `src/lib/abuse/guard.ts` | Turnstile secret; server verifies form tokens. Unset = bot check off. Test values: pass `1x0000000000000000000000000000000AA`, fail `2x0000000000000000000000000000000AA` (site key `1x00000000000000000000AA`) |
+| `UPSTASH_REDIS_REST_URL` | `src/lib/abuse/guard.ts` | Upstash Redis for rate limits on public actions. Unset = no limits |
+| `UPSTASH_REDIS_REST_TOKEN` | `src/lib/abuse/guard.ts` | Upstash Redis token |
 | `TRIGGER_API_KEY` | `src/trigger/*.ts` | Trigger.dev task scheduling |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `lib/analytics.ts`, `lib/gtag.ts` | Google Analytics |
 | `ANALYTICS_API_SECRET` | `lib/analytics.ts` | GA measurement protocol secret |

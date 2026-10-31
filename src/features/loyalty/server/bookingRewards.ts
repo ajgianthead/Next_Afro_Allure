@@ -1,5 +1,6 @@
 'use server'
 
+import { guardPublicAction } from '@/lib/abuse/guard'
 import { createAdminClient } from '@/app/utils/supabase/admin'
 import { describeReward, isRewardUsable, normalizeRewardCode, rewardFromRow } from '../loyalty'
 import { clientIdForContact } from './applyReward'
@@ -15,6 +16,9 @@ export type RewardCodeCheck = { ok: true; text: string } | { ok: false; error: s
 export async function checkRewardCodeAction(businessId: string, code: string, email: string, phone: string): Promise<RewardCodeCheck> {
     const normalized = normalizeRewardCode(code)
     if (!normalized) return { ok: false, error: 'Enter your reward code.' }
+    // Stops guessing codes by brute force.
+    const blocked = await guardPublicAction('reward-code', { perIp: { max: 20, window: '10 m' } })
+    if (blocked) return { ok: false, error: blocked }
     if (!/^[0-9a-f-]{36}$/i.test(businessId)) return { ok: false, error: "That code doesn't work here." }
     if (!email.trim() && !phone.trim()) return { ok: false, error: 'Add your email and phone first.' }
 

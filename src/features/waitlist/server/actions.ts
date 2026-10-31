@@ -1,5 +1,6 @@
 'use server'
 
+import { guardPublicAction } from '@/lib/abuse/guard'
 import { revalidatePath } from 'next/cache'
 import { DateTime } from 'luxon'
 import { createAdminClient } from '@/app/utils/supabase/admin'
@@ -18,7 +19,13 @@ const MAX_PER_BUSINESS = 500
  * without a session, so everything is checked here and the row is written
  * with the service role.
  */
-export async function joinWaitlist(input: WaitlistInput): Promise<Result> {
+export async function joinWaitlist(input: WaitlistInput, turnstileToken: string | null = null): Promise<Result> {
+    const blocked = await guardPublicAction('waitlist', {
+        turnstileToken,
+        perIp: { max: 10, window: '1 h' },
+        perKey: { key: String(input.businessId ?? ''), max: 100, window: '1 h' },
+    })
+    if (blocked) return { ok: false, error: blocked }
     try {
         const supabase = createAdminClient()
         const { data: business } = await supabase

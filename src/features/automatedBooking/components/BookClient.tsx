@@ -22,6 +22,7 @@ import { BOOKING_SELECTION_KEY, BOOKING_SESSION_KEY, canResumeBookingSession, cl
 import { parseStyleOptions } from '@/features/services/pricing'
 import { createBookingSessionAction, updateDateTimeAction, updateClientInfoAction, getBookingSessionAction } from '../server'
 import { BookingStepper } from './BookingStepper'
+import { useTurnstile } from '@/lib/abuse/useTurnstile'
 import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
 import { siteFontWeights } from '@/features/siteBuilder/themes'
 import { useRouter } from 'next/navigation'
@@ -198,6 +199,8 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
     const [rbbOpen, setRbbOpen] = useState(false)
     const [rbbAccepted, setRbbAccepted] = useState<boolean>(false)
     const [preSelected, setPreSelected] = useState(false)
+    // Bot check on the final "Book Appointment" (no-deposit bookings).
+    const { turnstile, getToken: getTurnstileToken } = useTurnstile('booking')
     // Set when a website-picked service is confirmed in its sheet; acted on once the choice is saved.
     const [advanceAfterSelect, setAdvanceAfterSelect] = useState(false)
     const router = useRouter()
@@ -330,7 +333,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
             setOpenErrorDialog(true)
             return false
         }
-        await createAppointmentAction({
+        const res = await createAppointmentAction({
             business: data.business_id,
             start: data.selectedDateTime.start!,
             end: data.selectedDateTime.end!,
@@ -348,7 +351,13 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
             acknowledged: data.acknowledged,
             referral_code: storedReferralCode(businessName) || null,
             reward_code: data.rewardCode || null,
+            turnstile_token: await getTurnstileToken(),
         })
+        if (res && 'blocked' in res) {
+            setError(res.blocked)
+            setOpenErrorDialog(true)
+            return false
+        }
         clearBookingProgress()
         clearStoredReferral(businessName)
         return true
@@ -636,6 +645,7 @@ const Book = ({ businessName, businessData, bookingLimitReachedInitial, themeDat
                                             Book Appointment
                                         </button>
                                     ) : null}
+                                    {!data.booking_policy?.deposit?.enabled && turnstile}
                                 </div>
                             </>
                         )}
