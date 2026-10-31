@@ -30,26 +30,25 @@ export const isClientBannedFromBusiness = async (
     // Called from public booking flows (no session) — service role, returns a boolean only.
     const supabase = createAdminClient()
 
-    const orFilter = [
-        email ? `email.eq.${email}` : null,
-        phoneNumber ? `phone_number.eq.${phoneNumber}` : null,
-    ].filter(Boolean).join(',')
+    // Exact matches only: the email and phone come from the public booking form,
+    // and pasting them into an .or() filter string let a crafted value change the
+    // query. Every matching client counts — the email may belong to one record and
+    // the phone to another (that used to error and read as "not banned").
+    const lookups = await Promise.all([
+        email ? supabase.from('client_users').select('client_id').eq('email', email) : null,
+        phoneNumber ? supabase.from('client_users').select('client_id').eq('phone_number', phoneNumber) : null,
+    ])
+    const clientIds = [...new Set(lookups.flatMap(r => r?.data ?? []).map(r => r.client_id))]
+    if (!clientIds.length) return false
 
-    const { data: existingUser } = await supabase
-        .from('client_users')
-        .select('client_id')
-        .or(orFilter)
-        .maybeSingle()
-    if (!existingUser) return false
-
-    const { data: bannedEntry } = await supabase
+    const { data: bannedEntries } = await supabase
         .from('banned_clients')
         .select('id')
         .eq('business_id', businessId)
-        .eq('client_id', existingUser.client_id)
-        .maybeSingle()
+        .in('client_id', clientIds)
+        .limit(1)
 
-    return !!bannedEntry
+    return !!bannedEntries?.length
 }
 
 export interface BannedClientDisplay {
@@ -130,22 +129,23 @@ export const updateClientInfo = async (
     const supabase = await createClient()
 
     // Check if another client_users record has the same email/phone
-    const { data: conflict } = await supabase
-        .from('client_users')
-        .select('client_id')
-        .or(`email.eq.${client.email},phone_number.eq.${client.phone_number}`)
-        .neq('client_id', client.client_id)
-        .maybeSingle()
+    // Exact matches (no values pasted into a filter string); several other
+    // clients can share the email or the phone.
+    const lookups = await Promise.all([
+        client.email ? supabase.from('client_users').select('client_id').eq('email', client.email).neq('client_id', client.client_id) : null,
+        client.phone_number ? supabase.from('client_users').select('client_id').eq('phone_number', client.phone_number).neq('client_id', client.client_id) : null,
+    ])
+    const conflicts = [...new Set(lookups.flatMap(r => r?.data ?? []).map(r => r.client_id))]
 
-    if (conflict) {
+    if (conflicts.length) {
         // Only a conflict if that other client is also in this business
         const { data: linked } = await supabase
             .from('business_clients')
             .select('id')
             .eq('business', businessId)
-            .eq('client', conflict.client_id)
-            .maybeSingle()
-        if (linked) return "Client already exists for this business"
+            .in('client', conflicts)
+            .limit(1)
+        if (linked?.length) return "Client already exists for this business"
     }
 
     const { data, error } = await supabase

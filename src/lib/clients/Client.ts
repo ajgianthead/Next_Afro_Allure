@@ -60,54 +60,12 @@ export class Client {
             throw Error(error.message)
         }
     }
-    static async checkClientExist(supabase: SupabaseClient<Database>, email: string, phoneNumber: string) {
-        try {
-            const { data: row, error } = await supabase.from('client_users').select().or(`email.eq.${email},phone_number.eq.${phoneNumber}`).single()
-            if (error) throw Error(error.message)
-            if (row) return true
-            return false
-        } catch (error: any) {
-            throw Error(error.message)
-        }
-    }
     static async checkClientBusinessRelationExist(supabase: SupabaseClient<Database>, businessId: string, clientId: string) {
         try {
             const { data: row, error } = await supabase.from('business_clients').select().eq('business', businessId).eq('client', clientId).single()
             if (error) throw Error(error.message)
             if (row) return true
             return false
-        } catch (error: any) {
-            throw Error(error.message)
-        }
-    }
-    static async isClientBanned(supabase: SupabaseClient<Database>, email: string, phoneNumber: string) {
-        try {
-            const { data: row, error } = await supabase.from('business_clients').select().eq('banned', true).or(`email.eq.${email},phone_number.eq.${phoneNumber}`).single()
-            if (error) throw Error(error.message)
-            if (row) return true
-            return false
-        } catch (error: any) {
-            throw Error(error.message)
-        }
-    }
-    static async create(supabase: SupabaseClient<Database>, client: {
-        firstName: string,
-        lastName: string,
-        email: string,
-        phoneNumber: string
-    }) {
-        try {
-            if (await this.checkClientExist(supabase, client.email, client.phoneNumber)) {
-                throw Error('Client already exists')
-            }
-            const { data: row, error } = await supabase.from('client_users').insert({
-                first_name: client.firstName,
-                last_name: client.lastName,
-                email: client.email,
-                phone_number: client.phoneNumber
-            }).select().single()
-            if (error) throw Error(error.message)
-            return Client.fromRow(row)
         } catch (error: any) {
             throw Error(error.message)
         }
