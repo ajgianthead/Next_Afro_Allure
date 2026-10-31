@@ -34,7 +34,8 @@ function getAnalyticsDataClient(): BetaAnalyticsDataClient {
 }
 
 const MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-const API_SECRET = process.env.NEXT_PUBLIC_ANALYTICS_API_SECRET
+// A secret: no NEXT_PUBLIC_ prefix. The old name is read until Vercel has ANALYTICS_API_SECRET set.
+const API_SECRET = process.env.ANALYTICS_API_SECRET ?? process.env.NEXT_PUBLIC_ANALYTICS_API_SECRET
 const GA_ENDPOINT = `https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}`
 
 const propertyId = process.env.ANALYTICS_PROPERTY_ID;

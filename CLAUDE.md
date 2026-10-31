@@ -48,18 +48,17 @@ In the Vercel dashboard under **Project → Settings → Environment Variables**
 | `NEXT_PUBLIC_SUPABASE_URL` | All Supabase clients | Dev project URL locally |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | All Supabase clients | Dev publishable key locally |
 | `SUPABASE_ROLE_SECRET_KEY` | Server-side admin operations | Service role / secret key |
-| `NEXT_PUBLIC_SUPABASE_CONNECTION_STRING` | `src/app/utils/dbPool.ts` | Direct Postgres pool connection |
+| `SUPABASE_CONNECTION_STRING` | `src/app/utils/dbPool.ts` | Direct Postgres pool connection (contains the DB password — never `NEXT_PUBLIC_`) |
 | `RESEND_API_KEY` | Email sending (multiple files) | Resend API |
 | `TRIGGER_API_KEY` | `src/trigger/*.ts` | Trigger.dev task scheduling |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `lib/analytics.ts`, `lib/gtag.ts` | Google Analytics |
-| `NEXT_PUBLIC_ANALYTICS_API_SECRET` | `lib/analytics.ts` | GA measurement protocol |
+| `ANALYTICS_API_SECRET` | `lib/analytics.ts` | GA measurement protocol secret |
 | `ANALYTICS_PROPERTY_ID` | `lib/analytics.ts` | GA property ID |
 | `GOOGLE_ANALYTICS_KEY` | `lib/analytics.ts` | Service account JSON (stringified) |
 | `GOOGLE_MAPS_KEY` | `src/app/marketplace/actions.ts` | Google Maps geocoding |
 | `NEXT_PUBLIC_GOOGLE_FONTS_API_KEY` | `src/useGoogleFonts.ts` | Google Fonts API |
 | `NEXT_PUBLIC_BASE_URL` | Multiple files | `http://localhost:3000` locally, `https://beta.afroallure.co` in Vercel prod |
 | `NEXT_PUBLIC_BOOKING_ROOT_DOMAIN` | `middleware.ts`, `src/lib/bookingUrl.ts`, `src/lib/businessHost.ts` | Root domain for business booking subdomains (`kayla.afroallure.co`). `afroallure.co` in Vercel Production, unset in Preview (falls back to `/business/<name>`), optionally `localhost:3000` locally |
-| `NEXT_PUBLIC_SECRET` | `src/app/business/[businessName]/edit/components/prebuitComponents/card/index.tsx` | Encryption key |
 
 ### Variables that no longer exist
 These were removed as part of the env cleanup (2025-04-25). Do not re-add them:
@@ -74,6 +73,9 @@ These were removed as part of the env cleanup (2025-04-25). Do not re-add them:
 - `SUPABASE_DEV_SECRET_KEY` — renamed to `SUPABASE_ROLE_SECRET_KEY`
 - `NEXT_PUBLIC_SUPABASE_DEV_CONNECTION_STRING` — consolidated into `NEXT_PUBLIC_SUPABASE_CONNECTION_STRING`
 - `NEXT_PUBLIC_TRIGGER_API_KEY` — renamed to `TRIGGER_API_KEY` (a secret key must not carry the NEXT_PUBLIC_ prefix)
+- `NEXT_PUBLIC_SUPABASE_CONNECTION_STRING` — renamed to `SUPABASE_CONNECTION_STRING` (2026-11-01): a `NEXT_PUBLIC_` variable is sent to every browser that imports it, and this one holds the database password. Code still falls back to the old name until Vercel is updated
+- `NEXT_PUBLIC_ANALYTICS_API_SECRET` — renamed to `ANALYTICS_API_SECRET` (2026-11-01), same reason
+- `NEXT_PUBLIC_SECRET` — no longer used by any code (2026-11-01)
 - `NEXT_PUBLIC_MAILCHIMP_API_KEY` — only used by the old BullMQ reminder queue, removed (2026-10-30); reminders run on Trigger.dev
 
 ---
