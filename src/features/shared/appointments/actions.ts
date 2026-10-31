@@ -32,7 +32,8 @@ export const getAppointmentByIdAction = async (id: string) => {
 
 export const cancelClientAppointmentAction = async (
     id: string,
-    start: string,
+    /** Ignored: the deadline uses the stored start time. Kept so existing callers don't change. */
+    _start: string,
     end: string,
     reasons: string[]
 ) => {
@@ -41,11 +42,12 @@ export const cancelClientAppointmentAction = async (
     // Enforce cancel_day_limit before proceeding
     const { data: apptCheck } = await supabase
         .from('appointments')
-        .select('status, policy_id')
+        .select('status, policy_id, start')
         .eq('id', id)
         .single()
 
-    if (apptCheck?.status === 'CANCELLED') {
+    if (!apptCheck) throw new Error('Appointment not found.')
+    if (apptCheck.status === 'CANCELLED') {
         throw new Error('This appointment has already been cancelled.')
     }
 
@@ -57,7 +59,8 @@ export const cancelClientAppointmentAction = async (
             .single()
         const limit = policy?.cancel_day_limit ?? 0
         if (limit > 0) {
-            const daysUntil = DateTime.fromISO(start).diff(DateTime.now(), 'days').days
+            // The stored time, not the one the browser sent (that could be faked to dodge the limit).
+            const daysUntil = DateTime.fromISO(apptCheck.start).diff(DateTime.now(), 'days').days
             if (daysUntil < limit) {
                 throw new Error(
                     `Cancellations are not allowed within ${limit} day${limit !== 1 ? 's' : ''} of the appointment.`
