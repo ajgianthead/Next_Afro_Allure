@@ -50,6 +50,11 @@ export const createBusinessUser = async (email: string, name: string, password: 
         return { ok: true, data: { ...businessUser.toClient(), needsEmailConfirmation } }
     } catch (error: any) {
         console.error('Signup failed:', error)
+        // Don't confirm whether an email already has an account (Supabase says
+        // "User already registered"); point people to log in or reset instead.
+        if (/already (registered|exists)/i.test(error?.message ?? '')) {
+            return { ok: false, error: "We couldn't create an account with that email. If you already have one, log in or reset your password." }
+        }
         return { ok: false, error: error?.message || 'Could not create your account. Please try again.' }
     }
 

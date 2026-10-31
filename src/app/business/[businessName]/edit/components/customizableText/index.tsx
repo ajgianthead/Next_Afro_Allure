@@ -2,6 +2,7 @@
 
 
 import { ComponentConfig } from "@puckeditor/core"
+import { safeHref } from '@/lib/safeHref'
 import { RegularText } from "../types"
 import { customizableTextFields, resolveCustomizableTextFields } from "./fields"
 import { useEditorContext } from "@/app/utils/context/EditorContext"
@@ -33,7 +34,7 @@ export const CustomizableTextComponent: ComponentConfig<RegularText> = {
             opacity: opacity != null ? opacity / 100 : undefined,
         }
         return isLink
-            ? <a href={linkType === 'external' ? url : `${process.env.NEXT_PUBLIC_BASE_URL}/${editorState.businessName}/#${sections.toLowerCase().replace(/\s+/g, "")}`} style={textStyle} className={`apply-font-${id.split('-')[1]}`}>{text}</a>
+            ? <a href={linkType === 'external' ? safeHref(url) : `${process.env.NEXT_PUBLIC_BASE_URL}/${editorState.businessName}/#${sections.toLowerCase().replace(/\s+/g, "")}`} style={textStyle} className={`apply-font-${id.split('-')[1]}`}>{text}</a>
             : <p style={textStyle} className={`apply-font-${id.split('-')[1]}`}>{text}</p>
     }
 }
