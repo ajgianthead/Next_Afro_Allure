@@ -7,7 +7,7 @@ import { BRAND, StepHeader, inputStyle } from '@/features/welcomeSetup/component
 import { LIMITS, MAX_GALLERY, type SiteData, type SiteInfo } from '../siteData'
 import { MediaSlot, IMAGE_ACCEPT, MEDIA_ACCEPT, type useSiteUploads } from './MediaPanel'
 import { SchemeSwatches } from './ColorsFontPanel'
-import { TemplatePicker } from './TemplatePicker'
+import { StarterPicker } from '@/features/builder/editor/StarterPicker'
 
 type Uploads = ReturnType<typeof useSiteUploads>
 
@@ -38,7 +38,7 @@ export function WebsiteSetupStep({ info, site, onChange, uploads, addMedia }: {
             <section className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: BRAND.warm }}>1. Template</p>
                 {info ? (
-                    <TemplatePicker info={info} site={site} selected={site.templateId} onPick={id => onChange({ templateId: id, scheme: '', fontPairing: '' })} layout="row" previewHeight={250} />
+                    <StarterPicker info={info} site={site} selected={site.templateId} onPick={id => onChange({ templateId: id, scheme: '', fontPairing: '' })} layout="row" previewHeight={250} />
                 ) : (
                     <div className="flex h-[300px] items-center justify-center rounded-2xl" style={{ backgroundColor: BRAND.cream }}>
                         <Loader2 className="animate-spin" color={BRAND.warm} />

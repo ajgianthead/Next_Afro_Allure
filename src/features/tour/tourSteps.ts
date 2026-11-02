@@ -270,32 +270,28 @@ export const TOUR_STEPS: Record<string, Step[]> = {
         },
     ],
 
-    // Steps shown before the business has a site (template gallery)
-    webBuilder: [
+    // The website builder (/dashboard/booking-site)
+    websiteBuilder: [
         {
-            target: '[data-tour="builder-templates"]',
-            title: 'Pick a template',
-            content: 'Every template fills itself in with your services, hours, policies and reviews. Pick the look you like; you can switch anytime.',
-            placement: 'bottom',
-            data: d('WEB BUILDER TOUR'),
-            skipBeacon: false,
-        },
-    ],
-
-    // Steps shown in the Simple Builder once a site exists
-    webBuilderManage: [
-        {
-            target: '[data-tour="builder-tabs"]',
-            title: 'Make it yours',
-            content: 'Switch templates, choose your colors and font, add your logo, photos and videos, and write a little about you.',
-            placement: 'bottom',
+            target: '[data-tour="builder-canvas"]',
+            title: 'Your page, section by section',
+            content: 'Click any section to edit it. Each one has three tabs: Properties for text, photos and colors, Layout for its 20 layouts, and Animation for how it moves.',
+            placement: 'center',
             data: d('BOOKING SITE TOUR'),
             skipBeacon: false,
         },
         {
+            target: '[data-tour="builder-templates"]',
+            title: 'Start from a template',
+            content: 'Every template fills itself in with your services, hours and reviews. Pick one, then change anything.',
+            placement: 'bottom',
+            data: d('BOOKING SITE TOUR'),
+            skipBeacon: true,
+        },
+        {
             target: '[data-tour="builder-publish"]',
-            title: 'Save and go live',
-            content: 'Save your changes and publish your site, then share your link in your bio. Your services and hours stay up to date on their own.',
+            title: 'Publish when you’re ready',
+            content: 'Your changes save as you go and stay private until you publish. Then share your link in your bio.',
             placement: 'bottom',
             data: d('BOOKING SITE TOUR'),
             skipBeacon: true,
@@ -313,8 +309,7 @@ export const TOUR_DISPLAY_NAMES: Record<string, string> = {
     bookingSettings: 'Booking Settings',
     analytics: 'Analytics',
     monetization: 'Monetization',
-    webBuilder: 'Web Builder Setup',
-    webBuilderManage: 'Website',
+    websiteBuilder: 'Website',
 }
 
 export const TOUR_DESCRIPTIONS: Record<string, string> = {
@@ -327,8 +322,7 @@ export const TOUR_DESCRIPTIONS: Record<string, string> = {
     bookingSettings: 'Deposits, cancellation, and reschedule policies',
     analytics: 'Revenue, retention, and performance insights',
     monetization: 'Stripe setup and payment tracking',
-    webBuilder: 'Picking a template for your booking site',
-    webBuilderManage: 'Customizing and publishing your booking site',
+    websiteBuilder: 'Building, styling and publishing your website',
 }
 
 export const TOUR_ROUTES: Record<string, string> = {
@@ -341,6 +335,5 @@ export const TOUR_ROUTES: Record<string, string> = {
     bookingSettings: '/dashboard/booking-settings',
     analytics: '/dashboard/analytics',
     monetization: '/dashboard/monetization',
-    webBuilder: '/dashboard/booking-site',
-    webBuilderManage: '/dashboard/booking-site',
+    websiteBuilder: '/dashboard/booking-site',
 }

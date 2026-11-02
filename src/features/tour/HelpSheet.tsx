@@ -21,8 +21,7 @@ const TOUR_ORDER = [
     'bookingSettings',
     'analytics',
     'monetization',
-    'webBuilder',
-    'webBuilderManage',
+    'websiteBuilder',
 ]
 
 interface HelpSheetProps {
@@ -39,14 +38,6 @@ export function HelpSheet({ open, onClose }: HelpSheetProps) {
         const route = TOUR_ROUTES[tourName]
         router.push(route)
         setTimeout(() => {
-            // Both booking-site tours share the same route but render different
-            // components depending on whether the site is live. After navigation,
-            // check which one is actually in the DOM and start the right tour.
-            if (tourName === 'webBuilder' || tourName === 'webBuilderManage') {
-                const siteIsLive = !!document.querySelector('[data-tour="builder-publish"]')
-                startTour(siteIsLive ? 'webBuilderManage' : 'webBuilder')
-                return
-            }
             startTour(tourName)
         }, 1200)
     }

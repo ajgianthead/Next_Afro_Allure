@@ -313,7 +313,7 @@ function Clients({ business }: { business: string }) {
     )
 }
 
-// ─── Booking site: the drag-and-drop editor building a page ─────────────────
+// ─── Booking site: the website builder building a page ──────────────────────
 
 const PALETTE = ['Navbar', 'Hero', 'Services', 'Gallery', 'About', 'Footer']
 
@@ -336,10 +336,10 @@ function Editor({ business }: { business: string }) {
         <>
             <Sidebar active="Booking Site" business={business} />
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: WARM, minWidth: 0 }}>
-                <Header title="Drag & Drop Editor" />
+                <Header title="Website builder" />
                 <div style={{ flex: 1, display: 'flex', gap: 18, padding: 22, minHeight: 0 }}>
                     <div style={{ width: 200, flexShrink: 0, background: '#fff', border: `1px solid ${LINE}`, borderRadius: 16, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <div style={{ fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: MUTED, fontWeight: 600, marginBottom: 4 }}>Components</div>
+                        <div style={{ fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: MUTED, fontWeight: 600, marginBottom: 4 }}>Sections</div>
                         {PALETTE.map((p, i) => (
                             <div key={p} className={i === placed ? 'aa-w-pulse' : ''} style={{ fontSize: 13, padding: '9px 12px', borderRadius: 10, border: `1.5px solid ${i === placed ? 'var(--acc)' : LINE}`, background: i < placed ? WARM : '#fff', color: i < placed ? MUTED : INK }}>⋮⋮ {p}</div>
                         ))}

@@ -120,6 +120,10 @@ export interface SiteService {
     description: string
     price: string
     duration: string
+    /** The service's first category ('' when none), for grouped layouts. */
+    category?: string
+    /** Photo URL set on the service, if any. */
+    photo?: string | null
 }
 
 export interface HoursLine {

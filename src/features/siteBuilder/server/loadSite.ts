@@ -17,7 +17,7 @@ export async function loadSiteInfo(businessId: string): Promise<SiteInfo | null>
     if (!business) return null
 
     const [servicesRes, scheduleRes, policyRes, reviewsRes, profileRes] = await Promise.all([
-        db.from('services').select('id, name, description, price, length, style_options').eq('business', businessId).order('created_at', { ascending: true }),
+        db.from('services').select('id, name, description, price, length, style_options, categories, photo_url').eq('business', businessId).order('created_at', { ascending: true }),
         business.default_availability
             ? db.from('availabilities').select('availability_data').eq('id', business.default_availability).eq('business_id', businessId).maybeSingle()
             : db.from('availabilities').select('availability_data').eq('business_id', businessId).order('created_at', { ascending: true }).limit(1).maybeSingle(),
@@ -38,6 +38,8 @@ export async function loadSiteInfo(businessId: string): Promise<SiteInfo | null>
         id: s.id,
         name: s.name,
         description: s.description ?? '',
+        category: ((s.categories ?? []) as string[]).map(x => x.trim()).find(Boolean) ?? '',
+        photo: /^https:\/\//.test(s.photo_url ?? '') ? s.photo_url : null,
         ...priceLabel({ price: s.price, length: s.length, style_options: s.style_options }),
     }))
 
