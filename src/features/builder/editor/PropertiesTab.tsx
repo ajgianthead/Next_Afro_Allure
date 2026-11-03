@@ -48,6 +48,7 @@ export function PropertiesTab({ def, props, setContent, setStyle }: {
             <Group title="Colors">
                 <Toggle label="Use the site colors" checked={style.useTheme} onChange={useTheme => setStyle(() => ({ useTheme }))} help="Turn off to pick this section’s own colors." />
                 <Toggle label="Invert colors" checked={style.invert} onChange={invert => setStyle(() => ({ invert }))} help="Swaps the background and text colors." />
+                <Toggle label="Accent background" checked={!!style.accentBg} onChange={accentBg => setStyle(() => ({ accentBg }))} help="The site’s accent color fills this section." />
                 <Toggle label="Tinted background" checked={!!style.tint} onChange={tint => setStyle(() => ({ tint }))} help="A shade darker than the page, to set this section apart." />
                 {!style.useTheme && <>
                     <ColorInput label="Background" value={style.colors.bg} placeholder={theme.bg} onChange={v => colors({ bg: v })} />

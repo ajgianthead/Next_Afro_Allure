@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/app/utils/supabase/admin'
-import { fallbackBio, formatHours, parseSiteData, priceLabel, ratingSummary, type SiteData, type SiteInfo, type SiteReview } from '../siteData'
+import { fallbackBio, feeSummaries, formatHours, parseSiteData, priceLabel, ratingSummary, type SiteData, type SiteInfo, type SiteReview } from '../siteData'
+import { parseLateFee } from '@/features/lateFees/lateFee'
+import { parseNoShowFee } from '@/features/noShowFees/noShowFee'
 
 /**
  * Public data for a template site. Deliberately NOT a server action (server
@@ -22,8 +24,8 @@ export async function loadSiteInfo(businessId: string): Promise<SiteInfo | null>
             ? db.from('availabilities').select('availability_data').eq('id', business.default_availability).eq('business_id', businessId).maybeSingle()
             : db.from('availabilities').select('availability_data').eq('business_id', businessId).order('created_at', { ascending: true }).limit(1).maybeSingle(),
         business.booking_policies
-            ? db.from('business_policies').select('cancel_day_limit, reschedule_day_limit, read_before_booking').eq('id', business.booking_policies).maybeSingle()
-            : db.from('business_policies').select('cancel_day_limit, reschedule_day_limit, read_before_booking').eq('business', businessId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+            ? db.from('business_policies').select('cancel_day_limit, reschedule_day_limit, read_before_booking, deposit, late_fee, no_show_fee').eq('id', business.booking_policies).maybeSingle()
+            : db.from('business_policies').select('cancel_day_limit, reschedule_day_limit, read_before_booking, deposit, late_fee, no_show_fee').eq('business', businessId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         db.from('reviews').select('name, rating, details, created_at').eq('business_id', businessId).order('created_at', { ascending: false }).limit(30),
         db.from('marketplace_profile').select('business_bio').eq('business_id', businessId).maybeSingle(),
     ])
@@ -61,6 +63,7 @@ export async function loadSiteInfo(businessId: string): Promise<SiteInfo | null>
             cancelDays: Number(policy?.cancel_day_limit ?? 0) || 0,
             rescheduleDays: Number(policy?.reschedule_day_limit ?? 0) || 0,
             readBeforeBooking: (policy?.read_before_booking ?? '').trim(),
+            ...feeSummaries({ deposit: policy?.deposit, lateFee: parseLateFee(policy?.late_fee), noShowFee: parseNoShowFee(policy?.no_show_fee) }),
         },
         reviews: reviews.slice(0, 12),
         rating: ratingSummary(reviews),

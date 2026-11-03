@@ -91,6 +91,8 @@ export interface SectionStyle {
     invert: boolean
     /** A slightly tinted version of the background, to set a section apart (follows the theme). */
     tint?: boolean
+    /** The accent color as the background (follows the theme), text in the accent's readable color. */
+    accentBg?: boolean
     colors: SectionColors
     background: SectionBackground
     buttons: SectionButtons

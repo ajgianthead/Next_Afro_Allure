@@ -28,13 +28,16 @@ interface Fill {
 const firstSentence = (text: string) => text.split(/(?<=[.!?])\s/)[0] ?? ''
 const inverted = (): Partial<SectionStyle> => ({ invert: true })
 const tinted = (): Partial<SectionStyle> => ({ tint: true })
+/** The old templates' Book band: the accent color, or the text color for the dark ones. */
+const accentBand = (): Partial<SectionStyle> => ({ accentBg: true, tint: false })
+const darkBand = (): Partial<SectionStyle> => ({ invert: true, tint: false })
 /** The template's headline look on the hero. */
 const headline = (heading: TextStyle, more?: (t: SiteTheme) => Partial<SectionStyle>) => (t: SiteTheme): Partial<SectionStyle> => {
     const extra = more?.(t) ?? {}
     return { ...extra, text: { ...(extra.text ?? {}), heading } }
 }
-/** The template's accent block (Rouge Maison's cover). */
-const accentBlock = (t: SiteTheme): Partial<SectionStyle> => ({ useTheme: false, colors: { bg: t.accent, fg: t.accentFg, accent: t.fg, buttonText: t.bg } })
+/** The template's accent block (Rouge Maison's cover); follows the theme's colors. */
+const accentBlock = (): Partial<SectionStyle> => ({ accentBg: true })
 
 function hero(f: Fill, eyebrow: (place: string | null) => string, primary: string, secondary: string, layout: number, extra?: Partial<PresetSection>): PresetSection {
     const bio = f.site?.content.bio || ''
@@ -89,9 +92,9 @@ const PRESETS: Record<TemplateId, (f: Fill) => PresetSection[]> = {
         services(1, 'The menu', 'Services'),
         gallery(f, 9, 'Portfolio', 'Recent work', { style: tinted }),
         about(f, 2, 'The artist'),
-        reviews(2, 'Kind words', undefined, { style: tinted }),
+        reviews(1, 'Kind words', undefined, { style: tinted }),
         hours('Visit'),
-        bookBand('Your chair is waiting.', { style: inverted }),
+        bookBand('Your chair is waiting.', { style: darkBand }),
         footer(f, 1),
     ],
     'fade-house': f => [
@@ -100,9 +103,9 @@ const PRESETS: Record<TemplateId, (f: Fill) => PresetSection[]> = {
         services(14, 'The menu', 'Cuts & prices'),
         gallery(f, 1, 'Fresh', 'Recent cuts', { style: tinted }),
         about(f, 2, 'The barber'),
-        reviews(1, 'Word on the street', 'Reviews'),
+        reviews(2, 'Word on the street', 'Reviews'),
         hours('Pull up', 'Hours & shop rules', { style: tinted }),
-        bookBand('Next chair’s open.'),
+        bookBand('Next chair’s open.', { style: accentBand }),
         footer(f, 17),
     ],
     'atelier-clair': f => [
@@ -111,9 +114,9 @@ const PRESETS: Record<TemplateId, (f: Fill) => PresetSection[]> = {
         services(4, 'Services', 'What we offer'),
         gallery(f, 1, 'Portfolio', 'Recent work'),
         about(f, 2, 'About', { style: tinted }),
-        reviews(1, 'Reviews'),
+        reviews(2, 'Reviews'),
         hours('Visit'),
-        bookBand('Take a little time for you.'),
+        bookBand('Take a little time for you.', { style: accentBand }),
         footer(f, 2),
     ],
     'rouge-maison': f => [
@@ -122,9 +125,9 @@ const PRESETS: Record<TemplateId, (f: Fill) => PresetSection[]> = {
         services(14, 'The edit', 'Services'),
         gallery(f, 11, 'Lookbook', 'The looks', { style: tinted }),
         about(f, 3, 'Behind the brush'),
-        reviews(2, 'In their words', undefined, { style: tinted }),
+        reviews(1, 'In their words', undefined, { style: tinted }),
         hours('Details', 'Hours & policies'),
-        bookBand('Your close-up awaits.', { style: inverted }),
+        bookBand('Your close-up awaits.', { style: darkBand }),
         footer(f, 1),
     ],
     'coil-crown': f => [
@@ -133,9 +136,9 @@ const PRESETS: Record<TemplateId, (f: Fill) => PresetSection[]> = {
         services(4, 'Services', 'The menu', { style: tinted }),
         gallery(f, 9, 'Portfolio', 'Crowns we love'),
         about(f, 2, 'Your loctician', { style: tinted }),
-        reviews(1, 'Love notes', 'From the chair'),
+        reviews(2, 'Love notes', 'From the chair'),
         hours('Visit'),
-        bookBand('Let’s grow something beautiful.'),
+        bookBand('Let’s grow something beautiful.', { style: accentBand }),
         footer(f, 2),
     ],
     quickstart: f => [
@@ -144,9 +147,9 @@ const PRESETS: Record<TemplateId, (f: Fill) => PresetSection[]> = {
         services(4, 'Services', 'Services & prices', { style: tinted }),
         gallery(f, 1, 'Gallery', 'My work'),
         about(f, 2, 'About me', { style: tinted }),
-        reviews(1, 'Reviews'),
+        reviews(2, 'Reviews'),
         hours('Visit', 'Hours, location & policies', { style: tinted }),
-        bookBand('Ready when you are.'),
+        bookBand('Ready when you are.', { style: accentBand }),
         footer(f, 1),
     ],
 }

@@ -1,13 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { Check, Facebook, Instagram, Loader2, Mail, MapPin, Music2, PanelBottom, Phone, Youtube } from 'lucide-react'
+import { Facebook, Instagram, Mail, MapPin, Music2, PanelBottom, Phone, Youtube } from 'lucide-react'
 import type { SiteMedia } from '@/features/siteBuilder/siteData'
-import { useTurnstile } from '@/lib/abuse/useTurnstile'
-import { joinWaitlist } from '@/features/waitlist/server/actions'
 import { useBuilder, useSection } from '../render/context'
 import { resolveHref } from '../render/links'
 import { Btn, cx, Media, Txt } from '../render/primitives'
+import { OpeningsSignup } from './shared'
 import type { SocialKind } from './navbar'
 import type { LayoutProps, LinkValue, SectionDefinition } from './types'
 
@@ -143,47 +141,6 @@ const Foot = ({ children, className, style }: { children: React.ReactNode; class
     <footer className={cx(PAD, 'py-12 @3xl:py-16', className)} style={style}>{children}</footer>
 const Rule = () => <hr className="my-8 border-0 border-t" style={{ borderColor: 'var(--s-border)' }} />
 
-/** "Tell me when a time opens up": joins the business's waitlist for the next 60 days. */
-function OpeningsSignup({ c, className }: { c: FooterContent; className?: string }) {
-    const { businessId, editing } = useBuilder()
-    const [name, setName] = useState('')
-    const [email, setEmail] = useState('')
-    const [state, setState] = useState<{ kind: 'idle' | 'saving' | 'done' } | { kind: 'error'; message: string }>({ kind: 'idle' })
-    const { turnstile, getToken } = useTurnstile('waitlist')
-    async function submit(e: React.FormEvent) {
-        e.preventDefault()
-        if (editing || !businessId) return
-        setState({ kind: 'saving' })
-        const day = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-        const from = new Date(), to = new Date(Date.now() + 60 * 86_400_000)
-        const r = await joinWaitlist({ businessId, firstName: name, lastName: '', email, phone: '', fromDate: day(from), toDate: day(to), timeOfDay: 'any' }, await getToken())
-        setState(r.ok ? { kind: 'done' } : { kind: 'error', message: r.error })
-    }
-    if (state.kind === 'done') {
-        return <p className={cx('flex items-center gap-2 text-[15px]', className)} role="status"><Check size={18} style={{ color: 'var(--s-accent)' }} />You’re on the list. We’ll email you when a time opens up.</p>
-    }
-    return (
-        <form onSubmit={submit} className={cx('flex flex-col gap-3', className)}>
-            <Txt role="signupHeading" as="h3" enter={false} defaults={{ font: 'heading', size: 24, weight: 600 }}>{c.signupHeading}</Txt>
-            <div className="flex flex-col gap-2 @2xl:flex-row">
-                <label className="sr-only" htmlFor="aa-footer-name">First name</label>
-                <input id="aa-footer-name" required value={name} onChange={e => setName(e.target.value)} placeholder="First name" autoComplete="given-name"
-                    className="min-h-11 min-w-0 flex-1 px-3.5 text-[15px] outline-none focus:border-[color:var(--s-accent)]" style={{ border: '1px solid var(--s-border)', background: 'var(--s-bg)', color: 'var(--s-fg)', borderRadius: 'var(--s-button-radius)' }} />
-                <label className="sr-only" htmlFor="aa-footer-email">Email</label>
-                <input id="aa-footer-email" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" autoComplete="email"
-                    className="min-h-11 min-w-0 flex-[1.4] px-3.5 text-[15px] outline-none focus:border-[color:var(--s-accent)]" style={{ border: '1px solid var(--s-border)', background: 'var(--s-bg)', color: 'var(--s-fg)', borderRadius: 'var(--s-button-radius)' }} />
-                <button type="submit" disabled={state.kind === 'saving'} className="inline-flex min-h-11 items-center justify-center gap-2 px-5 text-[14px] font-semibold disabled:opacity-60"
-                    style={{ background: 'var(--s-accent)', color: 'var(--s-accent-fg)', borderRadius: 'var(--s-button-radius)' }}>
-                    {state.kind === 'saving' && <Loader2 size={15} className="animate-spin" />}Notify me
-                </button>
-            </div>
-            {turnstile}
-            {state.kind === 'error' && <p role="alert" className="text-[13.5px]" style={{ color: '#d14343' }}>{state.message}</p>}
-            <p className="text-[12.5px]" style={{ color: 'var(--s-muted)' }}>We’ll only email you about open times in the next 60 days.</p>
-        </form>
-    )
-}
-
 // ─── Layouts ─────────────────────────────────────────────────────────────────
 
 const Simple = ({ content: c }: LayoutProps<FooterContent>) => (
@@ -317,7 +274,7 @@ const Signup = ({ content: c }: LayoutProps<FooterContent>) => (
     <Foot><Inner>
         <div className="grid gap-10 @3xl:grid-cols-[1fr_1.4fr] @3xl:items-end">
             <div className="flex flex-col gap-3"><Name c={c} /><Tagline c={c} /><Links c={c} className="pt-2" /></div>
-            <OpeningsSignup c={c} />
+            <OpeningsSignup heading={c.signupHeading} />
         </div>
         <Rule /><Legal c={c} />
     </Inner></Foot>

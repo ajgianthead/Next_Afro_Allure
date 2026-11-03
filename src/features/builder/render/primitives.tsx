@@ -100,7 +100,8 @@ export function Btn({ href, children, variant = 'primary', className, role = 'bu
             href={href}
             className={cx('aa-txt inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-opacity hover:opacity-85 active:opacity-75', size,
                 theme.buttonCase === 'uppercase' && 'uppercase tracking-[0.12em] text-[13px]', className)}
-            style={{ ...look[kind], borderRadius: radius, ...(text as React.CSSProperties) }}
+            // Only the text settings the business set: an unset one (color: undefined) must not wipe out the button's colors.
+            style={{ ...look[kind], borderRadius: radius, ...(Object.fromEntries(Object.entries(text).filter(([, v]) => v !== undefined)) as React.CSSProperties) }}
             data-enter="text"
             data-hover=""
         >

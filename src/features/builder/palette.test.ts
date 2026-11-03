@@ -32,4 +32,16 @@ describe('sectionPalette', () => {
         expect(lowContrast(sectionPalette(theme, { useTheme: true, invert: false, colors: {} }))).toBeNull()
         expect(lowContrast(sectionPalette(theme, { useTheme: false, invert: false, colors: { bg: '#777777', fg: '#888888' } }))).toMatch(/hard to read/)
     })
+    it('fills with the accent and swaps button colors (accent background)', () => {
+        const p = sectionPalette(theme, { useTheme: true, invert: false, colors: {}, accentBg: true })
+        expect(p.bg).toBe(theme.accent)
+        expect(p.accent).toBe(theme.bg)
+        expect(p.accentFg).toBe(theme.fg)
+        expect(lowContrast(p)).toBeNull()
+    })
+    it('tints the background a little, keeping text readable', () => {
+        const p = sectionPalette(theme, { useTheme: true, invert: false, colors: {}, tint: true })
+        expect(p.bg).not.toBe(theme.bg)
+        expect(lowContrast(p)).toBeNull()
+    })
 })

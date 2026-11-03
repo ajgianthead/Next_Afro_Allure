@@ -5,7 +5,7 @@
 
 import type { Config, Data } from '@puckeditor/core'
 import { BuilderRoot } from './render/BuilderRoot'
-import type { BuilderMetadata } from './render/context'
+import { useBuilder, type BuilderMetadata } from './render/context'
 import { SectionShell } from './render/SectionShell'
 import { SECTIONS } from './sections'
 import type { SectionDefinition } from './sections/types'
@@ -34,6 +34,8 @@ export function newSectionProps(def: SectionDefinition): SectionProps {
 
 export function SectionRender({ def, props, id }: { def: SectionDefinition; props: Partial<SectionProps>; id: string }) {
     const p = withDefaults(props, def.defaultContent)
+    const ctx = useBuilder()
+    if (!ctx.editing && def.hideWhen?.(p.content, p.layout, ctx)) return null
     const Layout = def.layouts[p.layout - 1] ?? def.layouts[0]
     return (
         <SectionShell type={def.type} id={id} props={p} fullBleed={def.fullBleed?.(p.layout)} sticky={def.sticky?.(p.layout)}>

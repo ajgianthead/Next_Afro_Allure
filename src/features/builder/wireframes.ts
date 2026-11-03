@@ -322,5 +322,11 @@ export const WIREFRAME_SECTIONS: WireframeSection[] = [
   L('Logo center', 'Links on both sides of a centered logo.', () => R(0, 54, 160, 46, 'c', 0) + LINKS(12, 70, 2, 18) + LOGO(72, 71) + LINKS(112, 70, 2, 18) + T(56, 88, 48, 1)),
   L('Compact', 'One line.', () => R(0, 80, 160, 20, 'c', 0) + LOGO(14, 90) + T(60, 89, 40, 1) + LINKS(110, 89, 2, 18)),
 ]},
+{ id: 'spacer', name: 'Spacer', blurb: 'Room between sections, optionally with a divider.', layouts: [
+  L('Space', 'Empty space.', () => DL(10, 32, 150) + DL(10, 68, 150)),
+  L('Line', 'A thin line across.', () => LN(10, 50, 150, 50, 'sk')),
+  L('Short line', 'A short accent line in the middle.', () => R(65, 49, 30, 2.4, 'a', 1.2)),
+  L('Dots', 'Three dots in the middle.', () => CI(72, 50, 2.2, 'a') + CI(80, 50, 2.2, 'a') + CI(88, 50, 2.2, 'a')),
+]},
 ];
 

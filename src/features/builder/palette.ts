@@ -19,14 +19,16 @@ export interface SectionPalette {
 
 const pick = (value: string | undefined, fallback: string) => (isHexColor(value) ? value : fallback)
 
-export function sectionPalette(theme: SiteTheme, style: Pick<SectionStyle, 'useTheme' | 'invert' | 'colors' | 'tint'>): SectionPalette {
+export function sectionPalette(theme: SiteTheme, style: Pick<SectionStyle, 'useTheme' | 'invert' | 'colors' | 'tint' | 'accentBg'>): SectionPalette {
     const own = style.useTheme ? {} : style.colors
     let bg = pick(own.bg, theme.bg)
     let fg = pick(own.fg, theme.fg)
     if (style.invert) [bg, fg] = [fg, bg]
     if (style.tint) bg = mix(fg, bg, luminance(bg) < 0.25 ? 0.08 : 0.05)
-    const accent = pick(own.accent ?? own.button, theme.accent)
-    const accentFg = pick(own.buttonText, textOn(accent))
+    let accent = pick(own.accent ?? own.button, theme.accent)
+    let accentFg = pick(own.buttonText, textOn(accent))
+    // Accent background: the accent fills the section; buttons take the page's colors.
+    if (style.accentBg) [bg, fg, accent, accentFg] = [accent, accentFg, bg, fg]
     return {
         bg,
         fg,

@@ -26,7 +26,7 @@ export const SAMPLE_INFO: SiteInfo = {
         { days: 'Sat', hours: '8 AM – 4 PM' },
         { days: 'Sun – Mon', hours: 'Closed' },
     ],
-    policies: { cancelDays: 2, rescheduleDays: 1, readBeforeBooking: 'Please arrive with hair washed and detangled. A $20 late fee applies after 15 minutes.' },
+    policies: { cancelDays: 2, rescheduleDays: 1, readBeforeBooking: 'Please arrive with hair washed and detangled. Bring a scarf for after. No extra guests, please.', deposit: '$25 deposit to book', lateFee: '$15 if you’re more than 15 minutes late', noShowFee: '$40 if you miss your appointment' },
     reviews: [
         { name: 'Bri', rating: 5, text: 'My knotless braids lasted eight weeks and looked fresh the whole time. Kay is so gentle!' },
         { name: 'Tasha', rating: 5, text: 'Best silk press I have ever had. My hair was bouncy for two weeks.' },
@@ -53,6 +53,15 @@ export const SAMPLE_METADATA: BuilderMetadata = {
         { label: 'Thu, Nov 6 · 10 AM' },
         { label: 'Thu, Nov 6 · 2 PM' },
         { label: 'Sat, Nov 8 · 9 AM' },
+    ],
+    week: [
+        { day: 'Today', date: 'Nov 3', open: false },
+        { day: 'Tue', date: 'Nov 4', open: true },
+        { day: 'Wed', date: 'Nov 5', open: true },
+        { day: 'Thu', date: 'Nov 6', open: true },
+        { day: 'Fri', date: 'Nov 7', open: false },
+        { day: 'Sat', date: 'Nov 8', open: true },
+        { day: 'Sun', date: 'Nov 9', open: false },
     ],
     offers: {
         loyalty: { title: 'Loyalty rewards', detail: 'Every 5th visit, $10 off.', visits: 5, rewardText: '$10 off' },

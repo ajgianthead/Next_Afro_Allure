@@ -8,6 +8,8 @@ import { WIREFRAME_SECTIONS } from '@/features/builder/wireframes'
 import type { TemplateId } from '@/features/siteBuilder/themes'
 
 /** Sample content for a section: its defaults with photos filled in. */
+const NL = String.fromCharCode(10)
+
 function sampleContent(type: string, base: Record<string, unknown>): Record<string, unknown> {
     const p = SAMPLE_PHOTOS
     switch (type) {
@@ -23,6 +25,26 @@ function sampleContent(type: string, base: Record<string, unknown>): Record<stri
             return { ...base, phone: '(718) 555-0142', announcement: { label: 'Refer a friend: you both get $10 off', href: 'book' }, socials: [{ kind: 'instagram', url: 'https://instagram.com/kaysbraids' }, { kind: 'tiktok', url: 'https://tiktok.com/@kaysbraids' }] }
         case 'Footer':
             return { ...base, tagline: 'Knotless braids, silk presses and loc care in Brooklyn.', phone: '(718) 555-0142', email: 'hello@kaysbraids.com', socials: [{ kind: 'instagram', url: 'https://instagram.com/kaysbraids' }, { kind: 'tiktok', url: 'https://tiktok.com/@kaysbraids' }], photos: p.gallery.slice(0, 6), legal: 'Licensed cosmetologist' }
+        case 'Hours':
+            return { ...base, parking: 'Free street parking on Bergen St.', gettingHere: 'Two blocks from the A/C at Nostrand Ave.', accessibility: 'Ground floor, no steps.', areas: ['Brooklyn', 'Queens', 'Lower Manhattan'].join(NL), media: p.second }
+        case 'Offers':
+            return { ...base, endsOn: '2026-12-31', media: p.cover, tiers: [{ title: 'Bronze', text: '5 visits: $10 off' }, { title: 'Silver', text: '10 visits: $25 off' }, { title: 'Gold', text: '20 visits: a free silk press' }] }
+        case 'BookNow':
+            return { ...base, eyebrow: 'Book online', secondary: { label: 'See services', href: '#services' }, phone: '(718) 555-0142', media: p.cover }
+        case 'Policies':
+            return { ...base, dos: ['Come with hair washed and detangled', 'Bring a scarf', 'Tell me about allergies'].join(NL), donts: ['Bring extra guests', 'Come more than 15 minutes late'].join(NL), extra: [{ title: 'Kids', text: 'Kids are welcome with an adult.' }] }
+        case 'Reviews':
+            return { ...base, minRating: 0, photos: p.gallery.slice(0, 4) }
+        case 'Contact':
+            return { ...base, phone: '(718) 555-0142', email: 'hello@kaysbraids.com', instagram: 'kaysbraids', tiktok: '@kaysbraids', media: p.portrait, faq: [{ q: 'Do you do house calls?', a: 'Not right now: appointments are at the studio.' }, { q: 'How early should I book?', a: 'Weekends fill up about two weeks ahead.' }] }
+        case 'FAQ':
+            return { ...base, media: p.portrait, items: [
+                { q: 'How long do knotless braids take?', a: 'Five to seven hours depending on length and size.', topic: 'Services' },
+                { q: 'Do I need to bring hair?', a: 'No, hair is included in the price.', topic: 'Services' },
+                { q: 'Do you take a deposit?', a: 'Yes, $25 to hold your spot. It goes toward your total.', topic: 'Booking' },
+                { q: 'Can I bring my kids?', a: 'Kids are welcome with an adult.', topic: 'Your visit' },
+                { q: 'How should I come prepared?', a: 'Hair washed, detangled and blow-dried, please.', topic: 'Your visit' },
+            ] }
         default:
             return base
     }

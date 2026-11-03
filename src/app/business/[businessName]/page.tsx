@@ -12,11 +12,10 @@ import { SectionsRenderer } from './sectionsRenderer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Metadata } from 'next';
 import { createAdminClient } from '@/app/utils/supabase/admin';
-import { SiteRenderer } from '@/features/siteBuilder/templates';
 import { parseSiteData } from '@/features/siteBuilder/siteData';
-import { resolveTheme } from '@/features/siteBuilder/themes';
 import { loadSiteInfo } from '@/features/siteBuilder/server/loadSite';
 import { BuilderPage } from '@/features/builder/render/BuilderPage';
+import { loadBuilderExtras } from '@/features/builder/server/loadExtras';
 import { sanitizePage } from '@/features/builder/page';
 import { effectivePlanType } from '@/lib/beta';
 
@@ -133,9 +132,10 @@ export default async function Page({ params }: PageProps) {
             )
         }
         const planType = effectivePlanType((result.result as any).plan_type) === 'GROWTH' ? 'GROWTH' : 'STARTER'
+        const extras = await loadBuilderExtras(result.result.business_id, info, basePath)
         return (
             <div className="min-h-screen">
-                <BuilderPage page={clean.page} metadata={{ info, basePath, planType, businessId: result.result.business_id }} />
+                <BuilderPage page={clean.page} metadata={{ info, basePath, planType, businessId: result.result.business_id, ...extras }} />
                 {isFoundingMember && memberNumber && <FoundingMemberBadge memberNumber={memberNumber} bottom={96} />}
             </div>
         )
@@ -154,11 +154,13 @@ export default async function Page({ params }: PageProps) {
                 </div>
             )
         }
+        // Template sites render as their template's starter page in the website builder (same text, photos and colors).
         const site = parseSiteData(rawSite)
-        const theme = resolveTheme(site.templateId, site.scheme, site.customColors, site.fontPairing)
+        const planType = effectivePlanType((result.result as any).plan_type) === 'GROWTH' ? 'GROWTH' : 'STARTER'
+        const extras = await loadBuilderExtras(result.result.business_id, info, basePath)
         return (
             <div className="min-h-screen">
-                <SiteRenderer info={info} site={site} theme={theme} basePath={basePath} />
+                <BuilderPage site={site} metadata={{ info, basePath, planType, businessId: result.result.business_id, ...extras }} />
                 {/* Raised so it clears the sticky Book bar on phones. */}
                 {isFoundingMember && memberNumber && <FoundingMemberBadge memberNumber={memberNumber} bottom={96} />}
             </div>

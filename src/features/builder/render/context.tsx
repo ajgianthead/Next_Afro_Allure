@@ -20,6 +20,8 @@ export interface BuilderMetadata {
     offers?: BuilderOffers
     /** The next open times ("Thu, Nov 6 · 10 AM"), soonest first, each linking to booking. */
     openings?: { label: string; href?: string }[]
+    /** The next 7 days ("Today", "Fri"…) and whether each has an open time. */
+    week?: { day: string; date: string; open: boolean }[]
 }
 
 export interface BuilderOffers {

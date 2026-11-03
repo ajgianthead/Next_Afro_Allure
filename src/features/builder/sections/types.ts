@@ -4,6 +4,7 @@
 import type { LucideIcon } from 'lucide-react'
 import type { SiteMedia } from '@/features/siteBuilder/siteData'
 import type { SectionAnimation, SectionStyle, SectionType, TextStyle } from '../types'
+import type { BuilderContextValue } from '../render/context'
 
 /** A button/link a business sets: label + where it goes. */
 export interface LinkValue {
@@ -58,6 +59,8 @@ export interface SectionDefinition<Content = any> {
     sticky?: (layout: number) => boolean | 'overlay'
     defaultStyle?: Partial<SectionStyle>
     defaultAnimation?: Partial<SectionAnimation>
+    /** On the live site, leave the section out entirely (e.g. Offers with no offer on). The editor still shows it. */
+    hideWhen?: (content: Content, layout: number, ctx: BuilderContextValue) => boolean
     /** Only one of this section per page (Navbar, Footer). */
     single?: boolean
 }
