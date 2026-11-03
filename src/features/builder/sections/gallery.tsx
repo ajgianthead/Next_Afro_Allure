@@ -56,7 +56,7 @@ function Header({ c, center, className }: { c: GalleryContent; center?: boolean;
     if (!c.eyebrow && !c.heading && !c.intro) return null
     return (
         <div className={cx('flex flex-col gap-3', center && 'items-center text-center', className)}>
-            {c.eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent)]">{c.eyebrow}</Txt>}
+            {c.eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent-text)]">{c.eyebrow}</Txt>}
             {c.heading && <Txt role="heading" as="h2" defaults={{ font: 'heading', size: 40, weight: 600, leading: 1.1 }}>{c.heading}</Txt>}
             {c.intro && <Txt role="intro" defaults={{ size: 17, leading: 1.6 }} className={cx('max-w-2xl !text-[color:var(--s-muted)]', center && 'mx-auto')}>{c.intro}</Txt>}
         </div>
@@ -343,8 +343,8 @@ const CollageText = ({ content: c }: LayoutProps<GalleryContent>) => {
         <Frame c={c} header={false}>
             <div className="relative grid grid-cols-2 gap-2 @3xl:grid-cols-4">
                 {photos.slice(0, 4).map((m, i) => <Item key={i} className={cx('aspect-[3/4]', i % 2 === 1 && '@3xl:mt-10')}><Tile media={m} i={i} rounded={false} /></Item>)}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/35 p-6"
-                    style={{ ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)', ['--s-accent' as string]: '#fff', color: '#fff' }}>
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/55 p-6"
+                    style={{ ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)', ['--s-accent' as string]: '#fff', ['--s-accent-text' as string]: '#fff', color: '#fff' }}>
                     <Header c={c} center />
                 </div>
             </div>

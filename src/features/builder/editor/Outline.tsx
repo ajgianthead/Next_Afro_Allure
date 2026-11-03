@@ -10,6 +10,8 @@ export function Outline({ onAdd, onPicked }: { onAdd: (at: number) => void; onPi
     const content = usePuck(s => s.appState.data.content)
     const selected = usePuck(s => s.appState.ui.itemSelector?.index ?? -1)
     const dispatch = usePuck(s => s.dispatch)
+    // With nothing selected, new sections go above the footer.
+    const footerIndex = content.findIndex(c => c.type === 'Footer')
     const select = (index: number) => {
         dispatch({ type: 'setUi', ui: { itemSelector: { index, zone: ROOT_ZONE } } })
         const id = (content[index]?.props as { id?: string })?.id
@@ -60,7 +62,7 @@ export function Outline({ onAdd, onPicked }: { onAdd: (at: number) => void; onPi
                 {!content.length && <li className="px-2 py-6 text-center text-[12.5px]" style={{ color: 'var(--b-muted)' }}>No sections yet.</li>}
             </ol>
             <div className="p-2.5" style={{ borderTop: '1px solid var(--b-line)' }}>
-                <button type="button" className="bld-btn w-full" data-primary="" onClick={() => onAdd(selected >= 0 ? selected + 1 : content.length)}>
+                <button type="button" className="bld-btn w-full" data-primary="" onClick={() => onAdd(selected >= 0 ? selected + 1 : footerIndex >= 0 ? footerIndex : content.length)}>
                     <Plus size={15} /> Add section
                 </button>
             </div>

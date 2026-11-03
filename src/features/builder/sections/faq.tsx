@@ -104,7 +104,7 @@ const Numbered = ({ content: c }: LayoutProps<FaqContent>) => (
         <ol className="flex flex-col gap-8">
             {useFaq(c).map((x, i) => (
                 <Item as="li" key={i} className="flex gap-5">
-                    <Txt role="number" as="span" defaults={{ font: 'heading', size: 32, weight: 600, leading: 1 }} className="flex-none tabular-nums !text-[color:var(--s-accent)]">{String(i + 1).padStart(2, '0')}</Txt>
+                    <Txt role="number" as="span" defaults={{ font: 'heading', size: 32, weight: 600, leading: 1 }} className="flex-none tabular-nums !text-[color:var(--s-accent-text)]">{String(i + 1).padStart(2, '0')}</Txt>
                     <div className="flex flex-col gap-2"><Q x={x} /><A x={x} /></div>
                 </Item>
             ))}
@@ -201,7 +201,7 @@ function FlipCard({ x }: { x: QA }) {
             <button type="button" onClick={() => setFlipped(f => !f)} aria-pressed={flipped} className="relative block h-56 w-full text-left transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none"
                 style={{ transform: flipped ? 'rotateY(180deg)' : undefined }}>
                 <span className="absolute inset-0 flex flex-col justify-between p-6 [backface-visibility:hidden]" style={{ background: 'var(--s-card)', border: '1px solid var(--s-border)', borderRadius: 'var(--s-radius)' }} aria-hidden={flipped}>
-                    <Q x={x} size={19} /><span className="text-[13px] font-semibold" style={{ color: 'var(--s-accent)' }}>Tap for the answer</span>
+                    <Q x={x} size={19} /><span className="text-[13px] font-semibold" style={{ color: 'var(--s-accent-text)' }}>Tap for the answer</span>
                 </span>
                 <span className="absolute inset-0 overflow-y-auto p-6 [backface-visibility:hidden] [transform:rotateY(180deg)]" style={{ background: 'var(--s-accent)', color: 'var(--s-accent-fg)', borderRadius: 'var(--s-radius)' }} aria-hidden={!flipped}>
                     <span className="whitespace-pre-line text-[15px] leading-relaxed">{x.a}</span>

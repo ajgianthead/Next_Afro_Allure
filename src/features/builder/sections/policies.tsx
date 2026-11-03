@@ -277,7 +277,7 @@ const Numbered = ({ content: c }: LayoutProps<PoliciesContent>) => {
             <ol className="grid gap-x-10 gap-y-8 @3xl:grid-cols-2">
                 {t.list.map((p, i) => (
                     <Item as="li" key={p.id} className="flex gap-4">
-                        <Txt role="number" as="span" defaults={{ font: 'heading', size: 36, weight: 600, leading: 1 }} className="flex-none tabular-nums !text-[color:var(--s-accent)]">{String(i + 1).padStart(2, '0')}</Txt>
+                        <Txt role="number" as="span" defaults={{ font: 'heading', size: 36, weight: 600, leading: 1 }} className="flex-none tabular-nums !text-[color:var(--s-accent-text)]">{String(i + 1).padStart(2, '0')}</Txt>
                         <div className="flex flex-col gap-1"><Title>{p.title}</Title><Body>{p.text}</Body></div>
                     </Item>
                 ))}
@@ -359,7 +359,7 @@ const FeeCards = ({ content: c }: LayoutProps<PoliciesContent>) => {
                 <div className={cx('grid gap-4', fees.length > 1 && '@2xl:grid-cols-2', fees.length > 2 && '@4xl:grid-cols-3')}>
                     {fees.map(p => (
                         <Item key={p.id} card className="flex flex-col items-center gap-2 p-7 text-center">
-                            <Txt role="amount" as="div" defaults={{ font: 'heading', size: 48, weight: 700, leading: 1 }} className="!text-[color:var(--s-accent)]">{p.amount}</Txt>
+                            <Txt role="amount" as="div" defaults={{ font: 'heading', size: 48, weight: 700, leading: 1 }} className="!text-[color:var(--s-accent-text)]">{p.amount}</Txt>
                             <Title>{p.short}</Title><Body>{p.text}</Body>
                         </Item>
                     ))}

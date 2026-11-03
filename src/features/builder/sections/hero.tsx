@@ -61,7 +61,7 @@ function Copy({ c, align = 'left', size = 56, className, maxSub = 'max-w-xl' }: 
     const center = align === 'center'
     return (
         <div className={cx('flex flex-col gap-5', center && 'items-center text-center', className)}>
-            {t.eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent)]">{t.eyebrow}</Txt>}
+            {t.eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent-text)]">{t.eyebrow}</Txt>}
             <Txt role="heading" as="h1" defaults={{ font: 'heading', size, weight: 600, leading: 1.04 }}>{t.heading}</Txt>
             {t.sub && <Txt role="subheading" defaults={{ size: 18, leading: 1.6 }} className={cx(maxSub, '!text-[color:var(--s-muted)]', center && 'mx-auto')}>{t.sub}</Txt>}
             {(t.primary || t.secondary) && (
@@ -76,7 +76,7 @@ function Copy({ c, align = 'left', size = 56, className, maxSub = 'max-w-xl' }: 
 
 /** Light text over a photo: the copy block in on-dark colors. */
 function OnPhoto({ children, className }: { children: React.ReactNode; className?: string }) {
-    return <div className={className} style={{ ['--s-fg' as string]: '#ffffff', ['--s-muted' as string]: 'rgba(255,255,255,.82)', color: '#fff' }}>{children}</div>
+    return <div className={className} style={{ ['--s-fg' as string]: '#ffffff', ['--s-muted' as string]: 'rgba(255,255,255,.82)', ['--s-accent-text' as string]: '#ffffff', color: '#fff' }}>{children}</div>
 }
 
 function PhotoBackdrop({ media, dim = 0.42, children, className }: { media: SiteMedia | null; dim?: number; children: React.ReactNode; className?: string }) {
@@ -260,7 +260,7 @@ const Stats = ({ content: c }: LayoutProps<HeroContent>) => {
             <div className="grid w-full max-w-3xl grid-cols-2 gap-6 @3xl:grid-cols-3">
                 {stats.map((s, i) => (
                     <Item key={i} className="flex flex-col items-center gap-1 text-center">
-                        <Txt role="stat" defaults={{ font: 'heading', size: 44, weight: 600 }} className="!text-[color:var(--s-accent)]" count enter={false}>{s.value}</Txt>
+                        <Txt role="stat" defaults={{ font: 'heading', size: 44, weight: 600 }} className="!text-[color:var(--s-accent-text)]" count enter={false}>{s.value}</Txt>
                         <Txt role="statLabel" defaults={{ size: 14 }} className="!text-[color:var(--s-muted)]" enter={false}>{s.label}</Txt>
                     </Item>
                 ))}

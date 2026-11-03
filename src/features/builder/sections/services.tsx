@@ -56,7 +56,7 @@ function Header({ c, center, className }: { c: ServicesContent; center?: boolean
     if (!c.eyebrow && !c.heading && !c.intro) return null
     return (
         <div className={cx('flex flex-col gap-3', center && 'items-center text-center', className)}>
-            {c.eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent)]">{c.eyebrow}</Txt>}
+            {c.eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent-text)]">{c.eyebrow}</Txt>}
             {c.heading && <Txt role="heading" as="h2" defaults={{ font: 'heading', size: 40, weight: 600, leading: 1.1 }}>{c.heading}</Txt>}
             {c.intro && <Txt role="intro" defaults={{ size: 17, leading: 1.6 }} className={cx('max-w-2xl !text-[color:var(--s-muted)]', center && 'mx-auto')}>{c.intro}</Txt>}
         </div>
@@ -278,7 +278,7 @@ const FeaturedList = ({ content: c }: LayoutProps<ServicesContent>) => {
                     <Item card className="flex flex-col overflow-hidden">
                         <Media media={photoOf(first)} label="a photo of this service" className="aspect-[4/3] w-full" rounded={false} />
                         <div className="flex flex-col gap-3 p-6">
-                            <Txt role="badge" defaults={{ size: 12, weight: 700, case: 'upper', tracking: 0.14 }} className="!text-[color:var(--s-accent)]">Most booked</Txt>
+                            <Txt role="badge" defaults={{ size: 12, weight: 700, case: 'upper', tracking: 0.14 }} className="!text-[color:var(--s-accent-text)]">Most booked</Txt>
                             <div className="flex items-start justify-between gap-3"><Name s={first} size={26} /><Price s={first} size={20} /></div>
                             <Duration c={c} s={first} /><Desc c={c} s={first} />
                             <div className="pt-2"><Book c={c} s={first} /></div>
@@ -323,7 +323,7 @@ const HoverReveal = ({ content: c }: LayoutProps<ServicesContent>) => {
                         <a href={bookHref(s.id)} className="absolute inset-0 block" aria-label={`Book ${s.name}, ${s.price}`}>
                             <Media media={photoOf(s)} label="a photo" className="h-full w-full" rounded={false} />
                             <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 text-white transition-[padding] duration-300 group-hover:pb-6 group-focus-visible:pb-6"
-                                style={{ background: 'linear-gradient(transparent, rgba(0,0,0,.72))', ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)' }}>
+                                style={{ background: 'linear-gradient(transparent, rgba(0,0,0,.72))', ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)', ['--s-accent-text' as string]: '#fff' }}>
                                 <Name s={s} size={18} />
                                 <span className="flex gap-3"><Price s={s} size={14} /><Duration c={c} s={s} /></span>
                                 <span className="max-h-0 overflow-hidden opacity-0 transition-all duration-300 group-hover:max-h-24 group-hover:opacity-100 group-focus-visible:max-h-24 group-focus-visible:opacity-100"><Desc c={c} s={s} clamp /></span>
@@ -361,7 +361,7 @@ const Numbered = ({ content: c }: LayoutProps<ServicesContent>) => {
             <ol className="grid gap-x-12 gap-y-10 @3xl:grid-cols-2">
                 {list.map((s, i) => (
                     <Item as="li" key={s.id} className="flex gap-5">
-                        <Txt role="number" as="span" defaults={{ font: 'heading', size: 44, weight: 600, leading: 1 }} className="flex-none whitespace-nowrap tabular-nums !text-[color:var(--s-accent)]">{String(i + 1).padStart(2, '0')}</Txt>
+                        <Txt role="number" as="span" defaults={{ font: 'heading', size: 44, weight: 600, leading: 1 }} className="flex-none whitespace-nowrap tabular-nums !text-[color:var(--s-accent-text)]">{String(i + 1).padStart(2, '0')}</Txt>
                         <div className="flex min-w-0 flex-col gap-2 pt-1">
                             <Name s={s} size={21} />
                             <div className="flex flex-wrap gap-4"><Price s={s} /><Duration c={c} s={s} /></div>
@@ -383,7 +383,7 @@ const BigType = ({ content: c }: LayoutProps<ServicesContent>) => {
                 {list.map(s => (
                     <Item as="li" key={s.id} className="border-t" style={{ borderColor: 'var(--s-border)' }}>
                         <a href={bookHref(s.id)} className="group flex flex-col gap-2 py-6 @3xl:flex-row @3xl:items-baseline @3xl:justify-between @3xl:gap-8">
-                            <Txt role="name" as="h3" defaults={{ font: 'heading', size: 56, weight: 500, leading: 1 }} className="transition-colors group-hover:!text-[color:var(--s-accent)]">{s.name}</Txt>
+                            <Txt role="name" as="h3" defaults={{ font: 'heading', size: 56, weight: 500, leading: 1 }} className="transition-colors group-hover:!text-[color:var(--s-accent-text)]">{s.name}</Txt>
                             <span className="flex flex-none items-baseline gap-5"><Duration c={c} s={s} /><Price s={s} size={18} /></span>
                         </a>
                     </Item>
@@ -397,7 +397,7 @@ const PricingCards = ({ content: c }: LayoutProps<ServicesContent>) => {
     const list = useServices(c)
     const { palette: p } = useSection()
     // The highlighted card swaps to the accent color; its button turns the page color.
-    const inverse = { background: p.accent, color: p.accentFg, ['--s-fg' as string]: p.accentFg, ['--s-muted' as string]: `color-mix(in srgb, ${p.accentFg} 80%, transparent)`, ['--s-accent' as string]: p.bg, ['--s-accent-fg' as string]: p.fg, ['--s-border' as string]: p.accent }
+    const inverse = { background: p.accent, color: p.accentFg, ['--s-fg' as string]: p.accentFg, ['--s-muted' as string]: p.accentFg, ['--s-accent' as string]: p.bg, ['--s-accent-text' as string]: p.bg, ['--s-accent-fg' as string]: p.fg, ['--s-border' as string]: p.accent }
     return (
         <Frame c={c} list={list} center>
             <div className="grid items-stretch gap-5 @3xl:grid-cols-3">
@@ -464,7 +464,7 @@ const OverlapCards = ({ content: c }: LayoutProps<ServicesContent>) => {
                     <Media media={c.media} label="a wide photo for behind the cards" className="h-full w-full" rounded={false} />
                     <div className="absolute inset-0 bg-black/45" />
                 </div>
-                <div className="mx-auto max-w-6xl" style={{ ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)', color: '#fff' }}><Header c={c} /></div>
+                <div className="mx-auto max-w-6xl" style={{ ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)', ['--s-accent-text' as string]: '#fff', color: '#fff' }}><Header c={c} /></div>
             </div>
             <div className="mx-auto -mt-28 grid w-full max-w-6xl gap-5 px-5 @2xl:grid-cols-2 @3xl:px-12 @4xl:grid-cols-3 @5xl:px-20">
                 {list.length ? list.map(s => <ServiceCard key={s.id} c={c} s={s} />) : <Empty />}

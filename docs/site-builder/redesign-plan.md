@@ -443,7 +443,7 @@ The site theme (fonts, colors, button and corner style) lives in Puck's root pro
 
 See **Decisions (Nov 2)** at the top. In practice:
 - **Data:** `web_editors.type = 'BUILDER'`; the published page in `builder_data`, the working draft in `builder_draft`, `builder_published_at` (migration 20261102000000). `site_data` and `theme_data` stay for the booking page and for rollback.
-- **Template sites** (`TEMPLATE`): `templateToBuilder(site_data, info)` (src/features/builder/presets.ts) turns the site into its template's starter page with the same colors, fonts, text and photos. The editor opens template sites this way; publishing stores the page as `BUILDER`. *Change from the original plan (Nov 2):* live template sites keep the old renderer until the Reviews, Hours and Book now sections exist (steps 4–5), because every template has them and rendering through the builder before then would drop them from live sites. The switch is one branch in `business/[businessName]/page.tsx`.
+- **Template sites** (`TEMPLATE`): `templateToBuilder(site_data, info)` (src/features/builder/presets.ts) turns the site into its template's starter page with the same colors, fonts, text and photos. The editor opens template sites this way; publishing stores the page as `BUILDER`. Live template sites render through the builder the same way (the switch waited for the Reviews, Hours and Book now sections so no site lost a section); an old-vs-new comparison of all six templates is at `/builder-preview/template-<id>?v=old|new` in development.
 - **Phone Book bar:** every old template had a sticky Book bar on phones; builder pages keep it as a site-look option (`mobileBookBar`, on by default). It steps aside when the menu bar is the Bottom booking bar layout.
 - **Free-form pages** (`CUSTOM`, `SECTIONS`): keep the legacy renderer until the owner publishes a new-builder page; the old editors are deleted.
 - **Plan gating:** every layout and animation is tagged `basic` or `pro`. The editor locks Pro ones for Starter (lock icon + upgrade prompt); the save action rejects a Pro choice from a Starter business unless that section already had it published.
@@ -451,6 +451,9 @@ See **Decisions (Nov 2)** at the top. In practice:
 - **Booking page** (`/dashboard/booking-page`) is its own screen now; "match my website" reads the builder page's theme.
 
 ## 9. Delivery order
+
+**Status (Nov 2):** all six steps done on `feat/growth-features`: 14 section types (13 × 20 layouts + Spacer × 4), live openings, offers and fees, the contact form, template sites on the builder, and a check of every layout at 390 / 820 / 1280 px for errors, overflow and axe accessibility issues.
+
 
 1. **Foundation** — Puck 0.24 upgrade; `BUILDER` type and renderer; editor shell at `/dashboard/booking-site` (outline, section picker, 3 tabs, theme panel, device toggle); SectionShell; animation engine; layout cards with wireframes; plan gating.
 2. **Core sections** — Navbar, Hero, About, Services, Gallery, Footer (6 × 20 layouts).

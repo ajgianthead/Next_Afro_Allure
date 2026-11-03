@@ -165,7 +165,7 @@ const HoursTable = ({ content: c }: LayoutProps<HoursContent>) => {
                     <tbody>
                         {t.rows.map(r => (
                             <tr key={r.day} className="border-b" style={{ borderColor: 'var(--s-border)', background: r.today ? 'var(--s-surface)' : undefined }}>
-                                <th scope="row" className="py-3 pl-3 text-left font-semibold">{r.day}{r.today && <span className="ml-2 text-xs font-medium" style={{ color: 'var(--s-accent)' }}>Today</span>}</th>
+                                <th scope="row" className="py-3 pl-3 text-left font-semibold">{r.day}{r.today && <span className="ml-2 text-xs font-medium" style={{ color: 'var(--s-accent-text)' }}>Today</span>}</th>
                                 <td className="py-3 pr-3 text-right" style={{ color: r.closed ? 'var(--s-muted)' : undefined }}>{r.hours}</td>
                             </tr>
                         ))}
@@ -301,7 +301,7 @@ const BigToday = ({ content: c }: LayoutProps<HoursContent>) => {
     const today = useToday()
     return (
         <div className="flex flex-col items-center gap-6 py-6 text-center">
-            {c.eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent)]">{c.eyebrow}</Txt>}
+            {c.eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent-text)]">{c.eyebrow}</Txt>}
             <Txt role="today" as="h2" defaults={{ font: 'heading', size: 72, weight: 600, leading: 1 }}>{today ? (today.open ? `Open today ${today.hours}` : 'Closed today') : c.heading}</Txt>
             <Place c={c} className="items-center" withButton={false} />
             <BookBtn c={c} />

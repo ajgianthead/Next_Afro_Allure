@@ -107,7 +107,7 @@ function Contact({ c, className }: { c: FooterContent; className?: string }) {
     if (!rows.length) return null
     return (
         <ul className={cx('flex flex-col gap-2', className)}>
-            {rows.map(r => <li key={r.text}><a href={r.href} className="inline-flex items-center gap-2 text-[14.5px] transition-opacity hover:opacity-70" target={r.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer"><r.icon size={15} aria-hidden style={{ color: 'var(--s-accent)' }} />{r.text}</a></li>)}
+            {rows.map(r => <li key={r.text}><a href={r.href} className="inline-flex min-w-0 items-center gap-2 text-[14.5px] transition-opacity [overflow-wrap:anywhere] hover:opacity-70" target={r.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer"><r.icon size={15} aria-hidden style={{ color: 'var(--s-accent)' }} />{r.text}</a></li>)}
         </ul>
     )
 }
@@ -208,7 +208,7 @@ const BookBand = ({ content: c }: LayoutProps<FooterContent>) => {
     const { palette: p } = useSection()
     return (
         <footer>
-            <div className={cx(PAD, 'py-14 text-center @3xl:py-20')} style={{ background: p.accent, color: p.accentFg, ['--s-fg' as string]: p.accentFg, ['--s-accent' as string]: p.bg, ['--s-accent-fg' as string]: p.fg } as React.CSSProperties}>
+            <div className={cx(PAD, 'py-14 text-center @3xl:py-20')} style={{ background: p.accent, color: p.accentFg, ['--s-fg' as string]: p.accentFg, ['--s-accent' as string]: p.bg, ['--s-accent-text' as string]: p.bg, ['--s-accent-fg' as string]: p.fg } as React.CSSProperties}>
                 <Inner className="flex flex-col items-center gap-6">
                     <Txt role="ctaHeading" as="h2" defaults={{ font: 'heading', size: 44, weight: 600, leading: 1.1 }} className="max-w-2xl">{c.ctaHeading}</Txt>
                     {t.book && <Btn href={t.book.href}>{t.book.label}</Btn>}
@@ -264,7 +264,7 @@ const Split = ({ content: c }: LayoutProps<FooterContent>) => (
     <Foot><Inner>
         <div className="grid gap-10 @3xl:grid-cols-2">
             <div className="flex flex-col gap-4"><Name c={c} size={30} /><Tagline c={c} /><Socials c={c} /></div>
-            <div className="grid grid-cols-2 gap-8"><div><ColTitle>Pages</ColTitle><Links c={c} vertical /></div><div><ColTitle>Contact</ColTitle><Contact c={c} /></div></div>
+            <div className="grid gap-8 @2xl:grid-cols-2"><div><ColTitle>Pages</ColTitle><Links c={c} vertical /></div><div><ColTitle>Contact</ColTitle><Contact c={c} /></div></div>
         </div>
         <Rule /><Legal c={c} />
     </Inner></Foot>

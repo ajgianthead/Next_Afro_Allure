@@ -22,7 +22,7 @@ export function Header({ eyebrow, heading, intro, center, className, size = 40 }
     if (!eyebrow && !heading && !intro) return null
     return (
         <div className={cx('flex flex-col gap-3', center && 'items-center text-center', className)}>
-            {eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent)]">{eyebrow}</Txt>}
+            {eyebrow && <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className="!text-[color:var(--s-accent-text)]">{eyebrow}</Txt>}
             {heading && <Txt role="heading" as="h2" defaults={{ font: 'heading', size, weight: 600, leading: 1.1 }}>{heading}</Txt>}
             {intro && <Txt role="intro" defaults={{ size: 17, leading: 1.6 }} className={cx('max-w-2xl whitespace-pre-line !text-[color:var(--s-muted)]', center && 'mx-auto')}>{intro}</Txt>}
         </div>

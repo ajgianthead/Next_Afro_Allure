@@ -310,7 +310,7 @@ const PhotoBacked = ({ content: c }: LayoutProps<ReviewsContent>) => {
     return (
         <div className="relative isolate overflow-hidden">
             <div className="absolute inset-0 -z-10" data-kenburns=""><Media media={t.photo(s.i) ?? c.photos?.[0] ?? null} label="a photo of the hairstyle" className="h-full w-full" rounded={false} /><div className="absolute inset-0 bg-black/55" /></div>
-            <figure className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-5 py-20 text-center text-white @3xl:py-28" style={{ ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)' }}>
+            <figure className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-5 py-20 text-center text-white @3xl:py-28" style={{ ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)', ['--s-accent-text' as string]: '#fff' }}>
                 {c.eyebrow && <span className="text-[13px] font-semibold uppercase tracking-[0.16em]">{c.eyebrow}</span>}
                 <Stars rating={r.rating} size={20} />
                 <blockquote><Txt role="quote" defaults={{ font: 'heading', size: 34, leading: 1.35 }}>“{r.text}”</Txt></blockquote>
@@ -369,14 +369,14 @@ const Badges = ({ content: c }: LayoutProps<ReviewsContent>) => {
     return (
         <div className="flex flex-col gap-10">
             <Header eyebrow={c.eyebrow} heading={c.heading} intro={c.intro} center />
-            <dl className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
                 {badges.map((b, i) => (
                     <Item key={i} className="flex min-w-36 flex-col items-center gap-1 rounded-full px-8 py-5" style={{ border: '1.5px solid var(--s-border)' }}>
                         <Txt role="score" as="div" count defaults={{ font: 'heading', size: 36, weight: 700, leading: 1 }}>{b.value}</Txt>
                         <span className="text-[13px]" style={{ color: 'var(--s-muted)' }}>{b.label}</span>
                     </Item>
                 ))}
-            </dl>
+            </div>
             {t.list.length > 0 && <div className="grid gap-5 @3xl:grid-cols-2">{t.list.slice(0, 2).map((r, i) => <ReviewCard key={i} r={r} />)}</div>}
         </div>
     )

@@ -58,7 +58,7 @@ function useAbout(c: AboutContent) {
 
 function Eyebrow({ c, center }: { c: AboutContent; center?: boolean }) {
     if (!c.eyebrow) return null
-    return <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className={cx('!text-[color:var(--s-accent)]', center && 'text-center')}>{c.eyebrow}</Txt>
+    return <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className={cx('!text-[color:var(--s-accent-text)]', center && 'text-center')}>{c.eyebrow}</Txt>
 }
 
 function Heading({ c, size = 40, center, className }: { c: AboutContent; size?: number; center?: boolean; className?: string }) {
@@ -72,7 +72,7 @@ function Body({ c, center, className, dropCap }: { c: AboutContent; center?: boo
         <div className={cx('flex flex-col gap-4', center && 'text-center', className)}>
             {t.paragraphs.map((p, i) => (
                 <Txt key={i} role="body" defaults={{ size: 17, leading: 1.7 }}
-                    className={cx('!text-[color:var(--s-muted)] whitespace-pre-line', dropCap && i === 0 && 'first-letter:float-left first-letter:mr-2 first-letter:font-[family-name:var(--s-heading)] first-letter:text-[3.6em] first-letter:leading-[0.85] first-letter:text-[color:var(--s-accent)]')}>
+                    className={cx('!text-[color:var(--s-muted)] whitespace-pre-line', dropCap && i === 0 && 'first-letter:float-left first-letter:mr-2 first-letter:font-[family-name:var(--s-heading)] first-letter:text-[3.6em] first-letter:leading-[0.85] first-letter:text-[color:var(--s-accent-text)]')}>
                     {p}
                 </Txt>
             ))}
@@ -232,7 +232,7 @@ const Since = ({ content: c }: LayoutProps<AboutContent>) => (
     <div className="grid items-center gap-8 @3xl:grid-cols-[2fr_3fr] @3xl:gap-16">
         <div className="flex flex-col">
             <Txt role="sinceLabel" defaults={{ size: 14, weight: 600, case: 'upper', tracking: 0.2 }} className="!text-[color:var(--s-muted)]">Since</Txt>
-            <Txt role="since" as="div" count defaults={{ font: 'heading', size: 128, weight: 600, leading: 0.9 }} className="!text-[color:var(--s-accent)]">{c.since || String(new Date().getFullYear())}</Txt>
+            <Txt role="since" as="div" count defaults={{ font: 'heading', size: 128, weight: 600, leading: 0.9 }} className="!text-[color:var(--s-accent-text)]">{c.since || String(new Date().getFullYear())}</Txt>
         </div>
         <Copy c={c} />
     </div>
@@ -245,7 +245,7 @@ const Signature = ({ content: c }: LayoutProps<AboutContent>) => {
             <Eyebrow c={c} />
             <Heading c={c} />
             <Body c={c} />
-            <Txt role="signature" defaults={{ font: 'Dancing Script', size: 40, leading: 1.1 }} className="!text-[color:var(--s-accent)]">{c.signature || t.name}</Txt>
+            <Txt role="signature" defaults={{ font: 'Dancing Script', size: 40, leading: 1.1 }} className="!text-[color:var(--s-accent-text)]">{c.signature || t.name}</Txt>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500&display=swap" precedence="default" />
             <Action c={c} />
         </Narrow>
@@ -265,7 +265,7 @@ const Timeline = ({ content: c }: LayoutProps<AboutContent>) => {
                 {steps.map((s, i) => (
                     <Item as="li" key={i} className="relative flex flex-col gap-1">
                         <span className="absolute -left-[39px] top-1.5 h-3.5 w-3.5 rounded-full" style={{ background: 'var(--s-accent)', boxShadow: '0 0 0 4px var(--s-bg)' }} />
-                        <Txt role="year" defaults={{ size: 13, weight: 700, tracking: 0.12 }} className="!text-[color:var(--s-accent)]">{s.year}</Txt>
+                        <Txt role="year" defaults={{ size: 13, weight: 700, tracking: 0.12 }} className="!text-[color:var(--s-accent-text)]">{s.year}</Txt>
                         <Txt role="itemTitle" as="h3" defaults={{ font: 'heading', size: 22, weight: 600 }}>{s.title}</Txt>
                         <Txt role="itemText" defaults={{ size: 15, leading: 1.6 }} className="!text-[color:var(--s-muted)]">{s.text}</Txt>
                     </Item>

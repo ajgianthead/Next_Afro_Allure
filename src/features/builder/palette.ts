@@ -10,6 +10,8 @@ export interface SectionPalette {
     fg: string
     accent: string
     accentFg: string
+    /** The accent, adjusted until small text in it is readable on the background (4.5:1). */
+    accentText: string
     muted: string
     border: string
     surface: string
@@ -18,6 +20,15 @@ export interface SectionPalette {
 }
 
 const pick = (value: string | undefined, fallback: string) => (isHexColor(value) ? value : fallback)
+
+/** `color` mixed toward `toward` in small steps until it reaches `ratio` against `bg`. */
+function readable(color: string, bg: string, toward: string, ratio = 4.5): string {
+    for (let i = 0; i <= 10; i++) {
+        const c = i === 0 ? color : mix(toward, color, i / 10)
+        if (contrastRatio(c, bg) >= ratio) return c
+    }
+    return toward
+}
 
 export function sectionPalette(theme: SiteTheme, style: Pick<SectionStyle, 'useTheme' | 'invert' | 'colors' | 'tint' | 'accentBg'>): SectionPalette {
     const own = style.useTheme ? {} : style.colors
@@ -29,11 +40,14 @@ export function sectionPalette(theme: SiteTheme, style: Pick<SectionStyle, 'useT
     let accentFg = pick(own.buttonText, textOn(accent))
     // Accent background: the accent fills the section; buttons take the page's colors.
     if (style.accentBg) [bg, fg, accent, accentFg] = [accent, accentFg, bg, fg]
+    // Button text: when neither near-white nor near-black reads well, use pure black or white.
+    if (!own.buttonText && contrastRatio(accentFg, accent) < 4.5) accentFg = contrastRatio('#000000', accent) >= contrastRatio('#ffffff', accent) ? '#000000' : '#ffffff'
     return {
         bg,
         fg,
         accent,
         accentFg,
+        accentText: readable(accent, bg, luminance(bg) < 0.25 ? '#ffffff' : '#000000'),
         muted: mix(fg, bg, 0.66),
         border: pick(own.border, mix(fg, bg, 0.16)),
         surface: mix(fg, bg, 0.05),
@@ -48,6 +62,7 @@ export function paletteVars(p: SectionPalette): Record<string, string> {
         '--s-fg': p.fg,
         '--s-accent': p.accent,
         '--s-accent-fg': p.accentFg,
+        '--s-accent-text': p.accentText,
         '--s-muted': p.muted,
         '--s-border': p.border,
         '--s-surface': p.surface,

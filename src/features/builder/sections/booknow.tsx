@@ -46,7 +46,7 @@ function useCta(c: BookNowContent) {
 }
 
 const Eyebrow = ({ c, center }: { c: BookNowContent; center?: boolean }) =>
-    c.eyebrow ? <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className={cx('!text-[color:var(--s-accent)]', center && 'text-center')}>{c.eyebrow}</Txt> : null
+    c.eyebrow ? <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className={cx('!text-[color:var(--s-accent-text)]', center && 'text-center')}>{c.eyebrow}</Txt> : null
 const Heading = ({ c, size = 44, className }: { c: BookNowContent; size?: number; className?: string }) =>
     <Txt role="heading" as="h2" defaults={{ font: 'heading', size, weight: 600, leading: 1.1 }} className={className}>{c.heading}</Txt>
 const Text = ({ c, className }: { c: BookNowContent; className?: string }) =>
@@ -71,10 +71,10 @@ const Stack = ({ c, center, size, className }: { c: BookNowContent; center?: boo
 /** Text in the accent's readable color, for accent-filled blocks. */
 function useOnAccent(): React.CSSProperties {
     const { palette: p } = useSection()
-    return { background: p.accent, color: p.accentFg, ['--s-fg' as string]: p.accentFg, ['--s-muted' as string]: `color-mix(in srgb, ${p.accentFg} 82%, transparent)`, ['--s-accent' as string]: p.bg, ['--s-accent-fg' as string]: p.fg }
+    return { background: p.accent, color: p.accentFg, ['--s-fg' as string]: p.accentFg, ['--s-muted' as string]: p.accentFg, ['--s-accent' as string]: p.bg, ['--s-accent-text' as string]: p.bg, ['--s-accent-fg' as string]: p.fg }
 }
 
-const OnPhoto = { color: '#fff', ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)' } as React.CSSProperties
+const OnPhoto = { color: '#fff', ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)', ['--s-accent-text' as string]: '#fff' } as React.CSSProperties
 const PAD = 'px-5 @3xl:px-12 @5xl:px-20'
 
 // ─── Layouts ─────────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ const MinimalLink = ({ content: c }: LayoutProps<BookNowContent>) => {
     return (
         <p className="text-center text-lg">
             <Txt role="heading" as="span" defaults={{ size: 18, weight: 600 }}>{c.heading}</Txt>{' '}
-            <a href={t.primary.href} className="font-semibold underline underline-offset-4" style={{ color: 'var(--s-accent)' }}>{t.primary.label} →</a>
+            <a href={t.primary.href} className="font-semibold underline underline-offset-4" style={{ color: 'var(--s-accent-text)' }}>{t.primary.label} →</a>
         </p>
     )
 }
@@ -227,8 +227,8 @@ const BigType = ({ content: c }: LayoutProps<BookNowContent>) => {
     const t = useCta(c)
     return (
         <a href={t.primary.href} className="group block text-center" aria-label={t.primary.label}>
-            <Txt role="heading" as="h2" defaults={{ font: 'heading', size: 112, weight: 700, leading: 0.9, case: 'upper' }} className="transition-colors group-hover:!text-[color:var(--s-accent)]">{c.heading || 'Book your appointment'}</Txt>
-            <span className="mt-6 inline-block text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--s-accent)' }}>{t.primary.label} →</span>
+            <Txt role="heading" as="h2" defaults={{ font: 'heading', size: 112, weight: 700, leading: 0.9, case: 'upper' }} className="transition-colors group-hover:!text-[color:var(--s-accent-text)]">{c.heading || 'Book your appointment'}</Txt>
+            <span className="mt-6 inline-block text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--s-accent-text)' }}>{t.primary.label} →</span>
         </a>
     )
 }
@@ -282,14 +282,14 @@ const StatsCta = ({ content: c }: LayoutProps<BookNowContent>) => {
     ]
     return (
         <div className="flex flex-col items-center gap-8 text-center">
-            <dl className="flex flex-wrap justify-center gap-x-12 gap-y-6">
+            <div className="flex flex-wrap justify-center gap-x-12 gap-y-6">
                 {stats.map((s, i) => (
                     <Item key={i} className="flex flex-col">
                         <Txt role="stat" as="div" count defaults={{ font: 'heading', size: 48, weight: 700, leading: 1 }}>{s.value}</Txt>
                         <Txt role="statLabel" as="div" defaults={{ size: 14 }} className="!text-[color:var(--s-muted)]">{s.label}</Txt>
                     </Item>
                 ))}
-            </dl>
+            </div>
             <Heading c={c} size={32} /><Buttons c={c} center />
         </div>
     )

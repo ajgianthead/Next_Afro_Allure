@@ -74,7 +74,7 @@ const Title = ({ o, size = 28, className }: { o: Offer; size?: number; className
 const Detail = ({ o, className }: { o: Offer; className?: string }) =>
     o.detail ? <Txt role="detail" defaults={{ size: 16, leading: 1.6 }} className={cx('!text-[color:var(--s-muted)]', className)}>{o.detail}</Txt> : null
 const Big = ({ o, size = 72, className }: { o: Offer; size?: number; className?: string }) =>
-    <Txt role="amount" as="div" count defaults={{ font: 'heading', size, weight: 700, leading: 1, case: 'upper' }} className={cx('!text-[color:var(--s-accent)]', className)}>{o.big}</Txt>
+    <Txt role="amount" as="div" count defaults={{ font: 'heading', size, weight: 700, leading: 1, case: 'upper' }} className={cx('!text-[color:var(--s-accent-text)]', className)}>{o.big}</Txt>
 
 function Action({ c, className, inverse }: { c: OffersContent; className?: string; inverse?: boolean }) {
     const t = useOffers(c)
@@ -83,12 +83,12 @@ function Action({ c, className, inverse }: { c: OffersContent; className?: strin
 }
 
 function Eyebrow({ c, center }: { c: OffersContent; center?: boolean }) {
-    return c.eyebrow ? <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className={cx('!text-[color:var(--s-accent)]', center && 'text-center')}>{c.eyebrow}</Txt> : null
+    return c.eyebrow ? <Txt role="eyebrow" defaults={{ size: 13, weight: 600, case: 'upper', tracking: 0.16 }} className={cx('!text-[color:var(--s-accent-text)]', center && 'text-center')}>{c.eyebrow}</Txt> : null
 }
 
 /** Accent-colored block: text in the accent's readable color. */
 const AccentBox = ({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
-    <div className={className} style={{ background: 'var(--s-accent)', color: 'var(--s-accent-fg)', ['--s-fg' as string]: 'var(--s-accent-fg)', ['--s-muted' as string]: 'color-mix(in srgb, var(--s-accent-fg) 82%, transparent)', ...style }}>{children}</div>
+    <div className={className} style={{ background: 'var(--s-accent)', color: 'var(--s-accent-fg)', ['--s-fg' as string]: 'var(--s-accent-fg)', ['--s-muted' as string]: 'var(--s-accent-fg)', ...style }}>{children}</div>
 )
 
 function None() {
@@ -150,7 +150,7 @@ const MinimalLine = ({ content: c }: LayoutProps<OffersContent>) => {
         <p className="text-center text-[17px]">
             <Txt role="title" as="span" defaults={{ size: 17, weight: 600 }}>{t.first.title}.</Txt>{' '}
             <span style={{ color: 'var(--s-muted)' }}>{t.first.detail}</span>{' '}
-            {t.button && <a href={t.button.href} className="font-semibold underline underline-offset-4" style={{ color: 'var(--s-accent)' }}>{t.button.label} →</a>}
+            {t.button && <a href={t.button.href} className="font-semibold underline underline-offset-4" style={{ color: 'var(--s-accent-text)' }}>{t.button.label} →</a>}
         </p>
     )
 }
@@ -352,7 +352,7 @@ const ImageBackground = ({ content: c }: LayoutProps<OffersContent>) => {
                 <Media media={c.media} label="a photo behind the offer" className="h-full w-full" rounded={false} />
                 <div className="absolute inset-0 bg-black/50" />
             </div>
-            <div className="flex flex-col items-center gap-4 px-5 py-20 text-center text-white @3xl:py-28" style={{ ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)', ['--s-accent' as string]: '#fff', ['--s-accent-fg' as string]: '#111' }}>
+            <div className="flex flex-col items-center gap-4 px-5 py-20 text-center text-white @3xl:py-28" style={{ ['--s-fg' as string]: '#fff', ['--s-muted' as string]: 'rgba(255,255,255,.85)', ['--s-accent' as string]: '#fff', ['--s-accent-text' as string]: '#fff', ['--s-accent-fg' as string]: '#111' }}>
                 <Eyebrow c={c} center /><Big o={t.first} size={88} /><Title o={t.first} size={28} /><Detail o={t.first} className="max-w-lg" /><Action c={c} />
             </div>
         </div>
