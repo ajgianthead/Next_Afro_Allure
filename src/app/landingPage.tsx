@@ -2,6 +2,7 @@
 // Editorial, warm, confident. Lead with operational pain, identity second.
 'use client'
 import './landingPage.css'
+import { useTurnstile } from '@/lib/abuse/useTurnstile'
 import { useState, useEffect, useRef } from "react";
 import LOGO from '../../public/images/logo_transparent_background.png'
 import Image from "next/image";
@@ -972,13 +973,14 @@ function WaitlistForm({ onClose }: { onClose: () => void }) {
     const [city, setCity] = useState('')
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState<'idle' | 'success' | 'duplicate' | 'error'>('idle')
+    const { turnstile, getToken } = useTurnstile('client_waitlist')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!email || loading) return
         setLoading(true)
         try {
-            const res = await joinClientWaitlist(email, city || undefined)
+            const res = await joinClientWaitlist(email, city || undefined, await getToken())
             setResult(res.duplicate ? 'duplicate' : 'success')
         } catch {
             setResult('error')
@@ -1059,6 +1061,7 @@ function WaitlistForm({ onClose }: { onClose: () => void }) {
                         {loading && <Loader2 size={16} className="animate-spin" />}
                         Notify Me
                     </button>
+                    {turnstile}
                 </form>
             )}
         </div>

@@ -4,8 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/app/utils/supabase/server'
 import type { Database } from '../../../../lib/database.types'
-import { effectivePlanType } from '@/lib/beta'
-import { importFromSections, parseSiteData, type SiteContent, type SiteData, type SiteInfo } from '../siteData'
+import { parseSiteData, type SiteData, type SiteInfo } from '../siteData'
 import { bookingThemeFromChoice, resolveTheme, toBookingTheme, type BookingThemeChoice } from '../themes'
 import { DEFAULT_BOOKING_THEME, type BookingTheme } from '@/features/automatedBooking/types/theme'
 import { loadSiteInfo } from './loadSite'
@@ -84,12 +83,19 @@ export async function saveBookingThemeAction(input: { matchSite: true } | { matc
     const business = await ownBusiness(supabase)
     if (!business) return { ok: false, error: SIGNED_OUT }
 
-    const { data: row } = await supabase.from('web_editors').select('type, site_data, theme_data').eq('business_id', business.business_id).maybeSingle()
+    const { data: row } = await supabase.from('web_editors').select('type, site_data, theme_data, builder_data, builder_draft' as '*').eq('business_id', business.business_id).maybeSingle() as { data: any }
     const site = row?.type === 'TEMPLATE' ? parseSiteData(row.site_data) : null
+    // Builder sites keep "booking matches the site" in the page's theme (root props).
+    const builder = row?.type === 'BUILDER' && row.builder_data?.root?.props ? row as { builder_data: { root: { props: Record<string, any> } }; builder_draft: { root?: { props?: Record<string, any> } } | null } : null
+    const withMatch = (page: any, match: boolean) => (page?.root ? { ...page, root: { ...page.root, props: { ...(page.root.props ?? {}), bookingMatchesSite: match } } } : page)
 
     let theme: BookingTheme
     let error: { message: string } | null = null
-    if (input.matchSite) {
+    if (input.matchSite && builder) {
+        const p = builder.builder_data.root.props
+        theme = toBookingTheme(resolveTheme(p.templateId, p.scheme, p.customColors, p.fontPairing))
+        ;({ error } = await supabase.from('web_editors').update({ theme_data: theme as any, builder_data: withMatch(builder.builder_data, true), builder_draft: withMatch(builder.builder_draft, true) } as any).eq('business_id', business.business_id))
+    } else if (input.matchSite) {
         if (!site) return { ok: false, error: 'Make your website first to match its look.' }
         site.bookingMatchesSite = true
         theme = themeFor(site)
@@ -98,8 +104,10 @@ export async function saveBookingThemeAction(input: { matchSite: true } | { matc
         const base = { ...DEFAULT_BOOKING_THEME, ...((row?.theme_data ?? {}) as Partial<BookingTheme>) }
         theme = bookingThemeFromChoice(input.choice, base)
         if (row) {
-            const fields = site ? { theme_data: theme as any, site_data: { ...site, bookingMatchesSite: false } as any } : { theme_data: theme as any }
-            ;({ error } = await supabase.from('web_editors').update(fields).eq('business_id', business.business_id))
+            const fields = builder
+                ? { theme_data: theme as any, builder_data: withMatch(builder.builder_data, false), builder_draft: withMatch(builder.builder_draft, false) }
+                : site ? { theme_data: theme as any, site_data: { ...site, bookingMatchesSite: false } as any } : { theme_data: theme as any }
+            ;({ error } = await supabase.from('web_editors').update(fields as any).eq('business_id', business.business_id))
         } else {
             // No site yet: an unpublished draft holds the booking theme.
             ;({ error } = await supabase.from('web_editors').insert({
@@ -122,17 +130,6 @@ export async function saveBookingThemeAction(input: { matchSite: true } | { matc
     return { ok: true, data: { theme, matchesSite: input.matchSite } }
 }
 
-/** Shows or hides the site. Booking links keep working either way. */
-export async function setSitePublishedAction(published: boolean): Promise<Result> {
-    const supabase = await createClient()
-    const business = await ownBusiness(supabase)
-    if (!business) return { ok: false, error: SIGNED_OUT }
-    const { error } = await supabase.from('business_users').update({ published_site: published }).eq('business_id', business.business_id)
-    if (error) return { ok: false, error: 'Could not update your site. Please try again.' }
-    revalidateSite(business.url_name)
-    return { ok: true, data: undefined }
-}
-
 /** Removes uploaded files that are no longer used. Only files in the business's own folder. */
 export async function deleteSiteMediaAction(paths: string[]): Promise<Result> {
     const supabase = await createClient()
@@ -143,34 +140,3 @@ export async function deleteSiteMediaAction(paths: string[]): Promise<Result> {
     return { ok: true, data: undefined }
 }
 
-/** Text and photos from the business's old Section Editor site, to start a template site with. */
-export async function importSectionContentAction(): Promise<Result<{ content: Partial<SiteContent>; images: string[] }>> {
-    const supabase = await createClient()
-    const business = await ownBusiness(supabase)
-    if (!business) return { ok: false, error: SIGNED_OUT }
-    const { data } = await supabase.from('web_editors').select('section_data').eq('business_id', business.business_id).maybeSingle()
-    return { ok: true, data: importFromSections(data?.section_data ?? []) }
-}
-
-/**
- * Where to open the Custom Builder (Growth). The site isn't switched here: it
- * becomes a custom site when they first save in the Custom Builder, so the
- * live template site stays up until then.
- */
-export async function customBuilderLinkAction(templateId: string): Promise<Result<string>> {
-    const supabase = await createClient()
-    const business = await ownBusiness(supabase)
-    if (!business) return { ok: false, error: SIGNED_OUT }
-    if (effectivePlanType(business.plan_type) !== 'GROWTH') return { ok: false, error: 'The Custom Builder is part of Growth.' }
-
-    const { data: existing } = await supabase.from('web_editors').select('editor_data').eq('business_id', business.business_id).maybeSingle()
-    if (!existing) {
-        await supabase.from('web_editors').insert({ business_id: business.business_id, type: 'TEMPLATE', editor_data: EMPTY_PUCK, section_data: [] })
-    }
-    let hasCustomPage = false
-    try {
-        hasCustomPage = (JSON.parse(existing?.editor_data ?? '{}')?.content?.length ?? 0) > 0
-    } catch { /* unreadable page: start from the template */ }
-    const query = hasCustomPage ? '' : `?template=${encodeURIComponent(templateId)}`
-    return { ok: true, data: `/business/${business.url_name}/edit${query}` }
-}

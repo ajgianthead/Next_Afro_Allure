@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTurnstile } from '@/lib/abuse/useTurnstile'
 import { DateTime } from 'luxon'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { joinWaitlist } from '@/features/waitlist/server/actions'
@@ -38,6 +39,7 @@ export function WaitlistForm({ businessId, serviceId, initialDate, defaults }: {
     })
     const [status, setStatus] = useState<'idle' | 'saving' | 'done'>('idle')
     const [error, setError] = useState('')
+    const { turnstile, getToken } = useTurnstile('waitlist')
     const set = (patch: Partial<typeof form>) => setForm(f => ({ ...f, ...patch }))
     const maxDate = DateTime.now().plus({ days: MAX_WAIT_DAYS }).toISODate()!
 
@@ -45,7 +47,7 @@ export function WaitlistForm({ businessId, serviceId, initialDate, defaults }: {
         e.preventDefault()
         setError('')
         setStatus('saving')
-        const res = await joinWaitlist({ businessId, serviceId: serviceId ?? null, ...form }).catch(() => ({ ok: false as const, error: 'Something went wrong. Please try again.' }))
+        const res = await joinWaitlist({ businessId, serviceId: serviceId ?? null, ...form }, await getToken()).catch(() => ({ ok: false as const, error: 'Something went wrong. Please try again.' }))
         if (res.ok) setStatus('done')
         else { setStatus('idle'); setError(res.error) }
     }
@@ -104,6 +106,7 @@ export function WaitlistForm({ businessId, serviceId, initialDate, defaults }: {
                     Join waitlist
                 </button>
             </div>
+            {turnstile}
         </form>
     )
 }

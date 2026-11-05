@@ -22,7 +22,7 @@ const GROWTH_INCLUDES = [
     'Automatic client reminders',
     'Loyalty rewards, rebook reminders and waitlist',
     'No-show and late fees',
-    'Full booking-site editor',
+    'Every website layout and animation',
 ]
 
 const UpgradeContext = createContext<{ openUpgrade: () => void }>({ openUpgrade: () => {} })

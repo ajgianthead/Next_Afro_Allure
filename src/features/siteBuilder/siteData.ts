@@ -120,6 +120,10 @@ export interface SiteService {
     description: string
     price: string
     duration: string
+    /** The service's first category ('' when none), for grouped layouts. */
+    category?: string
+    /** Photo URL set on the service, if any. */
+    photo?: string | null
 }
 
 export interface HoursLine {
@@ -142,7 +146,17 @@ export interface SiteInfo {
     travels: boolean
     services: SiteService[]
     hours: HoursLine[]
-    policies: { cancelDays: number; rescheduleDays: number; readBeforeBooking: string }
+    policies: {
+        cancelDays: number
+        rescheduleDays: number
+        readBeforeBooking: string
+        /** "20% deposit" / "$25 deposit"; null when bookings need no deposit. */
+        deposit?: string | null
+        /** "$10 if you're more than 15 minutes late"; null when off. */
+        lateFee?: string | null
+        /** "$40 if you miss your appointment"; null when off. */
+        noShowFee?: string | null
+    }
     reviews: SiteReview[]
     rating: { average: number; count: number } | null
     /** Bio to fall back on when the site has none (marketplace bio, else generated). */
@@ -261,4 +275,17 @@ export function importFromSections(sections: unknown): { content: Partial<SiteCo
         }
     }
     return { content, images: images.slice(0, MAX_GALLERY) }
+}
+
+/** A money amount or percent for the policy summaries ("$25", "20%"). */
+const feeAmount = (type: 'flat' | 'percent', value: number) => (type === 'percent' ? `${value}%` : `$${Number.isInteger(value) ? value : value.toFixed(2)}`)
+
+/** Plain-language deposit and fee lines for the website's Policies section, from business_policies. */
+export function feeSummaries(raw: { deposit?: unknown; lateFee?: { enabled: boolean; type: 'flat' | 'percent'; value: number; graceMinutes: number }; noShowFee?: { enabled: boolean; type: 'flat' | 'percent'; value: number } }) {
+    const d = (raw.deposit && typeof raw.deposit === 'object' ? raw.deposit : {}) as { enabled?: boolean; settings?: { type?: string; value?: number } }
+    const dValue = Number(d.settings?.value)
+    const deposit = d.enabled && Number.isFinite(dValue) && dValue > 0 ? `${feeAmount(d.settings?.type === 'percent' ? 'percent' : 'flat', dValue)} deposit to book` : null
+    const late = raw.lateFee?.enabled ? `${feeAmount(raw.lateFee.type, raw.lateFee.value)}${raw.lateFee.type === 'percent' ? ' of the service' : ''} if you’re more than ${raw.lateFee.graceMinutes || 15} minutes late` : null
+    const noShow = raw.noShowFee?.enabled ? `${feeAmount(raw.noShowFee.type, raw.noShowFee.value)}${raw.noShowFee.type === 'percent' ? ' of the booking' : ''} if you miss your appointment` : null
+    return { deposit, lateFee: late, noShowFee: noShow }
 }

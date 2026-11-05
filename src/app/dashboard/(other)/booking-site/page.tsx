@@ -1,4 +1,4 @@
-import { BuilderPage } from './builderPage'
+import { WebsiteBuilderPage } from './websiteBuilderPage'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,5 +7,5 @@ export const metadata = {
 }
 
 export default function Page() {
-    return <BuilderPage section="website" />
+    return <WebsiteBuilderPage />
 }

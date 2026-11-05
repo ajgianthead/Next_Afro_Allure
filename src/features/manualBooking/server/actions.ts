@@ -1,7 +1,7 @@
 'use server'
 
 import { CreateAppointmentPayload } from "../types"
-import { cancelAppointment, confirmAppointment, createNewManualAppointment, rescheduleAppointment, sendConfirmationLink, sendPaymentLink } from "./domain"
+import { cancelAppointment, confirmAppointment, createNewManualAppointment, getPaymentQr, rescheduleAppointment, sendConfirmationLink, sendPaymentLink } from "./domain"
 
 // Server actions return { ok, data | error } instead of throwing: in
 // production Next.js replaces thrown error messages with a generic one, so
@@ -34,3 +34,6 @@ export const sendConfirmationLinkAction = async (appointmentId: string) =>
 
 export const sendPaymentLinkAction = async (appointmentId: string) =>
     run(() => sendPaymentLink(appointmentId), 'Failed to send payment link.')
+
+export const getPaymentQrAction = async (appointmentId: string) =>
+    run(() => getPaymentQr(appointmentId), 'Could not load the payment QR code.')

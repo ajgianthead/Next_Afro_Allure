@@ -12,7 +12,7 @@ export const fetchBusinessData = async (businessName: string) => {
     const supabase = createAdminClient();
     const { data, error } = await supabase
         .from("business_users")
-        .select("business_id, business_name, url_name, brand_color, founding_member, founding_member_number, published_site, services(*), web_editors(*)")
+        .select("business_id, business_name, url_name, brand_color, founding_member, founding_member_number, published_site, plan_type, services(*), web_editors(*)")
         .eq("url_name", `${businessName}`)
         .single();
     if (error) {

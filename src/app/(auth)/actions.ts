@@ -1,5 +1,6 @@
 'use server'
 
+import { guardPublicAction } from '@/lib/abuse/guard'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
@@ -18,7 +19,9 @@ import { BusinessUser } from '@lib/businessUser/BusinessUser'
 // signup only showed "An error occurred in the Server Components render".
 export type AuthActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string; code?: string }
 
-export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false): Promise<AuthActionResult<ReturnType<BusinessUser['toClient']> & { needsEmailConfirmation: boolean }>> => {
+export const createBusinessUser = async (email: string, name: string, password: string, marketingOptIn: boolean = false, turnstileToken: string | null = null): Promise<AuthActionResult<ReturnType<BusinessUser['toClient']> & { needsEmailConfirmation: boolean }>> => {
+    const blocked = await guardPublicAction('signup', { turnstileToken, perIp: { max: 5, window: '1 h' } })
+    if (blocked) return { ok: false, error: blocked }
     try {
         const supabase = await createClient()
         const headerList = await headers()
@@ -50,6 +53,11 @@ export const createBusinessUser = async (email: string, name: string, password: 
         return { ok: true, data: { ...businessUser.toClient(), needsEmailConfirmation } }
     } catch (error: any) {
         console.error('Signup failed:', error)
+        // Don't confirm whether an email already has an account (Supabase says
+        // "User already registered"); point people to log in or reset instead.
+        if (/already (registered|exists)/i.test(error?.message ?? '')) {
+            return { ok: false, error: "We couldn't create an account with that email. If you already have one, log in or reset your password." }
+        }
         return { ok: false, error: error?.message || 'Could not create your account. Please try again.' }
     }
 

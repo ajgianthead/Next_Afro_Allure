@@ -23,6 +23,8 @@ import { defaultSiteData, type SiteData, type SiteInfo } from '@/features/siteBu
 import { deleteSiteMediaAction, getSitePreviewInfoAction, saveTemplateSiteAction } from '@/features/siteBuilder/server/actions'
 import { useSiteUploads } from '@/features/siteBuilder/components/MediaPanel'
 import { WebsiteSetupStep } from '@/features/siteBuilder/components/WebsiteSetupStep'
+import { templateToBuilder } from '@/features/builder/presets'
+import { publishBuilderPageAction } from '@/features/builder/server/actions'
 import { firstUnfinishedStep, isUntouchedExampleService, scheduleProblem, WELCOME_STEPS, type WelcomeStep as Step } from '../progress'
 import { blankDraft, draftFromService, draftPayload, draftProblem, type ServiceDraft } from '../serviceDrafts'
 import { BRAND } from './shared'
@@ -224,8 +226,11 @@ export function WelcomeSetupModal({ open, onComplete }: { open: boolean; onCompl
 
     const saveWebsite = () => run(async () => {
         if (siteUploading) return 'Wait for your uploads to finish.'
+        // site_data keeps the choices (booking-page look, rollback); the live site is a builder page made from them.
         const res = await saveTemplateSiteAction(siteDraft, { publish: true })
         if (!res.ok) return res.error
+        const page = await publishBuilderPageAction(templateToBuilder(res.data, siteInfo))
+        if (!page.ok) return page.error
         setSiteDraft(res.data)
         setSiteCreated(true)
         const stale = [...removedSitePaths.current]

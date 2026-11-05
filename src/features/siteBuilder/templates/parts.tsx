@@ -99,7 +99,7 @@ export function Button({ href, variant = 'solid', size = 'md', className, childr
 
 export function Stars({ rating, size = 14 }: { rating: number; size?: number }) {
     return (
-        <span className="inline-flex gap-0.5" aria-label={`${rating} out of 5 stars`}>
+        <span className="inline-flex gap-0.5" role="img" aria-label={`${rating} out of 5 stars`}>
             {Array.from({ length: 5 }, (_, i) => (
                 <svg key={i} width={size} height={size} viewBox="0 0 12 12" aria-hidden>
                     <path

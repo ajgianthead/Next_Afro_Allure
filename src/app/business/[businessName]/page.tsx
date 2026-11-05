@@ -12,10 +12,12 @@ import { SectionsRenderer } from './sectionsRenderer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Metadata } from 'next';
 import { createAdminClient } from '@/app/utils/supabase/admin';
-import { SiteRenderer } from '@/features/siteBuilder/templates';
 import { parseSiteData } from '@/features/siteBuilder/siteData';
-import { resolveTheme } from '@/features/siteBuilder/themes';
 import { loadSiteInfo } from '@/features/siteBuilder/server/loadSite';
+import { BuilderPage } from '@/features/builder/render/BuilderPage';
+import { loadBuilderExtras } from '@/features/builder/server/loadExtras';
+import { sanitizePage } from '@/features/builder/page';
+import { effectivePlanType } from '@/lib/beta';
 
 function FoundingMemberBadge({ memberNumber, bottom = 20 }: { memberNumber: number; bottom?: number }) {
     const padded = String(memberNumber).padStart(3, '0')
@@ -55,21 +57,33 @@ interface PageProps {
     };
 }
 
-/** Title, description and preview image for shared links (template sites use their own bio and cover). */
+/** Title, description and preview image for shared links (template and builder sites use their own words and photos). */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { businessName } = await params
     const { data } = await createAdminClient()
         .from('business_users')
-        .select('business_name, web_editors(type, site_data)')
+        .select('business_name, web_editors(type, site_data, builder_data)')
         .eq('url_name', businessName)
         .maybeSingle()
     if (!data) return {}
     const editor = (data.web_editors as any)?.[0] ?? (data.web_editors as any)
     const title = `${data.business_name} | Book online`
-    if (editor?.type !== 'TEMPLATE') return { title }
-    const site = parseSiteData(editor.site_data)
-    const description = (site.content.tagline || site.content.bio || `Book with ${data.business_name} online.`).slice(0, 160)
-    const image = [site.media.cover, ...site.media.gallery, site.media.about].find(m => m?.kind === 'image')?.url
+    let description: string
+    let image: string | undefined
+    if (editor?.type === 'BUILDER') {
+        // The hero's words and photo, else the first photo on the page.
+        const sections: { type: string; props?: { content?: Record<string, any> } }[] = editor.builder_data?.content ?? []
+        const hero = sections.find(s => s.type === 'Hero')?.props?.content ?? {}
+        description = String(hero.subheading || hero.heading || `Book with ${data.business_name} online.`).slice(0, 160)
+        const photos = [hero.media, ...sections.flatMap(s => [s.props?.content?.media, ...(s.props?.content?.photos ?? [])])]
+        image = photos.find(m => m?.kind === 'image' && /^https:\/\//.test(m.url))?.url
+    } else if (editor?.type === 'TEMPLATE') {
+        const site = parseSiteData(editor.site_data)
+        description = (site.content.tagline || site.content.bio || `Book with ${data.business_name} online.`).slice(0, 160)
+        image = [site.media.cover, ...site.media.gallery, site.media.about].find(m => m?.kind === 'image')?.url
+    } else {
+        return { title }
+    }
     return {
         title,
         description,
@@ -107,6 +121,26 @@ export default async function Page({ params }: PageProps) {
     const isFoundingMember = result.result.founding_member === true
     const memberNumber = result.result.founding_member_number as number | null
 
+    if ((result.result.web_editors[0].type as string) === 'BUILDER') {
+        const clean = sanitizePage((result.result.web_editors[0] as any).builder_data)
+        const info = result.result.published_site && clean.ok ? await loadSiteInfo(result.result.business_id) : null
+        if (!info || !clean.ok) {
+            return (
+                <div className="flex items-center justify-center min-h-screen">
+                    <p className="text-muted-foreground">This booking page is not yet published.</p>
+                </div>
+            )
+        }
+        const planType = effectivePlanType((result.result as any).plan_type) === 'GROWTH' ? 'GROWTH' : 'STARTER'
+        const extras = await loadBuilderExtras(result.result.business_id, info, basePath)
+        return (
+            <div className="min-h-screen">
+                <BuilderPage page={clean.page} metadata={{ info, basePath, planType, businessId: result.result.business_id, ...extras }} />
+                {isFoundingMember && memberNumber && <FoundingMemberBadge memberNumber={memberNumber} bottom={96} />}
+            </div>
+        )
+    }
+
     if (result.result.web_editors[0].type === 'TEMPLATE') {
         // Template sites can be unpublished; their booking page keeps working.
         // A row that only holds a booking-page look (no template chosen) isn't a site yet.
@@ -120,11 +154,13 @@ export default async function Page({ params }: PageProps) {
                 </div>
             )
         }
+        // Template sites render as their template's starter page in the website builder (same text, photos and colors).
         const site = parseSiteData(rawSite)
-        const theme = resolveTheme(site.templateId, site.scheme, site.customColors, site.fontPairing)
+        const planType = effectivePlanType((result.result as any).plan_type) === 'GROWTH' ? 'GROWTH' : 'STARTER'
+        const extras = await loadBuilderExtras(result.result.business_id, info, basePath)
         return (
             <div className="min-h-screen">
-                <SiteRenderer info={info} site={site} theme={theme} basePath={basePath} />
+                <BuilderPage site={site} metadata={{ info, basePath, planType, businessId: result.result.business_id, ...extras }} />
                 {/* Raised so it clears the sticky Book bar on phones. */}
                 {isFoundingMember && memberNumber && <FoundingMemberBadge memberNumber={memberNumber} bottom={96} />}
             </div>

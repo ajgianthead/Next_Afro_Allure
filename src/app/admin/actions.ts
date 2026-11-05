@@ -1,13 +1,18 @@
 'use server'
 
 import { createAdminClient } from '@/app/utils/supabase/admin'
+import { isFounder } from '@/lib/auth/requireFounder'
 import { Resend } from 'resend'
 import SupportReply from '../../../emails/SupportReply'
 import AtRiskCheckin from '../../../emails/AtRiskCheckin'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Server actions are public endpoints; the /admin layout doesn't protect them.
+const NOT_ALLOWED = { error: 'Not allowed.' } as const
+
 export async function updateFeedbackStatus(id: string, status: string, founderNotes: string): Promise<{ success: true } | { error: string }> {
+    if (!(await isFounder())) return NOT_ALLOWED
     const supabase = createAdminClient()
     const { error } = await supabase
         .from('feedback')
@@ -22,6 +27,7 @@ export async function updateFeedbackStatus(id: string, status: string, founderNo
 }
 
 export async function replyToTicket(ticketId: string, reply: string): Promise<{ success: true } | { error: string }> {
+    if (!(await isFounder())) return NOT_ALLOWED
     const supabase = createAdminClient()
     const { data: ticket } = await supabase
         .from('support_tickets')
@@ -55,6 +61,7 @@ export async function replyToTicket(ticketId: string, reply: string): Promise<{ 
 }
 
 export async function updateTicketPriority(ticketId: string, priority: string): Promise<{ success: true } | { error: string }> {
+    if (!(await isFounder())) return NOT_ALLOWED
     const supabase = createAdminClient()
     const { error } = await supabase.from('support_tickets').update({ priority }).eq('id', ticketId)
     if (error) return { error: error.message }
@@ -62,6 +69,7 @@ export async function updateTicketPriority(ticketId: string, priority: string): 
 }
 
 export async function updateTicketStatus(ticketId: string, status: string): Promise<{ success: true } | { error: string }> {
+    if (!(await isFounder())) return NOT_ALLOWED
     const supabase = createAdminClient()
     const { error } = await supabase
         .from('support_tickets')
@@ -72,6 +80,7 @@ export async function updateTicketStatus(ticketId: string, status: string): Prom
 }
 
 export async function sendAtRiskEmail(businessId: string): Promise<{ success: true } | { error: string }> {
+    if (!(await isFounder())) return NOT_ALLOWED
     const supabase = createAdminClient()
     const { data: business } = await supabase
         .from('business_users')

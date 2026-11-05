@@ -1,5 +1,6 @@
 'use server'
 
+import { guardPublicAction } from '@/lib/abuse/guard'
 import { Resend } from 'resend'
 import { createClient } from '@/app/utils/supabase/server'
 import { createAdminClient } from '@/app/utils/supabase/admin'
@@ -11,8 +12,12 @@ const FROM = 'AfroAllure <noreply@reminder.afroallure.co>'
 
 export async function createAdFunnelUser(
     email: string,
-    businessName: string
+    businessName: string,
+    turnstileToken: string | null = null
 ): Promise<{ error: string } | { success: true }> {
+    // Creates an account and emails any address: bot check + per-IP limit.
+    const blocked = await guardPublicAction('signup', { turnstileToken, perIp: { max: 5, window: '1 h' } })
+    if (blocked) return { error: blocked }
     const trimmedEmail = email.trim().toLowerCase()
     const trimmedName = businessName.trim()
 

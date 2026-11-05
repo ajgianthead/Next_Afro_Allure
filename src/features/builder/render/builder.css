@@ -1,0 +1,66 @@
+/* Website builder: the parts of animation and layout that are pure CSS.
+   Colors come from the --s-* variables each section sets. */
+
+/* Entrances. On the live site (.aa-anim on the page root) marked elements start
+   hidden until their animation runs, and show after 2.5 s even if none starts.
+   A <noscript> rule in BuilderRoot shows them at once without JavaScript. */
+.aa-anim [data-enter]:not([data-entered]) {
+    opacity: 0;
+    animation: aa-failsafe 0.01s 2.5s forwards;
+}
+@keyframes aa-failsafe { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+    .aa-anim [data-enter]:not([data-entered]) { opacity: 1; animation: none; }
+}
+
+/* Hover effects on cards, photos and links (class on the section). */
+.aa-hover-lift [data-hover] { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.aa-hover-lift [data-hover]:hover { transform: translateY(-4px); box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--s-fg) 35%, transparent); }
+.aa-hover-zoom [data-hover] { overflow: hidden; }
+.aa-hover-zoom [data-hover] img, .aa-hover-zoom [data-hover] video { transition: transform 0.5s ease; }
+.aa-hover-zoom [data-hover]:hover img, .aa-hover-zoom [data-hover]:hover video { transform: scale(1.06); }
+.aa-hover-glow [data-hover] { transition: box-shadow 0.25s ease; }
+.aa-hover-glow [data-hover]:hover { box-shadow: 0 0 0 2px var(--s-accent), 0 0 24px -4px color-mix(in srgb, var(--s-accent) 55%, transparent); }
+.aa-hover-underline a[data-hover], .aa-hover-underline [data-hover] [data-title] {
+    background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px; background-repeat: no-repeat; background-position: 0 100%;
+    transition: background-size 0.3s ease;
+}
+.aa-hover-underline a[data-hover]:hover, .aa-hover-underline [data-hover]:hover [data-title] { background-size: 100% 1px; }
+.aa-hover-tilt [data-hover] { transition: transform 0.3s ease; }
+.aa-hover-tilt [data-hover]:hover { transform: perspective(800px) rotateX(2deg) rotateY(-3deg); }
+@media (prefers-reduced-motion: reduce) {
+    .aa-hover-lift [data-hover]:hover, .aa-hover-zoom [data-hover]:hover img, .aa-hover-tilt [data-hover]:hover { transform: none; }
+}
+
+/* Ambient effects */
+.aa-ambient-kenburns [data-kenburns] img, .aa-ambient-kenburns [data-kenburns] video { animation: aa-kenburns 18s ease-in-out infinite alternate; }
+@keyframes aa-kenburns { from { transform: scale(1); } to { transform: scale(1.1) translate(-1.5%, -1%); } }
+.aa-ambient-gradient { background-size: 220% 220% !important; animation: aa-gradient 14s ease-in-out infinite alternate; }
+@keyframes aa-gradient { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+@media (prefers-reduced-motion: reduce) {
+    .aa-ambient-kenburns [data-kenburns] img, .aa-ambient-kenburns [data-kenburns] video, .aa-ambient-gradient { animation: none; }
+}
+
+/* Marquees (layouts that scroll content sideways). Pause on hover/focus and with reduce motion. */
+.aa-marquee { display: flex; width: max-content; animation: aa-marquee var(--aa-marquee-duration, 40s) linear infinite; }
+.aa-marquee[data-reverse] { animation-direction: reverse; }
+.aa-marquee:hover, .aa-marquee:focus-within { animation-play-state: paused; }
+@keyframes aa-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .aa-marquee { animation: none; flex-wrap: wrap; width: auto; } .aa-marquee-dup { display: none; } }
+
+/* Visibility per device (container width, so the editor's device toggle shows it). */
+@container (max-width: 47.99rem) { .aa-hide-mobile { display: none !important; } }
+@container (min-width: 48rem) { .aa-hide-desktop { display: none !important; } }
+
+/* Background patterns */
+.aa-pattern-dots { background-image: radial-gradient(color-mix(in srgb, var(--s-fg) 14%, transparent) 1px, transparent 1.5px); background-size: 18px 18px; }
+.aa-pattern-lines { background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--s-fg) 8%, transparent) 0 1px, transparent 1px 14px); }
+.aa-pattern-grain { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E"); }
+
+/* Text roles: phone size by default, desktop size from 48rem of container width. */
+.aa-txt { font-size: var(--fs-m, inherit); }
+@container (min-width: 48rem) { .aa-txt { font-size: var(--fs-d, inherit); } }
+
+/* The page's phone Book bar steps aside when the menu bar has its own. */
+.aa-root-bookbar { display: contents; } /* no box of its own, so the bar can stick to the page's bottom */
+.aa-root:has([data-aa-bookbar]) .aa-root-bookbar { display: none; }

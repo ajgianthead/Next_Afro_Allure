@@ -23,3 +23,12 @@ export function canPayBalance(appt: {
     if (!BALANCE_PAYABLE_STATUSES.includes(appt.status as any)) return false
     return remainingBalance(appt) >= 50
 }
+
+/**
+ * The in-person payment QR the business shows a client: only for a confirmed
+ * appointment that still owes money. (A payment link sent later can also
+ * cover no-shows and incomplete appointments — see canPayBalance.)
+ */
+export function canShowPaymentQr(appt: Parameters<typeof canPayBalance>[0]): boolean {
+    return appt.status === 'CONFIRMED' && canPayBalance(appt)
+}

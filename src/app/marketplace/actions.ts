@@ -77,7 +77,8 @@ export const getNearbyBusinesses = async (location: {
 }
 
 //TODO: What if address what just a city and a state?
-export const getCoordsFromAddress = async (address: string) => {
+// Internal: not exported, so it isn't a public server action (it spends the Google Maps quota).
+const getCoordsFromAddress = async (address: string) => {
     try {
         const client = new Client({})
         const response = await client.geocode({
@@ -94,7 +95,8 @@ export const getCoordsFromAddress = async (address: string) => {
     }
 }
 
-export const getCityAndStateFromCoords = async (latLng: {
+// Internal: not exported, so it isn't a public server action (it spends the Google Maps quota).
+const getCityAndStateFromCoords = async (latLng: {
     lat: number,
     lng: number
 }) => {
@@ -291,17 +293,6 @@ export const createMarketplaceProfile = async (profileData: MarketplaceProfile) 
 //     return data
 // }
 
-// Create Review
-export const createReview = async (reviewData: Review) => {
-    const supabase = createAdminClient()
-    const { data, error } = await supabase.from('reviews').insert({
-        business_id: reviewData.businessId,
-        details: reviewData.details,
-        rating: reviewData.rating
-    }).select().single()
-    if (error) return error
-    return data
-}
 // Get Reviews based on business
 export const getReviews = async (businessId: string) => {
     const supabase = createAdminClient()

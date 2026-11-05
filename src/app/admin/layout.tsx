@@ -1,5 +1,5 @@
-import { createClient } from "@/app/utils/supabase/server"
 import { redirect } from "next/navigation"
+import { isFounder } from "@/lib/auth/requireFounder"
 
 export const dynamic = 'force-dynamic'
 
@@ -8,12 +8,8 @@ export const metadata = {
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user || !process.env.FOUNDER_EMAIL || user.email !== process.env.FOUNDER_EMAIL) {
-        redirect('/')
-    }
+    // Guards the page only; each admin server action checks isFounder() itself.
+    if (!(await isFounder())) redirect('/')
 
     return <>{children}</>
 }

@@ -18,7 +18,7 @@ export const SPECIALTY_LINKS: MenuLink[] = [
 
 export const FEATURE_LINKS: MenuLink[] = [
     { label: 'Calendar & scheduling', href: '/features/calendar', blurb: 'Hours, online booking, waitlist', column: 'Get booked' },
-    { label: 'Website builder', href: '/features/website-builder', blurb: 'Templates and drag-and-drop', column: 'Get booked' },
+    { label: 'Website builder', href: '/features/website-builder', blurb: 'Templates, layouts and animations', column: 'Get booked' },
     { label: 'Smart pricing', href: '/features/smart-pricing', blurb: 'Price by size, length and hair', column: 'Get booked' },
     { label: 'Reminders & SMS', href: '/features/reminders', blurb: 'Email, text, rebook nudges', column: 'Get booked' },
     { label: 'Payments & 0% fees', href: '/features/payments', blurb: 'Deposits, pay links, payouts', column: 'Run your business' },

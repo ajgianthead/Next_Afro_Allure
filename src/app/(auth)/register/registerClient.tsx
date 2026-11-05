@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTurnstile } from '@/lib/abuse/useTurnstile'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, AlertCircle, Check, Mail } from 'lucide-react'
@@ -64,6 +65,7 @@ export default function Register() {
     const [marketingOptIn, setMarketingOptIn] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    const { turnstile, getToken } = useTurnstile('signup')
     // Set once the account exists but the email still needs confirming.
     const [checkEmail, setCheckEmail] = useState<string | null>(null)
 
@@ -80,7 +82,7 @@ export default function Register() {
         setLoading(true)
         setError(null)
         try {
-            const res = await createBusinessUser(formData.email, formData.name, formData.password, marketingOptIn)
+            const res = await createBusinessUser(formData.email, formData.name, formData.password, marketingOptIn, await getToken())
             if (!res.ok) {
                 setError(res.error)
                 setLoading(false)
@@ -302,6 +304,7 @@ export default function Register() {
                             {loading && <Loader2 size={14} className="animate-spin" />}
                             {loading ? 'Creating account…' : 'Create Account'}
                         </button>
+                        {turnstile}
                     </form>
                 </div>
                 )}

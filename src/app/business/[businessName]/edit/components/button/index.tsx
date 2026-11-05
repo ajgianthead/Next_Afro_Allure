@@ -1,6 +1,7 @@
 'use client'
 
 import { FieldLabel, registerOverlayPortal } from "@puckeditor/core";
+import { safeHref } from '@/lib/safeHref'
 import React, { useEffect, useRef } from 'react';
 import type { Fields } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
@@ -17,7 +18,7 @@ export const ButtonComponent: any = {
         const { editorState } = useEditorContext()
 
         const href = linkType === 'external'
-            ? url
+            ? safeHref(url)
             : `${process.env.NEXT_PUBLIC_BASE_URL}/${editorState.businessName}/#${(sections ?? '').toLowerCase().replace(/\s+/g, '')}`
 
         const wrapperClass = isFull ? 'block w-full md:inline-block md:w-auto' : 'inline-block'
