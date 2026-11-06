@@ -163,6 +163,8 @@ export interface SiteThemeProps {
     customColors: SchemeColors | null
     fontPairing: string
     logo: SiteMedia | null
+    /** The business name the website shows; empty uses the account name. */
+    siteName?: string
     /** Overrides for the template's corner and button style. */
     radius?: number
     buttonRadius?: number

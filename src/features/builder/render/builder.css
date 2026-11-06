@@ -9,6 +9,8 @@
     animation: aa-failsafe 0.01s 2.5s forwards;
 }
 @keyframes aa-failsafe { to { opacity: 1; } }
+/* Editor, "Play animations": sections wait out of sight until they scroll in, like the live site. */
+html[data-aa-live] [data-enter]:not([data-entered]) { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
     .aa-anim [data-enter]:not([data-entered]) { opacity: 1; animation: none; }
 }

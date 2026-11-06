@@ -6,10 +6,10 @@
 
 import '@puckeditor/core/puck.css'
 import './editor.css'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Puck, type Data } from '@puckeditor/core'
-import { ArrowLeft, Check, ExternalLink, Layers, LayoutTemplate, Loader2, Monitor, Redo2, SlidersHorizontal, Smartphone, Tablet, Undo2 } from 'lucide-react'
+import { ArrowLeft, Check, ExternalLink, Layers, LayoutTemplate, Loader2, Monitor, Palette, Pause, Play, Redo2, SlidersHorizontal, Smartphone, Tablet, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useUpgrade } from '@/features/billing/components/UpgradeDialog'
 import type { SiteData, SiteInfo } from '@/features/siteBuilder/siteData'
@@ -19,6 +19,7 @@ import { presetPage, templateToBuilder } from '../presets'
 import type { BuilderMetadata } from '../render/context'
 import { publishBuilderPageAction, saveBuilderDraftAction } from '../server/actions'
 import { EditorProvider, usePuck } from './EditorContext'
+import { setLivePreview } from './preview'
 import { Inspector } from './Inspector'
 import { Outline } from './Outline'
 import { SectionPicker } from './SectionPicker'
@@ -114,7 +115,11 @@ export function BuilderEditor({ page, site, metadata, info, businessId, plan, si
                     iframe={{ enabled: true, waitForStyles: true }}
                     ui={{ viewports: { current: { width: 1280, height: 'auto' }, controlsVisible: false, options: [] } }}
                 >
-                    <EditorLayout save={save} published={published} siteUrl={siteUrl} backHref={backHref} onPublish={publish} onRetry={flush} />
+                    {/* Anything that suspends (a font loading, a lazy chunk) waits here, inside the editor,
+                        instead of swapping the whole editor for the dashboard's loading screen. */}
+                    <Suspense fallback={<div className="flex h-[100dvh] items-center justify-center"><Loader2 className="animate-spin" style={{ color: 'var(--b-muted)' }} /></div>}>
+                        <EditorLayout save={save} published={published} siteUrl={siteUrl} backHref={backHref} onPublish={publish} onRetry={flush} />
+                    </Suspense>
                 </Puck>
             </div>
         </EditorProvider>
@@ -134,18 +139,32 @@ function EditorLayout({ save, published, siteUrl, backHref, onPublish, onRetry }
     // Phones: the canvas fills the screen; sections and settings open as sheets.
     const [sheet, setSheet] = useState<'none' | 'sections' | 'settings'>('none')
     const selected = usePuck(s => s.appState.ui.itemSelector?.index ?? -1)
+    const dispatch = usePuck(s => s.dispatch)
+    const [live, setLive] = useState(false)
     useEffect(() => { if (selected >= 0 && sheet === 'sections') setSheet('settings') }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
+    // Open at the size that fits: phone on small screens, tablet on narrow ones.
+    useEffect(() => {
+        const w = window.innerWidth
+        const width = w < 640 ? 390 : w < 1100 ? 820 : 1280
+        if (width !== 1280) dispatch({ type: 'setUi', ui: ui => ({ viewports: { ...ui.viewports, current: { width, height: 'auto' } } }) })
+    }, [dispatch])
+    useEffect(() => { setLivePreview(live) }, [live])
+    const openSiteLook = () => {
+        dispatch({ type: 'setUi', ui: { itemSelector: null } })
+        if (window.matchMedia('(max-width: 1023px)').matches) setSheet('settings')
+    }
 
     return (
         <div className="flex h-[100dvh] flex-col overflow-hidden">
             <WebsiteBuilderTour />
-            <TopBar save={save} published={published} siteUrl={siteUrl} backHref={backHref} onPublish={onPublish} onRetry={onRetry} onTemplates={() => setTemplates(true)} />
+            <TopBar save={save} published={published} siteUrl={siteUrl} backHref={backHref} onPublish={onPublish} onRetry={onRetry} onTemplates={() => setTemplates(true)}
+                onSiteLook={openSiteLook} live={live} onToggleLive={() => setLive(v => !v)} />
             <div className="relative flex min-h-0 flex-1">
                 <aside className="hidden w-[248px] flex-none flex-col lg:flex" style={{ background: '#fff', borderRight: '1px solid var(--b-line)' }}>
                     <Outline onAdd={setAdding} />
                 </aside>
                 <main data-tour="builder-canvas" className="relative min-w-0 flex-1 overflow-hidden" style={{ background: '#EFEAE2' }}>
-                    <Puck.Preview />
+                    <PreviewFrame />
                 </main>
                 <aside className="hidden w-[340px] flex-none flex-col lg:flex" style={{ background: 'var(--b-bg)', borderLeft: '1px solid var(--b-line)' }}>
                     <Inspector />
@@ -171,7 +190,55 @@ function EditorLayout({ save, published, siteUrl, backHref, onPublish, onRetry }
     )
 }
 
-function TopBar({ save, published, siteUrl, backHref, onPublish, onRetry, onTemplates }: {
+/**
+ * The canvas at the chosen device width (Puck applies it only in its own
+ * canvas, which this custom layout doesn't use). Wider than the space it has,
+ * it scales down to fit, like Puck's canvas; sections use container queries,
+ * so each one switches to its phone or tablet design inside the frame.
+ */
+function PreviewFrame() {
+    const width = usePuck(s => s.appState.ui.viewports.current.width)
+    const area = useRef<HTMLDivElement>(null)
+    const [box, setBox] = useState({ w: 0, h: 0 })
+    useLayoutEffect(() => {
+        const el = area.current
+        if (!el) return
+        const update = () => setBox({ w: el.clientWidth, h: el.clientHeight })
+        update()
+        const ro = new ResizeObserver(update)
+        ro.observe(el)
+        return () => ro.disconnect()
+    }, [])
+    const phone = width === 390
+    const gap = phone ? 24 : 16
+    const target = typeof width === 'number' ? width : Math.max(box.w - gap * 2, 320)
+    const room = Math.max(box.w - gap * 2, 1)
+    const scale = box.w ? Math.min(1, room / target) : 1
+    const height = Math.max((box.h - gap * 2) / scale, 200)
+    return (
+        <div ref={area} className="absolute inset-0 overflow-hidden">
+            {box.w > 0 && (
+                <div
+                    className="absolute left-1/2 overflow-hidden bg-white"
+                    style={{
+                        top: gap,
+                        width: target,
+                        height,
+                        transform: `translateX(-50%) scale(${scale})`,
+                        transformOrigin: 'top center',
+                        transition: 'width 250ms ease-out, transform 250ms ease-out',
+                        borderRadius: phone ? 28 : 6,
+                        boxShadow: phone ? '0 0 0 8px #1a1818, 0 20px 50px -20px rgba(0,0,0,.45)' : '0 8px 30px -14px rgba(0,0,0,.3)',
+                    }}
+                >
+                    <Puck.Preview />
+                </div>
+            )}
+        </div>
+    )
+}
+
+function TopBar({ save, published, siteUrl, backHref, onPublish, onRetry, onTemplates, onSiteLook, live, onToggleLive }: {
     save: SaveState
     published: string | null
     siteUrl: string
@@ -179,6 +246,9 @@ function TopBar({ save, published, siteUrl, backHref, onPublish, onRetry, onTemp
     onPublish: () => void
     onRetry: () => void
     onTemplates: () => void
+    onSiteLook: () => void
+    live: boolean
+    onToggleLive: () => void
 }) {
     const dispatch = usePuck(s => s.dispatch)
     const width = usePuck(s => s.appState.ui.viewports.current.width)
@@ -221,6 +291,11 @@ function TopBar({ save, published, siteUrl, backHref, onPublish, onRetry, onTemp
             </div>
 
             <div className="ml-auto flex items-center gap-1 md:ml-0">
+                <button type="button" className="bld-btn !px-2.5 sm:!px-3" onClick={onToggleLive} aria-pressed={live} title="Play the animations as visitors see them while you scroll the preview"
+                    style={live ? { background: 'var(--b-ink)', color: '#fff', borderColor: 'var(--b-ink)' } : undefined}>
+                    {live ? <Pause size={15} /> : <Play size={15} />}<span className="hidden xl:inline">{live ? 'Stop animations' : 'Play animations'}</span>
+                </button>
+                <button type="button" className="bld-btn !px-2.5 sm:!px-3" onClick={onSiteLook} title="Name, logo, colors and fonts"><Palette size={15} /><span className="hidden xl:inline">Site look</span></button>
                 <button type="button" data-tour="builder-templates" className="bld-btn !px-2.5 sm:!px-3" onClick={onTemplates}><LayoutTemplate size={15} /><span className="hidden sm:inline">Templates</span></button>
                 <button type="button" className="bld-icon-btn" aria-label="Undo" disabled={!history.hasPast} onClick={() => history.back()}><Undo2 size={17} /></button>
                 <button type="button" className="bld-icon-btn" aria-label="Redo" disabled={!history.hasFuture} onClick={() => history.forward()}><Redo2 size={17} /></button>

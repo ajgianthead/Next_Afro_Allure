@@ -38,6 +38,9 @@ export interface BuilderContextValue extends BuilderMetadata {
 
 const BuilderContext = createContext<BuilderContextValue | null>(null)
 export const BuilderProvider = BuilderContext.Provider
+/** The builder context, or null outside a builder page. */
+export const useOptionalBuilder = () => useContext(BuilderContext)
+
 export function useBuilder(): BuilderContextValue {
     const v = useContext(BuilderContext)
     if (!v) throw new Error('useBuilder must be used inside a builder page')

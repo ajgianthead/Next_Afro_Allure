@@ -7,10 +7,22 @@
 import { ArrowRight, CalendarDays } from 'lucide-react'
 import { MediaView } from '@/features/siteBuilder/templates/parts'
 import type { SiteMedia } from '@/features/siteBuilder/siteData'
-import { useBuilder, useSection } from './context'
+import { useBuilder, useOptionalBuilder, useSection } from './context'
 import type { TextStyle } from '../types'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
+
+/**
+ * A Google Fonts stylesheet. On the live site it uses React's `precedence`, so
+ * the fonts come with the page. In the editor and in thumbnails it's a plain
+ * <link>: a new `precedence` stylesheet suspends rendering until it loads,
+ * which swapped the whole editor for the dashboard's loading screen.
+ */
+export function FontLink({ href, live }: { href: string; live?: boolean }) {
+    const ctx = useOptionalBuilder()
+    const isLive = live ?? (!!ctx && !ctx.editing && !ctx.still)
+    return isLive ? <link rel="stylesheet" href={href} precedence="default" /> : <link rel="stylesheet" href={href} />
+}
 
 /** Roles that animate as headings (split into words for the "lines"/"words" entrances). */
 const HEADING_ROLES = new Set(['heading', 'title', 'name', 'wordmark', 'big'])

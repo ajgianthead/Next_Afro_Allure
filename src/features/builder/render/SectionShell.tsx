@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MediaView } from '@/features/siteBuilder/templates/parts'
 import { paletteVars, sectionPalette } from '../palette'
 import { runSectionAnimation } from '../animation/run'
@@ -54,19 +54,44 @@ export function SectionShell({ type, id, props, fullBleed, sticky, children }: {
     const palette = sectionPalette(theme, style)
     const ref = useRef<HTMLElement>(null)
 
-    // Live site: animate on scroll. Editor: only when the Preview button asks (an aa-preview event for this section).
+    // Live site: animate on scroll. Editor: play when the settings change or Preview asks
+    // (an aa-preview event for this section); with "Play animations" on (the canvas document
+    // has data-aa-live), animate on scroll like the live site. The editor plays animations
+    // even when the device asks for reduced motion, so the owner sees what they choose.
+    const [live, setLive] = useState(false)
+    useEffect(() => {
+        const doc = ref.current?.ownerDocument
+        if (!editing || !doc) return
+        const sync = () => setLive(doc.documentElement.dataset.aaLive === '1')
+        sync()
+        doc.addEventListener('aa-live-preview', sync)
+        return () => doc.removeEventListener('aa-live-preview', sync)
+    }, [editing])
+
+    const animKey = JSON.stringify(animation)
+    const lastKey = useRef(animKey)
     useEffect(() => {
         const el = ref.current
         if (!el) return
         if (still) return
         if (!editing) return runSectionAnimation(el, animation)
+        if (live) {
+            // Hide again so each section animates as it scrolls into view.
+            el.querySelectorAll('[data-entered]').forEach(n => n.removeAttribute('data-entered'))
+            return runSectionAnimation(el, animation, { force: true })
+        }
+        let cleanup: (() => void) | undefined
+        // A changed setting plays right away (not on first load).
+        if (lastKey.current !== animKey) cleanup = runSectionAnimation(el, animation, { immediate: true, force: true })
+        lastKey.current = animKey
         const onPreview = (e: Event) => {
             if ((e as CustomEvent).detail?.id !== id) return
-            runSectionAnimation(el, animation, { immediate: true })
+            cleanup?.()
+            cleanup = runSectionAnimation(el, animation, { immediate: true, force: true })
         }
         el.ownerDocument.addEventListener('aa-preview', onPreview)
-        return () => el.ownerDocument.removeEventListener('aa-preview', onPreview)
-    }, [editing, still, animation, id])
+        return () => { el.ownerDocument.removeEventListener('aa-preview', onPreview); cleanup?.() }
+    }, [editing, still, live, animKey, id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const bg = style.background
     const media = bg.kind === 'image' || bg.kind === 'video' ? bg.media : null

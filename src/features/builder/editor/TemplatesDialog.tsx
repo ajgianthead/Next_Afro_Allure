@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { Suspense, useEffect, useState } from 'react'
+import { Loader2, X } from 'lucide-react'
 import { templateMeta, type TemplateId } from '@/features/siteBuilder/themes'
 import { presetPage } from '../presets'
 import { usePuck, useEditor } from './EditorContext'
@@ -36,7 +36,11 @@ export function TemplatesDialog({ onClose }: { onClose: () => void }) {
                     </div>
                     <button type="button" className="bld-icon-btn" aria-label="Close" onClick={onClose}><X size={18} /></button>
                 </header>
-                <div className="overflow-y-auto p-4"><StarterPicker info={info} site={site} selected={picked} onPick={setPicked} previewHeight={320} /></div>
+                <div className="overflow-y-auto p-4">
+                    <Suspense fallback={<div className="flex h-80 items-center justify-center"><Loader2 className="animate-spin" style={{ color: 'var(--b-muted)' }} /></div>}>
+                        <StarterPicker info={info} site={site} selected={picked} onPick={setPicked} previewHeight={320} />
+                    </Suspense>
+                </div>
                 <footer className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderTop: '1px solid var(--b-line)', background: '#fff' }}>
                     <p className="text-[12px]" style={{ color: 'var(--b-muted)' }}>This replaces the page you’re editing. Undo brings it back.</p>
                     <button type="button" className="bld-btn" data-primary="" disabled={!picked} onClick={apply}>
