@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { CalendarDays, Clock, Facebook, Instagram, MapPin, Menu, Music2, PanelTop, Phone, X, Youtube } from 'lucide-react'
 import { useBuilder } from '../render/context'
 import { resolveHref } from '../render/links'
-import { Btn, cx, Txt } from '../render/primitives'
+import { Btn, cx, LogoMark, Txt } from '../render/primitives'
 import type { LayoutProps, LinkValue, SectionDefinition } from './types'
 
 export type SocialKind = 'instagram' | 'tiktok' | 'facebook' | 'youtube'
@@ -58,7 +58,7 @@ function Brand({ c, size = 36, nameSize = 19, hideNameOnPhone }: { c: NavbarCont
         <a href={basePath || '/'} className="flex min-w-0 items-center gap-2.5" aria-label={`${t.name}, home`}>
             {t.logo
                 // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={t.logo.url} alt="" className="shrink-0 object-contain" style={{ height: size, width: 'auto', maxWidth: size * 3 }} />
+                ? <LogoMark base={size} capOnPhone />
                 : <span aria-hidden className="inline-flex shrink-0 items-center justify-center rounded-full font-bold" style={{ width: size, height: size, background: 'var(--s-accent)', color: 'var(--s-accent-fg)', fontSize: size * 0.36, fontFamily: 'var(--s-heading)' }}>{monogram(t.name)}</span>}
             {c.showName && <Txt role="name" as="span" enter={false} defaults={{ font: 'heading', size: nameSize, weight: 600, leading: 1.1 }} className={cx('truncate', hideNameOnPhone && 'hidden @3xl:block')}>{t.name}</Txt>}
         </a>

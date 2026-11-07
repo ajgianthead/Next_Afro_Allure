@@ -8,7 +8,7 @@ import { ArrowRight, CalendarDays } from 'lucide-react'
 import { MediaView } from '@/features/siteBuilder/templates/parts'
 import type { SiteMedia } from '@/features/siteBuilder/siteData'
 import { useBuilder, useOptionalBuilder, useSection } from './context'
-import type { TextStyle } from '../types'
+import { LOGO_SIZE_DEFAULT, type TextStyle } from '../types'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -82,6 +82,37 @@ export function Txt({ role, as: Tag = 'p', defaults, className, children, enter 
         >
             {children}
         </Tag>
+    )
+}
+
+/**
+ * The site's logo at its chosen size and shape (Site look). `base` is the
+ * height this spot would use at the default size (menu bar 36); the chosen
+ * size scales every spot together. `capOnPhone` keeps tall logos from
+ * crowding a phone's menu bar.
+ */
+export function LogoMark({ base = LOGO_SIZE_DEFAULT, alt = '', className, capOnPhone }: { base?: number; alt?: string; className?: string; capOnPhone?: boolean }) {
+    const { themeProps } = useBuilder()
+    const logo = themeProps.logo
+    if (!logo) return null
+    const h = Math.round(base * (themeProps.logoSize ?? LOGO_SIZE_DEFAULT) / LOGO_SIZE_DEFAULT)
+    const shape = themeProps.logoShape ?? 'original'
+    const cropped = shape !== 'original'
+    return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            src={logo.url}
+            alt={alt}
+            className={cx('shrink-0', cropped ? 'object-cover' : 'object-contain', capOnPhone && '[height:min(var(--aa-logo),56px)] @3xl:[height:var(--aa-logo)]', className)}
+            style={{
+                ['--aa-logo' as string]: `${h}px`,
+                height: capOnPhone ? undefined : h,
+                width: cropped ? (capOnPhone ? undefined : h) : 'auto',
+                aspectRatio: cropped ? '1 / 1' : undefined,
+                maxWidth: cropped ? undefined : h * 4,
+                borderRadius: shape === 'circle' ? '50%' : shape === 'rounded' ? '22%' : 0,
+            }}
+        />
     )
 }
 

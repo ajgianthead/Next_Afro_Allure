@@ -154,6 +154,9 @@ export interface SectionProps<Content = Record<string, unknown>> {
     animation: SectionAnimation
 }
 
+export type LogoShape = 'original' | 'square' | 'rounded' | 'circle'
+export const LOGO_SIZE_DEFAULT = 36
+
 /** Site-wide look, in Puck's root props. Sections inherit it. */
 export interface SiteThemeProps {
     /** Which starter page's design rules (corner and button styles) the theme follows. */
@@ -163,6 +166,10 @@ export interface SiteThemeProps {
     customColors: SchemeColors | null
     fontPairing: string
     logo: SiteMedia | null
+    /** Logo height in the menu bar, px (other places scale with it). Unset: 36. */
+    logoSize?: number
+    /** Logo shape: as uploaded, or cropped to a square, rounded square or circle. */
+    logoShape?: LogoShape
     /** The business name the website shows; empty uses the account name. */
     siteName?: string
     /** Overrides for the template's corner and button style. */
