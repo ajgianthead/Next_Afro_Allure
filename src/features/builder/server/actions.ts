@@ -1,51 +1,15 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/app/utils/supabase/server'
-import { effectivePlanType } from '@/lib/beta'
 import { resolveTheme, toBookingTheme } from '@/features/siteBuilder/themes'
-import { proViolations, type PlanType } from '../gating'
+import { proViolations } from '../gating'
 import { sanitizePage, type StoredPage } from '../page'
 import { SECTION_LABELS, type SectionType, type SiteThemeProps } from '../types'
-
-type Result<T = undefined> = { ok: true; data: T } | { ok: false; error: string }
-
-const SIGNED_OUT = 'You are signed out. Please sign in again.'
-const EMPTY_PUCK = JSON.stringify({ content: [], root: {}, zones: {} })
-
-// builder_draft / builder_data / builder_published_at and the BUILDER type
-// come from migration 20261102000000; the generated database types catch up
-// after it runs in production, hence the loose casts on those columns.
-async function ownBusiness() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
-    const { data } = await supabase
-        .from('business_users')
-        .select('business_id, url_name, plan_type, published_site')
-        .eq('user_id', user.id)
-        .single()
-    return data ? { supabase, business: data, plan: effectivePlanType(data.plan_type) as PlanType } : null
-}
-
-async function ensureRow(supabase: Awaited<ReturnType<typeof createClient>>, businessId: string) {
-    const { data } = await supabase.from('web_editors').select('id').eq('business_id', businessId).maybeSingle()
-    if (data) return null
-    const { error } = await supabase.from('web_editors').insert({ business_id: businessId, type: 'TEMPLATE', editor_data: EMPTY_PUCK, section_data: [] })
-    return error?.message ?? null
-}
+import { ensureRow, ownBusiness, saveDraft, SIGNED_OUT, type Result } from './draft'
 
 /** Saves what the business is editing. Drafts never show on the live site. */
 export async function saveBuilderDraftAction(raw: unknown): Promise<Result<{ savedAt: string }>> {
-    const own = await ownBusiness()
-    if (!own) return { ok: false, error: SIGNED_OUT }
-    const clean = sanitizePage(raw)
-    if (!clean.ok) return clean
-    const rowError = await ensureRow(own.supabase, own.business.business_id)
-    if (rowError) return { ok: false, error: 'Could not save. Please try again.' }
-    const { error } = await own.supabase.from('web_editors').update({ builder_draft: clean.page } as any).eq('business_id', own.business.business_id)
-    if (error) return { ok: false, error: 'Could not save. Please try again.' }
-    return { ok: true, data: { savedAt: new Date().toISOString() } }
+    return saveDraft(raw)
 }
 
 /**

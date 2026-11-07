@@ -8,6 +8,7 @@ import '@puckeditor/core/puck.css'
 import './editor.css'
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Puck, type Data } from '@puckeditor/core'
 import { ArrowLeft, Check, ExternalLink, Layers, LayoutTemplate, Loader2, Monitor, Palette, Pause, Play, Redo2, SlidersHorizontal, Smartphone, Tablet, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -32,6 +33,23 @@ const VIEWPORTS = [
     { width: 1280, height: 'auto' as const, label: 'Computer', icon: Monitor },
 ]
 const AUTOSAVE_MS = 1500
+/** Unsaved edits are also kept in this browser until the server confirms them, so a reload or crash mid-save loses nothing. */
+const backupKey = (businessId: string) => `aa-builder-unsaved:${businessId}`
+const BACKUP_MAX_AGE = 24 * 60 * 60 * 1000
+function writeBackup(businessId: string, data: Data) {
+    try { localStorage.setItem(backupKey(businessId), JSON.stringify({ at: Date.now(), data })) } catch { /* storage full or blocked */ }
+}
+function clearBackup(businessId: string) {
+    try { localStorage.removeItem(backupKey(businessId)) } catch { /* blocked */ }
+}
+function readBackup(businessId: string): Data | null {
+    try {
+        const raw = localStorage.getItem(backupKey(businessId))
+        if (!raw) return null
+        const b = JSON.parse(raw) as { at: number; data: Data }
+        return Date.now() - b.at < BACKUP_MAX_AGE && b.data?.content ? b.data : null
+    } catch { return null }
+}
 
 type SaveState = { kind: 'saved'; at: Date | null } | { kind: 'dirty' } | { kind: 'saving' } | { kind: 'error'; message: string }
 
@@ -55,51 +73,95 @@ export function BuilderEditor({ page, site, metadata, info, businessId, plan, si
     const [published, setPublished] = useState<string | null>(publishedAt)
     const latest = useRef<Data>(initialData as Data)
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const saving = useRef<Promise<unknown> | null>(null)
+    // Every change bumps `version`; `savedVersion` is the newest one the server has.
+    const version = useRef(0)
+    const savedVersion = useRef(0)
+    const inflight = useRef<Promise<boolean> | null>(null)
+    const dirty = () => version.current !== savedVersion.current
 
-    const flush = useCallback(async () => {
-        if (timer.current) { clearTimeout(timer.current); timer.current = null }
-        setSave({ kind: 'saving' })
-        const run = saveBuilderDraftAction(latest.current)
-        saving.current = run
-        const r = await run
-        if (saving.current === run) saving.current = null
-        setSave(r.ok ? { kind: 'saved', at: new Date() } : { kind: 'error', message: r.error })
-        return r.ok
+    const schedule = useCallback((ms: number) => {
+        if (timer.current) clearTimeout(timer.current)
+        timer.current = setTimeout(() => { void flushRef.current() }, ms)
     }, [])
+
+    /** Saves the latest edits. One save at a time; edits made during a save are saved right after it. */
+    const flush = useCallback(async (): Promise<boolean> => {
+        if (timer.current) { clearTimeout(timer.current); timer.current = null }
+        if (inflight.current) await inflight.current
+        if (!dirty()) return true
+        const v = version.current
+        const data = latest.current
+        setSave({ kind: 'saving' })
+        const run = (async () => {
+            try {
+                const r = await saveBuilderDraftAction(data)
+                if (!r.ok) {
+                    setSave({ kind: 'error', message: r.error })
+                    return false
+                }
+                savedVersion.current = Math.max(savedVersion.current, v)
+                if (dirty()) { setSave({ kind: 'dirty' }); schedule(AUTOSAVE_MS) } else { setSave({ kind: 'saved', at: new Date() }); clearBackup(businessId) }
+                return true
+            } catch {
+                // Network down or the request failed: say so (never a stuck "Saving…") and try again soon.
+                setSave({ kind: 'error', message: 'Couldn’t save. Check your connection; trying again…' })
+                schedule(5000)
+                return false
+            }
+        })()
+        inflight.current = run
+        try { return await run } finally { if (inflight.current === run) inflight.current = null }
+    }, [schedule]) // eslint-disable-line react-hooks/exhaustive-deps
+    const flushRef = useRef(flush)
+    flushRef.current = flush
 
     const onChange = useCallback((data: Data) => {
         if (JSON.stringify(data) === JSON.stringify(latest.current)) return
         latest.current = data
+        version.current++
+        writeBackup(businessId, data)
         setSave({ kind: 'dirty' })
-        if (timer.current) clearTimeout(timer.current)
-        timer.current = setTimeout(flush, AUTOSAVE_MS)
-    }, [flush])
+        schedule(AUTOSAVE_MS)
+    }, [schedule, businessId])
 
-    // Unsaved edits: save on the way out, and warn if the save can't finish.
+    // Leaving: switching tabs or apps saves now; closing or reloading sends the last edits with
+    // sendBeacon (a normal request is cancelled when the page unloads); leaving the editor inside
+    // the app (back button, browser back) saves on the way out.
     useEffect(() => {
-        const onLeave = (e: BeforeUnloadEvent) => {
-            if (!timer.current && !saving.current) return
-            void flush()
-            e.preventDefault()
+        const onHide = () => { if (document.visibilityState === 'hidden' && dirty()) void flushRef.current() }
+        const onUnload = (e: BeforeUnloadEvent) => {
+            if (!dirty()) return
+            const sent = navigator.sendBeacon?.('/api/builder/draft', new Blob([JSON.stringify(latest.current)], { type: 'application/json' }))
+            if (!sent) e.preventDefault()
         }
-        window.addEventListener('beforeunload', onLeave)
-        return () => window.removeEventListener('beforeunload', onLeave)
-    }, [flush])
+        document.addEventListener('visibilitychange', onHide)
+        window.addEventListener('beforeunload', onUnload)
+        return () => {
+            document.removeEventListener('visibilitychange', onHide)
+            window.removeEventListener('beforeunload', onUnload)
+            if (timer.current) clearTimeout(timer.current)
+            if (dirty()) void saveBuilderDraftAction(latest.current).catch(() => {})
+        }
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const publish = useCallback(async () => {
         if (timer.current) { clearTimeout(timer.current); timer.current = null }
+        if (inflight.current) await inflight.current
+        const v = version.current
         setSave({ kind: 'saving' })
-        const r = await publishBuilderPageAction(latest.current)
+        const r = await publishBuilderPageAction(latest.current).catch(() => ({ ok: false as const, error: 'Couldn’t publish. Check your connection and try again.' }))
         if (!r.ok) {
             setSave({ kind: 'error', message: r.error })
             toast.error(r.error)
             return
         }
-        setSave({ kind: 'saved', at: new Date() })
+        // Publishing saves the draft too.
+        savedVersion.current = Math.max(savedVersion.current, v)
+        setSave(dirty() ? { kind: 'dirty' } : { kind: 'saved', at: new Date() })
+        if (dirty()) schedule(AUTOSAVE_MS); else clearBackup(businessId)
         setPublished(r.data.publishedAt)
         toast.success('Your site is live.')
-    }, [])
+    }, [schedule]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const askUpgrade = useCallback(() => openUpgrade(), [openUpgrade])
 
@@ -117,8 +179,9 @@ export function BuilderEditor({ page, site, metadata, info, businessId, plan, si
                 >
                     {/* Anything that suspends (a font loading, a lazy chunk) waits here, inside the editor,
                         instead of swapping the whole editor for the dashboard's loading screen. */}
+                    <RestoreBackup businessId={businessId} initial={initialData as Data} />
                     <Suspense fallback={<div className="flex h-[100dvh] items-center justify-center"><Loader2 className="animate-spin" style={{ color: 'var(--b-muted)' }} /></div>}>
-                        <EditorLayout save={save} published={published} siteUrl={siteUrl} backHref={backHref} onPublish={publish} onRetry={flush} />
+                        <EditorLayout save={save} published={published} siteUrl={siteUrl} backHref={backHref} onPublish={publish} onRetry={flush} onFlush={flush} />
                     </Suspense>
                 </Puck>
             </div>
@@ -126,13 +189,14 @@ export function BuilderEditor({ page, site, metadata, info, businessId, plan, si
     )
 }
 
-function EditorLayout({ save, published, siteUrl, backHref, onPublish, onRetry }: {
+function EditorLayout({ save, published, siteUrl, backHref, onPublish, onRetry, onFlush }: {
     save: SaveState
     published: string | null
     siteUrl: string
     backHref: string
     onPublish: () => void
     onRetry: () => void
+    onFlush: () => Promise<boolean>
 }) {
     const [adding, setAdding] = useState<number | null>(null)
     const [templates, setTemplates] = useState(false)
@@ -157,7 +221,7 @@ function EditorLayout({ save, published, siteUrl, backHref, onPublish, onRetry }
     return (
         <div className="flex h-[100dvh] flex-col overflow-hidden">
             <WebsiteBuilderTour />
-            <TopBar save={save} published={published} siteUrl={siteUrl} backHref={backHref} onPublish={onPublish} onRetry={onRetry} onTemplates={() => setTemplates(true)}
+            <TopBar save={save} published={published} siteUrl={siteUrl} backHref={backHref} onPublish={onPublish} onRetry={onRetry} onTemplates={() => setTemplates(true)} onFlush={onFlush}
                 onSiteLook={openSiteLook} live={live} onToggleLive={() => setLive(v => !v)} />
             <div className="relative flex min-h-0 flex-1">
                 <aside className="hidden w-[248px] flex-none flex-col lg:flex" style={{ background: '#fff', borderRight: '1px solid var(--b-line)' }}>
@@ -188,6 +252,23 @@ function EditorLayout({ save, published, siteUrl, backHref, onPublish, onRetry }
             {templates && <TemplatesDialog onClose={() => setTemplates(false)} />}
         </div>
     )
+}
+
+/**
+ * Opening the editor: if this browser holds edits newer than the saved draft
+ * (the page closed or reloaded before the save landed), put them back; the
+ * change then saves as usual.
+ */
+function RestoreBackup({ businessId, initial }: { businessId: string; initial: Data }) {
+    const dispatch = usePuck(s => s.dispatch)
+    useEffect(() => {
+        const backup = readBackup(businessId)
+        if (!backup) return
+        if (JSON.stringify(backup) === JSON.stringify(initial)) { clearBackup(businessId); return }
+        dispatch({ type: 'setData', data: backup as any, recordHistory: true })
+        toast('Restored changes that hadn’t finished saving.')
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    return null
 }
 
 /**
@@ -238,7 +319,7 @@ function PreviewFrame() {
     )
 }
 
-function TopBar({ save, published, siteUrl, backHref, onPublish, onRetry, onTemplates, onSiteLook, live, onToggleLive }: {
+function TopBar({ save, published, siteUrl, backHref, onPublish, onRetry, onTemplates, onFlush, onSiteLook, live, onToggleLive }: {
     save: SaveState
     published: string | null
     siteUrl: string
@@ -246,11 +327,13 @@ function TopBar({ save, published, siteUrl, backHref, onPublish, onRetry, onTemp
     onPublish: () => void
     onRetry: () => void
     onTemplates: () => void
+    onFlush: () => Promise<boolean>
     onSiteLook: () => void
     live: boolean
     onToggleLive: () => void
 }) {
     const dispatch = usePuck(s => s.dispatch)
+    const router = useRouter()
     const width = usePuck(s => s.appState.ui.viewports.current.width)
     const history = usePuck(s => s.history)
     const busy = save.kind === 'saving'
@@ -269,7 +352,13 @@ function TopBar({ save, published, siteUrl, backHref, onPublish, onRetry, onTemp
 
     return (
         <header className="flex h-14 flex-none items-center gap-2 px-2 sm:px-3" style={{ background: '#fff', borderBottom: '1px solid var(--b-line)' }}>
-            <Link href={backHref} className="bld-icon-btn" aria-label="Back to the dashboard"><ArrowLeft size={18} /></Link>
+            <Link href={backHref} className="bld-icon-btn" aria-label="Back to the dashboard" onClick={async e => {
+                // Unsaved edits: save first; if that fails, ask before leaving.
+                if (save.kind === 'saved') return
+                e.preventDefault()
+                const ok = await onFlush()
+                if (ok || window.confirm('Your latest changes didn’t save. Leave anyway?')) router.push(backHref)
+            }}><ArrowLeft size={18} /></Link>
             <div className="hidden min-w-0 sm:block">
                 <p className="text-[14px] font-semibold leading-tight">Website</p>
                 <SaveStatus save={save} onRetry={onRetry} />
