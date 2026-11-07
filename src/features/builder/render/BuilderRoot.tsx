@@ -7,6 +7,7 @@ import { MobileBookBar } from '@/features/siteBuilder/templates/parts'
 import { defaultSiteData, EMPTY_CONTENT } from '@/features/siteBuilder/siteData'
 import { resolveTheme } from '@/features/siteBuilder/themes'
 import { BuilderProvider, type BuilderMetadata } from './context'
+import { FontLink } from './primitives'
 import type { SiteThemeProps } from '../types'
 import './builder.css'
 
@@ -41,6 +42,12 @@ export function BuilderRoot({ themeProps, metadata, editing, children }: {
         bookingMatchesSite: themeProps.bookingMatchesSite,
     }), [themeProps])
 
+    // The name the website shows (Site look → Name on your website); empty uses the account name.
+    const info = useMemo(() => {
+        const name = themeProps.siteName?.trim()
+        return name ? { ...metadata.info, businessName: name } : metadata.info
+    }, [metadata.info, themeProps.siteName])
+
     const bookHref = (serviceId?: string) => `${metadata.basePath}/book${serviceId ? `?service=${encodeURIComponent(serviceId)}` : ''}`
 
     const vars = {
@@ -58,13 +65,13 @@ export function BuilderRoot({ themeProps, metadata, editing, children }: {
     } as React.CSSProperties
 
     return (
-        <BuilderProvider value={{ ...metadata, theme, themeProps, editing, bookHref }}>
-            <SiteProvider info={metadata.info} site={site} theme={theme} basePath={metadata.basePath} editing={editing}>
+        <BuilderProvider value={{ ...metadata, info, theme, themeProps, editing, bookHref }}>
+            <SiteProvider info={info} site={site} theme={theme} basePath={metadata.basePath} editing={editing}>
                 <div
                     className={`aa-root @container relative w-full min-h-full overflow-x-clip text-base antialiased${editing || metadata.still ? '' : ' aa-anim'}`}
                     style={{ ...vars, background: 'var(--s-bg)', color: 'var(--s-fg)', fontFamily: 'var(--s-body)', fontSynthesis: 'none' }}
                 >
-                    <link rel="stylesheet" href={buildGoogleFontsUrl(theme.fonts)} precedence="default" />
+                    <FontLink href={buildGoogleFontsUrl(theme.fonts)} live={!editing && !metadata.still} />
                     {/* Live site: entrance content starts hidden (builder.css) until its animation runs,
                         with a 2.5 s failsafe; without JavaScript it shows right away. In the editor
                         content always shows and the Preview button plays animations. */}

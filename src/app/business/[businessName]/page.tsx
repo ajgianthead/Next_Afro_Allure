@@ -67,7 +67,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         .maybeSingle()
     if (!data) return {}
     const editor = (data.web_editors as any)?.[0] ?? (data.web_editors as any)
-    const title = `${data.business_name} | Book online`
+    // Builder sites can show a different name (Site look → Name on your website).
+    const siteName = editor?.type === 'BUILDER' ? String(editor.builder_data?.root?.props?.siteName ?? '').trim() : ''
+    const title = `${siteName || data.business_name} | Book online`
     let description: string
     let image: string | undefined
     if (editor?.type === 'BUILDER') {

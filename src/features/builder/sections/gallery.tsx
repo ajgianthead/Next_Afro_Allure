@@ -6,7 +6,7 @@ import type { SiteMedia } from '@/features/siteBuilder/siteData'
 import { Lightbox } from '@/features/siteBuilder/templates/parts'
 import { useBuilder } from '../render/context'
 import { resolveHref } from '../render/links'
-import { Btn, cx, Item, Media, Txt } from '../render/primitives'
+import { Btn, cx, FontLink, Item, Media, Txt } from '../render/primitives'
 import type { LayoutProps, LinkValue, SectionDefinition } from './types'
 
 export interface GalleryContent {
@@ -285,7 +285,7 @@ const Polaroids = ({ content: c }: LayoutProps<GalleryContent>) => {
                     </Item>
                 ))}
             </div>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap" precedence="default" />
+            <FontLink href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap" />
         </Frame>
     )
 }

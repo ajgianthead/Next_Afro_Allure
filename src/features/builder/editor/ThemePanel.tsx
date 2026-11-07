@@ -3,10 +3,24 @@
 import { Check } from 'lucide-react'
 import { buildGoogleFontsUrl } from '@/lib/extractFonts'
 import { FONT_PAIRINGS, templateMeta, TEMPLATES, type SchemeColors } from '@/features/siteBuilder/themes'
-import { ColorInput, MediaInput, Segmented, Slider, Toggle } from './controls'
+import { ColorInput, MediaInput, Segmented, Slider, TextInput, Toggle } from './controls'
+import { useEditor } from './EditorContext'
 import { useTheme } from './useSection'
 
 const PAIRING_FONTS_URL = buildGoogleFontsUrl(FONT_PAIRINGS.map(f => ({ family: f.heading.family, weights: [f.heading.weights[f.heading.weights.length - 1]] })))
+
+/** The name and logo the whole website shows (menu bar, footer, hero…). Also in the Menu bar and Footer tabs. */
+export function NameLogoFields() {
+    const { theme, setTheme } = useTheme()
+    const { info } = useEditor()
+    return (
+        <>
+            <TextInput label="Name on your website" value={theme.siteName ?? ''} max={60} placeholder={info.businessName}
+                onChange={siteName => setTheme({ siteName })} help="Shown in the menu bar, footer and anywhere your name appears. Empty uses your account name; emails and receipts keep your account name." />
+            <MediaInput label="Logo" value={theme.logo} onChange={logo => setTheme({ logo })} help="Shown in the menu bar and footer. Without one, your name is shown." />
+        </>
+    )
+}
 
 /** Site-wide look: colors, fonts, logo, corners. Every section follows it unless it sets its own. */
 export function ThemePanel() {
@@ -19,6 +33,11 @@ export function ThemePanel() {
     return (
         <div className="grid gap-5 p-3.5">
             <link rel="stylesheet" href={PAIRING_FONTS_URL} />
+            <section className="grid gap-3">
+                <h3 className="bld-label">Name and logo</h3>
+                <NameLogoFields />
+            </section>
+
             <section className="grid gap-2">
                 <h3 className="bld-label">Style</h3>
                 <p className="bld-help">Sets the corners, buttons and color choices. Your sections stay as they are.</p>
@@ -61,7 +80,6 @@ export function ThemePanel() {
                 </div>
             </section>
 
-            <MediaInput label="Logo" value={theme.logo} onChange={logo => setTheme({ logo })} help="Shown in the menu bar and footer. Without one, your business name is shown." />
 
             <section className="grid gap-3">
                 <h3 className="bld-label">Corners and buttons</h3>

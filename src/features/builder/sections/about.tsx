@@ -5,7 +5,7 @@ import { UserRound } from 'lucide-react'
 import type { SiteMedia } from '@/features/siteBuilder/siteData'
 import { useBuilder } from '../render/context'
 import { resolveHref } from '../render/links'
-import { Btn, cx, Item, Media, Txt } from '../render/primitives'
+import { Btn, cx, FontLink, Item, Media, Txt } from '../render/primitives'
 import type { LayoutProps, LinkValue, SectionDefinition } from './types'
 
 export interface AboutContent {
@@ -246,7 +246,7 @@ const Signature = ({ content: c }: LayoutProps<AboutContent>) => {
             <Heading c={c} />
             <Body c={c} />
             <Txt role="signature" defaults={{ font: 'Dancing Script', size: 40, leading: 1.1 }} className="!text-[color:var(--s-accent-text)]">{c.signature || t.name}</Txt>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500&display=swap" precedence="default" />
+            <FontLink href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500&display=swap" />
             <Action c={c} />
         </Narrow>
     )

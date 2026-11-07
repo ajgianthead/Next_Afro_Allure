@@ -422,7 +422,7 @@ export const NavbarSection: SectionDefinition<NavbarContent> = {
     ],
     fields: [
         { kind: 'toggle', key: 'showName', label: 'Show the name beside the logo' },
-        { kind: 'text', key: 'name', label: 'Name', placeholder: 'Your business name', max: 60 },
+        { kind: 'text', key: 'name', label: 'Name in the menu bar (optional)', placeholder: 'Same as Name on your website', max: 60, help: 'Only if the menu bar should say something shorter.' },
         { kind: 'list', key: 'links', label: 'Links', itemLabel: 'Link', max: 7, empty: { label: '', href: '#services' },
             fields: [{ kind: 'link', key: '', label: 'Link' }] },
         { kind: 'link', key: 'book', label: 'Book button' },

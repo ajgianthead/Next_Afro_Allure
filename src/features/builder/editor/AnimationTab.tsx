@@ -6,17 +6,11 @@ import { ENTRANCES, type AmbientEffect, type HoverEffect, type ScrollEffect, typ
 import { Segmented, Select, Slider, Toggle } from './controls'
 import { useEditor } from './EditorContext'
 import { ProNotice } from './LayoutTab'
+import { previewAnimation } from './preview'
 
 const SCROLLS = Object.keys(SCROLL_LABELS) as ScrollEffect[]
 const HOVERS = Object.keys(HOVER_LABELS) as HoverEffect[]
 const AMBIENTS = Object.keys(AMBIENT_LABELS) as AmbientEffect[]
-
-/** Plays the section's entrance in the editor canvas (the canvas is an iframe). */
-export function previewAnimation(id: string) {
-    const frame = document.querySelector<HTMLIFrameElement>('.bld iframe')
-    const doc = frame?.contentDocument ?? document
-    doc.dispatchEvent(new CustomEvent('aa-preview', { detail: { id } }))
-}
 
 export function AnimationTab({ id, animation, setAnimation }: { id: string; animation: SectionAnimation; setAnimation: (a: Partial<SectionAnimation>) => void }) {
     const { plan } = useEditor()
@@ -28,6 +22,7 @@ export function AnimationTab({ id, animation, setAnimation }: { id: string; anim
         <div className="grid gap-4 p-3.5">
             {starter && animationIsPro(animation) && <ProNotice what="One of these animations" />}
             <button type="button" className="bld-btn" data-dark="" onClick={() => previewAnimation(id)}><Play size={14} /> Preview</button>
+            <p className="bld-help -mt-2">Changes play in the preview as you make them. Use Play animations at the top to scroll through the page as visitors see it.</p>
 
             <section className="grid gap-3">
                 <h3 className="text-[11px] font-bold uppercase tracking-[.08em]" style={{ color: 'var(--b-faint)' }}>When it scrolls into view</h3>

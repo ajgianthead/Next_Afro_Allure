@@ -6,6 +6,7 @@ import { lowContrast, sectionPalette } from '../palette'
 import type { SectionDefinition } from '../sections/types'
 import type { Divider, SectionProps, SectionStyle, Size, TextStyle } from '../types'
 import { ColorInput, ContentFields, MediaInput, Segmented, Select, Slider, TextInput, Toggle } from './controls'
+import { NameLogoFields } from './ThemePanel'
 import { useTheme } from './useSection'
 
 const SIZES: { value: Size; label: string }[] = [{ value: 'none', label: 'None' }, { value: 's', label: 'S' }, { value: 'm', label: 'M' }, { value: 'l', label: 'L' }, { value: 'xl', label: 'XL' }]
@@ -39,6 +40,12 @@ export function PropertiesTab({ def, props, setContent, setStyle }: {
 
     return (
         <div>
+            {(def.type === 'Navbar' || def.type === 'Footer') && (
+                <Group title="Name and logo" open>
+                    <NameLogoFields />
+                    <p className="bld-help">These are site-wide: the menu bar, footer and the rest of the page all use them.</p>
+                </Group>
+            )}
             {def.fields.length > 0 && (
                 <Group title="Content" open>
                     <ContentFields fields={def.fields} content={props.content as Record<string, unknown>} onChange={setContent} />
