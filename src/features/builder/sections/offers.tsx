@@ -460,7 +460,7 @@ export const OffersSection: SectionDefinition<OffersContent> = {
         { kind: 'textarea', key: 'detail', label: 'Promo details', rows: 2, max: 240 },
         { kind: 'text', key: 'endsOn', label: 'Promo ends on (Countdown)', placeholder: 'YYYY-MM-DD', max: 10, help: 'A custom promo hides itself after this day.' },
         { kind: 'link', key: 'button', label: 'Button' },
-        { kind: 'media', key: 'media', label: 'Photo (Image background)', accept: 'image' },
+        { kind: 'media', key: 'media', label: 'Photo or video (Image background)', accept: 'media' },
         { kind: 'list', key: 'tiers', label: 'Tiers (Tiers)', itemLabel: 'Tier', max: 4, empty: { title: '', text: '' },
             fields: [{ kind: 'text', key: 'title', label: 'Tier name', max: 40 }, { kind: 'text', key: 'text', label: 'Reward', max: 120 }] },
     ],

@@ -13,6 +13,7 @@ import { useEditor } from './EditorContext'
 
 const IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif'
 const MEDIA_ACCEPT = `${IMAGE_ACCEPT},video/mp4,video/quicktime,video/webm`
+const VIDEO_NOTE = 'Videos up to 50 MB play silently on a loop.'
 
 export function Field({ label, help, children, htmlFor }: { label: string; help?: string; children: ReactNode; htmlFor?: string }) {
     return (
@@ -146,7 +147,7 @@ export function MediaInput({ label, value, onChange, accept = 'image', help }: {
     const input = useRef<HTMLInputElement>(null)
     const { upload, busy, error } = useUpload()
     return (
-        <Field label={label} help={error || help}>
+        <Field label={label} help={error || (accept === 'media' ? [help, VIDEO_NOTE].filter(Boolean).join(' ') : help)}>
             <div className="flex items-center gap-3">
                 <button type="button" onClick={() => input.current?.click()} disabled={busy !== null}
                     className="relative flex h-16 w-24 flex-none items-center justify-center overflow-hidden rounded-lg"
@@ -172,12 +173,13 @@ export function MediaListInput({ label, value, onChange, max, help }: { label: s
     const { upload, busy, error } = useUpload()
     const list = value ?? []
     return (
-        <Field label={`${label} (${list.length}/${max})`} help={error || help}>
+        <Field label={`${label} (${list.length}/${max})`} help={error || [help, VIDEO_NOTE].filter(Boolean).join(' ')}>
             <div className="grid grid-cols-4 gap-2">
                 {list.map((m, i) => (
                     <div key={m.url + i} className="group relative aspect-square overflow-hidden rounded-md" style={{ border: '1px solid var(--b-line)' }}>
                         <Thumb media={m} />
-                        <button type="button" aria-label="Remove photo" onClick={() => onChange(list.filter((_, j) => j !== i))}
+                        {m.kind === 'video' && <span className="pointer-events-none absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white">Video</span>}
+                        <button type="button" aria-label={m.kind === 'video' ? 'Remove video' : 'Remove photo'} onClick={() => onChange(list.filter((_, j) => j !== i))}
                             className="absolute right-1 top-1 rounded-full bg-black/60 p-0.5 text-white"><X size={12} /></button>
                     </div>
                 ))}
@@ -188,7 +190,7 @@ export function MediaListInput({ label, value, onChange, max, help }: { label: s
                     </button>
                 )}
             </div>
-            <input ref={input} type="file" hidden multiple accept={IMAGE_ACCEPT}
+            <input ref={input} type="file" hidden multiple accept={MEDIA_ACCEPT}
                 onChange={async e => {
                     const files = [...(e.target.files ?? [])].slice(0, max - list.length); e.target.value = ''
                     let next = list

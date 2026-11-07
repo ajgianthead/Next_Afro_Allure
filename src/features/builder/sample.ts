@@ -37,7 +37,11 @@ export const SAMPLE_INFO: SiteInfo = {
     fallbackBio: 'Kay has been braiding in Brooklyn for over ten years. She specializes in knotless and boho braids that are gentle on your edges and last for weeks.',
 }
 
+/** A short CC0 clip (MDN), to check video in the layouts. */
+const video = { url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', path: '', kind: 'video' as const }
+
 export const SAMPLE_PHOTOS = {
+    video,
     cover: photo('aa-cover'),
     second: photo('aa-two', 800, 800),
     third: photo('aa-three', 800, 800),

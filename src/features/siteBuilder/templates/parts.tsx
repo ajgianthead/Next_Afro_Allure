@@ -117,22 +117,49 @@ export function Stars({ rating, size = 14 }: { rating: number; size?: number }) 
 // ─── Media ───────────────────────────────────────────────────────────────────
 
 export function MediaView({ media, alt, className, eager }: { media: SiteMedia; alt: string; className?: string; eager?: boolean }) {
-    if (media.kind === 'video') {
-        return (
-            <video
-                src={media.url}
-                className={cx('h-full w-full object-cover', className)}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload={eager ? 'auto' : 'metadata'}
-                aria-label={alt}
-            />
-        )
-    }
+    if (media.kind === 'video') return <VideoView media={media} alt={alt} className={className} eager={eager} />
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={media.url} alt={alt} className={cx('h-full w-full object-cover', className)} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+}
+
+/**
+ * A silent looping video. It plays only while on screen (a gallery of videos
+ * stays light), and shows a still frame for visitors who ask for reduced
+ * motion (in the gallery they can still open it full size, with controls).
+ * Uses the video's own window, so it works in the editor's canvas iframe too.
+ */
+function VideoView({ media, alt, className, eager }: { media: SiteMedia; alt: string; className?: string; eager?: boolean }) {
+    const ref = useRef<HTMLVideoElement>(null)
+    useEffect(() => {
+        const v = ref.current
+        if (!v) return
+        v.muted = true // the attribute alone doesn't always reach the element, and autoplay needs it
+        const win = v.ownerDocument.defaultView ?? window
+        if (win.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+            v.pause()
+            return
+        }
+        if (!('IntersectionObserver' in win)) { void v.play().catch(() => {}); return }
+        const io = new win.IntersectionObserver(([e]) => {
+            if (e.isIntersecting) void v.play().catch(() => {})
+            else v.pause()
+        }, { threshold: 0.1 })
+        io.observe(v)
+        return () => io.disconnect()
+    }, [media.url])
+    return (
+        <video
+            ref={ref}
+            src={media.url}
+            className={cx('h-full w-full object-cover', className)}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload={eager ? 'auto' : 'metadata'}
+            aria-label={alt}
+        />
+    )
 }
 
 /**

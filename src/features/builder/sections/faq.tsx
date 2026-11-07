@@ -326,7 +326,7 @@ export const FaqSection: SectionDefinition<FaqContent> = {
                 { kind: 'textarea', key: 'a', label: 'Answer', rows: 3, max: 1200 },
                 { kind: 'text', key: 'topic', label: 'Topic (Category tabs)', placeholder: 'Booking', max: 30 },
             ] },
-        { kind: 'media', key: 'media', label: 'Photo (Image + accordion)', accept: 'image' },
+        { kind: 'media', key: 'media', label: 'Photo or video (Image + accordion)', accept: 'media' },
         { kind: 'link', key: 'button', label: 'Button (FAQ + contact)' },
     ],
     defaultContent: DEFAULT,

@@ -335,7 +335,7 @@ export const BookNowSection: SectionDefinition<BookNowContent> = {
         { kind: 'link', key: 'primary', label: 'Main button' },
         { kind: 'link', key: 'secondary', label: 'Second button (optional)' },
         { kind: 'text', key: 'phone', label: 'Phone (Phone + Book)', placeholder: '(555) 123-4567', max: 30 },
-        { kind: 'media', key: 'media', label: 'Photo (Photo layouts)', accept: 'image' },
+        { kind: 'media', key: 'media', label: 'Photo or video (Photo layouts)', accept: 'media' },
         { kind: 'list', key: 'stats', label: 'Stats (Stats + CTA)', itemLabel: 'Stat', max: 4, empty: { value: '', label: '' },
             fields: [{ kind: 'text', key: 'value', label: 'Number', placeholder: '300+', max: 12 }, { kind: 'text', key: 'label', label: 'Label', placeholder: 'happy clients', max: 30 }] },
     ],

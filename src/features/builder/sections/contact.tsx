@@ -416,7 +416,7 @@ export const ContactSection: SectionDefinition<ContactContent> = {
         { kind: 'text', key: 'instagram', label: 'Instagram', placeholder: '@yourhandle', max: 200 },
         { kind: 'text', key: 'tiktok', label: 'TikTok', placeholder: '@yourhandle', max: 200 },
         { kind: 'text', key: 'facebook', label: 'Facebook', placeholder: 'facebook.com/yourpage', max: 200 },
-        { kind: 'media', key: 'media', label: 'Photo (photo layouts)', accept: 'image' },
+        { kind: 'media', key: 'media', label: 'Photo or video (photo layouts)', accept: 'media' },
         { kind: 'list', key: 'faq', label: 'Questions (FAQ + contact)', itemLabel: 'Question', max: 5, empty: { q: '', a: '' },
             fields: [{ kind: 'text', key: 'q', label: 'Question', max: 120 }, { kind: 'textarea', key: 'a', label: 'Answer', rows: 3, max: 600 }] },
     ],

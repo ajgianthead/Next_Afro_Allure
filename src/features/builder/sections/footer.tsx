@@ -403,7 +403,7 @@ export const FooterSection: SectionDefinition<FooterContent> = {
         { kind: 'text', key: 'ctaHeading', label: 'Book band heading (Book band)', max: 100 },
         { kind: 'link', key: 'book', label: 'Book button (Book band, Marquee)' },
         { kind: 'text', key: 'signupHeading', label: 'Sign-up heading (Openings signup)', max: 80, help: 'Visitors join your waitlist and get an email when a time opens up.' },
-        { kind: 'mediaList', key: 'photos', label: 'Photos (Photo strip)', max: 6 },
+        { kind: 'mediaList', key: 'photos', label: 'Photos and videos (Photo strip)', max: 6 },
         { kind: 'text', key: 'legal', label: 'After the © line (optional)', placeholder: 'Licensed cosmetologist', max: 80 },
     ],
     defaultContent: DEFAULT,

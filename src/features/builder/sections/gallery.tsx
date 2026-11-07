@@ -49,7 +49,7 @@ function Tile({ media, i, className, rounded = true, style }: { media: SiteMedia
     const { editing } = useBuilder()
     const inner = <Media media={media} label="a photo" className={cx('h-full w-full', className)} rounded={rounded} style={style} />
     if (!media || editing) return inner
-    return <button type="button" onClick={() => open(i)} className="block h-full w-full cursor-zoom-in text-left" aria-label={`Open photo ${i + 1}`}>{inner}</button>
+    return <button type="button" onClick={() => open(i)} className="block h-full w-full cursor-zoom-in text-left" aria-label={`Open ${media.kind === 'video' ? 'video' : 'photo'} ${i + 1}`}>{inner}</button>
 }
 
 function Header({ c, center, className }: { c: GalleryContent; center?: boolean; className?: string }) {
@@ -436,7 +436,7 @@ export const GallerySection: SectionDefinition<GalleryContent> = {
         { kind: 'text', key: 'eyebrow', label: 'Small label', placeholder: 'Portfolio', max: 40 },
         { kind: 'text', key: 'heading', label: 'Heading', placeholder: 'Recent work', max: 100 },
         { kind: 'textarea', key: 'intro', label: 'Intro (optional)', rows: 2, max: 300 },
-        { kind: 'mediaList', key: 'photos', label: 'Photos', max: 24, help: 'Before / after pairs uses them two at a time: before, then after.' },
+        { kind: 'mediaList', key: 'photos', label: 'Photos and videos', max: 24, help: 'Before / after pairs uses them two at a time: before, then after.' },
         { kind: 'textarea', key: 'captions', label: 'Captions (optional)', rows: 4, max: 2000, help: 'One per line, in the same order as the photos.' },
         { kind: 'link', key: 'button', label: 'Button (e.g. your Instagram)' },
     ],
