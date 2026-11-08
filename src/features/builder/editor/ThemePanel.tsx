@@ -1,11 +1,21 @@
 'use client'
 
-import { Check } from 'lucide-react'
+import { useState } from 'react'
+import { Check, Eraser } from 'lucide-react'
 import { buildGoogleFontsUrl } from '@/lib/extractFonts'
-import { FONT_PAIRINGS, templateMeta, TEMPLATES, type SchemeColors } from '@/features/siteBuilder/themes'
+import { FONT_PAIRINGS, resolveTheme, templateMeta, TEMPLATES, type SchemeColors } from '@/features/siteBuilder/themes'
+import { LOGO_SIZE_DEFAULT, type LogoShape } from '../types'
+import { LogoBackgroundDialog } from './LogoBackgroundDialog'
 import { ColorInput, MediaInput, Segmented, Slider, TextInput, Toggle } from './controls'
 import { useEditor } from './EditorContext'
 import { useTheme } from './useSection'
+
+const LOGO_SHAPES: { value: LogoShape; label: string; radius: string }[] = [
+    { value: 'original', label: 'Original', radius: '0' },
+    { value: 'square', label: 'Square', radius: '0' },
+    { value: 'rounded', label: 'Rounded', radius: '30%' },
+    { value: 'circle', label: 'Circle', radius: '50%' },
+]
 
 const PAIRING_FONTS_URL = buildGoogleFontsUrl(FONT_PAIRINGS.map(f => ({ family: f.heading.family, weights: [f.heading.weights[f.heading.weights.length - 1]] })))
 
@@ -13,11 +23,23 @@ const PAIRING_FONTS_URL = buildGoogleFontsUrl(FONT_PAIRINGS.map(f => ({ family: 
 export function NameLogoFields() {
     const { theme, setTheme } = useTheme()
     const { info } = useEditor()
+    const [cleaning, setCleaning] = useState(false)
+    const siteBg = resolveTheme(theme.templateId, theme.scheme, theme.customColors, theme.fontPairing).bg
+    const size = theme.logoSize ?? LOGO_SIZE_DEFAULT
     return (
         <>
             <TextInput label="Name on your website" value={theme.siteName ?? ''} max={60} placeholder={info.businessName}
                 onChange={siteName => setTheme({ siteName })} help="Shown in the menu bar, footer and anywhere your name appears. Empty uses your account name; emails and receipts keep your account name." />
             <MediaInput label="Logo" value={theme.logo} onChange={logo => setTheme({ logo })} help="Shown in the menu bar and footer. Without one, your name is shown." />
+            {theme.logo && <>
+                <Slider label="Logo size" unit="px" value={size} min={20} max={120} step={2} onChange={logoSize => setTheme({ logoSize })}
+                    onReset={theme.logoSize !== undefined ? () => setTheme({ logoSize: undefined }) : undefined} help="Height in the menu bar; the footer scales with it. Phones show at most 56px." />
+                <Segmented label="Logo shape" value={theme.logoShape ?? 'original'} onChange={logoShape => setTheme({ logoShape })}
+                    options={LOGO_SHAPES.map(o => ({ value: o.value, label: <span className="inline-flex items-center gap-1.5"><span aria-hidden className="inline-block h-3 w-3 border border-current" style={{ borderRadius: o.radius }} />{o.label}</span> }))}
+                    help={theme.logoShape && theme.logoShape !== 'original' ? 'Square shapes crop the logo to fill them.' : undefined} />
+                <button type="button" className="bld-btn" onClick={() => setCleaning(true)}><Eraser size={14} /> Remove background</button>
+                {cleaning && <LogoBackgroundDialog logo={theme.logo} siteBg={siteBg} onApply={logo => setTheme({ logo })} onClose={() => setCleaning(false)} />}
+            </>}
         </>
     )
 }

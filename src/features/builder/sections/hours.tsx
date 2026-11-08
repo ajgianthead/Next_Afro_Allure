@@ -458,7 +458,7 @@ export const HoursSection: SectionDefinition<HoursContent> = {
         { kind: 'textarea', key: 'gettingHere', label: 'Getting here (optional)', rows: 2, max: 240, placeholder: '2 blocks from the A/C at Nostrand Ave.' },
         { kind: 'textarea', key: 'accessibility', label: 'Accessibility (optional)', rows: 2, max: 240, placeholder: 'Ground floor, no steps.' },
         { kind: 'textarea', key: 'areas', label: 'Areas I travel to (if you’re mobile)', rows: 3, max: 400, help: 'One per line.' },
-        { kind: 'media', key: 'media', label: 'Photo of your space (Studio photo)', accept: 'image' },
+        { kind: 'media', key: 'media', label: 'Photo or video of your space (Studio photo)', accept: 'media' },
     ],
     defaultContent: DEFAULT,
     layouts: LAYOUTS,

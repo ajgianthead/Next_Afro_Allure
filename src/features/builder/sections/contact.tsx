@@ -6,7 +6,7 @@ import { Check, ChevronDown, Facebook, Instagram, Loader2, Mail, MapPin, Message
 import type { SiteMedia } from '@/features/siteBuilder/siteData'
 import { useTurnstile } from '@/lib/abuse/useTurnstile'
 import { useBuilder } from '../render/context'
-import { Btn, cx, Item, Media, Txt } from '../render/primitives'
+import { Btn, cx, Item, LogoMark, Media, Txt } from '../render/primitives'
 import { sendContactMessageAction } from '../server/contact'
 import { EditorNote, Header, MapEmbed, directionsHref } from './shared'
 import type { LayoutProps, SectionDefinition } from './types'
@@ -240,7 +240,6 @@ const QR = ({ content: c }: LayoutProps<ContactContent>) => {
 
 const BusinessCard = ({ content: c }: LayoutProps<ContactContent>) => {
     const t = useWays(c)
-    const { themeProps } = useBuilder()
     return (
         <div className="flex flex-col items-center gap-8">
             <Head c={c} center />
@@ -249,7 +248,7 @@ const BusinessCard = ({ content: c }: LayoutProps<ContactContent>) => {
                 <div className="flex h-full flex-col justify-between gap-6">
                     <div className="flex items-center gap-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        {themeProps.logo && <img src={themeProps.logo.url} alt="" className="h-10 w-auto object-contain" />}
+                        <LogoMark base={40} />
                         <Txt role="big" as="span" enter={false} defaults={{ font: 'heading', size: 24, weight: 600 }}>{t.info.businessName}</Txt>
                     </div>
                     <ul className="flex flex-col gap-1 text-[14px]">
@@ -416,7 +415,7 @@ export const ContactSection: SectionDefinition<ContactContent> = {
         { kind: 'text', key: 'instagram', label: 'Instagram', placeholder: '@yourhandle', max: 200 },
         { kind: 'text', key: 'tiktok', label: 'TikTok', placeholder: '@yourhandle', max: 200 },
         { kind: 'text', key: 'facebook', label: 'Facebook', placeholder: 'facebook.com/yourpage', max: 200 },
-        { kind: 'media', key: 'media', label: 'Photo (photo layouts)', accept: 'image' },
+        { kind: 'media', key: 'media', label: 'Photo or video (photo layouts)', accept: 'media' },
         { kind: 'list', key: 'faq', label: 'Questions (FAQ + contact)', itemLabel: 'Question', max: 5, empty: { q: '', a: '' },
             fields: [{ kind: 'text', key: 'q', label: 'Question', max: 120 }, { kind: 'textarea', key: 'a', label: 'Answer', rows: 3, max: 600 }] },
     ],

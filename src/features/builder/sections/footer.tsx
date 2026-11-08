@@ -4,7 +4,7 @@ import { Facebook, Instagram, Mail, MapPin, Music2, PanelBottom, Phone, Youtube 
 import type { SiteMedia } from '@/features/siteBuilder/siteData'
 import { useBuilder, useSection } from '../render/context'
 import { resolveHref } from '../render/links'
-import { Btn, cx, Media, Txt } from '../render/primitives'
+import { Btn, cx, LogoMark, Media, Txt } from '../render/primitives'
 import { OpeningsSignup } from './shared'
 import type { SocialKind } from './navbar'
 import type { LayoutProps, LinkValue, SectionDefinition } from './types'
@@ -61,7 +61,7 @@ function Name({ c, size = 22, className }: { c: FooterContent; size?: number; cl
     const t = useFooter(c)
     if (t.logo) {
         // eslint-disable-next-line @next/next/no-img-element
-        return <img src={t.logo.url} alt={t.name} className={cx('object-contain', className)} style={{ height: size * 1.8, width: 'auto', maxWidth: size * 6 }} />
+        return <LogoMark base={Math.round(size * 1.8)} alt={t.name} className={className} />
     }
     return <Txt role="name" as="div" enter={false} defaults={{ font: 'heading', size, weight: 600, leading: 1.1 }} className={className}>{t.name}</Txt>
 }
@@ -403,7 +403,7 @@ export const FooterSection: SectionDefinition<FooterContent> = {
         { kind: 'text', key: 'ctaHeading', label: 'Book band heading (Book band)', max: 100 },
         { kind: 'link', key: 'book', label: 'Book button (Book band, Marquee)' },
         { kind: 'text', key: 'signupHeading', label: 'Sign-up heading (Openings signup)', max: 80, help: 'Visitors join your waitlist and get an email when a time opens up.' },
-        { kind: 'mediaList', key: 'photos', label: 'Photos (Photo strip)', max: 6 },
+        { kind: 'mediaList', key: 'photos', label: 'Photos and videos (Photo strip)', max: 6 },
         { kind: 'text', key: 'legal', label: 'After the © line (optional)', placeholder: 'Licensed cosmetologist', max: 80 },
     ],
     defaultContent: DEFAULT,

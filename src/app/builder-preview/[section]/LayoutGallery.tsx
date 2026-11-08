@@ -14,13 +14,13 @@ function sampleContent(type: string, base: Record<string, unknown>): Record<stri
     const p = SAMPLE_PHOTOS
     switch (type) {
         case 'Hero':
-            return { ...base, eyebrow: 'Braids · Brooklyn', secondary: { label: 'View services', href: '#services' }, media: p.cover, media2: p.second, media3: p.third, slides: p.gallery.slice(0, 3), before: p.gallery[4], after: p.gallery[5] }
+            return { ...base, eyebrow: 'Braids · Brooklyn', secondary: { label: 'View services', href: '#services' }, media: p.cover, media2: p.second, media3: p.third, slides: [p.video, ...p.gallery.slice(0, 2)], before: p.gallery[4], after: p.gallery[5] }
         case 'About':
             return { ...base, heading: 'Hi, I’m Kay', body: 'I’ve been braiding for eight years, first for friends and family, then from my own studio in Brooklyn.\n\nEvery style starts with healthy hair: gentle tension, clean parts and products that won’t weigh you down.', since: '2016', media: p.portrait, media2: p.gallery[1], media3: p.gallery[2], button: { label: 'Book with Kay', href: 'book' } }
         case 'Services':
             return { ...base, intro: 'Prices start at the amount shown; longer lengths cost more.', media: p.cover }
         case 'Gallery':
-            return { ...base, photos: [...p.gallery, p.cover, p.second, p.third, p.portrait], captions: ['Knotless, waist length', 'Boho knotless', 'Silk press', 'Loc retwist', 'Feed-in cornrows', 'Kids braids'].join('\n'), button: { label: 'Follow on Instagram', href: 'https://instagram.com/kaysbraids' } }
+            return { ...base, photos: [p.gallery[0], p.video, ...p.gallery.slice(1), p.cover, p.second, p.third, p.portrait], captions: ['Knotless, waist length', 'Boho knotless', 'Silk press', 'Loc retwist', 'Feed-in cornrows', 'Kids braids'].join('\n'), button: { label: 'Follow on Instagram', href: 'https://instagram.com/kaysbraids' } }
         case 'Navbar':
             return { ...base, phone: '(718) 555-0142', announcement: { label: 'Refer a friend: you both get $10 off', href: 'book' }, socials: [{ kind: 'instagram', url: 'https://instagram.com/kaysbraids' }, { kind: 'tiktok', url: 'https://tiktok.com/@kaysbraids' }] }
         case 'Footer':

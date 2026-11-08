@@ -448,7 +448,7 @@ export const ReviewsSection: SectionDefinition<ReviewsContent> = {
         { kind: 'textarea', key: 'intro', label: 'Intro (optional)', rows: 2, max: 300, help: 'Reviews come from your clients and update on their own.' },
         { kind: 'select', key: 'minRating', label: 'Show reviews with', options: [{ value: '0', label: 'Any rating' }, { value: '3', label: '3 stars and up' }, { value: '4', label: '4 stars and up' }, { value: '5', label: '5 stars only' }] },
         { kind: 'number', key: 'limit', label: 'Most to show (0 = all)', min: 0, max: 12 },
-        { kind: 'mediaList', key: 'photos', label: 'Photos (photo layouts)', max: 12, help: 'In the same order as the reviews.' },
+        { kind: 'mediaList', key: 'photos', label: 'Photos and videos (photo layouts)', max: 12, help: 'In the same order as the reviews.' },
         { kind: 'list', key: 'badges', label: 'Badges (Badges)', itemLabel: 'Badge', max: 4, empty: { value: '', label: '' },
             fields: [{ kind: 'text', key: 'value', label: 'Number', placeholder: '300+', max: 12 }, { kind: 'text', key: 'label', label: 'Label', placeholder: 'happy clients', max: 30 }] },
     ],

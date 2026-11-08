@@ -526,7 +526,7 @@ export const ServicesSection: SectionDefinition<ServicesContent> = {
         { kind: 'toggle', key: 'showDescriptions', label: 'Show descriptions' },
         { kind: 'toggle', key: 'showDuration', label: 'Show how long each takes' },
         { kind: 'text', key: 'bookLabel', label: 'Book button text', placeholder: 'Book', max: 20 },
-        { kind: 'media', key: 'media', label: 'Band photo (Overlap cards)', accept: 'image' },
+        { kind: 'media', key: 'media', label: 'Band photo or video (Overlap cards)', accept: 'media' },
     ],
     defaultContent: DEFAULT,
     layouts: LAYOUTS,
